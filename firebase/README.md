@@ -14,5 +14,5 @@ firebase auth:import --hash-algo=scrypt auth-providers.json
 
 ## Emulator Suite
 
-For local development, enable the Firebase Emulator Suite and point the Next.js frontend and Cloud Functions to the emulated services. Configure `firebase.json` in future missions as the frontend scaffolding solidifies.
+For local development, enable the Firebase Emulator Suite and point the Next.js frontend and Cloud Functions to the emulated services. Configure `firebase.json` in future missions as the frontend scaffolding solidifies. 
 
