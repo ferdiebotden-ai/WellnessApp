@@ -146,7 +146,7 @@ const buildScheduleForUser = async (
   const localDateKey = formatInTimeZone(baseDate, timezone, 'yyyy-MM-dd');
 
   const writeSchedule = async (items: FinalScheduleItem[]) => {
-    await firestore.collection('schedules').doc(user.id).collection('daily').doc(localDateKey).set(
+    await firestore.doc(`schedules/${user.id}/${localDateKey}`).set(
       {
         generated_at: new Date().toISOString(),
         items,
