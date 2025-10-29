@@ -21,9 +21,7 @@ describe('generateAdaptiveNudges', () => {
     from: jest.fn(),
   };
 
-  const mockFirestore = {
-    doc: jest.fn(),
-  };
+  let mockFirestore: { collection: jest.Mock };
 
   const mockOpenAI = {
     embeddings: {
@@ -42,6 +40,7 @@ describe('generateAdaptiveNudges', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    mockFirestore = { collection: jest.fn() };
     (require('../lib/supabase').getSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
     (require('../lib/firebase').getFirestore as jest.Mock).mockReturnValue(mockFirestore);
     (require('../lib/openai').getOpenAIClient as jest.Mock).mockReturnValue(mockOpenAI);
@@ -159,7 +158,10 @@ describe('generateAdaptiveNudges', () => {
     });
 
     const docSetMock = jest.fn().mockResolvedValue(undefined);
-    mockFirestore.doc.mockReturnValue({ set: docSetMock });
+    const entryDocMock = jest.fn().mockReturnValue({ set: docSetMock });
+    const entriesCollectionMock = jest.fn().mockReturnValue({ doc: entryDocMock });
+    const userDocMock = jest.fn().mockReturnValue({ collection: entriesCollectionMock });
+    mockFirestore.collection.mockReturnValue({ doc: userDocMock });
 
     await generateAdaptiveNudges(undefined, { timestamp: '2024-04-02T00:05:00Z' });
 
@@ -177,6 +179,10 @@ describe('generateAdaptiveNudges', () => {
       }),
     );
 
+    expect(mockFirestore.collection).toHaveBeenCalledWith('live_nudges');
+    expect(userDocMock).toHaveBeenCalledWith('user-1');
+    expect(entriesCollectionMock).toHaveBeenCalledWith('entries');
+    expect(entryDocMock).toHaveBeenCalledTimes(1);
     expect(docSetMock).toHaveBeenCalledTimes(1);
     const [[nudgePayload]] = docSetMock.mock.calls;
     expect(nudgePayload.protocol_id).toBe('protocol-1');
@@ -257,11 +263,17 @@ describe('generateAdaptiveNudges', () => {
     mockOpenAI.chat.completions.create.mockRejectedValue(new Error('rate limit'));
 
     const docSetMock = jest.fn().mockResolvedValue(undefined);
-    mockFirestore.doc.mockReturnValue({ set: docSetMock });
+    const entryDocMock = jest.fn().mockReturnValue({ set: docSetMock });
+    const entriesCollectionMock = jest.fn().mockReturnValue({ doc: entryDocMock });
+    const userDocMock = jest.fn().mockReturnValue({ collection: entriesCollectionMock });
+    mockFirestore.collection.mockReturnValue({ doc: userDocMock });
 
     await generateAdaptiveNudges(undefined, { timestamp: '2024-04-02T00:05:00Z' });
 
     expect(mockOpenAI.chat.completions.create).toHaveBeenCalled();
+    expect(mockFirestore.collection).toHaveBeenCalledWith('live_nudges');
+    expect(userDocMock).toHaveBeenCalledWith('user-2');
+    expect(entriesCollectionMock).toHaveBeenCalledWith('entries');
     const [[fallbackPayload]] = docSetMock.mock.calls;
     expect(fallbackPayload.status).toBe('pending');
     expect(fallbackPayload.source).toBe('fallback');

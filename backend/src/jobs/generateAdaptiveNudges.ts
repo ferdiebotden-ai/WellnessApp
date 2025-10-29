@@ -422,7 +422,8 @@ const callOpenAi = async (
 
 const writeNudgeToFirestore = async (userId: string, timestamp: string, nudge: GeneratedNudge, source: string) => {
   const firestore = getFirestore();
-  await firestore.doc(`live_nudges/${userId}/${timestamp}`).set(
+  const docRef = firestore.collection('live_nudges').doc(userId).collection('entries').doc(timestamp);
+  await docRef.set(
     {
       ...nudge,
       status: 'pending',

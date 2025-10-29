@@ -99,14 +99,20 @@ describe('generateDailySchedules', () => {
     mockGetSupabaseClient.mockReturnValue(supabaseMock);
 
     const scheduleSetMock = jest.fn().mockResolvedValue(undefined);
-    const docMock = jest.fn().mockReturnValue({ set: scheduleSetMock });
-    const firestoreMock = { doc: docMock };
+    const dateDocMock = jest.fn().mockReturnValue({ set: scheduleSetMock });
+    const datesCollectionMock = jest.fn().mockReturnValue({ doc: dateDocMock });
+    const userDocMock = jest.fn().mockReturnValue({ collection: datesCollectionMock });
+    const schedulesCollectionMock = jest.fn().mockReturnValue({ doc: userDocMock });
+    const firestoreMock = { collection: schedulesCollectionMock };
 
     mockGetFirestore.mockReturnValue(firestoreMock);
 
     await generateDailySchedules(undefined, { timestamp: '2024-03-15T00:05:00.000Z' });
 
-    expect(docMock).toHaveBeenCalledWith('schedules/user-1/2024-03-14');
+    expect(schedulesCollectionMock).toHaveBeenCalledWith('schedules');
+    expect(userDocMock).toHaveBeenCalledWith('user-1');
+    expect(datesCollectionMock).toHaveBeenCalledWith('dates');
+    expect(dateDocMock).toHaveBeenCalledWith('2024-03-14');
     expect(supabaseMock.from).toHaveBeenCalledWith('users');
     expect(scheduleSetMock).toHaveBeenCalledTimes(1);
 
@@ -151,14 +157,20 @@ describe('generateDailySchedules', () => {
     mockGetSupabaseClient.mockReturnValue(supabaseMock);
 
     const scheduleSetMock = jest.fn().mockResolvedValue(undefined);
-    const docMock = jest.fn().mockReturnValue({ set: scheduleSetMock });
-    const firestoreMock = { doc: docMock };
+    const dateDocMock = jest.fn().mockReturnValue({ set: scheduleSetMock });
+    const datesCollectionMock = jest.fn().mockReturnValue({ doc: dateDocMock });
+    const userDocMock = jest.fn().mockReturnValue({ collection: datesCollectionMock });
+    const schedulesCollectionMock = jest.fn().mockReturnValue({ doc: userDocMock });
+    const firestoreMock = { collection: schedulesCollectionMock };
 
     mockGetFirestore.mockReturnValue(firestoreMock);
 
     await generateDailySchedules(undefined, {});
 
-    expect(docMock).toHaveBeenCalledWith(expect.stringMatching(/^schedules\/user-empty\/\d{4}-\d{2}-\d{2}$/));
+    expect(schedulesCollectionMock).toHaveBeenCalledWith('schedules');
+    expect(userDocMock).toHaveBeenCalledWith('user-empty');
+    expect(datesCollectionMock).toHaveBeenCalledWith('dates');
+    expect(dateDocMock).toHaveBeenCalledTimes(1);
     expect(scheduleSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
         items: [],
