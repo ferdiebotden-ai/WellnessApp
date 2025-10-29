@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import app from './index';
 import { generateDailySchedules } from './jobs/generateDailySchedules';
 import { embedProtocols as embedProtocolsJob } from './jobs/embedProtocols';
+import { generateAdaptiveNudges } from './jobs/generateAdaptiveNudges';
 
 export const onboardingApi = (req: Request, res: Response) => {
   return app(req, res);
@@ -29,4 +30,11 @@ export const embedProtocols = async (req: Request, res: Response) => {
 
 export const embedProtocolsPubSub = async (_event: { data?: string }) => {
   await embedProtocolsJob();
+};
+
+export const generateAdaptiveNudgesJob = async (
+  event: { data?: string } | undefined,
+  context: { timestamp?: string } | undefined,
+) => {
+  await generateAdaptiveNudges(event, context);
 };
