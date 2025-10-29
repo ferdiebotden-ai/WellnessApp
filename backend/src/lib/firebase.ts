@@ -15,3 +15,7 @@ export const verifyFirebaseIdToken = async (token: string) => {
   const app = getFirebaseAdmin();
   return app.auth().verifyIdToken(token);
 };
+
+export const getFirestore = (): admin.firestore.Firestore => {
+  return getFirebaseAdmin().firestore();
+};
