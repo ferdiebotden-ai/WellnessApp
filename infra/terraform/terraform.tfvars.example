@@ -1,0 +1,7 @@
+project_name        = "Wellness OS"
+project_id          = "wellness-os-<unique>"
+org_id              = "123456789012"
+billing_account     = "000000-000000-000000"
+default_region      = "us-central1"
+app_engine_location = "us-central"
+firestore_location  = "us-central"

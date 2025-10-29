@@ -1,0 +1,25 @@
+{
+  "mfa": {
+    "state": "ENABLED",
+    "smsProviderConfig": {
+      "enableSmsInAuthFlows": true
+    }
+  },
+  "authorizedDomains": [
+    "localhost",
+    "wellness-os.app"
+  ],
+  "signIn": {
+    "allowDuplicateEmails": false,
+    "email": {
+      "enabled": true,
+      "passwordRequired": true
+    },
+    "phone": {
+      "enabled": true
+    },
+    "google": {
+      "enabled": true
+    }
+  }
+}
