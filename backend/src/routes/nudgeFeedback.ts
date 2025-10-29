@@ -78,7 +78,8 @@ export const nudgeFeedbackHandler = async (req: Request, res: Response) => {
   const { error: updateError } = await supabase
     .from('ai_audit_log')
     .update(updatePayload)
-    .eq('id', nudgeLogId);
+    .eq('id', nudgeLogId)
+    .eq('user_id', decoded.uid);
 
   if (updateError) {
     res.status(500).json({ error: 'Failed to update feedback' });

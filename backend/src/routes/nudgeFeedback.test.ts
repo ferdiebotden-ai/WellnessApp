@@ -159,8 +159,19 @@ describe('POST /api/feedback/nudge/:nudge_log_id', () => {
     const eqSelectMock = jest.fn().mockReturnValue({ maybeSingle: maybeSingleMock });
     const selectMock = jest.fn().mockReturnValue({ eq: eqSelectMock });
 
-    const eqUpdateMock = jest.fn().mockResolvedValue({ error: { message: 'update failed' } });
-    const updateMock = jest.fn().mockReturnValue({ eq: eqUpdateMock });
+    const updateEqUserMock = jest.fn().mockImplementation(async (column: string, value: string) => {
+      expect(column).toBe('user_id');
+      expect(value).toBe('user-1');
+      return { error: { message: 'update failed' } };
+    });
+
+    const updateEqIdMock = jest.fn().mockImplementation((column: string, value: string) => {
+      expect(column).toBe('id');
+      expect(value).toBe(nudgeLogId);
+      return { eq: updateEqUserMock };
+    });
+
+    const updateMock = jest.fn().mockReturnValue({ eq: updateEqIdMock });
 
     const fromMock = jest.fn().mockImplementation(() => ({
       select: selectMock,
@@ -176,6 +187,7 @@ describe('POST /api/feedback/nudge/:nudge_log_id', () => {
 
     expect(response.status).toBe(500);
     expect(response.body).toEqual({ error: 'Failed to update feedback' });
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ user_feedback: 'thumb_up' }));
   });
 
   it('updates feedback successfully', async () => {
@@ -185,8 +197,19 @@ describe('POST /api/feedback/nudge/:nudge_log_id', () => {
     const eqSelectMock = jest.fn().mockReturnValue({ maybeSingle: maybeSingleMock });
     const selectMock = jest.fn().mockReturnValue({ eq: eqSelectMock });
 
-    const eqUpdateMock = jest.fn().mockResolvedValue({ error: null });
-    const updateMock = jest.fn().mockReturnValue({ eq: eqUpdateMock });
+    const updateEqUserMock = jest.fn().mockImplementation(async (column: string, value: string) => {
+      expect(column).toBe('user_id');
+      expect(value).toBe('user-1');
+      return { error: null };
+    });
+
+    const updateEqIdMock = jest.fn().mockImplementation((column: string, value: string) => {
+      expect(column).toBe('id');
+      expect(value).toBe(nudgeLogId);
+      return { eq: updateEqUserMock };
+    });
+
+    const updateMock = jest.fn().mockReturnValue({ eq: updateEqIdMock });
 
     const fromMock = jest.fn().mockImplementation(() => ({
       select: selectMock,
@@ -205,7 +228,6 @@ describe('POST /api/feedback/nudge/:nudge_log_id', () => {
     expect(selectMock).toHaveBeenCalledWith('id, user_id');
     expect(eqSelectMock).toHaveBeenCalledWith('id', nudgeLogId);
     expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ user_feedback: 'thumb_down' }));
-    expect(eqUpdateMock).toHaveBeenCalledWith('id', nudgeLogId);
     expect(maybeSingleMock).toHaveBeenCalled();
   });
 });
