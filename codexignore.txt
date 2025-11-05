@@ -1,0 +1,59 @@
+# .codexignore
+# Files and directories that Codex should not modify
+
+# CI/CD Configuration
+.github/
+.github/workflows/
+
+# Package manager lock files (let npm/yarn manage these)
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+build/
+lib/
+*.js.map
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+.supabase
+
+# Test reports and coverage
+coverage/
+playwright-report/
+test-results/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Terraform state (managed by Terraform)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Firebase
+firebase-debug.log
+.firebase/
+
+# Documentation that should be manually updated
+CHANGELOG.md
+LICENSE
