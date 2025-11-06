@@ -13,7 +13,8 @@
     "firebase": "^9.23.0",
     "react": "18.2.0",
     "react-native": "0.72.4",
-    "react-native-svg": "^13.11.0"
+    "react-native-google-fit": "^1.7.0",
+    "react-native-health": "^1.14.0"
   },
   "devDependencies": {
     "@testing-library/jest-native": "^5.4.3",

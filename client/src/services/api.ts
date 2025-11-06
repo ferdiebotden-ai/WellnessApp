@@ -1,6 +1,6 @@
 import { getAuth } from 'firebase/auth';
 import type { ModuleSummary } from '../types/module';
-import type { ProtocolDetail, ProtocolSummary } from '../types/protocol';
+import type { WearableSyncPayload } from './wearables/aggregators';
 
 type HttpMethod = 'GET' | 'POST';
 
@@ -43,8 +43,10 @@ export const completeOnboarding = (primaryModuleId: string) =>
     { primary_module_id: primaryModuleId }
   );
 
-export const searchProtocols = (query: string) =>
-  request<ProtocolSummary[]>(`/api/protocols/search?query=${encodeURIComponent(query)}`, 'GET');
-
-export const fetchProtocolById = (protocolId: string) =>
-  request<ProtocolDetail>(`/api/protocols/${encodeURIComponent(protocolId)}`, 'GET');
+/**
+ * Sends wearable readings to the Wellness OS API for synchronization.
+ * @param payload Normalized wearable metrics payload.
+ * @returns API response indicating whether the sync was accepted.
+ */
+export const syncWearableData = (payload: WearableSyncPayload) =>
+  request<{ success: boolean }>('/api/wearables/sync', 'POST', payload);
