@@ -14,6 +14,7 @@ const {
 
 const authenticateRequestMock = vi.fn();
 const getConfigMock = vi.fn();
+const getPrivacyConfigMock = vi.fn();
 const publishMessageMock = vi.fn();
 const topicMock = vi.fn(() => ({ publishMessage: publishMessageMock }));
 const pubsubConstructorMock = vi.fn(() => ({ topic: topicMock }));
@@ -37,6 +38,7 @@ vi.mock('../src/users', () => ({
 
 vi.mock('../src/config', () => ({
   getConfig: getConfigMock,
+  getPrivacyConfig: getPrivacyConfigMock,
 }));
 
 vi.mock('@google-cloud/pubsub', () => ({
@@ -103,16 +105,20 @@ const baseConfig = {
   openAiApiKey: 'openai',
   pineconeApiKey: 'pinecone',
   pineconeIndexName: 'index',
-  privacyExportTopic: 'projects/test/topics/privacy-export',
-  privacyDeletionTopic: 'projects/test/topics/privacy-delete',
-  privacyExportBucket: 'privacy-bucket',
   privacyExportUrlTtlHours: 48,
+};
+
+const privacyConfig = {
+  exportTopic: 'projects/test/topics/privacy-export',
+  deletionTopic: 'projects/test/topics/privacy-delete',
+  exportBucket: 'privacy-bucket',
 };
 
 beforeEach(() => {
   vi.restoreAllMocks();
   vi.clearAllMocks();
   getConfigMock.mockReturnValue(baseConfig);
+  getPrivacyConfigMock.mockReturnValue(privacyConfig);
 });
 
 describe('requestUserDataExport', () => {
@@ -136,7 +142,7 @@ describe('requestUserDataExport', () => {
 
     await requestUserDataExport(req, res);
 
-    expect(topicMock).toHaveBeenCalledWith(baseConfig.privacyExportTopic);
+    expect(topicMock).toHaveBeenCalledWith(privacyConfig.exportTopic);
     expect(publishMessageMock).toHaveBeenCalledWith({
       json: expect.objectContaining({ userId: 'user-123', email: 'user@example.com' }),
     });
@@ -156,7 +162,7 @@ describe('requestUserDeletion', () => {
 
     await requestUserDeletion(req, res);
 
-    expect(topicMock).toHaveBeenCalledWith(baseConfig.privacyDeletionTopic);
+    expect(topicMock).toHaveBeenCalledWith(privacyConfig.deletionTopic);
     expect(publishMessageMock).toHaveBeenCalledWith({
       json: expect.objectContaining({ userId: 'user-xyz' }),
     });

@@ -4,7 +4,7 @@ import { Storage } from '@google-cloud/storage';
 import JSZip from 'jszip';
 import type { FirebaseFirestore } from 'firebase-admin/firestore';
 import { authenticateRequest } from './users';
-import { getConfig } from './config';
+import { getConfig, getPrivacyConfig } from './config';
 import { getServiceClient, getUserClient } from './supabaseClient';
 import { getFirebaseApp } from './firebaseAdmin';
 
@@ -67,13 +67,14 @@ export const requestUserDataExport = async (req: Request, res: Response): Promis
   try {
     const { uid, email } = await authenticateRequest(req);
     const config = getConfig();
+    const privacyConfig = getPrivacyConfig();
     const message: PrivacyExportMessage = {
       userId: uid,
       email: email ?? null,
       requestedAt: new Date().toISOString(),
     };
 
-    await getPubSubClient().topic(config.privacyExportTopic).publishMessage({ json: message });
+    await getPubSubClient().topic(privacyConfig.exportTopic).publishMessage({ json: message });
 
     res.status(202).json({ accepted: true });
   } catch (error) {
@@ -91,13 +92,14 @@ export const requestUserDeletion = async (req: Request, res: Response): Promise<
   try {
     const { uid, email } = await authenticateRequest(req);
     const config = getConfig();
+    const privacyConfig = getPrivacyConfig();
     const message: PrivacyDeletionMessage = {
       userId: uid,
       email: email ?? null,
       requestedAt: new Date().toISOString(),
     };
 
-    await getPubSubClient().topic(config.privacyDeletionTopic).publishMessage({ json: message });
+    await getPubSubClient().topic(privacyConfig.deletionTopic).publishMessage({ json: message });
 
     res.status(202).json({ accepted: true });
   } catch (error) {
@@ -173,9 +175,10 @@ export const deliverExportEmail = async (recipient: string, downloadUrl: string)
 
 const persistArchiveToStorage = async (userId: string, archive: Buffer): Promise<{ filePath: string; signedUrl: string }> => {
   const config = getConfig();
+  const privacyConfig = getPrivacyConfig();
   const storage = getStorageClient();
   const filePath = `exports/${userId}/${Date.now()}-privacy-export.zip`;
-  const bucket = storage.bucket(config.privacyExportBucket);
+  const bucket = storage.bucket(privacyConfig.exportBucket);
   const file = bucket.file(filePath);
 
   await file.save(archive, {
