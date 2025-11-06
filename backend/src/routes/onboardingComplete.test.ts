@@ -13,13 +13,19 @@ jest.mock('../lib/pubsub', () => ({
   publishOnboardingCompleted: jest.fn(),
 }));
 
+jest.mock('../services/firstWinNudge', () => ({
+  deliverFirstWinNudge: jest.fn(),
+}));
+
 const mockVerifyFirebaseIdToken = jest.requireMock('../lib/firebase').verifyFirebaseIdToken as jest.Mock;
 const mockGetSupabaseClient = jest.requireMock('../lib/supabase').getSupabaseClient as jest.Mock;
 const mockPublishOnboardingCompleted = jest.requireMock('../lib/pubsub').publishOnboardingCompleted as jest.Mock;
+const mockDeliverFirstWinNudge = jest.requireMock('../services/firstWinNudge').deliverFirstWinNudge as jest.Mock;
 
 describe('POST /api/onboarding/complete', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockDeliverFirstWinNudge.mockResolvedValue(true);
   });
 
   it('rejects requests without authorization header', async () => {
@@ -81,6 +87,7 @@ describe('POST /api/onboarding/complete', () => {
         is_primary: true,
       }),
     ]);
+    expect(mockDeliverFirstWinNudge).toHaveBeenCalledWith('user-123', 'module-456');
     expect(mockPublishOnboardingCompleted).toHaveBeenCalledWith({
       user_id: 'user-123',
       primary_module_id: 'module-456',

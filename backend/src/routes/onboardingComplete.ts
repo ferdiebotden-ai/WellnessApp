@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { getSupabaseClient } from '../lib/supabase';
 import { publishOnboardingCompleted } from '../lib/pubsub';
 import { verifyFirebaseIdToken } from '../lib/firebase';
+import { deliverFirstWinNudge } from '../services/firstWinNudge';
 import type { OnboardingCompleteRequestBody } from '../types/onboarding';
 
 const DEFAULT_TRIAL_DAYS = 14;
@@ -70,6 +71,13 @@ export const onboardingCompleteHandler = async (req: Request, res: Response) => 
   if (enrollmentError) {
     res.status(500).json({ error: 'Failed to enroll user in module' });
     return;
+  }
+
+  try {
+    await deliverFirstWinNudge(userId, primaryModuleId);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('First win nudge delivery failed', { user_id: userId, module_id: primaryModuleId, error });
   }
 
   try {
