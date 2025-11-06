@@ -63,6 +63,21 @@ function isWearableMetricReading(value: unknown): value is WearableMetricReading
   return typeof reading.metric === 'string' && 'value' in reading;
 }
 
+function getFirebaseAuthErrorCode(error: unknown): string | null {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+
+  const firebaseError = error as { code?: unknown; errorInfo?: { code?: unknown } };
+  const directCode = typeof firebaseError.code === 'string' ? firebaseError.code : null;
+  const nestedCode =
+    firebaseError.errorInfo && typeof firebaseError.errorInfo.code === 'string'
+      ? firebaseError.errorInfo.code
+      : null;
+
+  return directCode ?? nestedCode ?? null;
+}
+
 function parsePayload(body: unknown): {
   userId: string;
   source: WearableSource;
@@ -357,7 +372,17 @@ export async function syncWearableData(req: Request, res: Response): Promise<voi
       throw Object.assign(new Error('Missing bearer token'), { status: 401 });
     }
 
-    const decoded = await verifyFirebaseToken(token);
+    let decoded: Awaited<ReturnType<typeof verifyFirebaseToken>>;
+    try {
+      decoded = await verifyFirebaseToken(token);
+    } catch (firebaseError) {
+      const authCode = getFirebaseAuthErrorCode(firebaseError);
+      if (authCode && authCode.startsWith('auth/')) {
+        throw Object.assign(new Error('Invalid or expired authentication token'), { status: 401 });
+      }
+
+      throw firebaseError;
+    }
     const { userId, source, capturedAt, metrics } = parsePayload(req.body);
 
     if (decoded.uid !== userId) {
