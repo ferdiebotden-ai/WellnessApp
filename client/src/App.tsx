@@ -4,6 +4,8 @@ import { Alert, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { BottomTabs } from './navigation/BottomTabs';
 import { TopNavigationBar } from './components/TopNavigationBar';
 import { palette } from './theme/palette';
+import { AppLockProvider } from './providers/AppLockProvider';
+import { AuthenticationGate } from './components/AuthenticationGate';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -23,19 +25,23 @@ export const App: React.FC = () => {
   };
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <StatusBar barStyle="light-content" />
-      <SafeAreaView style={styles.safeArea}>
-        <TopNavigationBar
-          title="Health Dashboard"
-          subtitle="Wellness OS"
-          onAiCoachPress={handleAiCoachPress}
-        />
-        <View style={styles.contentWrapper}>
-          <BottomTabs />
-        </View>
-      </SafeAreaView>
-    </NavigationContainer>
+    <AppLockProvider>
+      <AuthenticationGate>
+        <NavigationContainer theme={navigationTheme}>
+          <StatusBar barStyle="light-content" />
+          <SafeAreaView style={styles.safeArea}>
+            <TopNavigationBar
+              title="Health Dashboard"
+              subtitle="Wellness OS"
+              onAiCoachPress={handleAiCoachPress}
+            />
+            <View style={styles.contentWrapper}>
+              <BottomTabs />
+            </View>
+          </SafeAreaView>
+        </NavigationContainer>
+      </AuthenticationGate>
+    </AppLockProvider>
   );
 };
 
