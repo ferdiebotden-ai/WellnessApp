@@ -63,7 +63,7 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         <View style={[styles.section, styles.taskSection]}>
-          <Text style={styles.sectionTitle}>Today&apos;s Plan</Text>
+          <Text style={styles.sectionTitle}>Today's Plan</Text>
           <TaskList loading={loading} tasks={tasks} emptyMessage="Your schedule is clear." />
         </View>
       </ScrollView>
