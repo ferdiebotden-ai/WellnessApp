@@ -64,6 +64,7 @@ async function recordLastRun(client: SupabaseClient, timestamp: Date): Promise<v
 async function fetchFeedbackAggregates(
   client: SupabaseClient,
   lastRun: Date | null,
+  windowEnd: Date,
 ): Promise<FeedbackAggregateRow[]> {
   let query = client
     .from<FeedbackAggregateRow>('ai_audit_log')
@@ -74,6 +75,8 @@ async function fetchFeedbackAggregates(
   if (lastRun) {
     query = query.gte('user_action_timestamp', lastRun.toISOString());
   }
+
+  query = query.lt('user_action_timestamp', windowEnd.toISOString());
 
   const { data, error } = await query;
 
@@ -156,7 +159,7 @@ export async function analyzeNudgeFeedback(): Promise<void> {
 
   try {
     const lastRun = await fetchLastRun(supabase);
-    const aggregates = await fetchFeedbackAggregates(supabase, lastRun);
+    const aggregates = await fetchFeedbackAggregates(supabase, lastRun, runStartedAt);
     const grouped = groupFeedbackSummaries(aggregates);
     const report = formatFeedbackSummary(grouped, lastRun, runStartedAt);
 
