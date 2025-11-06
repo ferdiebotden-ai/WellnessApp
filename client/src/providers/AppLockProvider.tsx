@@ -13,6 +13,7 @@ import {
   updatePinProtectedRefreshToken,
   verifyPin,
   clearPinCredentials,
+  clearBiometricRefreshToken,
 } from '../services/secureCredentials';
 
 interface AppLockContextValue {
@@ -56,6 +57,9 @@ export const AppLockProvider: React.FC<{ children: React.ReactNode }> = ({ child
           await updatePinProtectedRefreshToken(refreshToken);
         } else {
           latestRefreshTokenRef.current = null;
+          await clearBiometricRefreshToken();
+          await clearPinCredentials();
+          setHasPin(false);
           setIsLocked(true);
         }
       } catch (tokenError) {
