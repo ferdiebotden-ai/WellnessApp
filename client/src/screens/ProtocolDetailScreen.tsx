@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -11,12 +11,18 @@ import {
   Linking,
 } from 'react-native';
 import { useProtocolDetail } from '../hooks/useProtocolDetail';
+import * as Haptics from 'expo-haptics';
+import { enqueueProtocolLog } from '../services/protocolLogs';
 
 interface ProtocolDetailScreenProps {
   route: {
     params: {
       protocolId: string;
       protocolName?: string;
+      moduleId?: string;
+      enrollmentId?: string;
+      source?: 'schedule' | 'manual' | 'nudge';
+      progressTarget?: number;
     };
   };
 }
@@ -39,13 +45,45 @@ const parseDescription = (description?: string | string[]) => {
 };
 
 export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ route }) => {
-  const { protocolId, protocolName } = route.params;
+  const { protocolId, protocolName, moduleId: routeModuleId, enrollmentId, source, progressTarget } = route.params;
   const { protocol, status, error, reload } = useProtocolDetail(protocolId);
   const [evidenceVisible, setEvidenceVisible] = useState(false);
+  const [logStatus, setLogStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [logError, setLogError] = useState<string | null>(null);
 
   const bullets = useMemo(() => parseDescription(protocol?.description), [protocol?.description]);
   const citations = protocol?.citations ?? [];
   const displayName = protocol?.name ?? protocolName ?? 'Protocol';
+  const moduleId = routeModuleId;
+
+  const handleLogComplete = useCallback(async () => {
+    if (!protocolId || !moduleId) {
+      setLogStatus('error');
+      setLogError('Module context missing.');
+      return;
+    }
+
+    setLogStatus('pending');
+    setLogError(null);
+
+    try {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await enqueueProtocolLog({
+        protocolId,
+        moduleId,
+        enrollmentId,
+        source,
+        progressTarget,
+        metadata: {
+          protocolName: displayName,
+        },
+      });
+      setLogStatus('success');
+    } catch (logErr) {
+      setLogStatus('error');
+      setLogError(logErr instanceof Error ? logErr.message : 'Unable to log protocol right now.');
+    }
+  }, [protocolId, moduleId, enrollmentId, source, progressTarget, displayName]);
 
   const handleOpenEvidence = () => {
     setEvidenceVisible(true);
@@ -110,6 +148,26 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
           </Pressable>
         ) : null}
       </ScrollView>
+
+      <View style={styles.logFooter}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !moduleId || logStatus === 'pending' || logStatus === 'success' }}
+          disabled={!moduleId || logStatus === 'pending' || logStatus === 'success'}
+          onPress={handleLogComplete}
+          style={[styles.logButton, logStatus === 'success' ? styles.logButtonSuccess : null, !moduleId ? styles.logButtonDisabled : null]}
+          testID="log-complete-button"
+        >
+          {logStatus === 'pending' ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.logButtonLabel}>
+              {logStatus === 'success' ? '✓ Logged' : 'Log Complete'}
+            </Text>
+          )}
+        </Pressable>
+        {logError ? <Text style={styles.logErrorText}>{logError}</Text> : null}
+      </View>
 
       <Modal
         animationType="slide"
@@ -183,6 +241,34 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 32,
+  },
+  logFooter: {
+    padding: 24,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#e2e8f0',
+    backgroundColor: '#fff',
+    gap: 8,
+  },
+  logButton: {
+    backgroundColor: '#2563eb',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  logButtonLabel: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  logButtonSuccess: {
+    backgroundColor: '#16a34a',
+  },
+  logButtonDisabled: {
+    backgroundColor: '#94a3b8',
+  },
+  logErrorText: {
+    color: '#b91c1c',
+    textAlign: 'center',
   },
   sectionHeading: {
     fontSize: 18,
