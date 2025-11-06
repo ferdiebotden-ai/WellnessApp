@@ -2,7 +2,7 @@ import { getAuth } from 'firebase/auth';
 import type { ModuleSummary } from '../types/module';
 import type { WearableSyncPayload } from './wearables/aggregators';
 
-type HttpMethod = 'GET' | 'POST';
+type HttpMethod = 'GET' | 'POST' | 'DELETE';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.example.com';
 
@@ -30,6 +30,10 @@ const request = async <T>(path: string, method: HttpMethod, body?: unknown): Pro
     throw new Error(message);
   }
 
+  if (response.status === 204) {
+    return {} as T;
+  }
+
   return response.json() as Promise<T>;
 };
 
@@ -50,3 +54,34 @@ export const completeOnboarding = (primaryModuleId: string) =>
  */
 export const syncWearableData = (payload: WearableSyncPayload) =>
   request<{ success: boolean }>('/api/wearables/sync', 'POST', payload);
+
+export interface ProtocolLogEntry {
+  id: string;
+  protocol_id?: string | null;
+  protocolName?: string | null;
+  module_id?: string | null;
+  status?: string | null;
+  logged_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface AiAuditLogEntry {
+  id: string;
+  created_at?: string | null;
+  action?: string | null;
+  agent?: string | null;
+  model?: string | null;
+  summary?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface PrivacyLogsResponse {
+  protocolLogs: ProtocolLogEntry[];
+  aiAuditLog: AiAuditLogEntry[];
+}
+
+export const fetchPrivacyLogs = () => request<PrivacyLogsResponse>('/api/users/me/privacy', 'GET');
+
+export const requestUserDataExport = () => request<{ accepted: boolean }>('/api/users/me/export', 'POST');
+
+export const requestAccountDeletion = () => request<{ accepted: boolean }>('/api/users/me', 'DELETE');
