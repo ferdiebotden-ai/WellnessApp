@@ -51,10 +51,8 @@ declare module 'react-native-google-fit' {
 
   export function getSleepData(options: AggregationOptions): Promise<SleepSegment[]>;
   export function getHeartRateSamples(options: AggregationOptions): Promise<FitnessValue[]>;
-  export function getHeartRateVariabilitySamples(options: AggregationOptions): Promise<FitnessValue[]>;
   export function getDailySteps(options: StepsOptions): Promise<FitnessValue[]>;
   export function getDailyStepCountSamples(options: StepsOptions): Promise<FitnessValue[]>;
-  export function getRestingHeartRateSamples(options: AggregationOptions): Promise<FitnessValue[]>;
 
   interface GoogleFitModule {
     Scopes: typeof Scopes;
@@ -64,10 +62,8 @@ declare module 'react-native-google-fit' {
     isEnabled: typeof isEnabled;
     getSleepData: typeof getSleepData;
     getHeartRateSamples: typeof getHeartRateSamples;
-    getHeartRateVariabilitySamples: typeof getHeartRateVariabilitySamples;
     getDailySteps: typeof getDailySteps;
     getDailyStepCountSamples: typeof getDailyStepCountSamples;
-    getRestingHeartRateSamples: typeof getRestingHeartRateSamples;
   }
 
   const GoogleFit: GoogleFitModule;

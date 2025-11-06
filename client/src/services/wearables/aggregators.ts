@@ -270,6 +270,162 @@ const fetchGoogleFitQuantitySamples = async (
   );
 };
 
+type GoogleFitHeartRateSample = {
+  startDate: string;
+  endDate: string;
+  value: number;
+  sourceId?: string;
+};
+
+const fetchGoogleFitHeartRateSamples = async (
+  options: WearableQueryOptions
+): Promise<GoogleFitHeartRateSample[]> => {
+  const results = await GoogleFit.getHeartRateSamples({
+    startDate: toISOString(options.startDate),
+    endDate: toISOString(options.endDate),
+    bucketUnit: 'MINUTE',
+    bucketInterval: 1,
+  });
+
+  return ensureChronologicalOrder(results).filter(
+    (sample): sample is GoogleFitHeartRateSample => typeof sample.value === 'number'
+  );
+};
+
+const groupSamplesByDay = <T extends { startDate: string }>(samples: T[]): Record<string, T[]> =>
+  samples.reduce<Record<string, T[]>>((acc, sample) => {
+    const dayKey = new Date(sample.startDate).toISOString().split('T')[0];
+    acc[dayKey] = acc[dayKey] ? [...acc[dayKey], sample] : [sample];
+    return acc;
+  }, {});
+
+const calculateRmssd = (intervals: number[]): number | null => {
+  if (intervals.length < 2) {
+    return null;
+  }
+
+  const squaredDiffs = intervals
+    .slice(1)
+    .map((interval, index) => Math.pow(interval - intervals[index], 2));
+
+  if (squaredDiffs.length === 0) {
+    return null;
+  }
+
+  const meanSquaredDiff =
+    squaredDiffs.reduce((sum, diff) => sum + diff, 0) / squaredDiffs.length;
+
+  return Math.sqrt(meanSquaredDiff);
+};
+
+const calculateSdnn = (intervals: number[]): number | null => {
+  if (intervals.length === 0) {
+    return null;
+  }
+
+  const mean = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+  const variance =
+    intervals.reduce((sum, interval) => sum + Math.pow(interval - mean, 2), 0) /
+    intervals.length;
+
+  return Math.sqrt(variance);
+};
+
+const deriveGoogleFitHrvReadings = async (
+  options: WearableQueryOptions
+): Promise<WearableMetricReading[]> => {
+  const samples = await fetchGoogleFitHeartRateSamples(options);
+  const grouped = groupSamplesByDay(samples);
+
+  const readings = Object.values(grouped)
+    .map((daySamples) => {
+      if (daySamples.length < 2) {
+        return null;
+      }
+
+      const sorted = ensureChronologicalOrder(daySamples);
+      const intervals = sorted
+        .map((sample) => (sample.value > 0 ? (60_000 / sample.value) : null))
+        .filter((value): value is number => value !== null);
+
+      const rmssd = calculateRmssd(intervals);
+      if (rmssd === null) {
+        return null;
+      }
+
+      const sdnn = calculateSdnn(intervals);
+      const startDate = sorted[0]?.startDate;
+      const endDate = sorted[sorted.length - 1]?.endDate ?? startDate;
+
+      return {
+        metric: 'hrv' as const,
+        value: rmssd,
+        unit: 'ms',
+        startDate,
+        endDate,
+        source: 'google_fit' as const,
+        metadata: {
+          sdnn: sdnn ?? undefined,
+          sampleCount: sorted.length,
+          sourceId: sorted[0]?.sourceId,
+        },
+      } satisfies WearableMetricReading;
+    })
+    .filter((reading): reading is WearableMetricReading => reading !== null);
+
+  return ensureChronologicalOrder(readings);
+};
+
+const deriveGoogleFitRestingHeartRateReadings = async (
+  options: WearableQueryOptions
+): Promise<WearableMetricReading[]> => {
+  const samples = await fetchGoogleFitHeartRateSamples(options);
+  const grouped = groupSamplesByDay(samples);
+
+  const readings = Object.values(grouped)
+    .map((daySamples) => {
+      if (daySamples.length === 0) {
+        return null;
+      }
+
+      const sorted = ensureChronologicalOrder(daySamples);
+      const resting = sorted.reduce<number | null>((lowest, sample) => {
+        if (typeof sample.value !== 'number' || sample.value <= 0) {
+          return lowest;
+        }
+
+        if (lowest === null) {
+          return sample.value;
+        }
+
+        return Math.min(lowest, sample.value);
+      }, null);
+
+      if (resting === null) {
+        return null;
+      }
+
+      const startDate = sorted[0]?.startDate;
+      const endDate = sorted[sorted.length - 1]?.endDate ?? startDate;
+
+      return {
+        metric: 'rhr' as const,
+        value: resting,
+        unit: 'bpm',
+        startDate,
+        endDate,
+        source: 'google_fit' as const,
+        metadata: {
+          sampleCount: sorted.length,
+          sourceId: sorted[0]?.sourceId,
+        },
+      } satisfies WearableMetricReading;
+    })
+    .filter((reading): reading is WearableMetricReading => reading !== null);
+
+  return ensureChronologicalOrder(readings);
+};
+
 /**
  * Retrieves sleep samples for the active platform within the provided window.
  * @param options Query window describing the start and end date.
@@ -306,12 +462,7 @@ export const getHrvReadings = async (
   }
 
   if (Platform.OS === 'android') {
-    return fetchGoogleFitQuantitySamples(
-      GoogleFit.getHeartRateVariabilitySamples,
-      'hrv',
-      options,
-      'DAY'
-    );
+    return deriveGoogleFitHrvReadings(options);
   }
 
   return [];
@@ -334,12 +485,7 @@ export const getRestingHeartRateReadings = async (
   }
 
   if (Platform.OS === 'android') {
-    return fetchGoogleFitQuantitySamples(
-      GoogleFit.getRestingHeartRateSamples,
-      'rhr',
-      options,
-      'DAY'
-    );
+    return deriveGoogleFitRestingHeartRateReadings(options);
   }
 
   return [];

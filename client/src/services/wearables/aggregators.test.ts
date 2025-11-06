@@ -31,8 +31,7 @@ jest.mock('react-native-google-fit', () => ({
   checkIsAuthorized: jest.fn(),
   authorize: jest.fn(),
   getSleepData: jest.fn(),
-  getHeartRateVariabilitySamples: jest.fn(),
-  getRestingHeartRateSamples: jest.fn(),
+  getHeartRateSamples: jest.fn(),
   getDailyStepCountSamples: jest.fn(),
 }));
 
@@ -41,6 +40,8 @@ import AppleHealthKit from 'react-native-health';
 import GoogleFit from 'react-native-google-fit';
 import {
   collectWearableMetrics,
+  getHrvReadings,
+  getRestingHeartRateReadings,
   getSleepReadings,
   prepareWearableSyncPayload,
   requestWearablePermissions,
@@ -204,5 +205,65 @@ describe('wearables aggregators', () => {
     expect(bundle.hrv).toHaveLength(1);
     expect(bundle.rhr).toHaveLength(1);
     expect(bundle.steps).toHaveLength(1);
+  });
+
+  it('derives HRV and resting heart rate from Google Fit heart rate samples', async () => {
+    advancePlatform('android');
+    const startDate = new Date('2023-01-01T00:00:00.000Z');
+    const endDate = new Date('2023-01-02T00:00:00.000Z');
+
+    mockedGoogleFit.getHeartRateSamples.mockResolvedValue([
+      {
+        startDate: '2023-01-01T06:00:00.000Z',
+        endDate: '2023-01-01T06:05:00.000Z',
+        value: 60,
+        sourceId: 'fit-source',
+      },
+      {
+        startDate: '2023-01-01T06:05:00.000Z',
+        endDate: '2023-01-01T06:10:00.000Z',
+        value: 55,
+        sourceId: 'fit-source',
+      },
+      {
+        startDate: '2023-01-01T06:10:00.000Z',
+        endDate: '2023-01-01T06:15:00.000Z',
+        value: 65,
+        sourceId: 'fit-source',
+      },
+    ]);
+
+    const hrvReadings = await getHrvReadings({ startDate, endDate });
+    const rhrReadings = await getRestingHeartRateReadings({ startDate, endDate });
+
+    expect(hrvReadings).toHaveLength(1);
+    expect(hrvReadings[0]).toMatchObject({
+      metric: 'hrv',
+      source: 'google_fit',
+      unit: 'ms',
+      metadata: expect.objectContaining({
+        sampleCount: 3,
+        sourceId: 'fit-source',
+      }),
+    });
+    expect(hrvReadings[0]?.value).toBeCloseTo(134.92, 2);
+    expect(hrvReadings[0]?.metadata).toEqual(
+      expect.objectContaining({ sdnn: expect.any(Number) })
+    );
+    const hrvMetadata = hrvReadings[0]?.metadata as {
+      sdnn?: number;
+      sampleCount?: number;
+      sourceId?: string;
+    };
+    expect(hrvMetadata.sdnn).toBeCloseTo(68.59, 2);
+
+    expect(rhrReadings).toHaveLength(1);
+    expect(rhrReadings[0]).toMatchObject({
+      metric: 'rhr',
+      source: 'google_fit',
+      unit: 'bpm',
+      value: 55,
+      metadata: { sampleCount: 3, sourceId: 'fit-source' },
+    });
   });
 });
