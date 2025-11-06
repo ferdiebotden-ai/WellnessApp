@@ -6,7 +6,8 @@ const config: Config = {
   roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleNameMapper: {
-    '\\.(css|scss)$': '<rootDir>/src/__mocks__/styleMock.ts'
+    '\\.(css|scss)$': '<rootDir>/src/__mocks__/styleMock.ts',
+    '^react-native-svg$': '<rootDir>/src/__mocks__/react-native-svg.ts'
   },
 };
 
