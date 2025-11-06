@@ -10,6 +10,8 @@ export const palette = {
   textMuted: '#6C7688',
   border: '#2C3240',
   success: '#4CE1A5',
+  error: '#FF5A5F',
+  white: '#FFFFFF',
 };
 
 export type Palette = typeof palette;
