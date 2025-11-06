@@ -43,6 +43,30 @@ describe('useProtocolDetail', () => {
     expect(getByTestId('name').props.children).toBe('Evening Wind Down');
   });
 
+  it('clears existing protocol data when loading a different protocol', async () => {
+    mockFetchProtocolById.mockResolvedValueOnce({
+      id: 'protocol-1',
+      name: 'Evening Wind Down',
+      description: 'Supports rest',
+      citations: ['https://doi.org/123'],
+    });
+
+    const { getByTestId, rerender } = render(<Harness protocolId="protocol-1" />);
+
+    await waitFor(() => expect(getByTestId('status').props.children).toBe('success'));
+    expect(getByTestId('name').props.children).toBe('Evening Wind Down');
+
+    mockFetchProtocolById.mockImplementationOnce(() => new Promise(() => {}));
+
+    rerender(<Harness protocolId="protocol-2" />);
+
+    await waitFor(() => {
+      expect(getByTestId('status').props.children).toBe('loading');
+      expect(getByTestId('name').props.children).toBe('');
+    });
+    expect(mockFetchProtocolById).toHaveBeenLastCalledWith('protocol-2');
+  });
+
   it('recovers from errors when reloading', async () => {
     mockFetchProtocolById
       .mockRejectedValueOnce(new Error('network issue'))

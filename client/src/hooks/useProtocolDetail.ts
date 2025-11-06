@@ -16,6 +16,7 @@ export const useProtocolDetail = (protocolId: string | null | undefined) => {
 
     setStatus('loading');
     setError(null);
+    setProtocol(null);
     try {
       const data = await fetchProtocolById(protocolId);
       setProtocol(data);
@@ -27,9 +28,14 @@ export const useProtocolDetail = (protocolId: string | null | undefined) => {
   }, [protocolId]);
 
   useEffect(() => {
-    if (protocolId) {
-      void loadProtocol();
+    if (!protocolId) {
+      setProtocol(null);
+      setStatus('idle');
+      setError(null);
+      return;
     }
+
+    void loadProtocol();
   }, [protocolId, loadProtocol]);
 
   return { protocol, status, error, reload: loadProtocol };
