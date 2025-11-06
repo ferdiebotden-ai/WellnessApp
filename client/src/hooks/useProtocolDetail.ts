@@ -11,12 +11,15 @@ export const useProtocolDetail = (protocolId: string | null | undefined) => {
 
   const loadProtocol = useCallback(async () => {
     if (!protocolId) {
+      setProtocol(null);
+      setStatus('idle');
+      setError(null);
       return;
     }
 
+    setProtocol(null);
     setStatus('loading');
     setError(null);
-    setProtocol(null);
     try {
       const data = await fetchProtocolById(protocolId);
       setProtocol(data);
@@ -38,5 +41,7 @@ export const useProtocolDetail = (protocolId: string | null | undefined) => {
     void loadProtocol();
   }, [protocolId, loadProtocol]);
 
-  return { protocol, status, error, reload: loadProtocol };
+  const currentProtocol = status === 'success' ? protocol : null;
+
+  return { protocol: currentProtocol, status, error, reload: loadProtocol };
 };
