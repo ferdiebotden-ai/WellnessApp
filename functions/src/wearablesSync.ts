@@ -78,6 +78,13 @@ function getFirebaseAuthErrorCode(error: unknown): string | null {
   return directCode ?? nestedCode ?? null;
 }
 
+const INVALID_FIREBASE_TOKEN_CODES = new Set([
+  'auth/invalid-id-token',
+  'auth/id-token-expired',
+  'auth/token-revoked',
+  'auth/argument-error',
+]);
+
 function parsePayload(body: unknown): {
   userId: string;
   source: WearableSource;
@@ -377,7 +384,7 @@ export async function syncWearableData(req: Request, res: Response): Promise<voi
       decoded = await verifyFirebaseToken(token);
     } catch (firebaseError) {
       const authCode = getFirebaseAuthErrorCode(firebaseError);
-      if (authCode && authCode.startsWith('auth/')) {
+      if (authCode && INVALID_FIREBASE_TOKEN_CODES.has(authCode)) {
         throw Object.assign(new Error('Invalid or expired authentication token'), { status: 401 });
       }
 
