@@ -43,6 +43,7 @@ import {
   getHrvReadings,
   getRestingHeartRateReadings,
   getSleepReadings,
+  getStepReadings,
   prepareWearableSyncPayload,
   requestWearablePermissions,
   type WearableMetricBundle,
@@ -286,6 +287,26 @@ describe('wearables aggregators', () => {
       expect(rhrReadings).toEqual([]);
     } finally {
       moduleRef.getHeartRateSamples = originalMethod;
+    }
+  });
+
+  it('returns empty step readings when the Google Fit step helper is unavailable', async () => {
+    advancePlatform('android');
+    const startDate = new Date('2023-01-01T00:00:00.000Z');
+    const endDate = new Date('2023-01-02T00:00:00.000Z');
+
+    const moduleRef = mockedGoogleFit as unknown as {
+      getDailyStepCountSamples?: typeof mockedGoogleFit.getDailyStepCountSamples;
+    };
+    const originalMethod = moduleRef.getDailyStepCountSamples;
+    moduleRef.getDailyStepCountSamples = undefined;
+
+    try {
+      const readings = await getStepReadings({ startDate, endDate });
+
+      expect(readings).toEqual([]);
+    } finally {
+      moduleRef.getDailyStepCountSamples = originalMethod;
     }
   });
 });

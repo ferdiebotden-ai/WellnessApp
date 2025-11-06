@@ -244,18 +244,32 @@ const fetchHealthKitQuantitySamples = async (
   });
 
 const fetchGoogleFitQuantitySamples = async (
-  method: (
-    options: {
-      startDate: string;
-      endDate: string;
-      bucketUnit?: 'MINUTE' | 'HOUR' | 'DAY';
-      bucketInterval?: number;
-    }
-  ) => Promise<Array<{ value: number; startDate: string; endDate: string; unit?: string; sourceId?: string }>>,
+  method:
+    | ((
+        options: {
+          startDate: string;
+          endDate: string;
+          bucketUnit?: 'MINUTE' | 'HOUR' | 'DAY';
+          bucketInterval?: number;
+        }
+      ) => Promise<
+        Array<{
+          value: number;
+          startDate: string;
+          endDate: string;
+          unit?: string;
+          sourceId?: string;
+        }>
+      >)
+    | undefined,
   metric: WearableMetricType,
   options: WearableQueryOptions,
   bucketUnit: 'MINUTE' | 'HOUR' | 'DAY' = 'DAY'
 ): Promise<WearableMetricReading[]> => {
+  if (typeof method !== 'function') {
+    return [];
+  }
+
   const results = await method(
     {
       startDate: toISOString(options.startDate),
