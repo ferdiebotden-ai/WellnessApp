@@ -52,6 +52,13 @@ const parseDateKey = (value: string | null | undefined): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const formatDateKey = (date: Date): string => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const computeDaysSinceActive = (lastActive: string | null | undefined, runDate: Date): number => {
   const parsed = parseDateKey(lastActive);
   if (!parsed) {
@@ -67,6 +74,25 @@ const computeDaysSinceActive = (lastActive: string | null | undefined, runDate: 
   }
 
   return Math.floor(diff / MS_PER_DAY);
+};
+
+const resolvePreservedDate = (lastActive: string | null | undefined, runDate: Date): Date => {
+  const latestCovered = new Date(Date.UTC(runDate.getUTCFullYear(), runDate.getUTCMonth(), runDate.getUTCDate() - 1));
+  const parsed = parseDateKey(lastActive);
+
+  if (!parsed) {
+    return latestCovered;
+  }
+
+  const advanced = new Date(
+    Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate() + 1),
+  );
+
+  if (advanced.getTime() > latestCovered.getTime()) {
+    return latestCovered;
+  }
+
+  return advanced;
 };
 
 const toTitleCase = (value: string): string => {
@@ -193,11 +219,13 @@ export const calculateStreaks = async (
     const docId = buildDocId(enrollment.id, timestampIso);
 
     if (enrollment.streak_freeze_available !== false) {
+      const preservedDate = resolvePreservedDate(enrollment.last_active_date ?? null, runDate);
       const { error } = await supabase
         .from('module_enrollment')
         .update({
           streak_freeze_available: false,
           streak_freeze_used_date: timestampIso,
+          last_active_date: formatDateKey(preservedDate),
         })
         .match({ id: enrollment.id });
 

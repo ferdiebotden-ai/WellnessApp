@@ -74,6 +74,7 @@ describe('streak maintenance functions', () => {
     expect(updateMock).toHaveBeenCalledWith({
       streak_freeze_available: false,
       streak_freeze_used_date: '2024-07-24T00:00:00.000Z',
+      last_active_date: '2024-07-23',
     });
     expect(updateMatchMock).toHaveBeenCalledWith({ id: 'enroll-1' });
 
@@ -131,6 +132,82 @@ describe('streak maintenance functions', () => {
       expect.objectContaining({ type: 'lapse_recovery' }),
       { merge: true },
     );
+  });
+
+  it('only advances the preserved date by one day even if multiple days were missed', async () => {
+    const selectMock = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'enroll-4',
+          user_id: 'user-4',
+          module_id: 'mobility',
+          current_streak: 6,
+          last_active_date: '2024-07-19',
+          streak_freeze_available: true,
+        },
+      ],
+      error: null,
+    });
+    const updateMatchMock = vi.fn().mockResolvedValue({ error: null });
+    const updateMock = vi.fn().mockReturnValue({ match: updateMatchMock });
+
+    const fromMock = vi.fn((table: string) => {
+      if (table === 'module_enrollment') {
+        return { select: selectMock, update: updateMock };
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    mockGetServiceClient.mockReturnValue({ from: fromMock });
+
+    createFirestoreMocks();
+
+    await calculateStreaks(undefined, { timestamp: '2024-07-24T00:00:00.000Z' });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      streak_freeze_available: false,
+      streak_freeze_used_date: '2024-07-24T00:00:00.000Z',
+      last_active_date: '2024-07-20',
+    });
+    expect(updateMatchMock).toHaveBeenCalledWith({ id: 'enroll-4' });
+  });
+
+  it('defaults the preserved date to the day before the run when no history exists', async () => {
+    const selectMock = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'enroll-5',
+          user_id: 'user-5',
+          module_id: 'nutrition',
+          current_streak: 3,
+          last_active_date: null,
+          streak_freeze_available: true,
+        },
+      ],
+      error: null,
+    });
+    const updateMatchMock = vi.fn().mockResolvedValue({ error: null });
+    const updateMock = vi.fn().mockReturnValue({ match: updateMatchMock });
+
+    const fromMock = vi.fn((table: string) => {
+      if (table === 'module_enrollment') {
+        return { select: selectMock, update: updateMock };
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    mockGetServiceClient.mockReturnValue({ from: fromMock });
+
+    createFirestoreMocks();
+
+    await calculateStreaks(undefined, { timestamp: '2024-07-24T00:00:00.000Z' });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      streak_freeze_available: false,
+      streak_freeze_used_date: '2024-07-24T00:00:00.000Z',
+      last_active_date: '2024-07-23',
+    });
+    expect(updateMatchMock).toHaveBeenCalledWith({ id: 'enroll-5' });
   });
 
   it('does nothing when last activity was within a day', async () => {
