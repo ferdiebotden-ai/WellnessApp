@@ -4,7 +4,7 @@ import { Text } from 'react-native';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ProtocolsScreen } from '../screens/ProtocolsScreen';
 import { InsightsScreen } from '../screens/InsightsScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
+import { ProfileStackNavigator } from './ProfileStack';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 
@@ -46,7 +46,7 @@ export const BottomTabs: React.FC = () => (
     />
     <Tab.Screen
       name="Profile"
-      component={ProfileScreen}
+      component={ProfileStackNavigator}
       options={{ tabBarLabel: renderTabLabel('Profile') }}
     />
   </Tab.Navigator>

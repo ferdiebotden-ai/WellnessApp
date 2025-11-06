@@ -9,6 +9,7 @@
   "dependencies": {
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/bottom-tabs": "^6.5.7",
+    "@react-navigation/native-stack": "^6.9.12",
     "expo": "~49.0.0",
     "expo-haptics": "~12.5.0",
     "firebase": "^9.23.0",

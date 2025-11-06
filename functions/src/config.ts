@@ -12,6 +12,10 @@ export interface ServiceConfig {
   openAiApiKey: string;
   pineconeApiKey: string;
   pineconeIndexName: string;
+  privacyExportTopic: string;
+  privacyDeletionTopic: string;
+  privacyExportBucket: string;
+  privacyExportUrlTtlHours: number;
 }
 
 const requiredEnv = [
@@ -23,7 +27,10 @@ const requiredEnv = [
   'SUPABASE_SERVICE_ROLE_KEY',
   'SUPABASE_JWT_SECRET',
   'OPENAI_API_KEY',
-  'PINECONE_API_KEY'
+  'PINECONE_API_KEY',
+  'PRIVACY_EXPORT_TOPIC',
+  'PRIVACY_DELETION_TOPIC',
+  'PRIVACY_EXPORT_BUCKET'
 ] as const;
 
 type RequiredEnv = (typeof requiredEnv)[number];
@@ -53,7 +60,11 @@ export function getConfig(): ServiceConfig {
       defaultTrialDays: Number.parseInt(process.env.DEFAULT_TRIAL_DAYS ?? '14', 10),
       openAiApiKey: readEnv('OPENAI_API_KEY'),
       pineconeApiKey: readEnv('PINECONE_API_KEY'),
-      pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? 'wellness-protocols'
+      pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? 'wellness-protocols',
+      privacyExportTopic: readEnv('PRIVACY_EXPORT_TOPIC'),
+      privacyDeletionTopic: readEnv('PRIVACY_DELETION_TOPIC'),
+      privacyExportBucket: readEnv('PRIVACY_EXPORT_BUCKET'),
+      privacyExportUrlTtlHours: Number.parseInt(process.env.PRIVACY_EXPORT_URL_TTL_HOURS ?? '72', 10),
     };
   }
   return cachedConfig;
