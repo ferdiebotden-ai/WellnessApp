@@ -1,5 +1,6 @@
 import { getAuth } from 'firebase/auth';
 import type { ModuleSummary } from '../types/module';
+import type { ProtocolDetail, ProtocolSummary } from '../types/protocol';
 
 type HttpMethod = 'GET' | 'POST';
 
@@ -41,3 +42,9 @@ export const completeOnboarding = (primaryModuleId: string) =>
     'POST',
     { primary_module_id: primaryModuleId }
   );
+
+export const searchProtocols = (query: string) =>
+  request<ProtocolSummary[]>(`/api/protocols/search?query=${encodeURIComponent(query)}`, 'GET');
+
+export const fetchProtocolById = (protocolId: string) =>
+  request<ProtocolDetail>(`/api/protocols/${encodeURIComponent(protocolId)}`, 'GET');
