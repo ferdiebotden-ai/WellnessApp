@@ -327,7 +327,7 @@ const fetchStarterCandidates = async (moduleId: string): Promise<{
 
   const moduleRow = moduleResult.data ?? null;
   const normalizedModuleName = moduleRow?.name?.trim();
-  const moduleName = normalizedModuleName && normalizedModuleName.length > 0 ? normalizedModuleName : toTitleCase(moduleId);
+  const moduleName = normalizedModuleName?.length ? normalizedModuleName : toTitleCase(moduleId);
 
   const mappingRecords = (mappingResult.data ?? []).filter((record) => record.is_starter_protocol);
   const starterProtocolIds = parseStarterProtocols(moduleRow?.starter_protocols);
