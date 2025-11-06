@@ -7,6 +7,15 @@ jest.mock('../hooks/useProtocolDetail', () => ({
   useProtocolDetail: jest.fn(),
 }));
 
+jest.mock('../services/protocolLogs', () => ({
+  enqueueProtocolLog: jest.fn(),
+}));
+
+jest.mock('expo-haptics', () => ({
+  notificationAsync: jest.fn(),
+  NotificationFeedbackType: { Success: 'success' },
+}));
+
 jest.mock('react-native/Libraries/Modal/Modal', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -15,6 +24,7 @@ jest.mock('react-native/Libraries/Modal/Modal', () => {
 });
 
 const mockUseProtocolDetail = jest.requireMock('../hooks/useProtocolDetail').useProtocolDetail as jest.Mock;
+const mockEnqueueProtocolLog = jest.requireMock('../services/protocolLogs').enqueueProtocolLog as jest.Mock;
 
 describe('ProtocolDetailScreen', () => {
   const createProps = () => ({
@@ -22,6 +32,8 @@ describe('ProtocolDetailScreen', () => {
       params: {
         protocolId: 'protocol-1',
         protocolName: 'Fallback Name',
+        moduleId: 'module-9',
+        enrollmentId: 'enroll-1',
       },
     },
   });
@@ -90,5 +102,53 @@ describe('ProtocolDetailScreen', () => {
 
     fireEvent.press(getByText('Tap to retry'));
     expect(reloadMock).toHaveBeenCalled();
+  });
+
+  it('queues a protocol log when the CTA is pressed', async () => {
+    mockUseProtocolDetail.mockReturnValue({
+      protocol: {
+        id: 'protocol-1',
+        name: 'Evening Wind Down',
+        description: 'Supports rest',
+        citations: [],
+      },
+      status: 'success',
+      error: null,
+      reload: jest.fn(),
+    });
+    mockEnqueueProtocolLog.mockResolvedValueOnce('doc-1');
+
+    const { getByTestId, findByText } = render(<ProtocolDetailScreen {...createProps()} />);
+
+    fireEvent.press(getByTestId('log-complete-button'));
+
+    await findByText('✓ Logged');
+    expect(mockEnqueueProtocolLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        protocolId: 'protocol-1',
+        moduleId: 'module-9',
+      }),
+    );
+  });
+
+  it('shows an error message when logging fails', async () => {
+    mockUseProtocolDetail.mockReturnValue({
+      protocol: {
+        id: 'protocol-1',
+        name: 'Evening Wind Down',
+        description: 'Supports rest',
+        citations: [],
+      },
+      status: 'success',
+      error: null,
+      reload: jest.fn(),
+    });
+    mockEnqueueProtocolLog.mockRejectedValueOnce(new Error('offline'));
+
+    const { getByTestId, findByText } = render(<ProtocolDetailScreen {...createProps()} />);
+
+    fireEvent.press(getByTestId('log-complete-button'));
+
+    await findByText('offline');
   });
 });

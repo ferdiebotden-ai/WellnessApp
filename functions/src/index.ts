@@ -2,3 +2,4 @@ export { createUser as postUsers, getCurrentUser as getUsersMe, updateCurrentUse
 export { analyzeNudgeFeedback } from './analyzeNudgeFeedback';
 export { searchProtocols as getProtocolsSearch } from './protocolSearch';
 export { syncWearableData as postWearablesSync } from './wearablesSync';
+export { onProtocolLogWritten } from './onProtocolLogWritten';

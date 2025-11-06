@@ -1,6 +1,12 @@
 import { FirebaseApp, initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import {
+  Firestore,
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
@@ -12,6 +18,7 @@ const firebaseConfig = {
 };
 
 let cachedApp: FirebaseApp | null = null;
+let cachedDb: Firestore | null = null;
 
 export const getFirebaseApp = (): FirebaseApp => {
   if (cachedApp) {
@@ -28,5 +35,25 @@ export const getFirebaseApp = (): FirebaseApp => {
   return cachedApp;
 };
 
+const initializeOfflineFirestore = (app: FirebaseApp): Firestore => {
+  if (cachedDb) {
+    return cachedDb;
+  }
+
+  try {
+    cachedDb = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+      experimentalAutoDetectLongPolling: true,
+    });
+    return cachedDb;
+  } catch (error) {
+    // Fallback for environments (like Jest or unsupported runtimes) that cannot enable persistence.
+    cachedDb = getFirestore(app);
+    return cachedDb;
+  }
+};
+
 export const firebaseAuth = getAuth(getFirebaseApp());
-export const firebaseDb = getFirestore(getFirebaseApp());
+export const firebaseDb = initializeOfflineFirestore(getFirebaseApp());
