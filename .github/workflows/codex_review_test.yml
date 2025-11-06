@@ -1,0 +1,62 @@
+name: "CI: Code Review & Tests"
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+jobs:
+  # Optional: Get AI feedback on code quality
+  code-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: OpenAI Codex Review
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+
+  # Smart test execution: Runs appropriate tests based on code changes
+  automated-tests:
+    runs-on: ubuntu-latest
+    needs: code-review
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Dependencies
+        run: npm ci
+      
+      - name: Detect Test Type and Run Tests
+        run: |
+          # Check if frontend code exists in this PR
+          if [ -d "frontend" ] || [ -d "app" ] || [ -d "pages" ] || [ -d "components" ]; then
+            echo "✅ Frontend code detected - Running Playwright E2E tests"
+            npx playwright install --with-deps
+            npm run test:ci
+          elif [ -d "functions" ] || [ -d "backend" ] || ls *.test.ts 2>/dev/null | grep -q .; then
+            echo "✅ Backend code detected - Running Jest unit tests"
+            npm run test:backend
+          else
+            echo "⚠️ No test files detected - Skipping tests"
+            echo "This is normal for infrastructure-only PRs (Terraform, configs, etc.)"
+          fi
+      
+      - name: Upload Test Results (if tests ran)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            playwright-report/
+            coverage/
+          retention-days: 7
