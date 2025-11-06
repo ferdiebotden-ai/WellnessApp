@@ -10,3 +10,4 @@ export {
   handleUserExportJob as privacyExportJob,
   handleUserDeletionJob as privacyDeletionJob,
 } from './privacy';
+export { calculateStreaks, resetFreezes } from './streaks';
