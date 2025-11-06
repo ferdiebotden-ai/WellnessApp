@@ -266,4 +266,26 @@ describe('wearables aggregators', () => {
       metadata: { sampleCount: 3, sourceId: 'fit-source' },
     });
   });
+
+  it('returns empty HRV and RHR arrays when Google Fit heart rate samples are unavailable', async () => {
+    advancePlatform('android');
+    const startDate = new Date('2023-01-01T00:00:00.000Z');
+    const endDate = new Date('2023-01-02T00:00:00.000Z');
+
+    const moduleRef = mockedGoogleFit as unknown as {
+      getHeartRateSamples?: typeof mockedGoogleFit.getHeartRateSamples;
+    };
+    const originalMethod = moduleRef.getHeartRateSamples;
+    moduleRef.getHeartRateSamples = undefined;
+
+    try {
+      const hrvReadings = await getHrvReadings({ startDate, endDate });
+      const rhrReadings = await getRestingHeartRateReadings({ startDate, endDate });
+
+      expect(hrvReadings).toEqual([]);
+      expect(rhrReadings).toEqual([]);
+    } finally {
+      moduleRef.getHeartRateSamples = originalMethod;
+    }
+  });
 });

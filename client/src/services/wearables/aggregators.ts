@@ -280,7 +280,22 @@ type GoogleFitHeartRateSample = {
 const fetchGoogleFitHeartRateSamples = async (
   options: WearableQueryOptions
 ): Promise<GoogleFitHeartRateSample[]> => {
-  const results = await GoogleFit.getHeartRateSamples({
+  const googleFitModule = GoogleFit as unknown as {
+    getHeartRateSamples?: (
+      params: {
+        startDate: string;
+        endDate: string;
+        bucketUnit?: 'MINUTE' | 'HOUR' | 'DAY';
+        bucketInterval?: number;
+      }
+    ) => Promise<GoogleFitHeartRateSample[]>;
+  };
+
+  if (typeof googleFitModule.getHeartRateSamples !== 'function') {
+    return [];
+  }
+
+  const results = await googleFitModule.getHeartRateSamples({
     startDate: toISOString(options.startDate),
     endDate: toISOString(options.endDate),
     bucketUnit: 'MINUTE',
