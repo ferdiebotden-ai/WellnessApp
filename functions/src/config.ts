@@ -9,6 +9,9 @@ export interface ServiceConfig {
   supabaseServiceRoleKey: string;
   supabaseJwtSecret: string;
   defaultTrialDays: number;
+  openAiApiKey: string;
+  pineconeApiKey: string;
+  pineconeIndexName: string;
 }
 
 const requiredEnv = [
@@ -18,7 +21,9 @@ const requiredEnv = [
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'SUPABASE_JWT_SECRET'
+  'SUPABASE_JWT_SECRET',
+  'OPENAI_API_KEY',
+  'PINECONE_API_KEY'
 ] as const;
 
 type RequiredEnv = (typeof requiredEnv)[number];
@@ -45,7 +50,10 @@ export function getConfig(): ServiceConfig {
       supabaseAnonKey: readEnv('SUPABASE_ANON_KEY'),
       supabaseServiceRoleKey: readEnv('SUPABASE_SERVICE_ROLE_KEY'),
       supabaseJwtSecret: readEnv('SUPABASE_JWT_SECRET'),
-      defaultTrialDays: Number.parseInt(process.env.DEFAULT_TRIAL_DAYS ?? '14', 10)
+      defaultTrialDays: Number.parseInt(process.env.DEFAULT_TRIAL_DAYS ?? '14', 10),
+      openAiApiKey: readEnv('OPENAI_API_KEY'),
+      pineconeApiKey: readEnv('PINECONE_API_KEY'),
+      pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? 'wellness-protocols'
     };
   }
   return cachedConfig;

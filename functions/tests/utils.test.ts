@@ -10,6 +10,9 @@ process.env.SUPABASE_ANON_KEY = 'anon-key';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role';
 process.env.SUPABASE_JWT_SECRET = 'secret';
 process.env.DEFAULT_TRIAL_DAYS = '7';
+process.env.OPENAI_API_KEY = 'openai-key';
+process.env.PINECONE_API_KEY = 'pinecone-key';
+process.env.PINECONE_INDEX_NAME = 'demo-index';
 
 describe('normalizePrivateKey', () => {
   it('replaces escaped newlines with actual newlines', () => {
