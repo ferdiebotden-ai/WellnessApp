@@ -1,0 +1,105 @@
+import React, { useMemo } from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { HealthMetricCard } from '../components/HealthMetricCard';
+import { ModuleEnrollmentCard } from '../components/ModuleEnrollmentCard';
+import { TaskList } from '../components/TaskList';
+import { palette } from '../theme/palette';
+import { typography } from '../theme/typography';
+import { useTaskFeed } from '../hooks/useTaskFeed';
+import type { HealthMetric, ModuleEnrollment } from '../types/dashboard';
+import { firebaseAuth } from '../services/firebase';
+
+const HEALTH_METRICS: HealthMetric[] = [
+  { id: 'sleep', label: 'Sleep Quality', valueLabel: '92%', trend: 'up', progress: 0.92 },
+  { id: 'hrv', label: 'HRV Readiness', valueLabel: '78 ms', trend: 'steady', progress: 0.78 },
+];
+
+const MODULE_ENROLLMENTS: ModuleEnrollment[] = [
+  {
+    id: 'resilience',
+    title: 'Resilience Foundations',
+    progressPct: 0.68,
+    currentStreak: 6,
+    focusArea: 'Emotional regulation',
+  },
+  {
+    id: 'sleep',
+    title: 'Sleep Optimization',
+    progressPct: 0.82,
+    currentStreak: 9,
+    focusArea: 'Deep sleep extension',
+  },
+];
+
+export const HomeScreen: React.FC = () => {
+  const userId = firebaseAuth.currentUser?.uid ?? null;
+  const { tasks, loading } = useTaskFeed(userId);
+
+  const orderedModules = useMemo(
+    () => [...MODULE_ENROLLMENTS].sort((a, b) => b.progressPct - a.progressPct),
+    []
+  );
+
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Health Outcomes</Text>
+          <View style={styles.metricsRow}>
+            {HEALTH_METRICS.map((metric) => (
+              <HealthMetricCard metric={metric} key={metric.id} />
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Active Protocols</Text>
+          <View style={styles.moduleStack}>
+            {orderedModules.map((module) => (
+              <ModuleEnrollmentCard key={module.id} module={module} />
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.section, styles.taskSection]}>
+          <Text style={styles.sectionTitle}>Today's Plan</Text>
+          <TaskList loading={loading} tasks={tasks} emptyMessage="Your schedule is clear." />
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: palette.background,
+  },
+  scrollContent: {
+    paddingBottom: 32,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    gap: 32,
+  },
+  section: {
+    gap: 16,
+  },
+  sectionTitle: {
+    ...typography.subheading,
+    color: palette.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  moduleStack: {
+    gap: 16,
+  },
+  taskSection: {
+    paddingBottom: 16,
+  },
+});
