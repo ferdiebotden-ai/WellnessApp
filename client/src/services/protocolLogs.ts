@@ -1,5 +1,6 @@
 import { addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { firebaseAuth, firebaseDb } from './firebase';
+import analytics from './AnalyticsService';
 
 export interface ProtocolLogPayload {
   protocolId: string;
@@ -51,5 +52,10 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
   };
 
   const docRef = await addDoc(queueRef, document);
+  void analytics.trackProtocolLogged({
+    protocolId,
+    moduleId,
+    source,
+  });
   return docRef.id;
 };

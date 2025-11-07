@@ -3,6 +3,24 @@ import { Alert } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { ModuleOnboardingScreen } from './ModuleOnboardingScreen';
 
+const analyticsMock = {
+  init: jest.fn(),
+  identifyUser: jest.fn(),
+  trackUserSignup: jest.fn(),
+  trackOnboardingComplete: jest.fn(),
+  trackProtocolLogged: jest.fn(),
+  trackPaywallViewed: jest.fn(),
+  trackSubscriptionStarted: jest.fn(),
+  trackAiChatQuerySent: jest.fn(),
+  trackAiChatLimitHit: jest.fn(),
+};
+
+jest.mock('../services/AnalyticsService', () => ({
+  __esModule: true,
+  default: analyticsMock,
+  analytics: analyticsMock,
+}));
+
 jest.mock('../hooks/useCoreModules', () => ({
   useCoreModules: jest.fn(),
 }));
@@ -55,7 +73,10 @@ describe('ModuleOnboardingScreen', () => {
       error: null,
       reload: jest.fn(),
     });
-    mockCompleteOnboarding.mockResolvedValue({ success: true });
+    mockCompleteOnboarding.mockResolvedValue({
+      success: true,
+      primary_module_id: 'module-1',
+    });
 
     const { getByText } = render(<ModuleOnboardingScreen />);
 
@@ -68,6 +89,8 @@ describe('ModuleOnboardingScreen', () => {
         "You're all set!",
         'Welcome to your tailored Wellness journey.'
       );
+      expect(analyticsMock.trackUserSignup).toHaveBeenCalledWith({ moduleId: 'module-1' });
+      expect(analyticsMock.trackOnboardingComplete).toHaveBeenCalledWith({ primaryModuleId: 'module-1' });
     });
   });
 

@@ -1,5 +1,23 @@
 import { enqueueProtocolLog } from './protocolLogs';
 
+const analyticsMock = {
+  trackProtocolLogged: jest.fn(),
+  init: jest.fn(),
+  identifyUser: jest.fn(),
+  trackUserSignup: jest.fn(),
+  trackOnboardingComplete: jest.fn(),
+  trackPaywallViewed: jest.fn(),
+  trackSubscriptionStarted: jest.fn(),
+  trackAiChatQuerySent: jest.fn(),
+  trackAiChatLimitHit: jest.fn(),
+};
+
+jest.mock('./AnalyticsService', () => ({
+  __esModule: true,
+  default: analyticsMock,
+  analytics: analyticsMock,
+}));
+
 jest.mock('./firebase', () => ({
   firebaseDb: { __type: 'firestore' },
   firebaseAuth: {
@@ -39,6 +57,11 @@ describe('enqueueProtocolLog', () => {
         progressTarget: 30,
       }),
     );
+    expect(analyticsMock.trackProtocolLogged).toHaveBeenCalledWith({
+      protocolId: 'protocol-1',
+      moduleId: 'module-1',
+      source: 'manual',
+    });
   });
 
   it('throws when the user is not authenticated', async () => {

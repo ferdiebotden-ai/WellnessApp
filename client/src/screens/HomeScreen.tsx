@@ -1,8 +1,6 @@
-import React, { useMemo, useCallback } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HealthMetricCard } from '../components/HealthMetricCard';
 import { ModuleEnrollmentCard } from '../components/ModuleEnrollmentCard';
 import { TaskList } from '../components/TaskList';
@@ -13,9 +11,9 @@ import type { HealthMetric, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
 import { LockedModuleCard } from '../components/LockedModuleCard';
 import type { HomeStackParamList } from '../navigation/HomeStack';
+import { useMonetization } from '../providers/MonetizationProvider';
 
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
-import { useMonetization } from '../providers/MonetizationProvider';
 
 const HEALTH_METRICS: HealthMetric[] = [
   { id: 'sleep', label: 'Sleep Quality', valueLabel: '92%', trend: 'up', progress: 0.92 },
@@ -77,7 +75,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const handleModulePress = useCallback(
     (module: ModuleEnrollment) => {
       if (module.tier === 'pro') {
-        const allowed = requestProModuleAccess();
+        const allowed = requestProModuleAccess(module.id);
         if (!allowed) {
           return;
         }

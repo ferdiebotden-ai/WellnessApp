@@ -3,12 +3,33 @@ import { Alert } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { App } from './App';
 
+const analyticsMock = {
+  init: jest.fn().mockResolvedValue(undefined),
+  identifyUser: jest.fn().mockResolvedValue(undefined),
+  trackUserSignup: jest.fn().mockResolvedValue(undefined),
+  trackOnboardingComplete: jest.fn().mockResolvedValue(undefined),
+  trackProtocolLogged: jest.fn().mockResolvedValue(undefined),
+  trackPaywallViewed: jest.fn().mockResolvedValue(undefined),
+  trackSubscriptionStarted: jest.fn().mockResolvedValue(undefined),
+  trackAiChatQuerySent: jest.fn().mockResolvedValue(undefined),
+  trackAiChatLimitHit: jest.fn().mockResolvedValue(undefined),
+};
+
+jest.mock('./services/AnalyticsService', () => ({
+  __esModule: true,
+  default: analyticsMock,
+  analytics: analyticsMock,
+}));
+
 jest.mock('./hooks/useTaskFeed', () => ({
   useTaskFeed: () => ({ tasks: [], loading: false }),
 }));
 
 jest.mock('./services/firebase', () => ({
-  firebaseAuth: { currentUser: { uid: 'test-user' } },
+  firebaseAuth: {
+    currentUser: { uid: 'test-user', email: 'test@example.com' },
+    onAuthStateChanged: jest.fn(() => jest.fn()),
+  },
 }));
 
 jest.mock('./providers/AppLockProvider', () => {
@@ -38,6 +59,7 @@ jest.mock('./components/AuthenticationGate', () => ({
 
 jest.mock('./providers/MonetizationProvider', () => {
   const React = require('react');
+  const requestChatAccess = jest.fn().mockReturnValue(true);
   const mockValue = {
     loading: false,
     status: {
@@ -57,19 +79,24 @@ jest.mock('./providers/MonetizationProvider', () => {
     paywallTrigger: null,
     openPaywall: jest.fn(),
     closePaywall: jest.fn(),
-    requestChatAccess: jest.fn().mockReturnValue(true),
+    requestChatAccess,
     requestProModuleAccess: jest.fn().mockReturnValue(false),
   };
 
   return {
     MonetizationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useMonetization: () => mockValue,
+    __mock: { mockValue },
   };
 });
 
 jest.spyOn(Alert, 'alert').mockImplementation(() => undefined as unknown as void);
 
 describe('App', () => {
+  const { __mock } = jest.requireMock('./providers/MonetizationProvider') as {
+    __mock: { mockValue: { requestChatAccess: jest.Mock } };
+  };
+
   it('renders bottom navigation tabs', () => {
     const { getByText } = render(<App />);
     expect(getByText('Home')).toBeTruthy();
@@ -83,5 +110,6 @@ describe('App', () => {
     const button = getByTestId('ai-coach-button');
     fireEvent.press(button);
     expect(Alert.alert).toHaveBeenCalled();
+    expect(__mock.mockValue.requestChatAccess).toHaveBeenCalledWith({ intent: 'quick_access' });
   });
 });

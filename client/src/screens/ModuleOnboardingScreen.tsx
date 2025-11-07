@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, FlatList, SafeAreaView, StyleSheet, Text, Vie
 import { ModuleCard } from '../components/ModuleCard';
 import { useCoreModules } from '../hooks/useCoreModules';
 import { completeOnboarding } from '../services/api';
+import analytics from '../services/AnalyticsService';
 import type { ModuleSummary } from '../types/module';
 
 const KEY_EXTRACTOR = (item: ModuleSummary) => item.id;
@@ -24,7 +25,12 @@ export const ModuleOnboardingScreen: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await completeOnboarding(selectedModuleId);
+      const response = await completeOnboarding(selectedModuleId);
+      void analytics.trackUserSignup({ moduleId: selectedModuleId });
+      const primaryModuleId = response?.primary_module_id ?? selectedModuleId;
+      if (primaryModuleId) {
+        void analytics.trackOnboardingComplete({ primaryModuleId });
+      }
       Alert.alert('You\'re all set!', 'Welcome to your tailored Wellness journey.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete onboarding';
