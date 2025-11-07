@@ -26,9 +26,13 @@ jest.mock('../services/firebase', () => ({
 
 describe('HomeScreen', () => {
   it('renders health metrics and tasks', () => {
-    const { getByText, getByTestId } = render(<HomeScreen />);
+    const { getByText, getByTestId } = render(
+      <HomeScreen navigation={{ navigate: jest.fn() } as never} route={{ key: 'Home', name: 'Home' } as never} />
+    );
     expect(getByText('Health Outcomes')).toBeTruthy();
     expect(getByText('Active Protocols')).toBeTruthy();
+    expect(getByText('Unlock Next-Level Modules')).toBeTruthy();
+    expect(getByText('Stress & Emotional Regulation')).toBeTruthy();
     expect(getByText("Today's Plan")).toBeTruthy();
     expect(getByText('Hydration Protocol')).toBeTruthy();
     expect(getByTestId('task-list')).toBeTruthy();

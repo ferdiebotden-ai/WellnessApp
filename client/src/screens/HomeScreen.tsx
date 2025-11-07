@@ -1,3 +1,6 @@
+import React, { useMemo, useCallback } from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { HealthMetricCard } from '../components/HealthMetricCard';
@@ -8,6 +11,10 @@ import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
 import type { HealthMetric, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
+import { LockedModuleCard } from '../components/LockedModuleCard';
+import type { HomeStackParamList } from '../navigation/HomeStack';
+
+type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 import { useMonetization } from '../providers/MonetizationProvider';
 
 const HEALTH_METRICS: HealthMetric[] = [
@@ -34,7 +41,35 @@ const MODULE_ENROLLMENTS: ModuleEnrollment[] = [
   },
 ];
 
-export const HomeScreen: React.FC = () => {
+interface LockedModule {
+  id: string;
+  title: string;
+  description: string;
+  tier: 'pro' | 'elite';
+}
+
+const LOCKED_MODULES: LockedModule[] = [
+  {
+    id: 'mod_stress_regulation',
+    title: 'Stress & Emotional Regulation',
+    description: 'Unlock HRV-guided breathing plans and advanced stress resilience analytics.',
+    tier: 'pro',
+  },
+  {
+    id: 'mod_energy_recovery',
+    title: 'Energy & Recovery',
+    description: 'Access metabolic recovery dashboards, cold exposure protocols, and readiness forecasting.',
+    tier: 'pro',
+  },
+  {
+    id: 'elite_concierge',
+    title: 'Elite Concierge',
+    description: 'Get 1:1 concierge coaching, lab integrations, and executive performance planning.',
+    tier: 'elite',
+  },
+];
+
+export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const userId = firebaseAuth.currentUser?.uid ?? null;
   const { tasks, loading } = useTaskFeed(userId);
   const { requestProModuleAccess } = useMonetization();
@@ -56,6 +91,21 @@ export const HomeScreen: React.FC = () => {
   const orderedModules = useMemo(
     () => [...MODULE_ENROLLMENTS].sort((a, b) => b.progressPct - a.progressPct),
     []
+  );
+
+  const handleLockedModulePress = useCallback(
+    (moduleId: string) => {
+      const module = LOCKED_MODULES.find((item) => item.id === moduleId);
+      if (!module) {
+        return;
+      }
+
+      navigation.navigate('Waitlist', {
+        tier: module.tier,
+        moduleName: module.title,
+      });
+    },
+    [navigation]
   );
 
   return (
@@ -81,6 +131,22 @@ export const HomeScreen: React.FC = () => {
                 locked={module.tier === 'pro'}
                 onPress={() => handleModulePress(module)}
                 testID={`module-card-${module.id}`}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Unlock Next-Level Modules</Text>
+          <View style={styles.lockedModules}>
+            {LOCKED_MODULES.map((module) => (
+              <LockedModuleCard
+                key={module.id}
+                id={module.id}
+                title={module.title}
+                description={module.description}
+                tier={module.tier}
+                onPress={handleLockedModulePress}
               />
             ))}
           </View>
@@ -121,6 +187,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   moduleStack: {
+    gap: 16,
+  },
+  lockedModules: {
     gap: 16,
   },
   taskSection: {

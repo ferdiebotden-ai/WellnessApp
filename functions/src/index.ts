@@ -11,3 +11,4 @@ export {
   handleUserDeletionJob as privacyDeletionJob,
 } from './privacy';
 export { calculateStreaks, resetFreezes } from './streaks';
+export { joinWaitlist as postWaitlist } from './waitlist';
