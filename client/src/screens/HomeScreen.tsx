@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { HealthMetricCard } from '../components/HealthMetricCard';
 import { ModuleEnrollmentCard } from '../components/ModuleEnrollmentCard';
 import { TaskList } from '../components/TaskList';
@@ -8,6 +8,7 @@ import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
 import type { HealthMetric, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
+import { useMonetization } from '../providers/MonetizationProvider';
 
 const HEALTH_METRICS: HealthMetric[] = [
   { id: 'sleep', label: 'Sleep Quality', valueLabel: '92%', trend: 'up', progress: 0.92 },
@@ -21,6 +22,7 @@ const MODULE_ENROLLMENTS: ModuleEnrollment[] = [
     progressPct: 0.68,
     currentStreak: 6,
     focusArea: 'Emotional regulation',
+    tier: 'core',
   },
   {
     id: 'sleep',
@@ -28,12 +30,28 @@ const MODULE_ENROLLMENTS: ModuleEnrollment[] = [
     progressPct: 0.82,
     currentStreak: 9,
     focusArea: 'Deep sleep extension',
+    tier: 'pro',
   },
 ];
 
 export const HomeScreen: React.FC = () => {
   const userId = firebaseAuth.currentUser?.uid ?? null;
   const { tasks, loading } = useTaskFeed(userId);
+  const { requestProModuleAccess } = useMonetization();
+
+  const handleModulePress = useCallback(
+    (module: ModuleEnrollment) => {
+      if (module.tier === 'pro') {
+        const allowed = requestProModuleAccess();
+        if (!allowed) {
+          return;
+        }
+      }
+
+      Alert.alert(module.title, 'Module details will be available soon.');
+    },
+    [requestProModuleAccess]
+  );
 
   const orderedModules = useMemo(
     () => [...MODULE_ENROLLMENTS].sort((a, b) => b.progressPct - a.progressPct),
@@ -57,7 +75,13 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Active Protocols</Text>
           <View style={styles.moduleStack}>
             {orderedModules.map((module) => (
-              <ModuleEnrollmentCard key={module.id} module={module} />
+              <ModuleEnrollmentCard
+                key={module.id}
+                module={module}
+                locked={module.tier === 'pro'}
+                onPress={() => handleModulePress(module)}
+                testID={`module-card-${module.id}`}
+              />
             ))}
           </View>
         </View>

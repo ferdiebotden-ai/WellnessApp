@@ -6,6 +6,10 @@ import { TopNavigationBar } from './components/TopNavigationBar';
 import { palette } from './theme/palette';
 import { AppLockProvider } from './providers/AppLockProvider';
 import { AuthenticationGate } from './components/AuthenticationGate';
+import { MonetizationProvider, useMonetization } from './providers/MonetizationProvider';
+import { TrialBanner } from './components/TrialBanner';
+import { TrialSoftReminderModal } from './components/TrialSoftReminderModal';
+import { PaywallModal } from './components/PaywallModal';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -19,31 +23,51 @@ const navigationTheme = {
   },
 };
 
-export const App: React.FC = () => {
+const AppScaffold: React.FC = () => {
+  const { requestChatAccess } = useMonetization();
+
   const handleAiCoachPress = () => {
+    const allowed = requestChatAccess();
+    if (!allowed) {
+      return;
+    }
+
     Alert.alert('AI Coach', 'The AI Coach will be available soon.');
   };
 
+  const handleSubscribe = () => {
+    Alert.alert('Upgrade to Core', 'Subscription checkout is handled in MISSION_023.');
+  };
+
   return (
-    <AppLockProvider>
-      <AuthenticationGate>
-        <NavigationContainer theme={navigationTheme}>
-          <StatusBar barStyle="light-content" />
-          <SafeAreaView style={styles.safeArea}>
-            <TopNavigationBar
-              title="Health Dashboard"
-              subtitle="Wellness OS"
-              onAiCoachPress={handleAiCoachPress}
-            />
-            <View style={styles.contentWrapper}>
-              <BottomTabs />
-            </View>
-          </SafeAreaView>
-        </NavigationContainer>
-      </AuthenticationGate>
-    </AppLockProvider>
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar barStyle="light-content" />
+      <SafeAreaView style={styles.safeArea}>
+        <TopNavigationBar
+          title="Health Dashboard"
+          subtitle="Wellness OS"
+          onAiCoachPress={handleAiCoachPress}
+        />
+        <TrialBanner />
+        <View style={styles.contentWrapper}>
+          <BottomTabs />
+        </View>
+      </SafeAreaView>
+      <TrialSoftReminderModal />
+      <PaywallModal onSubscribe={handleSubscribe} />
+    </NavigationContainer>
   );
 };
+
+export const App: React.FC = () => (
+  <AppLockProvider>
+    <AuthenticationGate>
+      <MonetizationProvider>
+        <AppScaffold />
+      </MonetizationProvider>
+    </AuthenticationGate>
+  </AppLockProvider>
+);
 
 export default App;
 
