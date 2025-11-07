@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { fetchMonetizationStatus } from '../services/api';
+import analytics, { AiChatIntent } from '../services/AnalyticsService';
 import type { MonetizationStatus, PaywallTrigger, SubscriptionTier } from '../types/monetization';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -19,10 +20,13 @@ interface MonetizationContextValue {
   isPaywallVisible: boolean;
   isPaywallDismissible: boolean;
   paywallTrigger: PaywallTrigger | null;
-  openPaywall: (trigger: PaywallTrigger, options?: { dismissible?: boolean }) => void;
+  openPaywall: (
+    trigger: PaywallTrigger,
+    options?: { dismissible?: boolean; triggerModuleId?: string | null }
+  ) => void;
   closePaywall: () => void;
-  requestChatAccess: () => boolean;
-  requestProModuleAccess: () => boolean;
+  requestChatAccess: (options?: { intent?: AiChatIntent }) => boolean;
+  requestProModuleAccess: (moduleId?: string | null) => boolean;
 }
 
 const MonetizationContext = createContext<MonetizationContextValue | undefined>(undefined);
@@ -122,13 +126,21 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setPaywallTrigger('trial_expired');
       setPaywallDismissible(false);
       setPaywallVisible(true);
+      void analytics.trackPaywallViewed({ trigger: 'trial_expired', triggerModuleId: null });
     }
   }, [isTrialExpired]);
 
-  const openPaywall = (trigger: PaywallTrigger, options?: { dismissible?: boolean }) => {
+  const openPaywall = (
+    trigger: PaywallTrigger,
+    options?: { dismissible?: boolean; triggerModuleId?: string | null }
+  ) => {
     setPaywallTrigger(trigger);
     setPaywallDismissible(options?.dismissible ?? true);
     setPaywallVisible(true);
+    void analytics.trackPaywallViewed({
+      trigger,
+      triggerModuleId: options?.triggerModuleId ?? null,
+    });
   };
 
   const closePaywall = () => {
@@ -140,13 +152,14 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setPaywallTrigger(null);
   };
 
-  const requestChatAccess = () => {
+  const requestChatAccess = (options?: { intent?: AiChatIntent }) => {
     if (activeSubscription) {
+      void analytics.trackAiChatQuerySent({ intentDetected: options?.intent ?? 'unknown' });
       return true;
     }
 
     if (isTrialExpired) {
-      openPaywall('trial_expired', { dismissible: false });
+      openPaywall('trial_expired', { dismissible: false, triggerModuleId: null });
       return false;
     }
 
@@ -154,7 +167,8 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const used = status?.chat_queries_used_this_week ?? 0;
 
     if (used >= limit) {
-      openPaywall('chat_limit');
+      void analytics.trackAiChatLimitHit({ weeklyLimit: limit, queriesUsed: used });
+      openPaywall('chat_limit', { triggerModuleId: null });
       return false;
     }
 
@@ -170,15 +184,17 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
     });
 
+    void analytics.trackAiChatQuerySent({ intentDetected: options?.intent ?? 'unknown' });
+
     return true;
   };
 
-  const requestProModuleAccess = () => {
+  const requestProModuleAccess = (moduleId?: string | null) => {
     if (hasActiveSubscription(tier)) {
       return true;
     }
 
-    openPaywall('pro_module');
+    openPaywall('pro_module', { triggerModuleId: moduleId ?? null });
     return false;
   };
 

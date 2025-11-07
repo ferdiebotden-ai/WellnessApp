@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { Alert, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { BottomTabs } from './navigation/BottomTabs';
@@ -10,6 +10,8 @@ import { MonetizationProvider, useMonetization } from './providers/MonetizationP
 import { TrialBanner } from './components/TrialBanner';
 import { TrialSoftReminderModal } from './components/TrialSoftReminderModal';
 import { PaywallModal } from './components/PaywallModal';
+import analytics from './services/AnalyticsService';
+import { firebaseAuth } from './services/firebase';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -27,7 +29,7 @@ const AppScaffold: React.FC = () => {
   const { requestChatAccess } = useMonetization();
 
   const handleAiCoachPress = () => {
-    const allowed = requestChatAccess();
+    const allowed = requestChatAccess({ intent: 'quick_access' });
     if (!allowed) {
       return;
     }
@@ -36,6 +38,7 @@ const AppScaffold: React.FC = () => {
   };
 
   const handleSubscribe = () => {
+    void analytics.trackSubscriptionStarted();
     Alert.alert('Upgrade to Core', 'Subscription checkout is handled in MISSION_023.');
   };
 
@@ -59,15 +62,45 @@ const AppScaffold: React.FC = () => {
   );
 };
 
-export const App: React.FC = () => (
-  <AppLockProvider>
-    <AuthenticationGate>
-      <MonetizationProvider>
-        <AppScaffold />
-      </MonetizationProvider>
-    </AuthenticationGate>
-  </AppLockProvider>
-);
+export const App: React.FC = () => {
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    analytics
+      .init()
+      .then(() => {
+        const currentUser = firebaseAuth.currentUser;
+        if (currentUser) {
+          void analytics.identifyUser(currentUser.uid, { email: currentUser.email ?? null });
+        }
+      })
+      .catch((error) => {
+        console.warn('Failed to initialize analytics service', error);
+      });
+
+    if (typeof firebaseAuth.onAuthStateChanged === 'function') {
+      unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
+        if (user) {
+          void analytics.identifyUser(user.uid, { email: user.email ?? null });
+        }
+      });
+    }
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
+  return (
+    <AppLockProvider>
+      <AuthenticationGate>
+        <MonetizationProvider>
+          <AppScaffold />
+        </MonetizationProvider>
+      </AuthenticationGate>
+    </AppLockProvider>
+  );
+};
 
 export default App;
 
