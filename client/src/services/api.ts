@@ -48,6 +48,17 @@ export const completeOnboarding = (primaryModuleId: string) =>
   );
 
 /**
+ * Submits a waitlist entry for premium tiers.
+ * @param email Email address for follow-up communication.
+ * @param tierInterestedIn Tier the user wants access to.
+ */
+export const submitWaitlistEntry = (email: string, tierInterestedIn: 'pro' | 'elite') =>
+  request<{ success: boolean }>('/api/waitlist', 'POST', {
+    email,
+    tier_interested_in: tierInterestedIn,
+  });
+
+/**
  * Sends wearable readings to the Wellness OS API for synchronization.
  * @param payload Normalized wearable metrics payload.
  * @returns API response indicating whether the sync was accepted.
