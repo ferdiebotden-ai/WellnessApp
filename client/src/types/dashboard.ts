@@ -19,6 +19,7 @@ export interface ModuleEnrollment {
   progressPct: number;
   currentStreak: number;
   focusArea: string;
+  tier?: 'core' | 'pro';
 }
 
 export interface HealthMetric {

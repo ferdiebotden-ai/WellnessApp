@@ -36,6 +36,37 @@ jest.mock('./components/AuthenticationGate', () => ({
   AuthenticationGate: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+jest.mock('./providers/MonetizationProvider', () => {
+  const React = require('react');
+  const mockValue = {
+    loading: false,
+    status: {
+      trial_start_date: new Date('2024-01-01T00:00:00.000Z').toISOString(),
+      trial_end_date: new Date('2024-01-15T00:00:00.000Z').toISOString(),
+      subscription_tier: 'trial',
+    },
+    daysLeftInTrial: 7,
+    hasTrial: true,
+    isTrialActive: true,
+    isTrialExpired: false,
+    chatLimitRemaining: 4,
+    shouldShowSoftReminder: false,
+    markSoftReminderSeen: jest.fn(),
+    isPaywallVisible: false,
+    isPaywallDismissible: true,
+    paywallTrigger: null,
+    openPaywall: jest.fn(),
+    closePaywall: jest.fn(),
+    requestChatAccess: jest.fn().mockReturnValue(true),
+    requestProModuleAccess: jest.fn().mockReturnValue(false),
+  };
+
+  return {
+    MonetizationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useMonetization: () => mockValue,
+  };
+});
+
 jest.spyOn(Alert, 'alert').mockImplementation(() => undefined as unknown as void);
 
 describe('App', () => {
