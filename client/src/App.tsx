@@ -61,11 +61,11 @@ const AppScaffold: React.FC = () => {
 
 export const App: React.FC = () => (
   <AppLockProvider>
-    <MonetizationProvider>
-      <AuthenticationGate>
+    <AuthenticationGate>
+      <MonetizationProvider>
         <AppScaffold />
-      </AuthenticationGate>
-    </MonetizationProvider>
+      </MonetizationProvider>
+    </AuthenticationGate>
   </AppLockProvider>
 );
 
