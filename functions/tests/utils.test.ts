@@ -13,6 +13,7 @@ process.env.DEFAULT_TRIAL_DAYS = '7';
 process.env.OPENAI_API_KEY = 'openai-key';
 process.env.PINECONE_API_KEY = 'pinecone-key';
 process.env.PINECONE_INDEX_NAME = 'demo-index';
+process.env.REVENUECAT_WEBHOOK_SECRET = 'webhook-secret';
 
 describe('normalizePrivateKey', () => {
   it('replaces escaped newlines with actual newlines', () => {
@@ -60,7 +61,8 @@ describe('buildUserInsert', () => {
       onboarding_complete: false,
       preferences: {},
       healthMetrics: {},
-      earnedBadges: []
+      earnedBadges: [],
+      subscription_id: null
     });
 
     expect(profile.trial_start_date).toBe('2024-01-01T00:00:00.000Z');

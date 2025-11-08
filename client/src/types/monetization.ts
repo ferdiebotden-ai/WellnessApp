@@ -4,6 +4,7 @@ export interface MonetizationStatus {
   trial_start_date?: string | null;
   trial_end_date?: string | null;
   subscription_tier?: SubscriptionTier | null;
+  subscription_id?: string | null;
   chat_queries_used_this_week?: number | null;
   chat_weekly_limit?: number | null;
 }

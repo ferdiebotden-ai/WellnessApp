@@ -16,6 +16,7 @@ interface UserProfileInsert {
   preferences?: Record<string, unknown>;
   healthMetrics?: Record<string, unknown>;
   earnedBadges?: string[];
+  subscription_id?: string | null;
 }
 
 const MUTABLE_FIELDS = new Set<keyof UserProfileInsert>([
@@ -70,7 +71,8 @@ function buildUserInsert(uid: string, email?: string | null, displayName?: strin
     trial_end_date: trialEnd.toISOString(),
     preferences: {},
     healthMetrics: {},
-    earnedBadges: []
+    earnedBadges: [],
+    subscription_id: null
   };
 }
 

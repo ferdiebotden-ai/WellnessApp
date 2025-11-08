@@ -118,6 +118,7 @@ export const fetchMonetizationStatus = async (): Promise<MonetizationStatus> => 
       trial_start_date: trialStart.toISOString(),
       trial_end_date: trialEnd.toISOString(),
       subscription_tier: 'trial',
+      subscription_id: null,
       chat_queries_used_this_week: 0,
       chat_weekly_limit: 10,
     };
