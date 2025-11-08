@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { fetchMonetizationStatus } from '../services/api';
 import analytics, { AiChatIntent } from '../services/AnalyticsService';
 import type { MonetizationStatus, PaywallTrigger, SubscriptionTier } from '../types/monetization';
@@ -27,6 +35,7 @@ interface MonetizationContextValue {
   closePaywall: () => void;
   requestChatAccess: (options?: { intent?: AiChatIntent }) => boolean;
   requestProModuleAccess: (moduleId?: string | null) => boolean;
+  refreshStatus: () => Promise<void>;
 }
 
 const MonetizationContext = createContext<MonetizationContextValue | undefined>(undefined);
@@ -40,31 +49,36 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isPaywallVisible, setPaywallVisible] = useState(false);
   const [paywallTrigger, setPaywallTrigger] = useState<PaywallTrigger | null>(null);
   const [isPaywallDismissible, setPaywallDismissible] = useState(true);
+  const isMountedRef = useRef(true);
+
+  const loadStatus = useCallback(async () => {
+    if (isMountedRef.current) {
+      setLoading(true);
+    }
+
+    try {
+      const monetizationStatus = await fetchMonetizationStatus();
+      if (isMountedRef.current) {
+        setStatus(monetizationStatus);
+      }
+    } catch (error) {
+      if (isMountedRef.current) {
+        console.error('Failed to retrieve monetization status', error);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const loadStatus = async () => {
-      setLoading(true);
-      try {
-        const monetizationStatus = await fetchMonetizationStatus();
-        if (isMounted) {
-          setStatus(monetizationStatus);
-        }
-      } catch (error) {
-        console.error('Failed to retrieve monetization status', error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
+    isMountedRef.current = true;
     void loadStatus();
-
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
-  }, []);
+  }, [loadStatus]);
 
   const now = useMemo(() => startOfDay(new Date()), [status?.trial_end_date]);
   const trialEnd = useMemo(
@@ -198,6 +212,10 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return false;
   };
 
+  const refreshStatus = useCallback(async () => {
+    await loadStatus();
+  }, [loadStatus]);
+
   const value: MonetizationContextValue = {
     loading,
     status,
@@ -215,6 +233,7 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     closePaywall,
     requestChatAccess,
     requestProModuleAccess,
+    refreshStatus,
   };
 
   return <MonetizationContext.Provider value={value}>{children}</MonetizationContext.Provider>;

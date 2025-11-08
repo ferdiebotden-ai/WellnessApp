@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useMonetization } from '../providers/MonetizationProvider';
 import type { PaywallTrigger } from '../types/monetization';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 
 interface PaywallModalProps {
-  onSubscribe?: () => void;
+  onSubscribe?: () => Promise<void>;
 }
 
 const HEADLINES: Record<PaywallTrigger, string> = {
@@ -25,6 +25,7 @@ const SUBCOPY: Record<PaywallTrigger, string> = {
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({ onSubscribe }) => {
   const { isPaywallVisible, closePaywall, isPaywallDismissible, paywallTrigger } = useMonetization();
+  const [isProcessing, setProcessing] = useState(false);
 
   const headline = useMemo(() => {
     if (!paywallTrigger) {
@@ -47,7 +48,18 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onSubscribe }) => {
   }
 
   const handleSubscribe = () => {
-    onSubscribe?.();
+    if (!onSubscribe || isProcessing) {
+      return;
+    }
+
+    setProcessing(true);
+    onSubscribe()
+      .catch((error) => {
+        console.error('Subscription flow failed', error);
+      })
+      .finally(() => {
+        setProcessing(false);
+      });
   };
 
   return (
@@ -84,11 +96,17 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onSubscribe }) => {
 
           <TouchableOpacity
             accessibilityRole="button"
+            accessibilityState={{ busy: isProcessing, disabled: isProcessing }}
+            disabled={isProcessing}
             onPress={handleSubscribe}
-            style={styles.primaryButton}
+            style={[styles.primaryButton, isProcessing && styles.primaryButtonDisabled]}
             testID="subscribe-core"
           >
-            <Text style={styles.primaryButtonText}>Upgrade to Core for $29/mo</Text>
+            {isProcessing ? (
+              <ActivityIndicator color={palette.surface} testID="subscribe-loading" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Upgrade to Core for $29/mo</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -165,6 +183,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
   },
   primaryButtonText: {
     ...typography.subheading,

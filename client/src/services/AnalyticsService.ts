@@ -121,6 +121,15 @@ class AnalyticsService {
   }
 
   /**
+   * Tracks when the Core subscription purchase is confirmed by the store.
+   */
+  async trackSubscriptionActivated(context: { productIdentifier?: string | null }): Promise<void> {
+    await this.track('subscription_activated', {
+      product_identifier: context.productIdentifier ?? null,
+    });
+  }
+
+  /**
    * Tracks individual AI chat queries sent from the device.
    */
   async trackAiChatQuerySent(event: AiChatQueryEvent): Promise<void> {

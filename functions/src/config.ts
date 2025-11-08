@@ -13,6 +13,7 @@ export interface ServiceConfig {
   pineconeApiKey: string;
   pineconeIndexName: string;
   privacyExportUrlTtlHours: number;
+  revenuecatWebhookSecret: string;
 }
 
 export interface PrivacyConfig {
@@ -30,7 +31,8 @@ const requiredEnv = [
   'SUPABASE_SERVICE_ROLE_KEY',
   'SUPABASE_JWT_SECRET',
   'OPENAI_API_KEY',
-  'PINECONE_API_KEY'
+  'PINECONE_API_KEY',
+  'REVENUECAT_WEBHOOK_SECRET'
 ] as const;
 
 type RequiredEnv = (typeof requiredEnv)[number];
@@ -63,6 +65,7 @@ export function getConfig(): ServiceConfig {
       pineconeApiKey: readEnv('PINECONE_API_KEY'),
       pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? 'wellness-protocols',
       privacyExportUrlTtlHours: Number.parseInt(process.env.PRIVACY_EXPORT_URL_TTL_HOURS ?? '72', 10),
+      revenuecatWebhookSecret: readEnv('REVENUECAT_WEBHOOK_SECRET'),
     };
   }
   return cachedConfig;

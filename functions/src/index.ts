@@ -12,3 +12,4 @@ export {
 } from './privacy';
 export { calculateStreaks, resetFreezes } from './streaks';
 export { joinWaitlist as postWaitlist } from './waitlist';
+export { handleRevenueCatWebhook as postApiWebhooksRevenuecat } from './revenuecatWebhook';
