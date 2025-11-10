@@ -12,6 +12,7 @@ import { firebaseAuth } from '../services/firebase';
 import { LockedModuleCard } from '../components/LockedModuleCard';
 import type { HomeStackParamList } from '../navigation/HomeStack';
 import { useMonetization } from '../providers/MonetizationProvider';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
@@ -71,6 +72,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const userId = firebaseAuth.currentUser?.uid ?? null;
   const { tasks, loading } = useTaskFeed(userId);
   const { requestProModuleAccess } = useMonetization();
+  const { isModuleEnabled } = useFeatureFlags();
 
   const handleModulePress = useCallback(
     (module: ModuleEnrollment) => {
@@ -86,10 +88,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     [requestProModuleAccess]
   );
 
+  // Filter modules based on feature flags
+  const filteredEnrolledModules = useMemo(() => {
+    return MODULE_ENROLLMENTS.filter((module) => {
+      // Map module IDs to feature flags
+      if (module.id === 'sleep') {
+        return isModuleEnabled('sleep');
+      }
+      if (module.id === 'resilience') {
+        // Resilience maps to stress module
+        return isModuleEnabled('stress');
+      }
+      // Default to enabled if not mapped
+      return true;
+    });
+  }, [isModuleEnabled]);
+
   const orderedModules = useMemo(
-    () => [...MODULE_ENROLLMENTS].sort((a, b) => b.progressPct - a.progressPct),
-    []
+    () => [...filteredEnrolledModules].sort((a, b) => b.progressPct - a.progressPct),
+    [filteredEnrolledModules]
   );
+
+  // Filter locked modules based on feature flags
+  const filteredLockedModules = useMemo(() => {
+    return LOCKED_MODULES.filter((module) => {
+      // Map module IDs to feature flags
+      if (module.id === 'mod_stress_regulation') {
+        return isModuleEnabled('stress');
+      }
+      if (module.id === 'mod_energy_recovery') {
+        return isModuleEnabled('energy');
+      }
+      // Elite concierge doesn't have a specific flag - show if any pro module is enabled
+      if (module.id === 'elite_concierge') {
+        return isModuleEnabled('stress') || isModuleEnabled('energy') || isModuleEnabled('dopamine');
+      }
+      // Default to enabled if not mapped
+      return true;
+    });
+  }, [isModuleEnabled]);
 
   const handleLockedModulePress = useCallback(
     (moduleId: string) => {
@@ -121,34 +158,40 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Active Protocols</Text>
-          <View style={styles.moduleStack}>
-            {orderedModules.map((module) => (
-              <ModuleEnrollmentCard
-                key={module.id}
-                module={module}
-                locked={module.tier === 'pro'}
-                onPress={() => handleModulePress(module)}
-                testID={`module-card-${module.id}`}
-              />
-            ))}
-          </View>
+          {orderedModules.length > 0 ? (
+            <View style={styles.moduleStack}>
+              {orderedModules.map((module) => (
+                <ModuleEnrollmentCard
+                  key={module.id}
+                  module={module}
+                  locked={module.tier === 'pro'}
+                  onPress={() => handleModulePress(module)}
+                  testID={`module-card-${module.id}`}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.emptyState}>No active modules available.</Text>
+          )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Unlock Next-Level Modules</Text>
-          <View style={styles.lockedModules}>
-            {LOCKED_MODULES.map((module) => (
-              <LockedModuleCard
-                key={module.id}
-                id={module.id}
-                title={module.title}
-                description={module.description}
-                tier={module.tier}
-                onPress={handleLockedModulePress}
-              />
-            ))}
+        {filteredLockedModules.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Unlock Next-Level Modules</Text>
+            <View style={styles.lockedModules}>
+              {filteredLockedModules.map((module) => (
+                <LockedModuleCard
+                  key={module.id}
+                  id={module.id}
+                  title={module.title}
+                  description={module.description}
+                  tier={module.tier}
+                  onPress={handleLockedModulePress}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         <View style={[styles.section, styles.taskSection]}>
           <Text style={styles.sectionTitle}>Today's Plan</Text>
@@ -192,5 +235,12 @@ const styles = StyleSheet.create({
   },
   taskSection: {
     paddingBottom: 16,
+  },
+  emptyState: {
+    ...typography.body,
+    color: palette.textSecondary,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 24,
   },
 });

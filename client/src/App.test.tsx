@@ -107,16 +107,38 @@ jest.mock('./providers/MonetizationProvider', () => {
   };
 });
 
+jest.mock('./providers/FeatureFlagsProvider', () => {
+  const React = require('react');
+  const mockValue = {
+    loading: false,
+    isModuleEnabled: jest.fn().mockReturnValue(true),
+    isAiChatEnabled: jest.fn().mockReturnValue(true),
+    getFlag: jest.fn().mockReturnValue(true),
+    refresh: jest.fn().mockResolvedValue(undefined),
+  };
+
+  return {
+    FeatureFlagsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useFeatureFlags: () => mockValue,
+    __mock: { mockValue },
+  };
+});
+
 jest.spyOn(Alert, 'alert').mockImplementation(() => undefined as unknown as void);
 
 describe('App', () => {
-  const { __mock } = jest.requireMock('./providers/MonetizationProvider') as {
+  const { __mock: monetizationMock } = jest.requireMock('./providers/MonetizationProvider') as {
     __mock: { mockValue: { requestChatAccess: jest.Mock; refreshStatus: jest.Mock; closePaywall: jest.Mock } };
+  };
+
+  const { __mock: featureFlagsMock } = jest.requireMock('./providers/FeatureFlagsProvider') as {
+    __mock: { mockValue: { isAiChatEnabled: jest.Mock } };
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    __mock.mockValue.isPaywallVisible = false;
+    monetizationMock.mockValue.isPaywallVisible = false;
+    featureFlagsMock.mockValue.isAiChatEnabled.mockReturnValue(true);
   });
 
   it('renders bottom navigation tabs', () => {
@@ -127,12 +149,20 @@ describe('App', () => {
     expect(getByText('Profile')).toBeTruthy();
   });
 
-  it('exposes AI coach quick access button', () => {
+  it('exposes AI coach quick access button when feature flag is enabled', () => {
+    featureFlagsMock.mockValue.isAiChatEnabled.mockReturnValue(true);
     const { getByTestId } = render(<App />);
     const button = getByTestId('ai-coach-button');
     fireEvent.press(button);
     expect(Alert.alert).toHaveBeenCalled();
-    expect(__mock.mockValue.requestChatAccess).toHaveBeenCalledWith({ intent: 'quick_access' });
+    expect(monetizationMock.mockValue.requestChatAccess).toHaveBeenCalledWith({ intent: 'quick_access' });
+  });
+
+  it('hides AI coach button when feature flag is disabled', () => {
+    featureFlagsMock.mockValue.isAiChatEnabled.mockReturnValue(false);
+    const { queryByTestId } = render(<App />);
+    const button = queryByTestId('ai-coach-button');
+    expect(button).toBeNull();
   });
 
   it('configures RevenueCat with the current user on mount', async () => {
@@ -158,6 +188,6 @@ describe('App', () => {
       expect.stringContaining('Your subscription is active')
     );
 
-    __mock.mockValue.isPaywallVisible = false;
+    monetizationMock.mockValue.isPaywallVisible = false;
   });
 });

@@ -7,6 +7,7 @@ import { palette } from './theme/palette';
 import { AppLockProvider } from './providers/AppLockProvider';
 import { AuthenticationGate } from './components/AuthenticationGate';
 import { MonetizationProvider, useMonetization } from './providers/MonetizationProvider';
+import { FeatureFlagsProvider } from './providers/FeatureFlagsProvider';
 import { TrialBanner } from './components/TrialBanner';
 import { TrialSoftReminderModal } from './components/TrialSoftReminderModal';
 import { PaywallModal } from './components/PaywallModal';
@@ -131,13 +132,15 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <AppLockProvider>
-      <AuthenticationGate>
-        <MonetizationProvider>
-          <AppScaffold />
-        </MonetizationProvider>
-      </AuthenticationGate>
-    </AppLockProvider>
+    <FeatureFlagsProvider>
+      <AppLockProvider>
+        <AuthenticationGate>
+          <MonetizationProvider>
+            <AppScaffold />
+          </MonetizationProvider>
+        </AuthenticationGate>
+      </AppLockProvider>
+    </FeatureFlagsProvider>
   );
 };
 
