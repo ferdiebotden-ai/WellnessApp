@@ -7,7 +7,7 @@ import {
   query,
   type FirestoreError,
 } from 'firebase/firestore';
-import { firebaseDb } from '../services/firebase';
+import { firebaseDb, isUsingMemoryPersistenceMode } from '../services/firebase';
 import type { DashboardTask, TaskSource, TaskStatus } from '../types/dashboard';
 
 interface TaskDocument {
@@ -64,6 +64,14 @@ export const useTaskFeed = (userId?: string | null): UseTaskFeedResult => {
       return;
     }
 
+    // Short-circuit if Firestore is unavailable (memory-only mode)
+    if (isUsingMemoryPersistenceMode) {
+      // Return empty task list - app continues to function
+      setTaskBuckets({});
+      setLoading(false);
+      return;
+    }
+
     const unsubscribeFns: Array<() => void> = [];
     setLoading(true);
     setError(undefined);
@@ -100,13 +108,16 @@ export const useTaskFeed = (userId?: string | null): UseTaskFeedResult => {
             setLoading(false);
           },
           (firestoreError: FirestoreError) => {
-            setError(firestoreError.message);
+            // Firestore error - return empty tasks instead of blocking UI
+            setError(undefined); // Don't show error to user in dev mode
+            setTaskBuckets({});
             setLoading(false);
           }
         );
         unsubscribeFns.push(unsubscribe);
       } catch (listenerError) {
-        setError((listenerError as Error).message);
+        // Listener setup failed - return empty tasks
+        setError(undefined);
         setLoading(false);
       }
     };

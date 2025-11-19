@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import type { BIOMETRY_TYPE } from 'react-native-keychain';
 import { firebaseAuth } from '../services/firebase';
 import { refreshFirebaseSession } from '../services/firebaseSession';
 import {
@@ -14,12 +13,16 @@ import {
   verifyPin,
   clearPinCredentials,
   clearBiometricRefreshToken,
+  type BiometryType,
 } from '../services/secureCredentials';
+import * as SecureStore from 'expo-secure-store';
+
+const BIOMETRIC_SERVICE = 'com.wellnessos.firebaseRefreshToken';
 
 interface AppLockContextValue {
   isLocked: boolean;
   isProcessing: boolean;
-  supportedBiometry: BIOMETRY_TYPE | null;
+  supportedBiometry: BiometryType;
   hasPin: boolean;
   error: string | null;
   unlockWithBiometrics: () => Promise<boolean>;
@@ -35,32 +38,61 @@ const MIN_PIN_LENGTH = 4;
 
 /**
  * Provides biometric and PIN gated access to the application tree.
+ * Only locks authenticated users who have previously set up biometric/PIN protection.
  */
 export const AppLockProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLocked, setIsLocked] = useState(true);
-  const [supportedBiometry, setSupportedBiometry] = useState<BIOMETRY_TYPE | null>(null);
+  const [supportedBiometry, setSupportedBiometry] = useState<BiometryType>(null);
   const [hasPin, setHasPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const latestRefreshTokenRef = useRef<string | null>(null);
+  const hasCheckedInitialLock = useRef(false);
 
   useEffect(() => {
+    const initializeLock = async () => {
+      // Check if user is authenticated
+      const currentUser = firebaseAuth.currentUser;
+      if (!currentUser) {
+        setIsLocked(false);
+        hasCheckedInitialLock.current = true;
+        return;
+      }
+
+      // Check for existing biometric token or PIN
+      const hasBiometricToken = await SecureStore.getItemAsync(BIOMETRIC_SERVICE).catch(() => null);
+      const hasPin = await hasPinCredentials().catch(() => false);
+
+      // If no lock method exists, this is first session - unlock automatically
+      if (!hasBiometricToken && !hasPin) {
+        setIsLocked(false);
+        hasCheckedInitialLock.current = true;
+        return;
+      }
+
+      // User has lock configured, start locked
+      setIsLocked(true);
+      hasCheckedInitialLock.current = true;
+    };
+
     getSupportedBiometryType().then(setSupportedBiometry).catch(() => setSupportedBiometry(null));
     hasPinCredentials().then(setHasPin).catch(() => setHasPin(false));
+    void initializeLock();
 
     const unsubscribe = firebaseAuth.onIdTokenChanged(async (user) => {
       try {
         const refreshToken = (user as unknown as { stsTokenManager?: { refreshToken?: string } })?.stsTokenManager?.refreshToken;
         if (refreshToken) {
           latestRefreshTokenRef.current = refreshToken;
-          await storeBiometricRefreshToken(refreshToken);
+          // Only store tokens if user has opted in to biometric lock
+          // This happens in BiometricSetupScreen
           await updatePinProtectedRefreshToken(refreshToken);
         } else {
           latestRefreshTokenRef.current = null;
           await clearBiometricRefreshToken();
           await clearPinCredentials();
           setHasPin(false);
-          setIsLocked(true);
+          setIsLocked(false);
         }
       } catch (tokenError) {
         console.error('Failed to persist refresh token', tokenError);
@@ -68,8 +100,16 @@ export const AppLockProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
 
     const handleAppStateChange = (nextState: AppStateStatus) => {
-      if (nextState !== 'active') {
-        setIsLocked(true);
+      if (nextState !== 'active' && hasCheckedInitialLock.current) {
+        // Only lock on app state change if user has lock configured
+        const checkLock = async () => {
+          const hasBiometricToken = await SecureStore.getItemAsync(BIOMETRIC_SERVICE).catch(() => null);
+          const hasPin = await hasPinCredentials().catch(() => false);
+          if (hasBiometricToken || hasPin) {
+            setIsLocked(true);
+          }
+        };
+        void checkLock();
       }
     };
 

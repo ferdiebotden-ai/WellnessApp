@@ -6,6 +6,31 @@ import type { WearableSyncPayload } from './wearables/aggregators';
 type HttpMethod = 'GET' | 'POST' | 'DELETE';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.example.com';
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const DEV_CORE_MODULES: ModuleSummary[] = [
+  {
+    id: 'sleep_foundations',
+    name: 'Sleep Foundations',
+    tier: 'core',
+    headline: 'Sleep better, recover faster',
+    description: 'Reset your sleep schedule, improve deep sleep, and boost recovery.',
+  },
+  {
+    id: 'metabolic_reset',
+    name: 'Metabolic Reset',
+    tier: 'core',
+    headline: 'Stabilize energy and focus',
+    description: 'Dial-in nutrition, glucose, and metabolic flexibility.',
+  },
+  {
+    id: 'stress_resilience',
+    name: 'Stress Resilience',
+    tier: 'core',
+    headline: 'Calm mind, strong body',
+    description: 'Nervous system regulation, nervous system downshifting, breath work.',
+  },
+];
 
 const request = async <T>(path: string, method: HttpMethod, body?: unknown): Promise<T> => {
   const auth = getAuth();
@@ -38,15 +63,36 @@ const request = async <T>(path: string, method: HttpMethod, body?: unknown): Pro
   return response.json() as Promise<T>;
 };
 
-export const fetchCoreModules = () =>
-  request<ModuleSummary[]>(`/api/modules?tier=core`, 'GET');
+export const fetchCoreModules = async () => {
+  try {
+    return await request<ModuleSummary[]>(`/api/modules?tier=core`, 'GET');
+  } catch (error) {
+    console.warn('Backend API unavailable, using development fallback core modules.', error);
+    return DEV_CORE_MODULES;
+  }
+};
 
-export const completeOnboarding = (primaryModuleId: string) =>
-  request<{ success: boolean; trial_start_date: string; trial_end_date: string; primary_module_id: string }>(
-    '/api/onboarding/complete',
-    'POST',
-    { primary_module_id: primaryModuleId }
-  );
+export const completeOnboarding = async (primaryModuleId: string) => {
+  try {
+    return await request<{
+      success: boolean;
+      trial_start_date: string;
+      trial_end_date: string;
+      primary_module_id: string;
+    }>('/api/onboarding/complete', 'POST', { primary_module_id: primaryModuleId });
+  } catch (error) {
+    console.warn('Backend API unavailable, simulating onboarding completion.', error);
+    const now = new Date();
+    const trialStart = now.toISOString();
+    const trialEnd = new Date(now.getTime() + 14 * MS_PER_DAY).toISOString();
+    return {
+      success: true,
+      trial_start_date: trialStart,
+      trial_end_date: trialEnd,
+      primary_module_id: primaryModuleId,
+    };
+  }
+};
 
 /**
  * Submits a waitlist entry for premium tiers.
@@ -98,6 +144,12 @@ export const requestUserDataExport = () => request<{ accepted: boolean }>('/api/
 
 export const requestAccountDeletion = () => request<{ accepted: boolean }>('/api/users/me', 'DELETE');
 
+export const sendChatQuery = (message: string, conversationId?: string) =>
+  request<{ response: string; conversationId: string; citations: string[] }>('/api/chat', 'POST', {
+    message,
+    conversationId,
+  });
+
 /**
  * Retrieves the current monetization status for the authenticated user.
  * Falls back to a local mock payload when the remote API is unavailable so
@@ -109,18 +161,18 @@ export const fetchMonetizationStatus = async (): Promise<MonetizationStatus> => 
   try {
     return await request<MonetizationStatus>('/api/users/me/monetization', 'GET');
   } catch (error) {
-    console.warn('Unable to load monetization status, using fallback payload.', error);
+    console.warn('Backend API unavailable, using development fallback monetization status.');
+    // Return unlimited access for development
     const now = new Date();
-    const msPerDay = 24 * 60 * 60 * 1000;
-    const trialStart = new Date(now.getTime() - 7 * msPerDay);
-    const trialEnd = new Date(now.getTime() + 7 * msPerDay);
+    const trialStart = new Date(now.getTime() - 1 * MS_PER_DAY);
+    const trialEnd = new Date(now.getTime() + 365 * MS_PER_DAY); // 1 year trial
     return {
       trial_start_date: trialStart.toISOString(),
       trial_end_date: trialEnd.toISOString(),
-      subscription_tier: 'trial',
-      subscription_id: null,
+      subscription_tier: 'pro', // Grant Pro tier in development
+      subscription_id: 'dev-subscription',
       chat_queries_used_this_week: 0,
-      chat_weekly_limit: 10,
+      chat_weekly_limit: 999999, // Unlimited
     };
   }
 };

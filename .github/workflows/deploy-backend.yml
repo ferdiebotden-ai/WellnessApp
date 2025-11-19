@@ -1,0 +1,74 @@
+name: "CD: Deploy Backend Functions"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/**'
+
+jobs:
+  deploy-functions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          cd functions
+          npm ci
+          npm run build
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy generateDailySchedules
+        run: |
+          cd functions
+          gcloud functions deploy generateDailySchedules \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=us-central1 \
+            --source=. \
+            --entry-point=generateDailySchedules \
+            --trigger-topic=daily-tick \
+            --allow-unauthenticated
+
+      - name: Deploy generateAdaptiveNudges
+        run: |
+          cd functions
+          gcloud functions deploy generateAdaptiveNudges \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=us-central1 \
+            --source=. \
+            --entry-point=generateAdaptiveNudges \
+            --trigger-topic=hourly-tick \
+            --allow-unauthenticated
+
+      - name: Deploy postChat
+        run: |
+          cd functions
+          gcloud functions deploy postChat \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=us-central1 \
+            --source=. \
+            --entry-point=postChat \
+            --trigger-http \
+            --allow-unauthenticated

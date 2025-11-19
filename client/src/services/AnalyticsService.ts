@@ -186,11 +186,13 @@ class AnalyticsService {
 
     const token = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN;
     if (!token) {
-      console.warn('Mixpanel token is not configured. Analytics is disabled.');
+      console.log('Mixpanel not configured. Analytics disabled in development.');
       return null;
     }
 
-    const instance = new Mixpanel(token);
+    // Mixpanel v3 uses async init with trackAutomaticEvents parameter
+    const trackAutomaticEvents = false;
+    const instance = new Mixpanel(token, trackAutomaticEvents);
     const initialization = instance
       .init()
       .then(() => {

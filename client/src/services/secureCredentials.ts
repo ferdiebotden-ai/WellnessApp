@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
-import * as Keychain from 'react-native-keychain';
+import * as SecureStore from 'expo-secure-store';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { sha256 } from 'js-sha256';
 
 const BIOMETRIC_SERVICE = 'com.wellnessos.firebaseRefreshToken';
@@ -7,7 +8,7 @@ const PIN_HASH_SERVICE = 'com.wellnessos.authPinHash';
 const PIN_TOKEN_SERVICE = 'com.wellnessos.pinProtectedToken';
 const PIN_SALT = 'wellness-os.pin.salt.v1';
 
-type BiometryType = Keychain.BIOMETRY_TYPE | null;
+export type BiometryType = 'FaceID' | 'TouchID' | 'Fingerprint' | 'Iris' | null;
 
 const derivePinHash = (pin: string): string => {
   if (!pin) {
@@ -67,24 +68,18 @@ const decryptTokenWithKey = (cipherHex: string, keyHex: string): string => {
 };
 
 /**
- * Persists the Firebase refresh token in the device Keychain/Keystore protected by biometrics.
+ * Persists the Firebase refresh token in SecureStore protected by biometrics.
  * @param token The Firebase refresh token to persist.
  */
 export const storeBiometricRefreshToken = async (token: string): Promise<void> => {
   try {
-    await Keychain.setGenericPassword('firebase_refresh', token, {
-      service: BIOMETRIC_SERVICE,
-      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
-      accessControl: Platform.OS === 'ios' ? Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET : undefined,
-      authenticationType: Platform.OS === 'android' ? Keychain.AUTHENTICATION_TYPE.BIOMETRICS : undefined,
-      securityLevel: Platform.OS === 'android' ? Keychain.SECURITY_LEVEL.SECURE_SOFTWARE : undefined,
+    await SecureStore.setItemAsync(BIOMETRIC_SERVICE, token, {
+      requireAuthentication: true,
+      authenticationPrompt: 'Authenticate to store your session',
     });
   } catch (error) {
-    await Keychain.setGenericPassword('firebase_refresh', token, {
-      service: BIOMETRIC_SERVICE,
-      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
-      securityLevel: Platform.OS === 'android' ? Keychain.SECURITY_LEVEL.SECURE_SOFTWARE : undefined,
-    });
+    // Fallback: store without biometric protection if biometrics unavailable
+    await SecureStore.setItemAsync(BIOMETRIC_SERVICE, token);
   }
 };
 
@@ -93,43 +88,85 @@ export const storeBiometricRefreshToken = async (token: string): Promise<void> =
  * @returns The decrypted Firebase refresh token string.
  */
 export const retrieveRefreshTokenWithBiometrics = async (): Promise<string> => {
-  const credentials = await Keychain.getGenericPassword({
-    service: BIOMETRIC_SERVICE,
-    authenticationPrompt: {
-      title: 'Unlock Wellness OS',
-      subtitle: 'Authenticate to continue',
-      description: 'Use Face ID, Touch ID, or your device biometrics to unlock your session.',
-      cancel: 'Cancel',
-    },
+  // First authenticate with biometrics
+  const authResult = await LocalAuthentication.authenticateAsync({
+    promptMessage: 'Unlock Wellness OS',
+    cancelLabel: 'Cancel',
+    disableDeviceFallback: false,
   });
 
-  if (!credentials) {
+  if (!authResult.success) {
+    throw new Error('Biometric authentication failed or was cancelled');
+  }
+
+  // Then retrieve the token from SecureStore
+  const token = await SecureStore.getItemAsync(BIOMETRIC_SERVICE, {
+    requireAuthentication: true,
+    authenticationPrompt: 'Authenticate to access your session',
+  });
+
+  if (!token) {
     throw new Error('Biometric refresh token not found');
   }
 
-  return credentials.password;
+  return token;
 };
 
 /**
  * Removes the biometric credential entry from secure storage.
  */
 export const clearBiometricRefreshToken = async (): Promise<void> => {
-  await Keychain.resetGenericPassword({ service: BIOMETRIC_SERVICE });
+  await SecureStore.deleteItemAsync(BIOMETRIC_SERVICE);
 };
 
 /**
  * Determines the native biometric capability available on the device.
  * @returns The supported biometry type or null when unsupported.
  */
-export const getSupportedBiometryType = async (): Promise<BiometryType> => Keychain.getSupportedBiometryType();
+export const getSupportedBiometryType = async (): Promise<BiometryType> => {
+  try {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    if (!hasHardware) {
+      return null;
+    }
 
-const getStoredPinHash = async (): Promise<string | null> => {
-  const stored = await Keychain.getGenericPassword({ service: PIN_HASH_SERVICE });
-  if (!stored) {
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+    if (!isEnrolled) {
+      return null;
+    }
+
+    const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
+    
+    if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+      return Platform.OS === 'ios' ? 'FaceID' : 'Fingerprint';
+    }
+    
+    if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+      return 'Fingerprint';
+    }
+    
+    if (supportedTypes.includes(LocalAuthentication.AuthenticationType.IRIS)) {
+      return 'Iris';
+    }
+
+    // iOS Touch ID falls back to fingerprint type
+    if (Platform.OS === 'ios' && supportedTypes.length > 0) {
+      return 'TouchID';
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('Failed to get supported biometry type', error);
     return null;
   }
+};
 
-  return stored.password;
+const getStoredPinHash = async (): Promise<string | null> => {
+  try {
+    return await SecureStore.getItemAsync(PIN_HASH_SERVICE);
+  } catch (error) {
+    return null;
+  }
 };
 
 /**
@@ -145,23 +182,17 @@ export const hasPinCredentials = async (): Promise<boolean> => {
  * Clears the stored PIN hash and encrypted refresh token copy.
  */
 export const clearPinCredentials = async (): Promise<void> => {
-  await Keychain.resetGenericPassword({ service: PIN_HASH_SERVICE });
-  await Keychain.resetGenericPassword({ service: PIN_TOKEN_SERVICE });
+  await SecureStore.deleteItemAsync(PIN_HASH_SERVICE);
+  await SecureStore.deleteItemAsync(PIN_TOKEN_SERVICE);
 };
 
 const storePinHash = async (pinHash: string): Promise<void> => {
-  await Keychain.setGenericPassword('app_pin_hash', pinHash, {
-    service: PIN_HASH_SERVICE,
-    accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
-  });
+  await SecureStore.setItemAsync(PIN_HASH_SERVICE, pinHash);
 };
 
 const storePinEncryptedTokenWithHash = async (token: string, pinHash: string): Promise<void> => {
   const encrypted = encryptTokenWithKey(token, pinHash);
-  await Keychain.setGenericPassword('app_pin_token', encrypted, {
-    service: PIN_TOKEN_SERVICE,
-    accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
-  });
+  await SecureStore.setItemAsync(PIN_TOKEN_SERVICE, encrypted);
 };
 
 /**
@@ -219,10 +250,10 @@ export const retrieveRefreshTokenWithPin = async (pin: string): Promise<string> 
     throw new Error('Invalid PIN');
   }
 
-  const encryptedPayload = await Keychain.getGenericPassword({ service: PIN_TOKEN_SERVICE });
+  const encryptedPayload = await SecureStore.getItemAsync(PIN_TOKEN_SERVICE);
   if (!encryptedPayload) {
     throw new Error('PIN protected refresh token is unavailable');
   }
 
-  return decryptTokenWithKey(encryptedPayload.password, storedHash);
+  return decryptTokenWithKey(encryptedPayload, storedHash);
 };

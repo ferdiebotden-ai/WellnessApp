@@ -1,6 +1,14 @@
 import { Platform } from 'react-native';
 import AppleHealthKit from 'react-native-health';
-import GoogleFit, { Scopes } from 'react-native-google-fit';
+import {
+  getSdkStatus,
+  SdkAvailabilityStatus,
+  initialize,
+  requestPermission,
+  getGrantedPermissions,
+  readRecords,
+  type Permission,
+} from 'react-native-health-connect';
 
 export type WearableSource = 'apple_health' | 'google_fit';
 export type WearableMetricType = 'sleep' | 'hrv' | 'rhr' | 'steps';
@@ -52,11 +60,12 @@ const HEALTH_KIT_PERMISSIONS = {
   },
 };
 
-const GOOGLE_FIT_SCOPES = [
-  Scopes.FITNESS_ACTIVITY_READ,
-  Scopes.FITNESS_SLEEP_READ,
-  Scopes.FITNESS_HEART_RATE_READ,
-  Scopes.FITNESS_BODY_READ,
+const HEALTH_CONNECT_PERMISSIONS: Permission[] = [
+  { accessType: 'read', recordType: 'SleepSession' },
+  { accessType: 'read', recordType: 'Steps' },
+  { accessType: 'read', recordType: 'HeartRate' },
+  { accessType: 'read', recordType: 'RestingHeartRate' },
+  { accessType: 'read', recordType: 'HeartRateVariability' },
 ];
 
 const toISOString = (date: Date): string => date.toISOString();
@@ -131,29 +140,44 @@ const requestHealthKitPermissions = async (): Promise<WearablePermissionResult> 
     });
   });
 
-const requestGoogleFitPermissions = async (): Promise<WearablePermissionResult> => {
+const requestHealthConnectPermissions = async (): Promise<WearablePermissionResult> => {
   try {
-    const alreadyAuthorized = await GoogleFit.checkIsAuthorized();
-    if (alreadyAuthorized) {
+    const status = await getSdkStatus();
+    if (status !== SdkAvailabilityStatus.SDK_AVAILABLE) {
+      return {
+        status: 'unavailable',
+        source: 'google_fit',
+        error: 'Health Connect is not available on this device',
+      };
+    }
+
+    await initialize();
+
+    const granted = await getGrantedPermissions();
+    const allGranted = HEALTH_CONNECT_PERMISSIONS.every((perm) =>
+      granted.some((g) => g.accessType === perm.accessType && g.recordType === perm.recordType)
+    );
+
+    if (allGranted) {
       return { status: 'authorized', source: 'google_fit' };
     }
 
-    const result = await GoogleFit.authorize({ scopes: GOOGLE_FIT_SCOPES });
+    const result = await requestPermission(HEALTH_CONNECT_PERMISSIONS);
 
-    if (result.success) {
+    if (result.denied.length === 0) {
       return { status: 'authorized', source: 'google_fit' };
     }
 
     return {
       status: 'denied',
       source: 'google_fit',
-      error: result.message ?? 'Google Fit authorization denied',
+      error: `Health Connect permissions denied: ${result.denied.map((p) => p.recordType).join(', ')}`,
     };
   } catch (error) {
     return {
       status: 'denied',
       source: 'google_fit',
-      error: error instanceof Error ? error.message : 'Unknown Google Fit error',
+      error: error instanceof Error ? error.message : 'Unknown Health Connect error',
     };
   }
 };
@@ -168,7 +192,7 @@ export const requestWearablePermissions = async (): Promise<WearablePermissionRe
   }
 
   if (Platform.OS === 'android') {
-    return requestGoogleFitPermissions();
+    return requestHealthConnectPermissions();
   }
 
   return { status: 'unavailable' };
@@ -193,24 +217,38 @@ const fetchHealthKitSleep = async (options: WearableQueryOptions): Promise<Weara
     );
   });
 
-const fetchGoogleFitSleep = async (options: WearableQueryOptions): Promise<WearableMetricReading[]> => {
-  const results = await GoogleFit.getSleepData({
-    startDate: toISOString(options.startDate),
-    endDate: toISOString(options.endDate),
-    bucketUnit: 'DAY',
-  });
-
-  return ensureChronologicalOrder(results).map((sample) =>
-    mapSleepSampleToReading(
-      {
-        startDate: sample.startDate,
-        endDate: sample.endDate,
-        sleepStage: sample.sleepStage,
-        sourceId: sample.sourceId,
+const fetchHealthConnectSleep = async (options: WearableQueryOptions): Promise<WearableMetricReading[]> => {
+  try {
+    const result = await readRecords<{
+      startTime: string;
+      endTime: string;
+      stages?: Array<{ stage: number }>;
+      metadata?: { id?: string };
+    }>('SleepSession', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: toISOString(options.startDate),
+        endTime: toISOString(options.endDate),
       },
-      'google_fit'
-    )
-  );
+    });
+
+    return ensureChronologicalOrder(
+      result.records.map((record) =>
+        mapSleepSampleToReading(
+          {
+            startDate: record.startTime,
+            endDate: record.endTime,
+            sleepStage: record.stages?.[0]?.stage,
+            sourceId: record.metadata?.id,
+          },
+          'google_fit'
+        )
+      )
+    );
+  } catch (error) {
+    console.warn('Failed to fetch Health Connect sleep data', error);
+    return [];
+  }
 };
 
 const fetchHealthKitQuantitySamples = async (
@@ -243,68 +281,95 @@ const fetchHealthKitQuantitySamples = async (
     );
   });
 
-const fetchGoogleFitQuantitySamples = async (
-  method: (
-    options: {
-      startDate: string;
-      endDate: string;
-      bucketUnit?: 'MINUTE' | 'HOUR' | 'DAY';
-      bucketInterval?: number;
-    }
-  ) => Promise<Array<{ value: number; startDate: string; endDate: string; unit?: string; sourceId?: string }>>,
+const fetchHealthConnectQuantitySamples = async (
+  recordType: string,
   metric: WearableMetricType,
-  options: WearableQueryOptions,
-  bucketUnit: 'MINUTE' | 'HOUR' | 'DAY' = 'DAY'
-): Promise<WearableMetricReading[]> => {
-  const results = await method(
-    {
-      startDate: toISOString(options.startDate),
-      endDate: toISOString(options.endDate),
-      bucketUnit,
-      bucketInterval: bucketUnit === 'DAY' ? 1 : undefined,
-    }
-  );
-
-  return ensureChronologicalOrder(results).map((sample) =>
-    mapQuantitySampleToReading(sample, metric, 'google_fit')
-  );
-};
-
-type GoogleFitHeartRateSample = {
-  startDate: string;
-  endDate: string;
-  value: number;
-  sourceId?: string;
-};
-
-const fetchGoogleFitHeartRateSamples = async (
   options: WearableQueryOptions
-): Promise<GoogleFitHeartRateSample[]> => {
-  const googleFitModule = GoogleFit as unknown as {
-    getHeartRateSamples?: (
-      params: {
-        startDate: string;
-        endDate: string;
-        bucketUnit?: 'MINUTE' | 'HOUR' | 'DAY';
-        bucketInterval?: number;
-      }
-    ) => Promise<GoogleFitHeartRateSample[]>;
-  };
+): Promise<WearableMetricReading[]> => {
+  try {
+    const result = await readRecords<{
+      startTime: string;
+      endTime: string;
+      beatsPerMinute?: number;
+      count?: number;
+      metadata?: { id?: string };
+    }>(recordType, {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: toISOString(options.startDate),
+        endTime: toISOString(options.endDate),
+      },
+    });
 
-  if (typeof googleFitModule.getHeartRateSamples !== 'function') {
+    return ensureChronologicalOrder(
+      result.records.map((record) => {
+        const value =
+          'beatsPerMinute' in record && record.beatsPerMinute !== undefined
+            ? record.beatsPerMinute
+            : 'count' in record && record.count !== undefined
+            ? record.count
+            : 0;
+
+        return mapQuantitySampleToReading(
+          {
+            startDate: record.startTime,
+            endDate: record.endTime,
+            value,
+            sourceId: record.metadata?.id,
+          },
+          metric,
+          'google_fit'
+        );
+      })
+    );
+  } catch (error) {
+    console.warn(`Failed to fetch Health Connect ${metric} data`, error);
     return [];
   }
+};
 
-  const results = await googleFitModule.getHeartRateSamples({
-    startDate: toISOString(options.startDate),
-    endDate: toISOString(options.endDate),
-    bucketUnit: 'MINUTE',
-    bucketInterval: 1,
-  });
+const fetchHealthConnectHeartRateSamples = async (
+  options: WearableQueryOptions
+): Promise<Array<{ startDate: string; endDate: string; value: number; sourceId?: string }>> => {
+  try {
+    const result = await readRecords<{
+      startTime: string;
+      endTime: string;
+      beatsPerMinute: number;
+      samples?: Array<{ time: string; beatsPerMinute: number }>;
+      metadata?: { id?: string };
+    }>('HeartRate', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: toISOString(options.startDate),
+        endTime: toISOString(options.endDate),
+      },
+    });
 
-  return ensureChronologicalOrder(results).filter(
-    (sample): sample is GoogleFitHeartRateSample => typeof sample.value === 'number'
-  );
+    return ensureChronologicalOrder(
+      result.records.flatMap((record) => {
+        if (record.samples && record.samples.length > 0) {
+          return record.samples.map((sample) => ({
+            startDate: sample.time,
+            endDate: sample.time,
+            value: sample.beatsPerMinute,
+            sourceId: record.metadata?.id,
+          }));
+        }
+        return [
+          {
+            startDate: record.startTime,
+            endDate: record.endTime,
+            value: record.beatsPerMinute,
+            sourceId: record.metadata?.id,
+          },
+        ];
+      })
+    );
+  } catch (error) {
+    console.warn('Failed to fetch Health Connect heart rate data', error);
+    return [];
+  }
 };
 
 const groupSamplesByDay = <T extends { startDate: string }>(samples: T[]): Record<string, T[]> =>
@@ -346,10 +411,51 @@ const calculateSdnn = (intervals: number[]): number | null => {
   return Math.sqrt(variance);
 };
 
-const deriveGoogleFitHrvReadings = async (
+const deriveHealthConnectHrvReadings = async (
   options: WearableQueryOptions
 ): Promise<WearableMetricReading[]> => {
-  const samples = await fetchGoogleFitHeartRateSamples(options);
+  try {
+    // Try to get HRV records directly first
+    const hrvResult = await readRecords<{
+      startTime: string;
+      endTime: string;
+      samples?: Array<{ time: string; milliseconds: number }>;
+      metadata?: { id?: string };
+    }>('HeartRateVariability', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: toISOString(options.startDate),
+        endTime: toISOString(options.endDate),
+      },
+    });
+
+    if (hrvResult.records.length > 0) {
+      return ensureChronologicalOrder(
+        hrvResult.records.flatMap((record) => {
+          if (record.samples && record.samples.length > 0) {
+            return record.samples.map((sample) =>
+              mapQuantitySampleToReading(
+                {
+                  startDate: sample.time,
+                  endDate: sample.time,
+                  value: sample.milliseconds,
+                  sourceId: record.metadata?.id,
+                },
+                'hrv',
+                'google_fit'
+              )
+            );
+          }
+          return [];
+        })
+      );
+    }
+  } catch (error) {
+    console.warn('HRV records not available, deriving from heart rate samples', error);
+  }
+
+  // Fallback: derive HRV from heart rate samples
+  const samples = await fetchHealthConnectHeartRateSamples(options);
   const grouped = groupSamplesByDay(samples);
 
   const readings = Object.values(grouped)
@@ -391,10 +497,46 @@ const deriveGoogleFitHrvReadings = async (
   return ensureChronologicalOrder(readings);
 };
 
-const deriveGoogleFitRestingHeartRateReadings = async (
+const deriveHealthConnectRestingHeartRateReadings = async (
   options: WearableQueryOptions
 ): Promise<WearableMetricReading[]> => {
-  const samples = await fetchGoogleFitHeartRateSamples(options);
+  try {
+    // Try to get resting heart rate records directly first
+    const rhrResult = await readRecords<{
+      startTime: string;
+      endTime: string;
+      beatsPerMinute: number;
+      metadata?: { id?: string };
+    }>('RestingHeartRate', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: toISOString(options.startDate),
+        endTime: toISOString(options.endDate),
+      },
+    });
+
+    if (rhrResult.records.length > 0) {
+      return ensureChronologicalOrder(
+        rhrResult.records.map((record) =>
+          mapQuantitySampleToReading(
+            {
+              startDate: record.startTime,
+              endDate: record.endTime,
+              value: record.beatsPerMinute,
+              sourceId: record.metadata?.id,
+            },
+            'rhr',
+            'google_fit'
+          )
+        )
+      );
+    }
+  } catch (error) {
+    console.warn('Resting heart rate records not available, deriving from heart rate samples', error);
+  }
+
+  // Fallback: derive from heart rate samples
+  const samples = await fetchHealthConnectHeartRateSamples(options);
   const grouped = groupSamplesByDay(samples);
 
   const readings = Object.values(grouped)
@@ -454,7 +596,7 @@ export const getSleepReadings = async (
   }
 
   if (Platform.OS === 'android') {
-    return fetchGoogleFitSleep(options);
+    return fetchHealthConnectSleep(options);
   }
 
   return [];
@@ -477,7 +619,7 @@ export const getHrvReadings = async (
   }
 
   if (Platform.OS === 'android') {
-    return deriveGoogleFitHrvReadings(options);
+    return deriveHealthConnectHrvReadings(options);
   }
 
   return [];
@@ -500,7 +642,7 @@ export const getRestingHeartRateReadings = async (
   }
 
   if (Platform.OS === 'android') {
-    return deriveGoogleFitRestingHeartRateReadings(options);
+    return deriveHealthConnectRestingHeartRateReadings(options);
   }
 
   return [];
@@ -523,12 +665,7 @@ export const getStepReadings = async (
   }
 
   if (Platform.OS === 'android') {
-    return fetchGoogleFitQuantitySamples(
-      GoogleFit.getDailyStepCountSamples,
-      'steps',
-      options,
-      'DAY'
-    );
+    return fetchHealthConnectQuantitySamples('Steps', 'steps', options);
   }
 
   return [];

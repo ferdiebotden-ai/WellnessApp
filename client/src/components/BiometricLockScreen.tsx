@@ -8,13 +8,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import type { BIOMETRY_TYPE } from 'react-native-keychain';
+import type { BiometryType } from '../services/secureCredentials';
 import { useAppLock } from '../providers/AppLockProvider';
 import { palette } from '../theme/palette';
 
 type ScreenMode = 'biometric' | 'pin-entry' | 'pin-create' | 'pin-confirm';
 
-const getBiometryLabel = (type: BIOMETRY_TYPE | null): string => {
+const getBiometryLabel = (type: BiometryType): string => {
   switch (type) {
     case 'FaceID':
       return 'Face ID';

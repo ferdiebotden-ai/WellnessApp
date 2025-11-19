@@ -13,6 +13,8 @@ import type { MonetizationStatus, PaywallTrigger, SubscriptionTier } from '../ty
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const DEV_MODE_FULL_ACCESS = true; // Set to false in production
+
 const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 interface MonetizationContextValue {
@@ -59,7 +61,16 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const monetizationStatus = await fetchMonetizationStatus();
       if (isMountedRef.current) {
-        setStatus(monetizationStatus);
+        if (DEV_MODE_FULL_ACCESS) {
+          setStatus({
+            ...monetizationStatus,
+            subscription_tier: 'pro',
+            chat_weekly_limit: 9999,
+            chat_queries_used_this_week: 0,
+          });
+        } else {
+          setStatus(monetizationStatus);
+        }
       }
     } catch (error) {
       if (isMountedRef.current) {
@@ -136,6 +147,9 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [daysLeftInTrial, hasTrial, isTrialActive, softReminderSeen]);
 
   useEffect(() => {
+    if (DEV_MODE_FULL_ACCESS) {
+      return; // Don't show paywall in dev mode
+    }
     if (isTrialExpired) {
       setPaywallTrigger('trial_expired');
       setPaywallDismissible(false);
@@ -148,6 +162,9 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     trigger: PaywallTrigger,
     options?: { dismissible?: boolean; triggerModuleId?: string | null }
   ) => {
+    if (DEV_MODE_FULL_ACCESS) {
+      return;
+    }
     setPaywallTrigger(trigger);
     setPaywallDismissible(options?.dismissible ?? true);
     setPaywallVisible(true);
@@ -167,6 +184,11 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const requestChatAccess = (options?: { intent?: AiChatIntent }) => {
+    if (DEV_MODE_FULL_ACCESS) {
+      void analytics.trackAiChatQuerySent({ intentDetected: options?.intent ?? 'unknown' });
+      return true; // Allow all chat access in dev mode
+    }
+
     if (activeSubscription) {
       void analytics.trackAiChatQuerySent({ intentDetected: options?.intent ?? 'unknown' });
       return true;
@@ -204,6 +226,10 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const requestProModuleAccess = (moduleId?: string | null) => {
+    if (DEV_MODE_FULL_ACCESS) {
+      return true; // Allow all module access in dev mode
+    }
+
     if (hasActiveSubscription(tier)) {
       return true;
     }

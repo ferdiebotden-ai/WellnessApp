@@ -1,17 +1,28 @@
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ModuleCard } from '../components/ModuleCard';
 import { useCoreModules } from '../hooks/useCoreModules';
 import { completeOnboarding } from '../services/api';
+import { useUpdateOnboarding } from '../providers/AuthProvider';
 import analytics from '../services/AnalyticsService';
 import type { ModuleSummary } from '../types/module';
+import type { OnboardingStackParamList } from '../navigation/OnboardingStack';
 
 const KEY_EXTRACTOR = (item: ModuleSummary) => item.id;
 
-export const ModuleOnboardingScreen: React.FC = () => {
+type ModuleOnboardingScreenProps = NativeStackScreenProps<
+  OnboardingStackParamList,
+  'ModuleOnboarding'
+>;
+
+export const ModuleOnboardingScreen: React.FC<ModuleOnboardingScreenProps> = ({
+  navigation,
+}) => {
   const { modules, status, error, reload } = useCoreModules();
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const updateOnboarding = useUpdateOnboarding();
 
   const handleSelect = useCallback((moduleId: string) => {
     setSelectedModuleId(moduleId);
@@ -31,7 +42,20 @@ export const ModuleOnboardingScreen: React.FC = () => {
       if (primaryModuleId) {
         void analytics.trackOnboardingComplete({ primaryModuleId });
       }
-      Alert.alert('You\'re all set!', 'Welcome to your tailored Wellness journey.');
+
+      // Navigate to biometric setup if available, otherwise mark onboarding complete
+      // Check if biometrics are available
+      const { getSupportedBiometryType } = await import('../services/secureCredentials');
+      const biometryType = await getSupportedBiometryType();
+      
+      if (biometryType) {
+        // Don't mark onboarding complete yet - BiometricSetupScreen will do that
+        navigation.navigate('BiometricSetup');
+      } else {
+        // No biometrics available, mark onboarding complete now
+        await updateOnboarding(true);
+        // RootNavigator will automatically show MainStack
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete onboarding';
       Alert.alert('Something went wrong', message, [
@@ -41,7 +65,7 @@ export const ModuleOnboardingScreen: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [selectedModuleId]);
+  }, [selectedModuleId, updateOnboarding, navigation]);
 
   const renderItem = ({ item }: { item: ModuleSummary }) => (
     <ModuleCard module={item} selected={item.id === selectedModuleId} onSelect={handleSelect} />
@@ -53,7 +77,7 @@ export const ModuleOnboardingScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Choose your first focus area</Text>
-        <Text style={styles.subtitle}>We\'ll personalize your Wellness OS experience around this core module.</Text>
+        <Text style={styles.subtitle}>We'll personalize your Wellness OS experience around this core module.</Text>
       </View>
 
       {showLoading ? (

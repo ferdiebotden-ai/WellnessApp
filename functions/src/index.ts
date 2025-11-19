@@ -13,3 +13,6 @@ export {
 export { calculateStreaks, resetFreezes } from './streaks';
 export { joinWaitlist as postWaitlist } from './waitlist';
 export { handleRevenueCatWebhook as postApiWebhooksRevenuecat } from './revenuecatWebhook';
+export { generateDailySchedules } from './dailyScheduler';
+export { generateAdaptiveNudges } from './nudgeEngine';
+export { postChat } from './chat';
