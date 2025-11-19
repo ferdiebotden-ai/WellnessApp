@@ -54,6 +54,10 @@ const formatDateKey = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+/**
+ * Generates daily schedules for all active user module enrollments.
+ * Runs nightly via Pub/Sub trigger.
+ */
 export const generateDailySchedules = async (
   _event: ScheduledEvent,
   context: ScheduledContext,
