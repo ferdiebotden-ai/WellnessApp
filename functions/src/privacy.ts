@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { PubSub } from '@google-cloud/pubsub';
 import { Storage } from '@google-cloud/storage';
 import JSZip from 'jszip';
-import type { FirebaseFirestore } from 'firebase-admin/firestore';
+import type { Firestore } from 'firebase-admin/firestore';
 import { authenticateRequest } from './users';
 import { getConfig, getPrivacyConfig } from './config';
 import { getServiceClient, getUserClient } from './supabaseClient';
@@ -261,7 +261,7 @@ export const handleUserExportJob = async (event: PubSubMessage): Promise<void> =
   }
 };
 
-const purgeFirestoreData = async (firestore: FirebaseFirestore.Firestore, userId: string): Promise<void> => {
+const purgeFirestoreData = async (firestore: Firestore, userId: string): Promise<void> => {
   const logQueueRef = firestore.collection('protocol_log_queue').doc(userId).collection('entries');
   const queueDocuments = await logQueueRef.listDocuments();
   await Promise.all(queueDocuments.map((doc) => doc.delete()));

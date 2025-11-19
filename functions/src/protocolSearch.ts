@@ -235,7 +235,7 @@ async function fetchProtocols(
   }
 
   const { data, error } = await client
-    .from<ProtocolRow>('protocols')
+    .from('protocols')
     .select('id,name,description,category,tier_required,benefits,constraints,citations,is_active')
     .in('id', ids);
 
@@ -243,7 +243,7 @@ async function fetchProtocols(
     throw new Error(`Failed to fetch protocols: ${error.message}`);
   }
 
-  return data ?? [];
+  return (data as ProtocolRow[] | null) ?? [];
 }
 
 function mapProtocols(matches: RankedMatch[], rows: ProtocolRow[]): ProtocolSearchResult[] {

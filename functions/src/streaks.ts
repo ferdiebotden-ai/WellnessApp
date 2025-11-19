@@ -168,15 +168,15 @@ const sendStreakNudge = async (
 const fetchEnrollments = async (
   supabase: ReturnType<typeof getServiceClient>,
 ): Promise<ModuleEnrollmentRow[]> => {
-  const response: PostgrestResponse<ModuleEnrollmentRow> = await supabase
-    .from<ModuleEnrollmentRow>('module_enrollment')
+  const { data, error } = await supabase
+    .from('module_enrollment')
     .select('id,user_id,module_id,current_streak,last_active_date,streak_freeze_available');
 
-  if (response.error) {
-    throw new Error(`Failed to load module enrollments: ${response.error.message}`);
+  if (error) {
+    throw new Error(`Failed to load module enrollments: ${error.message}`);
   }
 
-  return Array.isArray(response.data) ? response.data : [];
+  return Array.isArray(data) ? (data as ModuleEnrollmentRow[]) : [];
 };
 
 const resolveRunDate = (context: ScheduledContext): Date => {

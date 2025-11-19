@@ -28,7 +28,7 @@ function isPostgrestError(error: unknown): error is PostgrestError {
 
 async function fetchLastRun(client: SupabaseClient): Promise<Date | null> {
   const { data, error } = await client
-    .from<JobRunStateRow>(JOB_STATE_TABLE)
+    .from(JOB_STATE_TABLE)
     .select('last_run_at')
     .eq('job_name', JOB_NAME)
     .maybeSingle();
@@ -66,13 +66,12 @@ async function fetchFeedbackAggregates(
   lastRun: Date | null,
 ): Promise<FeedbackAggregateRow[]> {
   let query = client
-    .from<FeedbackAggregateRow>('ai_audit_log')
-    .select('protocol_id,module_id,user_feedback,count:id', { head: false })
-    .not('user_feedback', 'is', null)
-    .group('protocol_id,module_id,user_feedback');
+    .from('ai_audit_log')
+    .select('protocol_id,module_id,user_feedback')
+    .not('user_feedback', 'is', null);
 
   if (lastRun) {
-    query = query.gte('user_action_timestamp', lastRun.toISOString());
+    query = query.gte('created_at', lastRun.toISOString());
   }
 
   const { data, error } = await query;
@@ -81,7 +80,23 @@ async function fetchFeedbackAggregates(
     throw new Error(`Failed to aggregate feedback: ${error.message}`);
   }
 
-  return data ?? [];
+  // Group in JavaScript since Supabase doesn't support .group()
+  const grouped = new Map<string, number>();
+  for (const row of (data as Array<{ protocol_id: string | null; module_id: string | null; user_feedback: string | null }> | null) ?? []) {
+    if (!row.user_feedback) continue;
+    const key = `${row.protocol_id ?? 'unassigned'}|${row.module_id ?? 'unassigned'}|${row.user_feedback}`;
+    grouped.set(key, (grouped.get(key) ?? 0) + 1);
+  }
+
+  return Array.from(grouped.entries()).map(([key, count]) => {
+    const [protocol_id, module_id, user_feedback] = key.split('|');
+    return {
+      protocol_id: protocol_id === 'unassigned' ? null : protocol_id,
+      module_id: module_id === 'unassigned' ? null : module_id,
+      user_feedback,
+      count,
+    };
+  });
 }
 
 export function groupFeedbackSummaries(rows: FeedbackAggregateRow[]): FeedbackSummaryEntry[] {

@@ -1,7 +1,6 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { getFirebaseApp } from './firebaseAdmin';
 import { getServiceClient } from './supabaseClient';
-import type { PostgrestResponse } from '@supabase/supabase-js';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -65,27 +64,26 @@ export const generateDailySchedules = async (
   const supabase = getServiceClient();
 
   // 1. Fetch all active enrollments
-  const enrollmentsResponse: PostgrestResponse<ModuleEnrollmentRow> = await supabase
-    .from<ModuleEnrollmentRow>('module_enrollment')
+  const { data: enrollments, error: enrollmentsError } = await supabase
+    .from('module_enrollment')
     .select('id, user_id, module_id');
 
-  if (enrollmentsResponse.error) {
-    throw new Error(`Failed to fetch enrollments: ${enrollmentsResponse.error.message}`);
+  if (enrollmentsError) {
+    throw new Error(`Failed to fetch enrollments: ${enrollmentsError.message}`);
   }
-  const enrollments = enrollmentsResponse.data || [];
   if (enrollments.length === 0) return;
 
   // 2. Fetch all protocols and mappings (cache them)
-  const [protocolsResponse, mappingsResponse] = await Promise.all([
-    supabase.from<ProtocolRow>('protocols').select('id, name, duration_minutes, category'),
-    supabase.from<ModuleProtocolMapRow>('module_protocol_map').select('protocol_id, module_id, is_starter_protocol'),
+  const [protocolsResult, mappingsResult] = await Promise.all([
+    supabase.from('protocols').select('id, name, duration_minutes, category'),
+    supabase.from('module_protocol_map').select('protocol_id, module_id, is_starter_protocol'),
   ]);
 
-  if (protocolsResponse.error) throw new Error(`Failed to fetch protocols: ${protocolsResponse.error.message}`);
-  if (mappingsResponse.error) throw new Error(`Failed to fetch mappings: ${mappingsResponse.error.message}`);
+  if (protocolsResult.error) throw new Error(`Failed to fetch protocols: ${protocolsResult.error.message}`);
+  if (mappingsResult.error) throw new Error(`Failed to fetch mappings: ${mappingsResult.error.message}`);
 
-  const protocols = new Map(protocolsResponse.data?.map((p) => [p.id, p]) || []);
-  const mappings = mappingsResponse.data || [];
+  const protocols = new Map((protocolsResult.data as ProtocolRow[] | null)?.map((p) => [p.id, p]) || []);
+  const mappings = (mappingsResult.data as ModuleProtocolMapRow[] | null) || [];
 
   // Group mappings by module_id
   const moduleProtocols = new Map<string, string[]>();

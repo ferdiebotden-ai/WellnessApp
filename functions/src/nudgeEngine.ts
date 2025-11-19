@@ -9,7 +9,6 @@ import {
   fetchProtocols,
   mapProtocols,
 } from './protocolSearch';
-import type { PostgrestResponse } from '@supabase/supabase-js';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -80,17 +79,16 @@ export const generateAdaptiveNudges = async (
   const supabase = getServiceClient();
 
   // 1. Fetch active enrollments
-  const enrollmentsResponse: PostgrestResponse<ModuleEnrollmentRow> = await supabase
-    .from<ModuleEnrollmentRow>('module_enrollment')
+  const { data: enrollments, error: enrollmentsError } = await supabase
+    .from('module_enrollment')
     .select('id, user_id, module_id, last_active_date');
 
-  if (enrollmentsResponse.error) throw new Error(enrollmentsResponse.error.message);
-  const enrollments = enrollmentsResponse.data || [];
+  if (enrollmentsError) throw new Error(enrollmentsError.message);
   if (enrollments.length === 0) return;
 
   // Group by user
   const userEnrollments = new Map<string, ModuleEnrollmentRow[]>();
-  for (const e of enrollments) {
+  for (const e of (enrollments as ModuleEnrollmentRow[] | null) || []) {
     const list = userEnrollments.get(e.user_id) || [];
     list.push(e);
     userEnrollments.set(e.user_id, list);
@@ -100,13 +98,13 @@ export const generateAdaptiveNudges = async (
   const userIds = Array.from(userEnrollments.keys()).slice(0, 50);
   
   // Fetch profiles
-  const profilesResponse = await supabase
-    .from<UserProfileRow>('users')
+  const { data: profilesData, error: profilesError } = await supabase
+    .from('users')
     .select('id, display_name, healthMetrics')
     .in('id', userIds);
     
-  if (profilesResponse.error) throw new Error(profilesResponse.error.message);
-  const profiles = new Map(profilesResponse.data?.map(p => [p.id, p]) || []);
+  if (profilesError) throw new Error(profilesError.message);
+  const profiles = new Map((profilesData as UserProfileRow[] | null)?.map(p => [p.id, p]) || []);
 
   for (const userId of userIds) {
     const profile = profiles.get(userId);
