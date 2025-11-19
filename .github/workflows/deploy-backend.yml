@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'functions/**'
+      - '.github/workflows/deploy-backend.yml'
 
 jobs:
   deploy-functions:
