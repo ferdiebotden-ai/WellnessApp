@@ -1,17 +1,68 @@
-import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { fetchCurrentUser, updateUserPreferences } from '../services/api';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import type { ProfileStackParamList } from '../navigation/ProfileStack';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
+  const [socialAnonymous, setSocialAnonymous] = useState<boolean>(true);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
+  const [isUpdatingPreferences, setIsUpdatingPreferences] = useState(false);
+  const [preferencesError, setPreferencesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUserPreferences = async () => {
+      try {
+        setIsLoadingPreferences(true);
+        setPreferencesError(null);
+        const response = await fetchCurrentUser();
+        const currentValue = response.user.preferences?.social_anonymous ?? true;
+        setSocialAnonymous(currentValue);
+      } catch (error) {
+        console.error('Failed to load user preferences', error);
+        setPreferencesError('Failed to load preferences');
+      } finally {
+        setIsLoadingPreferences(false);
+      }
+    };
+
+    void loadUserPreferences();
+  }, []);
 
   const handlePrivacyPress = useCallback(() => {
     navigation.navigate('PrivacyDashboard');
   }, [navigation]);
+
+  const handleSocialAnonymousToggle = useCallback(
+    async (value: boolean) => {
+      try {
+        setIsUpdatingPreferences(true);
+        setPreferencesError(null);
+        setSocialAnonymous(value);
+        
+        // Fetch current preferences to merge with the update
+        const currentUserResponse = await fetchCurrentUser();
+        const currentPreferences = currentUserResponse.user.preferences || {};
+        
+        // Merge the social_anonymous update with existing preferences
+        await updateUserPreferences({
+          ...currentPreferences,
+          social_anonymous: value,
+        });
+      } catch (error) {
+        console.error('Failed to update social anonymity preference', error);
+        setSocialAnonymous(!value); // Revert toggle on error
+        setPreferencesError('Failed to update preference. Please try again.');
+      } finally {
+        setIsUpdatingPreferences(false);
+      }
+    },
+    []
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -36,6 +87,35 @@ export const ProfileScreen: React.FC = () => {
         >
           <Text style={styles.primaryButtonText}>Open Privacy Dashboard</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Social Features (Coming Soon)</Text>
+        <Text style={styles.cardBody}>
+          Choose how you'll appear in future leaderboards and challenges.
+        </Text>
+        {isLoadingPreferences ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={palette.primary} />
+          </View>
+        ) : (
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>Appear anonymously in future social features</Text>
+            <Switch
+              value={socialAnonymous}
+              onValueChange={handleSocialAnonymousToggle}
+              disabled={isUpdatingPreferences}
+              trackColor={{ false: palette.border, true: palette.primary }}
+              thumbColor={palette.surface}
+              testID="social-anonymous-toggle"
+            />
+          </View>
+        )}
+        {preferencesError && (
+          <Text style={styles.errorText} testID="preferences-error">
+            {preferencesError}
+          </Text>
+        )}
       </View>
     </ScrollView>
   );
@@ -77,5 +157,29 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     ...typography.subheading,
     color: palette.surface,
+  },
+  loadingContainer: {
+    marginTop: 8,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  toggleContainer: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  toggleLabel: {
+    ...typography.body,
+    color: palette.textPrimary,
+    flex: 1,
+    marginRight: 12,
+  },
+  errorText: {
+    ...typography.body,
+    color: palette.error,
+    marginTop: 8,
+    fontSize: 14,
   },
 });

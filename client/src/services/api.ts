@@ -1,9 +1,10 @@
 import { getAuth } from 'firebase/auth';
 import type { ModuleSummary } from '../types/module';
 import type { MonetizationStatus } from '../types/monetization';
+import type { UserPreferences, UserProfile } from '../types/user';
 import type { WearableSyncPayload } from './wearables/aggregators';
 
-type HttpMethod = 'GET' | 'POST' | 'DELETE';
+type HttpMethod = 'GET' | 'POST' | 'DELETE' | 'PATCH';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.example.com';
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -149,6 +150,20 @@ export const sendChatQuery = (message: string, conversationId?: string) =>
     message,
     conversationId,
   });
+
+/**
+ * Retrieves the current user profile.
+ * @returns User profile including preferences and other user data.
+ */
+export const fetchCurrentUser = () => request<{ user: UserProfile }>('/api/users/me', 'GET');
+
+/**
+ * Updates user preferences.
+ * @param preferences Partial preferences object to update.
+ * @returns Updated user profile.
+ */
+export const updateUserPreferences = (preferences: Partial<UserPreferences>) =>
+  request<{ user: UserProfile }>('/api/users/me', 'PATCH', { preferences });
 
 /**
  * Retrieves the current monetization status for the authenticated user.
