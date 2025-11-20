@@ -9,6 +9,7 @@ import {
   fetchProtocols,
   mapProtocols,
 } from './protocolSearch';
+import { generateCompletion, getCompletionModelName } from './vertexAI';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -43,32 +44,6 @@ type ScheduledEvent = { data?: string } | undefined;
 type ScheduledContext = { timestamp?: string } | undefined;
 
 const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis. **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
-
-async function generateCompletion(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`OpenAI completion request failed: ${response.status} ${message}`);
-  }
-
-  const payload = await response.json() as any;
-  return payload.choices?.[0]?.message?.content || '';
-}
 
 export const generateAdaptiveNudges = async (
   _event: ScheduledEvent,
@@ -124,7 +99,7 @@ export const generateAdaptiveNudges = async (
     // RAG: Find relevant protocol
     // Query based on module + "optimization"
     const query = `${primaryModule.module_id} optimization strategies`;
-    const embedding = await generateEmbedding(config.openAiApiKey, query);
+    const embedding = await generateEmbedding(query);
     const pineconeHost = await resolvePineconeHost(config.pineconeApiKey, config.pineconeIndexName);
     const matches = await queryPinecone(config.pineconeApiKey, pineconeHost, embedding, 3);
     const protocols = await fetchProtocols(supabase, matches.map(m => m.id));
@@ -134,15 +109,15 @@ export const generateAdaptiveNudges = async (
 
     const userPrompt = `
       Context: ${context}
-      
+
       Relevant Protocols:
       ${ragContext}
-      
+
       Task: Generate a short, punchy, evidence-based nudge (max 2 sentences) to motivate the user to engage with their ${primaryModule.module_id} module today. Suggest one of the relevant protocols if appropriate.
     `;
 
     // Generate Nudge
-    const nudgeText = await generateCompletion(config.openAiApiKey, SYSTEM_PROMPT, userPrompt);
+    const nudgeText = await generateCompletion(SYSTEM_PROMPT, userPrompt);
 
     // Write to Firestore
     const nudgePayload: NudgePayload = {
@@ -161,7 +136,7 @@ export const generateAdaptiveNudges = async (
     await supabase.from('ai_audit_log').insert({
       user_id: userId,
       decision_type: 'nudge_generated',
-      model_used: 'gpt-4-turbo-preview',
+      model_used: getCompletionModelName(),
       prompt: userPrompt,
       response: nudgeText,
       reasoning: 'Proactive engagement',

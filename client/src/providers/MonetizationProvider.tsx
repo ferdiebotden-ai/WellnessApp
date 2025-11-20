@@ -69,7 +69,7 @@ export const MonetizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             chat_queries_used_this_week: 0,
           });
         } else {
-          setStatus(monetizationStatus);
+        setStatus(monetizationStatus);
         }
       }
     } catch (error) {

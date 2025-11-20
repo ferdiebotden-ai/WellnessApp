@@ -11,36 +11,11 @@ import {
   fetchProtocols,
   mapProtocols,
 } from './protocolSearch';
+import { generateCompletion, getCompletionModelName } from './vertexAI';
 
 const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis. **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
 
 const MEDICAL_DISCLAIMER = "\n\n⚠️ **Important**: This is educational information, not medical advice. Consult your healthcare provider.";
-
-async function generateCompletion(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`OpenAI completion request failed: ${response.status} ${message}`);
-  }
-
-  const payload = await response.json() as any;
-  return payload.choices?.[0]?.message?.content || '';
-}
 
 export const postChat = async (req: Request, res: Response): Promise<void> => {
   if (req.method !== 'POST') {
@@ -85,7 +60,7 @@ export const postChat = async (req: Request, res: Response): Promise<void> => {
     `;
 
     // 3. RAG Search
-    const embedding = await generateEmbedding(config.openAiApiKey, message);
+    const embedding = await generateEmbedding(message);
     const pineconeHost = await resolvePineconeHost(config.pineconeApiKey, config.pineconeIndexName);
     const matches = await queryPinecone(config.pineconeApiKey, pineconeHost, embedding, 3);
     const protocols = await fetchProtocols(supabase, matches.map(m => m.id));
@@ -96,14 +71,14 @@ export const postChat = async (req: Request, res: Response): Promise<void> => {
     // 4. Generate Response
     const userPrompt = `
       Context: ${context}
-      
+
       Relevant Protocols:
       ${ragContext}
-      
+
       User Query: ${message}
     `;
 
-    let responseText = await generateCompletion(config.openAiApiKey, SYSTEM_PROMPT, userPrompt);
+    let responseText = await generateCompletion(SYSTEM_PROMPT, userPrompt);
 
     // Append disclaimer if medical keywords detected (simplified)
     const medicalKeywords = ['pain', 'doctor', 'prescription', 'diagnose', 'symptom', 'medication'];
@@ -137,7 +112,7 @@ export const postChat = async (req: Request, res: Response): Promise<void> => {
     await supabase.from('ai_audit_log').insert({
       user_id: uid,
       decision_type: 'chat_response',
-      model_used: 'gpt-4-turbo-preview',
+      model_used: getCompletionModelName(),
       prompt: userPrompt,
       response: responseText,
       reasoning: 'Chat response with RAG',

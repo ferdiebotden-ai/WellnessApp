@@ -1,0 +1,21 @@
+{
+  "name": "wellness-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for Wellness App backend setup",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "seed": "ts-node seed-pinecone.ts"
+  },
+  "dependencies": {
+    "@google-cloud/vertexai": "^1.7.0",
+    "@supabase/supabase-js": "^2.43.5",
+    "dotenv": "^16.4.7",
+    "google-auth-library": "^9.14.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

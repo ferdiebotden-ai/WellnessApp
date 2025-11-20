@@ -48,7 +48,8 @@ jobs:
             --source=. \
             --entry-point=generateDailySchedules \
             --trigger-topic=daily-tick \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}
 
       - name: Deploy generateAdaptiveNudges
         run: |
@@ -60,7 +61,8 @@ jobs:
             --source=. \
             --entry-point=generateAdaptiveNudges \
             --trigger-topic=hourly-tick \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}
 
       - name: Deploy postChat
         run: |
@@ -72,4 +74,5 @@ jobs:
             --source=. \
             --entry-point=postChat \
             --trigger-http \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}

@@ -9,7 +9,6 @@ export interface ServiceConfig {
   supabaseServiceRoleKey: string;
   supabaseJwtSecret: string;
   defaultTrialDays: number;
-  openAiApiKey: string;
   pineconeApiKey: string;
   pineconeIndexName: string;
   privacyExportUrlTtlHours: number;
@@ -30,7 +29,6 @@ const requiredEnv = [
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
   'SUPABASE_JWT_SECRET',
-  'OPENAI_API_KEY',
   'PINECONE_API_KEY',
   'REVENUECAT_WEBHOOK_SECRET'
 ] as const;
@@ -61,7 +59,6 @@ export function getConfig(): ServiceConfig {
       supabaseServiceRoleKey: readEnv('SUPABASE_SERVICE_ROLE_KEY'),
       supabaseJwtSecret: readEnv('SUPABASE_JWT_SECRET'),
       defaultTrialDays: Number.parseInt(process.env.DEFAULT_TRIAL_DAYS ?? '14', 10),
-      openAiApiKey: readEnv('OPENAI_API_KEY'),
       pineconeApiKey: readEnv('PINECONE_API_KEY'),
       pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? 'wellness-protocols',
       privacyExportUrlTtlHours: Number.parseInt(process.env.PRIVACY_EXPORT_URL_TTL_HOURS ?? '72', 10),

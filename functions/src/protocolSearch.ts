@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getConfig } from './config';
 import { getServiceClient } from './supabaseClient';
+import { generateEmbedding as generateVertexEmbedding, getEmbeddingModelName } from './vertexAI';
 
-const EMBEDDING_MODEL = 'text-embedding-3-large';
 const DEFAULT_TOP_K = 5;
 const MAX_TOP_K = 20;
 
@@ -118,32 +118,9 @@ function extractQuery(value: unknown): string {
   return '';
 }
 
-async function generateEmbedding(apiKey: string, query: string): Promise<number[]> {
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: query,
-    }),
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`OpenAI embeddings request failed: ${response.status} ${message}`);
-  }
-
-  const payload = (await response.json()) as EmbeddingResponse;
-  const embedding = payload.data?.[0]?.embedding;
-
-  if (!embedding || embedding.length === 0) {
-    throw new Error('OpenAI response did not include an embedding vector');
-  }
-
-  return embedding;
+async function generateEmbedding(query: string): Promise<number[]> {
+  // Use Vertex AI embedding generation
+  return await generateVertexEmbedding(query);
 }
 
 async function resolvePineconeHost(apiKey: string, indexName: string): Promise<string> {
@@ -293,7 +270,7 @@ export async function searchProtocols(req: Request, res: Response): Promise<void
   try {
     const config = getConfig();
     const supabase = getServiceClient();
-    const embedding = await generateEmbedding(config.openAiApiKey, queryParam);
+    const embedding = await generateEmbedding(queryParam);
     const pineconeHost = await resolvePineconeHost(config.pineconeApiKey, config.pineconeIndexName);
     const matches = await queryPinecone(config.pineconeApiKey, pineconeHost, embedding, topK);
     const protocols = await fetchProtocols(supabase, matches.map((match) => match.id));
