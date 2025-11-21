@@ -41,6 +41,22 @@ jobs:
       - name: Deploy generateDailySchedules
         run: |
           cd functions
+
+          # Create .env.yaml file with all secrets
+          cat > .env.yaml << 'EOF'
+          FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+          FIREBASE_PRIVATE_KEY: "${{ secrets.FIREBASE_PRIVATE_KEY }}"
+          SUPABASE_URL: "${{ secrets.SUPABASE_URL }}"
+          SUPABASE_ANON_KEY: "${{ secrets.SUPABASE_ANON_KEY }}"
+          SUPABASE_SERVICE_ROLE_KEY: "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          SUPABASE_JWT_SECRET: "${{ secrets.SUPABASE_JWT_SECRET }}"
+          PINECONE_API_KEY: "${{ secrets.PINECONE_API_KEY }}"
+          PINECONE_INDEX_NAME: "${{ secrets.PINECONE_INDEX_NAME }}"
+          REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
+          EOF
+
+          # Deploy with env file
           gcloud functions deploy generateDailySchedules \
             --gen2 \
             --runtime=nodejs20 \
@@ -49,11 +65,30 @@ jobs:
             --entry-point=generateDailySchedules \
             --trigger-topic=daily-tick \
             --allow-unauthenticated \
-            --set-env-vars=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}
+            --env-vars-file=.env.yaml
+
+          # Clean up
+          rm .env.yaml
 
       - name: Deploy generateAdaptiveNudges
         run: |
           cd functions
+
+          # Create .env.yaml file with all secrets
+          cat > .env.yaml << 'EOF'
+          FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+          FIREBASE_PRIVATE_KEY: "${{ secrets.FIREBASE_PRIVATE_KEY }}"
+          SUPABASE_URL: "${{ secrets.SUPABASE_URL }}"
+          SUPABASE_ANON_KEY: "${{ secrets.SUPABASE_ANON_KEY }}"
+          SUPABASE_SERVICE_ROLE_KEY: "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          SUPABASE_JWT_SECRET: "${{ secrets.SUPABASE_JWT_SECRET }}"
+          PINECONE_API_KEY: "${{ secrets.PINECONE_API_KEY }}"
+          PINECONE_INDEX_NAME: "${{ secrets.PINECONE_INDEX_NAME }}"
+          REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
+          EOF
+
+          # Deploy with env file
           gcloud functions deploy generateAdaptiveNudges \
             --gen2 \
             --runtime=nodejs20 \
@@ -62,11 +97,30 @@ jobs:
             --entry-point=generateAdaptiveNudges \
             --trigger-topic=hourly-tick \
             --allow-unauthenticated \
-            --set-env-vars=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}
+            --env-vars-file=.env.yaml
+
+          # Clean up
+          rm .env.yaml
 
       - name: Deploy postChat
         run: |
           cd functions
+
+          # Create .env.yaml file with all secrets
+          cat > .env.yaml << 'EOF'
+          FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+          FIREBASE_PRIVATE_KEY: "${{ secrets.FIREBASE_PRIVATE_KEY }}"
+          SUPABASE_URL: "${{ secrets.SUPABASE_URL }}"
+          SUPABASE_ANON_KEY: "${{ secrets.SUPABASE_ANON_KEY }}"
+          SUPABASE_SERVICE_ROLE_KEY: "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          SUPABASE_JWT_SECRET: "${{ secrets.SUPABASE_JWT_SECRET }}"
+          PINECONE_API_KEY: "${{ secrets.PINECONE_API_KEY }}"
+          PINECONE_INDEX_NAME: "${{ secrets.PINECONE_INDEX_NAME }}"
+          REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
+          EOF
+
+          # Deploy with env file
           gcloud functions deploy postChat \
             --gen2 \
             --runtime=nodejs20 \
@@ -75,4 +129,7 @@ jobs:
             --entry-point=postChat \
             --trigger-http \
             --allow-unauthenticated \
-            --set-env-vars=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}
+            --env-vars-file=.env.yaml
+
+          # Clean up
+          rm .env.yaml
