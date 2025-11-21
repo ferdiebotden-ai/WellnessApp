@@ -23,7 +23,7 @@ interface UseTaskFeedResult {
   error?: string;
 }
 
-const SCHEDULE_SUBCOLLECTIONS = ['entries', 'items', 'tasks'];
+const SCHEDULE_SUBCOLLECTIONS = ['entries', 'items', 'tasks', 'days'];
 const LIVE_NUDGE_SUBCOLLECTIONS = ['entries', 'items', 'nudges'];
 
 const parseScheduledAt = (value?: Timestamp | Date | string | null): Date | undefined => {

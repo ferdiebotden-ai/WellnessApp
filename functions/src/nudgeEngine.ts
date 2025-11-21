@@ -119,18 +119,31 @@ export const generateAdaptiveNudges = async (
     // Generate Nudge
     const nudgeText = await generateCompletion(SYSTEM_PROMPT, userPrompt);
 
-    // Write to Firestore
+    // Write to Firestore (match client's expected task structure)
+    const now = new Date().toISOString();
     const nudgePayload: NudgePayload = {
       nudge_text: nudgeText,
       module_id: primaryModule.module_id,
       reasoning: 'AI generated based on module focus and RAG context',
       citations: ragResults.length > 0 ? ragResults[0].citations : [],
       type: 'proactive_coach',
-      generated_at: new Date().toISOString(),
+      generated_at: now,
       status: 'pending',
     };
 
-    await firestore.collection('live_nudges').doc(userId).collection('entries').add(nudgePayload);
+    // Write as a task document with client-expected fields
+    const taskDoc = {
+      title: nudgeText, // Client expects 'title' field
+      status: 'pending' as const,
+      scheduled_for: now, // Client expects 'scheduled_for' field
+      emphasis: 'high', // Nudges are high priority
+      type: 'proactive_coach',
+      module_id: primaryModule.module_id,
+      citations: nudgePayload.citations,
+      created_at: now,
+    };
+
+    await firestore.collection('live_nudges').doc(userId).collection('entries').add(taskDoc);
 
     // Log to Audit Log
     await supabase.from('ai_audit_log').insert({

@@ -146,19 +146,32 @@ export const generateDailySchedules = async (
     }
 
     if (dailyProtocols.length > 0) {
-      const docRef = firestore.collection('schedules').doc(userId).collection('days').doc(dateKey);
-      // Use set with merge to avoid overwriting if it already exists (though usually we want to overwrite or update)
-      // For MVP, let's overwrite to ensure fresh schedule
-      batch.set(docRef, { protocols: dailyProtocols, created_at: new Date().toISOString() });
-      batchCount++;
+      // Write each protocol as a separate document in the 'days' subcollection
+      // This matches the client's expectation of individual task documents
+      const daysCollection = firestore.collection('schedules').doc(userId).collection('days');
 
-      if (batchCount >= 400) {
-        await batch.commit();
-        batchCount = 0;
-        // Reset batch is not possible, need new batch
-        // But firestore.batch() returns a new batch object? No, we need to create a new one.
-        // Actually, let's just commit and create new batch in a loop if we had many users.
-        // For MVP, 500 limit is fine.
+      for (const protocol of dailyProtocols) {
+        const protocolData = protocols.get(protocol.protocol_id);
+        const taskDoc = {
+          title: protocolData?.name || 'Wellness Protocol',
+          status: protocol.status,
+          scheduled_for: protocol.scheduled_time_utc,
+          duration_minutes: protocol.duration_minutes,
+          protocol_id: protocol.protocol_id,
+          module_id: protocol.module_id,
+          emphasis: protocolData?.category === 'Foundation' ? 'high' : 'normal',
+          created_at: new Date().toISOString(),
+        };
+
+        // Use protocol_id + date as document ID to ensure uniqueness and idempotency
+        const docId = `${protocol.protocol_id}_${dateKey}`;
+        batch.set(daysCollection.doc(docId), taskDoc);
+        batchCount++;
+
+        if (batchCount >= 400) {
+          await batch.commit();
+          batchCount = 0;
+        }
       }
     }
   }
