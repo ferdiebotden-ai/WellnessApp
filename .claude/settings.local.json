@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: migrate to Vertex AI Gemini 2.0 Flash (96% cost savings)\n\nMajor changes:\n- Migrate from OpenAI GPT-4 Turbo to Vertex AI Gemini 2.0 Flash\n- Update embeddings from text-embedding-3-large (3072-dim) to text-embedding-005 (768-dim)\n- Add Vertex AI client wrapper (functions/src/vertexAI.ts)\n- Update chat.ts, nudgeEngine.ts, and protocolSearch.ts to use Vertex AI\n- Remove OpenAI API key requirement from config\n- Add environment variables to GitHub Actions deployment workflow\n- Create Pinecone seeding script for 768-dim vectors\n- Update client API URL to Cloud Functions endpoint\n- Add comprehensive SETUP.md guide\n\nCost impact:\n- Before: $120-180/month (OpenAI GPT-4 Turbo)\n- After: $4-8/month (Vertex AI Gemini 2.0 Flash)\n- Savings: 96%\n\nDependencies added:\n- @google-cloud/vertexai: ^1.7.0\n- google-auth-library: ^9.14.2\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(gcloud functions list:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install)",
+      "Bash(test:*)",
+      "Bash(git commit:*)",
+      "Bash(gh run list:*)",
+      "Bash(where:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

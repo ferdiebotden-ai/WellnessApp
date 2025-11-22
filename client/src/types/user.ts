@@ -7,6 +7,17 @@ export interface UserPreferences {
   social_anonymous?: boolean; // Default: true
 }
 
+export interface ModuleEnrollmentRow {
+  id: string;
+  module_id: string;
+  user_id: string;
+  current_streak?: number;
+  longest_streak?: number;
+  progress_pct?: number;
+  enrolled_at: string;
+  last_active_date?: string;
+}
+
 export interface UserProfile {
   id: string;
   email?: string | null;
@@ -19,5 +30,5 @@ export interface UserProfile {
   healthMetrics?: Record<string, unknown>;
   earnedBadges?: string[];
   subscription_id?: string | null;
+  module_enrollment?: ModuleEnrollmentRow[];
 }
-

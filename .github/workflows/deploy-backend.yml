@@ -102,7 +102,7 @@ jobs:
           # Clean up
           rm .env.yaml
 
-      - name: Deploy postChat
+      - name: Deploy api
         run: |
           cd functions
 
@@ -121,12 +121,12 @@ jobs:
           EOF
 
           # Deploy with env file
-          gcloud functions deploy postChat \
+          gcloud functions deploy api \
             --gen2 \
             --runtime=nodejs20 \
             --region=us-central1 \
             --source=. \
-            --entry-point=postChat \
+            --entry-point=api \
             --trigger-http \
             --allow-unauthenticated \
             --env-vars-file=.env.yaml

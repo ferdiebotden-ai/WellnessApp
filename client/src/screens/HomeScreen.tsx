@@ -13,32 +13,9 @@ import { LockedModuleCard } from '../components/LockedModuleCard';
 import type { HomeStackParamList } from '../navigation/HomeStack';
 import { useMonetization } from '../providers/MonetizationProvider';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { useDashboardData } from '../hooks/useDashboardData';
 
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
-
-const HEALTH_METRICS: HealthMetric[] = [
-  { id: 'sleep', label: 'Sleep Quality', valueLabel: '92%', trend: 'up', progress: 0.92 },
-  { id: 'hrv', label: 'HRV Readiness', valueLabel: '78 ms', trend: 'steady', progress: 0.78 },
-];
-
-const MODULE_ENROLLMENTS: ModuleEnrollment[] = [
-  {
-    id: 'resilience',
-    title: 'Resilience Foundations',
-    progressPct: 0.68,
-    currentStreak: 6,
-    focusArea: 'Emotional regulation',
-    tier: 'core',
-  },
-  {
-    id: 'sleep',
-    title: 'Sleep Optimization',
-    progressPct: 0.82,
-    currentStreak: 9,
-    focusArea: 'Deep sleep extension',
-    tier: 'pro',
-  },
-];
 
 interface LockedModule {
   id: string;
@@ -70,7 +47,8 @@ const LOCKED_MODULES: LockedModule[] = [
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const userId = firebaseAuth.currentUser?.uid ?? null;
-  const { tasks, loading } = useTaskFeed(userId);
+  const { tasks, loading: loadingTasks } = useTaskFeed(userId);
+  const { metrics, enrollments, loading: loadingDashboard } = useDashboardData();
   const { requestProModuleAccess } = useMonetization();
   const { isModuleEnabled } = useFeatureFlags();
 
@@ -90,7 +68,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   // Filter modules based on feature flags
   const filteredEnrolledModules = useMemo(() => {
-    return MODULE_ENROLLMENTS.filter((module) => {
+    return enrollments.filter((module) => {
       // Map module IDs to feature flags
       if (module.id === 'sleep') {
         return isModuleEnabled('sleep');
@@ -102,7 +80,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       // Default to enabled if not mapped
       return true;
     });
-  }, [isModuleEnabled]);
+  }, [enrollments, isModuleEnabled]);
 
   const orderedModules = useMemo(
     () => [...filteredEnrolledModules].sort((a, b) => b.progressPct - a.progressPct),
@@ -150,9 +128,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Health Outcomes</Text>
           <View style={styles.metricsRow}>
-            {HEALTH_METRICS.map((metric) => (
-              <HealthMetricCard metric={metric} key={metric.id} />
-            ))}
+            {metrics.length > 0 ? (
+              metrics.map((metric) => (
+                <HealthMetricCard metric={metric} key={metric.id} />
+              ))
+            ) : (
+              <Text style={styles.emptyState}>No health metrics available yet.</Text>
+            )}
           </View>
         </View>
 
@@ -195,7 +177,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         <View style={[styles.section, styles.taskSection]}>
           <Text style={styles.sectionTitle}>Today's Plan</Text>
-          <TaskList loading={loading} tasks={tasks} emptyMessage="Your schedule is clear." />
+          <TaskList loading={loadingTasks} tasks={tasks} emptyMessage="Your schedule is clear." />
         </View>
       </ScrollView>
     </View>

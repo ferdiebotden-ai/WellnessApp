@@ -19,6 +19,8 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+console.log("DEBUG: Script started");
+
 // Configuration
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -31,7 +33,6 @@ const EMBEDDING_MODEL = 'text-embedding-005';
 interface Protocol {
   id: string;
   name: string;
-  description: string;
   summary: string;
   category: string;
 }
@@ -42,7 +43,9 @@ interface Protocol {
 async function generateEmbedding(text: string): Promise<number[]> {
   const endpoint = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_LOCATION}/publishers/google/models/${EMBEDDING_MODEL}:predict`;
 
-  const auth = new GoogleAuth();
+  const auth = new GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/cloud-platform']
+  });
   const client = await auth.getClient();
   const accessToken = await client.getAccessToken();
 
@@ -66,7 +69,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
     throw new Error(`Vertex AI embedding request failed: ${response.status} ${errorText}`);
   }
 
-  const payload = await response.json();
+  const payload = await response.json() as any;
   const embedding = payload.predictions?.[0]?.embeddings?.values;
 
   if (!embedding || !Array.isArray(embedding)) {
@@ -97,7 +100,7 @@ async function getPineconeHost(apiKey: string, indexName: string): Promise<strin
     throw new Error(`Failed to describe Pinecone index: ${response.status} ${body}`);
   }
 
-  const payload = await response.json();
+  const payload = await response.json() as any;
   if (!payload.host) {
     throw new Error('Pinecone describe response did not include host');
   }
@@ -133,8 +136,9 @@ async function upsertToPinecone(
  */
 async function seedPinecone() {
   console.log('🌱 Starting Pinecone seeding process...\n');
-
-  // Validate environment variables
+  
+  try {
+    // Validate environment variables
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !PINECONE_API_KEY) {
     throw new Error('Missing required environment variables. Check your .env file.');
   }
@@ -153,8 +157,7 @@ async function seedPinecone() {
   console.log('📚 Fetching protocols from Supabase...');
   const { data: protocols, error } = await supabase
     .from('protocols')
-    .select('id, name, description, summary, category')
-    .eq('is_active', true);
+    .select('id, name, summary, category');
 
   if (error) {
     throw new Error(`Failed to fetch protocols: ${error.message}`);
@@ -183,8 +186,8 @@ async function seedPinecone() {
     const progressPercent = ((i + 1) / protocols.length * 100).toFixed(1);
 
     try {
-      // Combine name, description, and summary for embedding
-      const textToEmbed = `${protocol.name}\n\n${protocol.description}\n\n${protocol.summary}`;
+      // Combine name and summary for embedding
+      const textToEmbed = `${protocol.name}\n\n${protocol.summary}`;
 
       // Generate embedding
       console.log(`   [${i + 1}/${protocols.length}] (${progressPercent}%) Embedding: ${protocol.name}...`);
@@ -240,11 +243,16 @@ async function seedPinecone() {
   console.log(`   Pinecone index: ${PINECONE_INDEX_NAME}`);
   console.log(`   Embedding dimensions: 768\n`);
   console.log('✨ Your Pinecone index is ready for RAG queries!');
+  } catch (error) {
+    console.error('❌ Error during seeding:', error);
+    throw error;
+  }
 }
 
 // Run the seeding script
 seedPinecone()
   .then(() => {
+    console.log('✅ Script finished successfully');
     process.exit(0);
   })
   .catch((error) => {

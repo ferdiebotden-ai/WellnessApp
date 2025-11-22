@@ -1,0 +1,297 @@
+[
+  {
+    "id": "morning_light_exposure",
+    "name": "Morning Light Exposure",
+    "short_name": "Morning Light",
+    "category": "Foundation",
+    "tier_required": "core",
+    "description": "Morning light (10-30 min, ≥1,000 lux, within 60 min of waking) advances sleep phase by 0.5-2.7 hours and improves sleep efficiency by 10-15% within 1-2 weeks. Amplifies cortisol awakening response by >50%, enhancing alertness and mood.",
+    "benefits": "Advances sleep phase, improves sleep efficiency, enhances alertness and mood.",
+    "constraints": "Avoid direct sun staring. Bipolar disorder: consult physician. Retinal disorders: consult ophthalmologist.",
+    "citations": [
+      "Wright, K.P., et al. (2013). Entrainment of the human circadian clock to the natural light-dark cycle. Current Biology.",
+      "Terman, M., et al. (2001). Circadian time of morning light administration and therapeutic response in winter depression. Archives of General Psychiatry.",
+      "Leproult, R., et al. (2001). Transition from dim to bright light in the morning induces an immediate elevation of cortisol levels. JCEM.",
+      "Crowley, S.J., & Eastman, C.I. (2015). Phase advancing human circadian rhythms with morning bright light. Sleep Medicine Reviews."
+    ],
+    "summary": "Get 10-30 minutes of outdoor light within 1 hour of waking to reset circadian rhythm and boost energy.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "evening_light_management",
+    "name": "Evening Light Management",
+    "short_name": "Evening Light",
+    "category": "Foundation",
+    "tier_required": "core",
+    "description": "Evening light management (dim lights <50 lux, blue light minimization 2-3 hours pre-sleep) preserves melatonin secretion and optimizes sleep onset. Bright evening light (>500 lux) delays circadian phase by 1-3 hours and suppresses melatonin by 55-71%.",
+    "benefits": "Preserves melatonin, optimizes sleep onset, stabilizes circadian phase.",
+    "constraints": "Bright overhead lights suppress melatonin even with blue blockers. Night shift workers require inverted protocol.",
+    "citations": [
+      "Chang, A.M., et al. (2015). Evening use of light-emitting eReaders negatively affects sleep. PNAS.",
+      "Gooley, J.J., et al. (2011). Exposure to room light before bedtime suppresses melatonin onset. JCEM.",
+      "Vethe, D., et al. (2021). The evening light environment in hospitals... Sleep."
+    ],
+    "summary": "Dim lights and avoid screens 2-3 hours before bed to preserve melatonin.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "sleep_optimization",
+    "name": "Sleep Optimization",
+    "short_name": "Sleep Optimization",
+    "category": "Foundation",
+    "tier_required": "core",
+    "description": "Evidence-based sleep optimization requires temperature control (60-67°F), pre-sleep warm baths 90 min before bedtime, meal cutoffs 3 hours prior, alcohol avoidance 4+ hours before bed, and bedtime consistency ±30 min.",
+    "benefits": "Improves sleep onset, duration, and efficiency. Enhances recovery.",
+    "constraints": "Untreated sleep disorders (apnea) may limit effectiveness. Shift workers require inverted protocol.",
+    "citations": [
+      "Raj, A., et al. (2020). Higher bedroom temperature associated with poorer sleep. Sleep.",
+      "Haghayegh, S., et al. (2019). Before-bedtime passive body heating... Sleep Medicine Reviews.",
+      "Gardiner, C., et al. (2024). The effect of alcohol on subsequent sleep. Sleep Medicine Reviews.",
+      "Chaput, J.P., et al. (2020). Sleep timing, sleep consistency, and health. Sleep Medicine Reviews."
+    ],
+    "summary": "Optimize sleep environment (cool room) and habits (consistency, warm bath) for deep recovery.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "hydration_electrolytes",
+    "name": "Hydration & Electrolytes",
+    "short_name": "Hydration",
+    "category": "Foundation",
+    "tier_required": "core",
+    "description": "Even mild dehydration (1-2% body mass) impairs mood and cognition. Morning hydration (16-32 oz + electrolytes within 30 min of waking) optimizes cortisol awakening response and cognitive readiness.",
+    "benefits": "Improves mood, concentration, and executive function. Restores fluid balance.",
+    "constraints": "Kidney disease or hypertension: consult physician regarding sodium/potassium intake.",
+    "citations": [
+      "Armstrong, L.E., et al. (2012). Mild dehydration affects mood in healthy young women. The Journal of Nutrition.",
+      "Masento, N.A., et al. (2014). Effects of hydration status on cognitive performance and mood. British Journal of Nutrition.",
+      "Wittbrodt, M.T., & Millard-Stafford, M. (2018). Autonomic adaptations mediate the effect of hydration on brain functioning. Physiology & Behavior."
+    ],
+    "summary": "Drink 16-32oz water with electrolytes immediately upon waking.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "caffeine_timing",
+    "name": "Caffeine Timing & Cutoff",
+    "short_name": "Caffeine Timing",
+    "category": "Performance",
+    "tier_required": "core",
+    "description": "Caffeine cutoff 8-10 hours before bedtime preserves sleep onset and quality. Delaying first caffeine 90-120 min post-wake may reduce afternoon crashes.",
+    "benefits": "Preserves deep sleep and sleep onset. Reduces afternoon energy crashes.",
+    "constraints": "Anxiety disorders: limit intake. Pregnancy: limit to 200mg/day.",
+    "citations": [
+      "Drake, C., et al. (2013). Caffeine effects on sleep taken 0, 3, or 6 hours before going to bed. JCSM.",
+      "Gardiner, C.L., et al. (2025). Dose and timing effects of caffeine on subsequent sleep. Sleep.",
+      "Burke, T.M., et al. (2015). Effects of caffeine on the human circadian clock. Science Translational Medicine."
+    ],
+    "summary": "Stop caffeine 8-10 hours before bed; optionally delay morning intake 90 minutes.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "morning_movement",
+    "name": "Morning Movement",
+    "short_name": "Morning Movement",
+    "category": "Performance",
+    "tier_required": "core",
+    "description": "Light-to-moderate aerobic exercise (Zone 2) within 30-90 min of waking enhances cortisol awakening response by 50-75% and increases alertness.",
+    "benefits": "Amplifies cortisol awakening response, boosts alertness and mood.",
+    "constraints": "Respect physical injuries. Adjust for chronotype (evening types may need later window).",
+    "citations": [
+      "Drogos, L.L., et al. (2019). Aerobic exercise increases cortisol awakening response. Eur J Appl Physiol.",
+      "Shen, B., et al. (2025). Differential benefits of 12-week morning vs. evening exercise. Scientific Reports."
+    ],
+    "summary": "10-30 minutes of moderate movement (Zone 2) within 90 mins of waking.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "walking_breaks",
+    "name": "Walking Breaks & Micro-Movement",
+    "short_name": "Walking Breaks",
+    "category": "Performance",
+    "tier_required": "pro",
+    "description": "2-5 min light walking every 20-30 min during sedentary work reduces postprandial glucose by 17-58% and preserves cerebral blood flow.",
+    "benefits": "Reduces glucose spikes, maintains focus, prevents cerebral blood flow decline.",
+    "constraints": "Workplace constraints may require seated alternatives.",
+    "citations": [
+      "Dunstan, D.W., et al. (2012). Breaking up prolonged sitting reduces postprandial glucose. Diabetes Care.",
+      "Diaz, K.M., et al. (2023). Interrupting sitting time with brief walking activity. MSSE.",
+      "Carter, S.E., et al. (2018). Regular walking breaks prevent decline in cerebral blood flow. J Appl Physiol."
+    ],
+    "summary": "Take a 2-5 minute walk every 30 minutes of sitting.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "nutrition_cognitive",
+    "name": "Nutrition for Cognitive Stability",
+    "short_name": "Cognitive Nutrition",
+    "category": "Performance",
+    "tier_required": "pro",
+    "description": "Protein-driven neurotransmitter synthesis, low-glycemic carbs, and circadian meal timing (finish 3h before sleep) support cognitive stability.",
+    "benefits": "Sustained energy/focus, improved sleep quality, metabolic health.",
+    "constraints": "Dietary restrictions (medical/ethical) require adaptation. Eating disorders: avoid rigid tracking.",
+    "citations": [
+      "Adams, M.S., et al. (2025). Effects of dietary proteins on cognitive performance. Nutrition Research Reviews.",
+      "Li, Y., et al. (2025). Association of dietary protein intake... Frontiers in Nutrition.",
+      "Gonçalves, N.G., et al. (2023). Association between consumption of ultraprocessed foods and cognitive decline. JAMA Neurol."
+    ],
+    "summary": "Prioritize protein, low-GI foods, and finish eating 3 hours before bed.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "fitness_focus",
+    "name": "Fitness for Focus",
+    "short_name": "Fitness for Focus",
+    "category": "Performance",
+    "tier_required": "pro",
+    "description": "Aerobic exercise (Zone 2) and resistance training upregulate BDNF, improving executive function and memory.",
+    "benefits": "Increases BDNF, improves executive function and memory, reverses hippocampal atrophy.",
+    "constraints": "Medical clearance required for >40 sedentary/high-risk. Respect recovery needs (HRV).",
+    "citations": [
+      "Erickson, K.I., et al. (2011). Exercise training increases size of hippocampus. PNAS.",
+      "Sartori, G.P., et al. (2022). Effects of different physical activities on BDNF. Frontiers in Neuroscience.",
+      "Singh, B., et al. (2025). Effectiveness of exercise for improving cognition. BJSM."
+    ],
+    "summary": "Regular aerobic and resistance training to boost brain plasticity and focus.",
+    "evidence_level": "Very High"
+  },
+  {
+    "id": "nsdr_meditation",
+    "name": "NSDR & Meditation",
+    "short_name": "NSDR",
+    "category": "Recovery",
+    "tier_required": "pro",
+    "description": "NSDR (Non-Sleep Deep Rest) and meditation induce theta brainwaves, increase dopamine (+65% with Yoga Nidra), and accelerate recovery.",
+    "benefits": "Accelerates recovery, increases dopamine, improves sleep quality and HRV.",
+    "constraints": "Active psychosis/severe trauma: modify practice type.",
+    "citations": [
+      "Meta-analysis of 163 meditation studies (dose-response).",
+      "Yoga Nidra dopamine release studies (PET imaging)."
+    ],
+    "summary": "10-20 mins of Yoga Nidra or meditation to recover energy and focus.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "breathwork_hrv",
+    "name": "Breathwork & HRV Regulation",
+    "short_name": "Breathwork",
+    "category": "Recovery",
+    "tier_required": "core",
+    "description": "Controlled breathing (cyclic sighing, box breathing) modulates autonomic balance, reducing anxiety by 22% and increasing HRV.",
+    "benefits": "Rapid anxiety reduction, increased HRV, stress resilience.",
+    "constraints": "Panic disorder: avoid breath holding. Pregnancy: avoid hyperventilation.",
+    "citations": [
+      "Balban et al. (2023). Brief structured respiration practices enhance mood and reduce physiological arousal. Cell Reports Medicine."
+    ],
+    "summary": "Use Cyclic Sighing (5 min) for anxiety or Box Breathing for focus.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "cold_exposure",
+    "name": "Cold Exposure",
+    "short_name": "Cold Exposure",
+    "category": "Recovery",
+    "tier_required": "pro",
+    "description": "11 mins/week of cold exposure increases norepinephrine (+530%) and dopamine (+250%), enhancing mood and resilience.",
+    "benefits": "Increases alertness/dopamine, reduces inflammation, builds stress resilience.",
+    "constraints": "Cardiovascular disease: consult physician. Raynaud's: avoid. Pregnancy: avoid.",
+    "citations": [
+      "Søberg et al. (2021). Altered brown fat thermoregulation... Cell Metabolism.",
+      "Kox et al. (2014). Voluntary activation of the sympathetic nervous system... PNAS."
+    ],
+    "summary": "11 minutes total weekly cold exposure (shower/plunge) for resilience and dopamine.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "foundational_supplements",
+    "name": "Foundational Supplement Stack",
+    "short_name": "Supplements",
+    "category": "Optimization",
+    "tier_required": "pro",
+    "description": "Addresses common deficiencies (Vitamin D, Omega-3, Magnesium) to support sleep, mood, and cognition.",
+    "benefits": "Fills nutrient gaps, supports sleep (Magnesium), mood (Vit D/Omega-3), and cognition.",
+    "constraints": "Medical contraindications apply (e.g., kidney disease, blood thinners). Consult physician.",
+    "citations": [
+      "Anglin et al. (2013). Vitamin D and depression meta-analysis.",
+      "Skulas-Ray et al. (2019). Omega-3 fatty acids... Circulation.",
+      "Abbasi et al. (2012). Effect of magnesium on insomnia... J Res Med Sci."
+    ],
+    "summary": "Vitamin D, Omega-3, and Magnesium to cover biological bases.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "dopamine_optimization",
+    "name": "Dopamine Optimization",
+    "short_name": "Dopamine Opt.",
+    "category": "Optimization",
+    "tier_required": "pro",
+    "description": "Managing dopamine baseline via reward delay, cold exposure, and avoiding overstimulation (social media) prevents anhedonia.",
+    "benefits": "Restores motivation, prevents burnout/anhedonia, improves focus.",
+    "constraints": "Clinical depression/ADHD: adjust strategy with professional support.",
+    "citations": [
+      "PET imaging studies on D2/D3 receptor density and recovery."
+    ],
+    "summary": "Manage cheap dopamine (screens) and use healthy tools (cold, sun) to sustain motivation.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "alcohol_sleep",
+    "name": "Alcohol & Sleep Quality",
+    "short_name": "Alcohol Cutoff",
+    "category": "Optimization",
+    "tier_required": "core",
+    "description": "Alcohol within 3-4 hours of bed suppresses REM sleep and reduces HRV. A strict cutoff minimizes disruption.",
+    "benefits": "Preserves REM sleep, HRV, and recovery.",
+    "constraints": "Alcohol Use Disorder: seek professional help. Do not combine with sleep meds.",
+    "citations": [
+      "Meta-analysis (27 studies) on alcohol and sleep architecture."
+    ],
+    "summary": "Stop alcohol 3-4 hours before bed to protect sleep quality.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "focus_information_diet",
+    "name": "Focus & Information Diet",
+    "short_name": "Information Diet",
+    "category": "Optimization",
+    "tier_required": "pro",
+    "description": "Deep work blocks (90 min) and batched notifications reduce context switching and cognitive fatigue.",
+    "benefits": "Increases productivity and sustained attention. Reduces decision fatigue.",
+    "constraints": "Role-dependent (e.g., emergency responders cannot batch).",
+    "citations": [
+      "Shah et al. (2019). Organizational policies reduced notifications...",
+      "Skowronek et al. (2023). Smartphone separation and cognitive performance."
+    ],
+    "summary": "Batch notifications and use deep work blocks to maximize cognitive output.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "cognitive_testing",
+    "name": "Cognitive Testing & Reflection",
+    "short_name": "Cognitive Testing",
+    "category": "Meta",
+    "tier_required": "pro",
+    "description": "Weekly self-assessment (mood, reflection) increases self-awareness and adherence.",
+    "benefits": "Enhances self-monitoring, adherence, and personalization.",
+    "constraints": "Avoid obsessive daily checking; stick to weekly.",
+    "citations": [
+      "Meta-analysis of digital interventions on self-monitoring."
+    ],
+    "summary": "Weekly review of mood and progress to optimize protocols.",
+    "evidence_level": "High"
+  },
+  {
+    "id": "social_accountability",
+    "name": "Social Connection & Accountability",
+    "short_name": "Social Accountability",
+    "category": "Meta",
+    "tier_required": "core",
+    "description": "Peer accountability increases adherence by ~60% through social pressure and support.",
+    "benefits": "Increases habit consistency, reduces isolation, improves mental health.",
+    "constraints": "Avoid shame-based accountability. Match with compatible partners.",
+    "citations": [
+      "Meta-analysis of 148 studies on social relationships and mortality.",
+      "Habit-based interventions with social support effect sizes."
+    ],
+    "summary": "Use a buddy or team to boost consistency and motivation.",
+    "evidence_level": "Very High"
+  }
+]

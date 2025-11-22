@@ -11,6 +11,7 @@ import { FeatureFlagsProvider } from './providers/FeatureFlagsProvider';
 import { TrialBanner } from './components/TrialBanner';
 import { TrialSoftReminderModal } from './components/TrialSoftReminderModal';
 import { PaywallModal } from './components/PaywallModal';
+import { ChatModal } from './components/ChatModal';
 import analytics from './services/AnalyticsService';
 import { firebaseAuth } from './services/firebase';
 import { revenueCat } from './services/RevenueCatService';
@@ -29,14 +30,24 @@ const navigationTheme = {
 
 const AppScaffold: React.FC = () => {
   const { requestChatAccess, refreshStatus, closePaywall } = useMonetization();
+  const [isChatVisible, setChatVisible] = React.useState(false);
 
   const handleAiCoachPress = () => {
-    const allowed = requestChatAccess({ intent: 'quick_access' });
-    if (!allowed) {
-      return;
-    }
+    console.log('AI Coach button pressed');
+    try {
+      const allowed = requestChatAccess({ intent: 'quick_access' });
+      console.log('Chat access allowed:', allowed);
+      if (!allowed) {
+        console.log('Chat access denied by monetization check');
+        return;
+      }
 
-    Alert.alert('AI Coach', 'The AI Coach will be available soon.');
+      console.log('Opening chat modal...');
+      setChatVisible(true);
+    } catch (error) {
+      console.error('Error in handleAiCoachPress:', error);
+      Alert.alert('Error', 'Failed to open chat. Please check the console for details.');
+    }
   };
 
   const handleSubscribe = async () => {
@@ -89,6 +100,7 @@ const AppScaffold: React.FC = () => {
       </SafeAreaView>
       <TrialSoftReminderModal />
       <PaywallModal onSubscribe={handleSubscribe} />
+      <ChatModal visible={isChatVisible} onClose={() => setChatVisible(false)} />
     </NavigationContainer>
   );
 };
