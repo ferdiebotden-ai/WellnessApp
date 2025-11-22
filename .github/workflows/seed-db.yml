@@ -15,11 +15,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Dependencies
+      - name: Install Script Dependencies
         run: |
+          cd scripts
           npm ci
-          # Install ts-node if not in dependencies
-          npm install -g ts-node typescript
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
@@ -35,5 +34,5 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_LOCATION: 'us-central1'
         run: |
-          npx ts-node scripts/seed-full-system.ts
-
+          cd scripts
+          npx ts-node seed-full-system.ts
