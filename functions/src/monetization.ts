@@ -41,7 +41,7 @@ async function getChatQueriesThisWeek(userId: string): Promise<number> {
   startOfWeek.setDate(now.getDate() - dayOfWeek);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const { data, error } = await serviceClient
+  const { count, error } = await serviceClient
     .from('ai_audit_log')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
@@ -53,7 +53,7 @@ async function getChatQueriesThisWeek(userId: string): Promise<number> {
     return 0;
   }
 
-  return data || 0;
+  return count || 0;
 }
 
 /**
