@@ -20,12 +20,21 @@ const AppScaffold: React.FC = () => {
   const [isChatVisible, setChatVisible] = React.useState(false);
 
   const handleAiCoachPress = () => {
-    const allowed = requestChatAccess({ intent: 'quick_access' });
-    if (!allowed) {
-      return;
-    }
+    console.log('AI Coach button pressed');
+    try {
+      const allowed = requestChatAccess({ intent: 'quick_access' });
+      console.log('Chat access allowed:', allowed);
+      if (!allowed) {
+        console.log('Chat access denied by monetization check');
+        return;
+      }
 
-    setChatVisible(true);
+      console.log('Opening chat modal...');
+      setChatVisible(true);
+    } catch (error) {
+      console.error('Error in handleAiCoachPress:', error);
+      Alert.alert('Error', 'Failed to open chat. Please check the console for details.');
+    }
   };
 
   const handleSubscribe = async () => {

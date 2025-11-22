@@ -14,6 +14,8 @@ export const TopNavigationBar: React.FC<Props> = ({ title, subtitle, onAiCoachPr
   const { isAiChatEnabled } = useFeatureFlags();
   const aiChatEnabled = isAiChatEnabled();
 
+  console.log('[TopNavigationBar] AI Chat Enabled:', aiChatEnabled, '| Handler provided:', typeof onAiCoachPress);
+
   return (
     <View style={styles.container}>
       <View style={styles.textGroup}>
@@ -23,7 +25,14 @@ export const TopNavigationBar: React.FC<Props> = ({ title, subtitle, onAiCoachPr
       {aiChatEnabled && (
         <TouchableOpacity
           style={styles.aiCoachButton}
-          onPress={onAiCoachPress}
+          onPress={() => {
+            console.log('[TopNavigationBar] AI button clicked');
+            if (onAiCoachPress) {
+              onAiCoachPress();
+            } else {
+              console.error('[TopNavigationBar] No onAiCoachPress handler provided!');
+            }
+          }}
           accessibilityRole="button"
           accessibilityLabel="Open AI coach"
           testID="ai-coach-button"
