@@ -167,29 +167,18 @@ async function seedFullSystem() {
     // 3. Upsert to Supabase
     console.log('💾 Upserting protocols to Supabase...');
     
+    // Map to only the columns that exist in the protocols table schema
+    // Schema: id, name, short_name, category, summary, evidence_level, created_at, updated_at
     const supabaseData = protocolsData.map(p => ({
       id: p.id,
       name: p.name,
       short_name: p.short_name,
       category: p.category,
       summary: p.summary,
-      evidence_level: p.evidence_level,
-      // Include extra fields that protocolSearch.ts uses, assuming columns exist
-      description: p.description,
-      benefits: p.benefits,
-      constraints: p.constraints,
-      citations: p.citations, 
-      is_active: true,
-      // tier_required might be in module_protocol_map, not protocols table?
-      // protocolSearch.ts selects it from protocols table.
-      // create_modules_protocols.sql showed tier_required in module_protocol_map!
-      // But protocolSearch.ts selects it from 'protocols'.
-      // This is a discrepancy.
-      // I will include it in the upsert payload. If Supabase errors "column does not exist", then the schema is strict.
-      // However, if I omit it, search might break if it selects it.
-      // I'll include it. If it fails, user will see error in logs.
-      tier_required: p.tier_required,
-      updated_at: new Date().toISOString()
+      evidence_level: p.evidence_level
+      // Note: created_at and updated_at are auto-managed by the database
+      // Note: description, benefits, constraints, citations, tier_required are NOT in protocols table
+      //       They may be stored elsewhere (e.g., module_protocol_map for tier_required)
     }));
 
     const { error: upsertError } = await supabase
