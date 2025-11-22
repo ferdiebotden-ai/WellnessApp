@@ -105,195 +105,40 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy postUsers Function
+      - name: Deploy API Function
         run: |
-          gcloud functions deploy postUsers \
+          gcloud functions deploy api \
             --gen2 \
             --runtime=nodejs20 \
             --region=us-central1 \
-            --entry-point=postUsers \
+            --entry-point=api \
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=wellness-os-app
+            --project=wellness-os-app \
+            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
-      - name: Deploy getUsersMe Function
+      - name: Deploy Daily Scheduler Function
         run: |
-          gcloud functions deploy getUsersMe \
+          gcloud functions deploy generateDailySchedules \
             --gen2 \
             --runtime=nodejs20 \
             --region=us-central1 \
-            --entry-point=getUsersMe \
-            --trigger-http \
-            --allow-unauthenticated \
+            --entry-point=generateDailySchedules \
+            --trigger-topic=daily-tick \
             --source=functions \
-            --project=wellness-os-app
+            --project=wellness-os-app \
+            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
 
-      - name: Deploy patchUsersMe Function
+      - name: Deploy Nudge Engine Function
         run: |
-          gcloud functions deploy patchUsersMe \
+          gcloud functions deploy generateAdaptiveNudges \
             --gen2 \
             --runtime=nodejs20 \
             --region=us-central1 \
-            --entry-point=patchUsersMe \
-            --trigger-http \
-            --allow-unauthenticated \
+            --entry-point=generateAdaptiveNudges \
+            --trigger-topic=hourly-tick \
             --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy analyzeNudgeFeedback Function
-        run: |
-          gcloud functions deploy analyzeNudgeFeedback \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=analyzeNudgeFeedback \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy getProtocolsSearch Function
-        run: |
-          gcloud functions deploy getProtocolsSearch \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=getProtocolsSearch \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy postWearablesSync Function
-        run: |
-          gcloud functions deploy postWearablesSync \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=postWearablesSync \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy onProtocolLogWritten Function
-        run: |
-          gcloud functions deploy onProtocolLogWritten \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=onProtocolLogWritten \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy postUsersMeExport Function
-        run: |
-          gcloud functions deploy postUsersMeExport \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=postUsersMeExport \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy deleteUsersMe Function
-        run: |
-          gcloud functions deploy deleteUsersMe \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=deleteUsersMe \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy getUsersMePrivacy Function
-        run: |
-          gcloud functions deploy getUsersMePrivacy \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=getUsersMePrivacy \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy privacyExportJob Function
-        run: |
-          gcloud functions deploy privacyExportJob \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=privacyExportJob \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy privacyDeletionJob Function
-        run: |
-          gcloud functions deploy privacyDeletionJob \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=privacyDeletionJob \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy calculateStreaks Function
-        run: |
-          gcloud functions deploy calculateStreaks \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=calculateStreaks \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy resetFreezes Function
-        run: |
-          gcloud functions deploy resetFreezes \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=resetFreezes \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy postWaitlist Function
-        run: |
-          gcloud functions deploy postWaitlist \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=postWaitlist \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
-
-      - name: Deploy postApiWebhooksRevenuecat Function
-        run: |
-          gcloud functions deploy postApiWebhooksRevenuecat \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
-            --entry-point=postApiWebhooksRevenuecat \
-            --trigger-http \
-            --allow-unauthenticated \
-            --source=functions \
-            --project=wellness-os-app
+            --project=wellness-os-app \
+            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
