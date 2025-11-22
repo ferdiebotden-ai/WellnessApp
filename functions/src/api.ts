@@ -17,26 +17,31 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
+// Health check endpoint for Cloud Run
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'wellness-api' });
+});
+
 // Routes
 // User routes
-app.post('/users', createUser);
-app.get('/users/me', getCurrentUser);
-app.patch('/users/me', updateCurrentUser);
-app.delete('/users/me', requestUserDeletion);
-app.post('/users/me/export', requestUserDataExport);
-app.get('/users/me/privacy', getPrivacyDashboardData);
-app.get('/users/me/monetization', getMonetizationStatus);
+app.post('/api/users', createUser);
+app.get('/api/users/me', getCurrentUser);
+app.patch('/api/users/me', updateCurrentUser);
+app.delete('/api/users/me', requestUserDeletion);
+app.post('/api/users/me/export', requestUserDataExport);
+app.get('/api/users/me/privacy', getPrivacyDashboardData);
+app.get('/api/users/me/monetization', getMonetizationStatus);
 
 // Feature routes
-app.post('/chat', postChat);
-app.post('/onboarding/complete', completeOnboarding);
-app.post('/waitlist', joinWaitlist);
-app.post('/wearables/sync', syncWearableData);
-app.get('/protocols/search', searchProtocols);
-app.get('/modules', getModules);
+app.post('/api/chat', postChat);
+app.post('/api/onboarding/complete', completeOnboarding);
+app.post('/api/waitlist', joinWaitlist);
+app.post('/api/wearables/sync', syncWearableData);
+app.get('/api/protocols/search', searchProtocols);
+app.get('/api/modules', getModules);
 
 // Webhooks
-app.post('/webhooks/revenuecat', handleRevenueCatWebhook);
+app.post('/api/webhooks/revenuecat', handleRevenueCatWebhook);
 
 export const apiApp = app;
 
