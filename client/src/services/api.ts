@@ -152,6 +152,33 @@ export const sendChatQuery = (message: string, conversationId?: string) =>
   });
 
 /**
+ * Protocol search result from RAG-powered semantic search.
+ */
+export interface ProtocolSearchResult {
+  id: string;
+  name: string | null;
+  description: string | null;
+  category: string | null;
+  tier_required: string | null;
+  benefits: string | null;
+  constraints: string | null;
+  citations: string[];
+  score: number;
+}
+
+/**
+ * Searches protocols using RAG-powered semantic search via Pinecone.
+ * @param query Natural language search query (e.g., "improve my sleep")
+ * @param limit Maximum number of results to return (default: 5, max: 20)
+ * @returns Array of protocol search results ranked by relevance score
+ */
+export const searchProtocols = (query: string, limit?: number) =>
+  request<ProtocolSearchResult[]>(
+    `/api/protocols/search?q=${encodeURIComponent(query)}&limit=${limit || 5}`,
+    'GET'
+  );
+
+/**
  * Retrieves the current user profile.
  * @returns User profile including preferences and other user data.
  */

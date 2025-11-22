@@ -1,15 +1,16 @@
 -- Mission 009 seed data for modules, protocols, and module_protocol_map
 
-insert into public.modules (id, name, description, icon_svg, tier, outcome_metric, starter_protocols)
+insert into public.modules (id, name, headline, description, icon_svg, tier, outcome_metric, starter_protocols)
 values
-    ('mod_sleep', 'Sleep Optimization', 'Restore circadian alignment and improve sleep quality with light, temperature, and recovery rituals.', 'moon-stars', 'core', 'Sleep Quality Score', array['proto_morning_light', 'proto_evening_light', 'proto_nsdr_session']),
-    ('mod_morning_routine', 'Morning Routine', 'Build a reliable morning anchor that primes energy, hydration, and movement within the first hour of wake.', 'sunrise', 'core', 'Routine Completion %', array['proto_morning_light', 'proto_hydration_electrolytes', 'proto_morning_movement']),
-    ('mod_focus_productivity', 'Focus & Productivity', 'Protect deep work capacity, minimize distractions, and schedule recovery blocks for consistent output.', 'target', 'core', 'Focus Blocks/day', array['proto_caffeine_timing', 'proto_breathwork_hrv', 'proto_focus_information_diet']),
-    ('mod_stress_regulation', 'Stress & Emotional Regulation', 'Reduce acute anxiety, strengthen parasympathetic tone, and cultivate emotional resilience.', 'lotus', 'pro', 'HRV Trend', array['proto_nsdr_session', 'proto_breathwork_hrv', 'proto_gratitude_practice']),
-    ('mod_energy_recovery', 'Energy & Recovery', 'Stabilize daytime energy, accelerate recovery, and build metabolic resilience with hormetic stressors.', 'bolt', 'pro', 'Readiness Score', array['proto_cold_exposure', 'proto_movement_snacks', 'proto_hydration_electrolytes']),
-    ('mod_dopamine_hygiene', 'Dopamine Hygiene', 'Reduce compulsive scrolling, rebalance reward sensitivity, and protect attention through stimulus management.', 'brain-circuit', 'pro', 'Screen Time', array['proto_evening_light', 'proto_focus_information_diet', 'proto_dopamine_optimization'])
+    ('mod_sleep', 'Sleep Optimization', 'Sleep better, recover faster', 'Restore circadian alignment and improve sleep quality with light, temperature, and recovery rituals.', 'moon-stars', 'core', 'Sleep Quality Score', array['proto_morning_light', 'proto_evening_light', 'proto_nsdr_session']),
+    ('mod_morning_routine', 'Morning Routine', 'Start your day right', 'Build a reliable morning anchor that primes energy, hydration, and movement within the first hour of wake.', 'sunrise', 'core', 'Routine Completion %', array['proto_morning_light', 'proto_hydration_electrolytes', 'proto_morning_movement']),
+    ('mod_focus_productivity', 'Focus & Productivity', 'Deep work, minimal distractions', 'Protect deep work capacity, minimize distractions, and schedule recovery blocks for consistent output.', 'target', 'core', 'Focus Blocks/day', array['proto_caffeine_timing', 'proto_breathwork_hrv', 'proto_focus_information_diet']),
+    ('mod_stress_regulation', 'Stress & Emotional Regulation', 'Calm mind, strong body', 'Reduce acute anxiety, strengthen parasympathetic tone, and cultivate emotional resilience.', 'lotus', 'pro', 'HRV Trend', array['proto_nsdr_session', 'proto_breathwork_hrv', 'proto_gratitude_practice']),
+    ('mod_energy_recovery', 'Energy & Recovery', 'Sustained energy, rapid recovery', 'Stabilize daytime energy, accelerate recovery, and build metabolic resilience with hormetic stressors.', 'bolt', 'pro', 'Readiness Score', array['proto_cold_exposure', 'proto_movement_snacks', 'proto_hydration_electrolytes']),
+    ('mod_dopamine_hygiene', 'Dopamine Hygiene', 'Restore your attention span', 'Reduce compulsive scrolling, rebalance reward sensitivity, and protect attention through stimulus management.', 'brain-circuit', 'pro', 'Screen Time', array['proto_evening_light', 'proto_focus_information_diet', 'proto_dopamine_optimization'])
 on conflict (id) do update set
     name = excluded.name,
+    headline = excluded.headline,
     description = excluded.description,
     icon_svg = excluded.icon_svg,
     tier = excluded.tier,
