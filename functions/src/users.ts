@@ -160,7 +160,11 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
   try {
     const { uid } = await authenticateRequest(req);
     const supabase = getUserClient(uid);
-    const { data, error } = await supabase.from('users').select('*').eq('id', uid).single();
+    const { data, error } = await supabase
+      .from('users')
+      .select('*, module_enrollment(*)')
+      .eq('id', uid)
+      .single();
 
     if (error) {
       throw error;
