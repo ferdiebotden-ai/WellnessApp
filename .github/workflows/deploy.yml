@@ -100,7 +100,7 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -115,7 +115,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy getUsersMe Function
         run: |
@@ -127,7 +127,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy patchUsersMe Function
         run: |
@@ -139,7 +139,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy analyzeNudgeFeedback Function
         run: |
@@ -151,7 +151,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy getProtocolsSearch Function
         run: |
@@ -163,7 +163,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy postWearablesSync Function
         run: |
@@ -175,7 +175,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy onProtocolLogWritten Function
         run: |
@@ -187,7 +187,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy postUsersMeExport Function
         run: |
@@ -199,7 +199,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy deleteUsersMe Function
         run: |
@@ -211,7 +211,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy getUsersMePrivacy Function
         run: |
@@ -223,7 +223,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy privacyExportJob Function
         run: |
@@ -235,7 +235,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy privacyDeletionJob Function
         run: |
@@ -247,7 +247,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy calculateStreaks Function
         run: |
@@ -259,7 +259,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy resetFreezes Function
         run: |
@@ -271,7 +271,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy postWaitlist Function
         run: |
@@ -283,7 +283,7 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
       - name: Deploy postApiWebhooksRevenuecat Function
         run: |
@@ -295,5 +295,5 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --source=functions \
-            --project=${{ secrets.GCP_PROJECT_ID }}
+            --project=wellness-os-app
 
