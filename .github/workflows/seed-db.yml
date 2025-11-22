@@ -35,4 +35,4 @@ jobs:
           GCP_LOCATION: 'us-central1'
         run: |
           cd scripts
-          npx ts-node seed-full-system.ts
+          npx tsx seed-full-system.ts
