@@ -56,3 +56,4 @@ npm run deploy
 
 Deployment uses the configuration defined in `package.json` scripts and expects environment variables set on the Cloud Function resource.
 
+# Trigger redeployment - Sat, Nov 22, 2025 10:50:22 AM
