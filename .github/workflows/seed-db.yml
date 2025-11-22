@@ -35,4 +35,7 @@ jobs:
           GCP_LOCATION: 'us-central1'
         run: |
           cd scripts
-          npx tsx seed-full-system.ts
+          npm run build
+          # Copy the JSON data file to the dist folder so the script can find it
+          cp protocols_data.json dist/protocols_data.json
+          node dist/seed-full-system.js

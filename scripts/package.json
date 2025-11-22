@@ -5,7 +5,8 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "seed": "ts-node seed-pinecone.ts"
+    "seed": "ts-node seed-pinecone.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "@google-cloud/vertexai": "^1.7.0",
