@@ -1,34 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postChat = exports.generateAdaptiveNudges = exports.generateDailySchedules = exports.postApiWebhooksRevenuecat = exports.postWaitlist = exports.resetFreezes = exports.calculateStreaks = exports.privacyDeletionJob = exports.privacyExportJob = exports.getUsersMePrivacy = exports.deleteUsersMe = exports.postUsersMeExport = exports.onProtocolLogWritten = exports.postWearablesSync = exports.getProtocolsSearch = exports.analyzeNudgeFeedback = exports.patchUsersMe = exports.getUsersMe = exports.postUsers = void 0;
-var users_1 = require("./users");
-Object.defineProperty(exports, "postUsers", { enumerable: true, get: function () { return users_1.createUser; } });
-Object.defineProperty(exports, "getUsersMe", { enumerable: true, get: function () { return users_1.getCurrentUser; } });
-Object.defineProperty(exports, "patchUsersMe", { enumerable: true, get: function () { return users_1.updateCurrentUser; } });
-var analyzeNudgeFeedback_1 = require("./analyzeNudgeFeedback");
-Object.defineProperty(exports, "analyzeNudgeFeedback", { enumerable: true, get: function () { return analyzeNudgeFeedback_1.analyzeNudgeFeedback; } });
-var protocolSearch_1 = require("./protocolSearch");
-Object.defineProperty(exports, "getProtocolsSearch", { enumerable: true, get: function () { return protocolSearch_1.searchProtocols; } });
-var wearablesSync_1 = require("./wearablesSync");
-Object.defineProperty(exports, "postWearablesSync", { enumerable: true, get: function () { return wearablesSync_1.syncWearableData; } });
-var onProtocolLogWritten_1 = require("./onProtocolLogWritten");
-Object.defineProperty(exports, "onProtocolLogWritten", { enumerable: true, get: function () { return onProtocolLogWritten_1.onProtocolLogWritten; } });
-var privacy_1 = require("./privacy");
-Object.defineProperty(exports, "postUsersMeExport", { enumerable: true, get: function () { return privacy_1.requestUserDataExport; } });
-Object.defineProperty(exports, "deleteUsersMe", { enumerable: true, get: function () { return privacy_1.requestUserDeletion; } });
-Object.defineProperty(exports, "getUsersMePrivacy", { enumerable: true, get: function () { return privacy_1.getPrivacyDashboardData; } });
-Object.defineProperty(exports, "privacyExportJob", { enumerable: true, get: function () { return privacy_1.handleUserExportJob; } });
-Object.defineProperty(exports, "privacyDeletionJob", { enumerable: true, get: function () { return privacy_1.handleUserDeletionJob; } });
-var streaks_1 = require("./streaks");
-Object.defineProperty(exports, "calculateStreaks", { enumerable: true, get: function () { return streaks_1.calculateStreaks; } });
-Object.defineProperty(exports, "resetFreezes", { enumerable: true, get: function () { return streaks_1.resetFreezes; } });
-var waitlist_1 = require("./waitlist");
-Object.defineProperty(exports, "postWaitlist", { enumerable: true, get: function () { return waitlist_1.joinWaitlist; } });
-var revenuecatWebhook_1 = require("./revenuecatWebhook");
-Object.defineProperty(exports, "postApiWebhooksRevenuecat", { enumerable: true, get: function () { return revenuecatWebhook_1.handleRevenueCatWebhook; } });
+exports.api = exports.generateAdaptiveNudges = exports.generateDailySchedules = void 0;
+const functions_framework_1 = require("@google-cloud/functions-framework");
+const api_1 = require("./api");
+// Export HTTP Cloud Function
 var dailyScheduler_1 = require("./dailyScheduler");
 Object.defineProperty(exports, "generateDailySchedules", { enumerable: true, get: function () { return dailyScheduler_1.generateDailySchedules; } });
 var nudgeEngine_1 = require("./nudgeEngine");
 Object.defineProperty(exports, "generateAdaptiveNudges", { enumerable: true, get: function () { return nudgeEngine_1.generateAdaptiveNudges; } });
-var chat_1 = require("./chat");
-Object.defineProperty(exports, "postChat", { enumerable: true, get: function () { return chat_1.postChat; } });
+// Register and export Express app for Cloud Functions Gen 2
+// The http() function registers the Express app as a Cloud Function handler
+// The entry point 'api' must match the function name in the http() call
+(0, functions_framework_1.http)('api', api_1.apiApp);
+exports.api = api_1.apiApp;

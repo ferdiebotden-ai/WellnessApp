@@ -116,7 +116,7 @@ jobs:
             --allow-unauthenticated \
             --source=functions \
             --project=wellness-os-app \
-            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}
 
       - name: Deploy Daily Scheduler Function
         run: |
@@ -128,7 +128,7 @@ jobs:
             --trigger-topic=daily-tick \
             --source=functions \
             --project=wellness-os-app \
-            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
 
       - name: Deploy Nudge Engine Function
         run: |
@@ -140,5 +140,5 @@ jobs:
             --trigger-topic=hourly-tick \
             --source=functions \
             --project=wellness-os-app \
-            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 

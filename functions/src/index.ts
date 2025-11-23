@@ -5,5 +5,8 @@ import { apiApp } from './api';
 export { generateDailySchedules } from './dailyScheduler';
 export { generateAdaptiveNudges } from './nudgeEngine';
 
-// Wrap Express app for Cloud Functions
+// Register and export Express app for Cloud Functions Gen 2
+// The http() function registers the Express app as a Cloud Function handler
+// The entry point 'api' must match the function name in the http() call
+http('api', apiApp);
 export const api = apiApp;
