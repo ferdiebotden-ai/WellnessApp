@@ -106,7 +106,23 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy API Function
+        working-directory: functions
         run: |
+          # Create .env.yaml file with all secrets (handles multi-line values correctly)
+          cat > .env.yaml << 'EOF'
+          FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+          FIREBASE_PRIVATE_KEY: "${{ secrets.FIREBASE_PRIVATE_KEY }}"
+          SUPABASE_URL: "${{ secrets.SUPABASE_URL }}"
+          SUPABASE_ANON_KEY: "${{ secrets.SUPABASE_ANON_KEY }}"
+          SUPABASE_SERVICE_ROLE_KEY: "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          SUPABASE_JWT_SECRET: "${{ secrets.SUPABASE_JWT_SECRET }}"
+          PINECONE_API_KEY: "${{ secrets.PINECONE_API_KEY }}"
+          PINECONE_INDEX_NAME: "${{ secrets.PINECONE_INDEX_NAME }}"
+          OPENAI_API_KEY: "${{ secrets.OPENAI_API_KEY }}"
+          REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
+          EOF
+          
           gcloud functions deploy api \
             --gen2 \
             --runtime=nodejs20 \
@@ -114,31 +130,61 @@ jobs:
             --entry-point=api \
             --trigger-http \
             --allow-unauthenticated \
-            --source=functions \
+            --source=. \
             --project=wellness-os-app \
-            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }},PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},REVENUECAT_WEBHOOK_SECRET=${{ secrets.REVENUECAT_WEBHOOK_SECRET }}
+            --env-vars-file=.env.yaml
+          
+          # Clean up
+          rm .env.yaml
 
       - name: Deploy Daily Scheduler Function
+        working-directory: functions
         run: |
+          # Create .env.yaml file with required secrets
+          cat > .env.yaml << 'EOF'
+          FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+          FIREBASE_PRIVATE_KEY: "${{ secrets.FIREBASE_PRIVATE_KEY }}"
+          SUPABASE_URL: "${{ secrets.SUPABASE_URL }}"
+          SUPABASE_SERVICE_ROLE_KEY: "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          EOF
+          
           gcloud functions deploy generateDailySchedules \
             --gen2 \
             --runtime=nodejs20 \
             --region=us-central1 \
             --entry-point=generateDailySchedules \
             --trigger-topic=daily-tick \
-            --source=functions \
+            --source=. \
             --project=wellness-os-app \
-            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+            --env-vars-file=.env.yaml
+          
+          # Clean up
+          rm .env.yaml
 
       - name: Deploy Nudge Engine Function
+        working-directory: functions
         run: |
+          # Create .env.yaml file with required secrets
+          cat > .env.yaml << 'EOF'
+          FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+          FIREBASE_PRIVATE_KEY: "${{ secrets.FIREBASE_PRIVATE_KEY }}"
+          SUPABASE_URL: "${{ secrets.SUPABASE_URL }}"
+          SUPABASE_SERVICE_ROLE_KEY: "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          OPENAI_API_KEY: "${{ secrets.OPENAI_API_KEY }}"
+          EOF
+          
           gcloud functions deploy generateAdaptiveNudges \
             --gen2 \
             --runtime=nodejs20 \
             --region=us-central1 \
             --entry-point=generateAdaptiveNudges \
             --trigger-topic=hourly-tick \
-            --source=functions \
+            --source=. \
             --project=wellness-os-app \
-            --set-env-vars SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            --env-vars-file=.env.yaml
+          
+          # Clean up
+          rm .env.yaml
 
