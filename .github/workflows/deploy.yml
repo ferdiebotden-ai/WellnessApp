@@ -123,14 +123,10 @@ jobs:
           REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
           EOF
           
-          gcloud functions deploy api \
-            --gen2 \
-            --runtime=nodejs20 \
+          gcloud run deploy api \
             --region=us-central1 \
-            --entry-point=api \
-            --trigger-http \
-            --allow-unauthenticated \
             --source=. \
+            --allow-unauthenticated \
             --project=wellness-os-app \
             --env-vars-file=.env.yaml
           

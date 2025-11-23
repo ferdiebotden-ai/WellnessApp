@@ -10,11 +10,18 @@ const LOCATION = 'us-central1';
 const COMPLETION_MODEL = 'gemini-2.0-flash-001';
 const EMBEDDING_MODEL = 'text-embedding-005';
 
-// Initialize Vertex AI client
-const vertexAI = new VertexAI({
-  project: PROJECT_ID,
-  location: LOCATION,
-});
+// Initialize Vertex AI client lazily
+let vertexAI: VertexAI | null = null;
+
+function getVertexAI(): VertexAI {
+  if (!vertexAI) {
+    vertexAI = new VertexAI({
+      project: PROJECT_ID,
+      location: LOCATION,
+    });
+  }
+  return vertexAI;
+}
 
 // Safety settings for wellness coaching context
 const safetySettings = [
@@ -48,7 +55,7 @@ export async function generateCompletion(
   userPrompt: string,
   temperature = 0.7,
 ): Promise<string> {
-  const generativeModel = vertexAI.getGenerativeModel({
+  const generativeModel = getVertexAI().getGenerativeModel({
     model: COMPLETION_MODEL,
     safetySettings,
     generationConfig: {
