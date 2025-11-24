@@ -56,7 +56,7 @@ jobs:
           REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
           EOF
 
-          # Deploy with env file
+          # Deploy with env file (clear existing vars to avoid type mismatch)
           gcloud functions deploy generateDailySchedules \
             --gen2 \
             --runtime=nodejs20 \
@@ -65,6 +65,7 @@ jobs:
             --entry-point=generateDailySchedules \
             --trigger-topic=daily-tick \
             --allow-unauthenticated \
+            --clear-env-vars \
             --env-vars-file=.env.yaml
 
           # Clean up
@@ -88,7 +89,7 @@ jobs:
           REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
           EOF
 
-          # Deploy with env file
+          # Deploy with env file (clear existing vars to avoid type mismatch)
           gcloud functions deploy generateAdaptiveNudges \
             --gen2 \
             --runtime=nodejs20 \
@@ -97,6 +98,7 @@ jobs:
             --entry-point=generateAdaptiveNudges \
             --trigger-topic=hourly-tick \
             --allow-unauthenticated \
+            --clear-env-vars \
             --env-vars-file=.env.yaml
 
           # Clean up
@@ -120,7 +122,7 @@ jobs:
           REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
           EOF
 
-          # Deploy with env file
+          # Deploy with env file (clear existing vars to avoid type mismatch)
           gcloud functions deploy api \
             --gen2 \
             --runtime=nodejs20 \
@@ -129,6 +131,7 @@ jobs:
             --entry-point=api \
             --trigger-http \
             --allow-unauthenticated \
+            --clear-env-vars \
             --env-vars-file=.env.yaml
 
           # Clean up
