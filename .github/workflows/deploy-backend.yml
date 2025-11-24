@@ -42,7 +42,18 @@ jobs:
         run: |
           cd functions
 
-          # Create .env.yaml file with all secrets
+          # Step 1: Remove existing env vars to clear type mismatch (ignore errors if function doesn't exist)
+          gcloud functions deploy generateDailySchedules \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=us-central1 \
+            --source=. \
+            --entry-point=generateDailySchedules \
+            --trigger-topic=daily-tick \
+            --allow-unauthenticated \
+            --clear-env-vars || true
+
+          # Step 2: Create .env.yaml file with all secrets
           cat > .env.yaml << 'EOF'
           FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
           FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
@@ -56,8 +67,7 @@ jobs:
           REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
           EOF
 
-          # Deploy with explicit env var removal to fix type mismatch
-          # First remove all existing vars, then set new ones from file
+          # Step 3: Deploy with new env vars
           gcloud functions deploy generateDailySchedules \
             --gen2 \
             --runtime=nodejs20 \
@@ -66,7 +76,6 @@ jobs:
             --entry-point=generateDailySchedules \
             --trigger-topic=daily-tick \
             --allow-unauthenticated \
-            --remove-env-vars=FIREBASE_PROJECT_ID,FIREBASE_CLIENT_EMAIL,FIREBASE_PRIVATE_KEY,SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,SUPABASE_JWT_SECRET,PINECONE_API_KEY,PINECONE_INDEX_NAME,REVENUECAT_WEBHOOK_SECRET \
             --env-vars-file=.env.yaml
 
           # Clean up
@@ -76,7 +85,18 @@ jobs:
         run: |
           cd functions
 
-          # Create .env.yaml file with all secrets
+          # Step 1: Remove existing env vars to clear type mismatch (ignore errors if function doesn't exist)
+          gcloud functions deploy generateAdaptiveNudges \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=us-central1 \
+            --source=. \
+            --entry-point=generateAdaptiveNudges \
+            --trigger-topic=hourly-tick \
+            --allow-unauthenticated \
+            --clear-env-vars || true
+
+          # Step 2: Create .env.yaml file with all secrets
           cat > .env.yaml << 'EOF'
           FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
           FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
@@ -90,8 +110,7 @@ jobs:
           REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
           EOF
 
-          # Deploy with explicit env var removal to fix type mismatch
-          # First remove all existing vars, then set new ones from file
+          # Step 3: Deploy with new env vars
           gcloud functions deploy generateAdaptiveNudges \
             --gen2 \
             --runtime=nodejs20 \
@@ -100,7 +119,6 @@ jobs:
             --entry-point=generateAdaptiveNudges \
             --trigger-topic=hourly-tick \
             --allow-unauthenticated \
-            --remove-env-vars=FIREBASE_PROJECT_ID,FIREBASE_CLIENT_EMAIL,FIREBASE_PRIVATE_KEY,SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,SUPABASE_JWT_SECRET,PINECONE_API_KEY,PINECONE_INDEX_NAME,REVENUECAT_WEBHOOK_SECRET \
             --env-vars-file=.env.yaml
 
           # Clean up
@@ -110,7 +128,18 @@ jobs:
         run: |
           cd functions
 
-          # Create .env.yaml file with all secrets
+          # Step 1: Remove existing env vars to clear type mismatch (ignore errors if function doesn't exist)
+          gcloud functions deploy api \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=us-central1 \
+            --source=. \
+            --entry-point=api \
+            --trigger-http \
+            --allow-unauthenticated \
+            --clear-env-vars || true
+
+          # Step 2: Create .env.yaml file with all secrets
           cat > .env.yaml << 'EOF'
           FIREBASE_PROJECT_ID: "${{ secrets.FIREBASE_PROJECT_ID }}"
           FIREBASE_CLIENT_EMAIL: "${{ secrets.FIREBASE_CLIENT_EMAIL }}"
@@ -124,8 +153,7 @@ jobs:
           REVENUECAT_WEBHOOK_SECRET: "${{ secrets.REVENUECAT_WEBHOOK_SECRET }}"
           EOF
 
-          # Deploy with explicit env var removal to fix type mismatch
-          # First remove all existing vars, then set new ones from file
+          # Step 3: Deploy with new env vars
           gcloud functions deploy api \
             --gen2 \
             --runtime=nodejs20 \
@@ -134,7 +162,6 @@ jobs:
             --entry-point=api \
             --trigger-http \
             --allow-unauthenticated \
-            --remove-env-vars=FIREBASE_PROJECT_ID,FIREBASE_CLIENT_EMAIL,FIREBASE_PRIVATE_KEY,SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,SUPABASE_JWT_SECRET,PINECONE_API_KEY,PINECONE_INDEX_NAME,REVENUECAT_WEBHOOK_SECRET \
             --env-vars-file=.env.yaml
 
           # Clean up
