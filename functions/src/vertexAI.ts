@@ -16,9 +16,9 @@ let vertexAI: VertexAI | null = null;
 function getVertexAI(): VertexAI {
   if (!vertexAI) {
     vertexAI = new VertexAI({
-      project: PROJECT_ID,
-      location: LOCATION,
-    });
+  project: PROJECT_ID,
+  location: LOCATION,
+});
   }
   return vertexAI;
 }
