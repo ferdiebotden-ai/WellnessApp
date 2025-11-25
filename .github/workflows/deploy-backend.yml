@@ -38,6 +38,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Debug - Show authenticated service account
+        run: |
+          echo "Authenticated as:"
+          gcloud auth list --filter=status:ACTIVE --format="value(account)"
+
       - name: Deploy generateDailySchedules
         run: |
           cd functions
