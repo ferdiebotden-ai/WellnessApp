@@ -1,110 +1,23 @@
 import React, { useEffect } from 'react';
-import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
-import { Alert, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
-import { BottomTabs } from './navigation/BottomTabs';
-import { TopNavigationBar } from './components/TopNavigationBar';
-import { palette } from './theme/palette';
-import { AppLockProvider } from './providers/AppLockProvider';
-import { AuthenticationGate } from './components/AuthenticationGate';
-import { MonetizationProvider, useMonetization } from './providers/MonetizationProvider';
+import { StatusBar } from 'react-native';
 import { FeatureFlagsProvider } from './providers/FeatureFlagsProvider';
-import { TrialBanner } from './components/TrialBanner';
-import { TrialSoftReminderModal } from './components/TrialSoftReminderModal';
-import { PaywallModal } from './components/PaywallModal';
-import { ChatModal } from './components/ChatModal';
+import { AuthProvider } from './providers/AuthProvider';
+import { RootNavigator } from './navigation/RootNavigator';
 import analytics from './services/AnalyticsService';
 import { firebaseAuth } from './services/firebase';
 import { revenueCat } from './services/RevenueCatService';
+import { palette } from './theme/palette';
 
-const navigationTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: palette.primary,
-    background: palette.background,
-    card: palette.background,
-    text: palette.textPrimary,
-    border: palette.border,
-  },
-};
-
-const AppScaffold: React.FC = () => {
-  const { requestChatAccess, refreshStatus, closePaywall } = useMonetization();
-  const [isChatVisible, setChatVisible] = React.useState(false);
-
-  const handleAiCoachPress = () => {
-    console.log('AI Coach button pressed');
-    try {
-      const allowed = requestChatAccess({ intent: 'quick_access' });
-      console.log('Chat access allowed:', allowed);
-      if (!allowed) {
-        console.log('Chat access denied by monetization check');
-        return;
-      }
-
-      console.log('Opening chat modal...');
-      setChatVisible(true);
-    } catch (error) {
-      console.error('Error in handleAiCoachPress:', error);
-      Alert.alert('Error', 'Failed to open chat. Please check the console for details.');
-    }
-  };
-
-  const handleSubscribe = async () => {
-    try {
-      await analytics.trackSubscriptionStarted();
-      const purchase = await revenueCat.purchaseCorePackage();
-
-      if (!revenueCat.hasActiveCoreEntitlement(purchase.customerInfo)) {
-        throw new Error('Core entitlement was not activated.');
-      }
-
-      await analytics.trackSubscriptionActivated({
-        productIdentifier: purchase.productIdentifier,
-      });
-
-      await refreshStatus();
-      closePaywall();
-
-      Alert.alert(
-        'Welcome to Core',
-        'Your subscription is active. Enjoy unlimited coaching and premium modules.'
-      );
-    } catch (error) {
-      if (revenueCat.isUserCancellationError(error)) {
-        Alert.alert('Purchase cancelled', 'No charges were made to your account.');
-        return;
-      }
-
-      console.error('Core subscription purchase failed', error);
-      Alert.alert(
-        'Purchase failed',
-        'We were unable to complete your purchase. Please try again in a few minutes.'
-      );
-    }
-  };
-
-  return (
-    <NavigationContainer theme={navigationTheme}>
-      <StatusBar barStyle="light-content" />
-      <SafeAreaView style={styles.safeArea}>
-        <TopNavigationBar
-          title="Health Dashboard"
-          subtitle="Wellness OS"
-          onAiCoachPress={handleAiCoachPress}
-        />
-        <TrialBanner />
-        <View style={styles.contentWrapper}>
-          <BottomTabs />
-        </View>
-      </SafeAreaView>
-      <TrialSoftReminderModal />
-      <PaywallModal onSubscribe={handleSubscribe} />
-      <ChatModal visible={isChatVisible} onClose={() => setChatVisible(false)} />
-    </NavigationContainer>
-  );
-};
-
+/**
+ * Main App component.
+ *
+ * The app uses RootNavigator to conditionally render:
+ * - AuthStackNavigator: When user is not authenticated (Sign In / Sign Up)
+ * - OnboardingStackNavigator: When user is authenticated but hasn't completed onboarding
+ * - MainStackContent: When user is authenticated and has completed onboarding
+ *
+ * This ensures users must log in before accessing the Health Dashboard.
+ */
 export const App: React.FC = () => {
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -145,25 +58,12 @@ export const App: React.FC = () => {
 
   return (
     <FeatureFlagsProvider>
-      <AppLockProvider>
-        <AuthenticationGate>
-          <MonetizationProvider>
-            <AppScaffold />
-          </MonetizationProvider>
-        </AuthenticationGate>
-      </AppLockProvider>
+      <AuthProvider>
+        <StatusBar barStyle="light-content" backgroundColor={palette.background} />
+        <RootNavigator />
+      </AuthProvider>
     </FeatureFlagsProvider>
   );
 };
 
 export default App;
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: palette.background,
-  },
-  contentWrapper: {
-    flex: 1,
-  },
-});
