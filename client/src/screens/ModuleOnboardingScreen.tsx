@@ -16,9 +16,7 @@ type ModuleOnboardingScreenProps = NativeStackScreenProps<
   'ModuleOnboarding'
 >;
 
-export const ModuleOnboardingScreen: React.FC<ModuleOnboardingScreenProps> = ({
-  navigation,
-}) => {
+export const ModuleOnboardingScreen: React.FC<ModuleOnboardingScreenProps> = () => {
   const { modules, status, error, reload } = useCoreModules();
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -43,19 +41,12 @@ export const ModuleOnboardingScreen: React.FC<ModuleOnboardingScreenProps> = ({
         void analytics.trackOnboardingComplete({ primaryModuleId });
       }
 
-      // Navigate to biometric setup if available, otherwise mark onboarding complete
-      // Check if biometrics are available
-      const { getSupportedBiometryType } = await import('../services/secureCredentials');
-      const biometryType = await getSupportedBiometryType();
-      
-      if (biometryType) {
-        // Don't mark onboarding complete yet - BiometricSetupScreen will do that
-        navigation.navigate('BiometricSetup');
-      } else {
-        // No biometrics available, mark onboarding complete now
-        await updateOnboarding(true);
-        // RootNavigator will automatically show MainStack
-      }
+      // Mark onboarding complete - user goes directly to main app
+      // Biometric/PIN protection is an optional feature users can enable later in Settings
+      // This follows industry best practices (Headspace, Calm, Noom, etc. don't ask for
+      // biometrics during initial onboarding - it creates friction and confusion)
+      await updateOnboarding(true);
+      // RootNavigator will automatically show MainStack
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete onboarding';
       Alert.alert('Something went wrong', message, [
@@ -65,7 +56,7 @@ export const ModuleOnboardingScreen: React.FC<ModuleOnboardingScreenProps> = ({
     } finally {
       setSubmitting(false);
     }
-  }, [selectedModuleId, updateOnboarding, navigation]);
+  }, [selectedModuleId, updateOnboarding]);
 
   const renderItem = ({ item }: { item: ModuleSummary }) => (
     <ModuleCard module={item} selected={item.id === selectedModuleId} onSelect={handleSelect} />

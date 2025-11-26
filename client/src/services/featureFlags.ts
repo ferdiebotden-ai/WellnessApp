@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { getRemoteConfig, getValue, RemoteConfig } from 'firebase/remote-config';
 import { getFirebaseApp } from './firebase';
 
@@ -13,6 +14,16 @@ export const FEATURE_FLAG_KEYS = {
   MODULE_DOPAMINE: 'enable_module_dopamine',
   AI_CHAT: 'enable_ai_chat',
 } as const;
+
+/**
+ * Check if we're running in an environment that supports Firebase Remote Config.
+ * Remote Config uses IndexedDB which is not available in React Native.
+ */
+const isRemoteConfigSupported = (): boolean => {
+  // Remote Config is only supported on web platform
+  // React Native (iOS/Android) doesn't have IndexedDB support
+  return Platform.OS === 'web';
+};
 
 /**
  * Default values for feature flags.
@@ -55,6 +66,14 @@ class FeatureFlagService {
   }
 
   private async _doInitialize(): Promise<void> {
+    // Skip Remote Config on React Native - it uses IndexedDB which isn't supported
+    // Use default flag values instead (all features enabled for MVP)
+    if (!isRemoteConfigSupported()) {
+      console.log('Feature flags: Using default values (Remote Config not supported on mobile)');
+      this.initialized = true;
+      return;
+    }
+
     try {
       const app = getFirebaseApp();
       this.remoteConfig = getRemoteConfig(app);
@@ -71,7 +90,7 @@ class FeatureFlagService {
 
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to initialize feature flags', error);
+      console.warn('Feature flags: Initialization failed, using defaults', error);
       // Continue with defaults if initialization fails
       this.initialized = true;
     }
