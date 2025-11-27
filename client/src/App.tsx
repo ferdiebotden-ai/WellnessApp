@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { FeatureFlagsProvider } from './providers/FeatureFlagsProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { RootNavigator } from './navigation/RootNavigator';
@@ -57,12 +58,14 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <FeatureFlagsProvider>
-      <AuthProvider>
-        <StatusBar barStyle="light-content" backgroundColor={palette.background} />
-        <RootNavigator />
-      </AuthProvider>
-    </FeatureFlagsProvider>
+    <SafeAreaProvider>
+      <FeatureFlagsProvider>
+        <AuthProvider>
+          <StatusBar barStyle="light-content" backgroundColor={palette.background} />
+          <RootNavigator />
+        </AuthProvider>
+      </FeatureFlagsProvider>
+    </SafeAreaProvider>
   );
 };
 
