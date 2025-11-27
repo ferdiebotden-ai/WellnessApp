@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { sendChatQuery } from '../services/api';
@@ -16,7 +16,8 @@ interface Props {
   onClose: () => void;
 }
 
-export const ChatModal: React.FC<Props> = ({ visible, onClose }) => {
+// Inner component that uses SafeAreaInsets - must be inside SafeAreaProvider
+const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -60,63 +61,72 @@ export const ChatModal: React.FC<Props> = ({ visible, onClose }) => {
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>AI Coach</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>AI Coach</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={styles.closeText}>Close</Text>
+          </TouchableOpacity>
+        </View>
 
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={item => item.id}
-            contentContainerStyle={styles.listContent}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="interactive"
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            renderItem={({ item }) => (
-              <View style={[styles.bubble, item.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-                <Text style={[styles.messageText, item.role === 'user' ? styles.userText : styles.aiText]}>{item.content}</Text>
-              </View>
-            )}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyTitle}>Welcome to AI Coach</Text>
-                <Text style={styles.emptyText}>Ask me anything about wellness, sleep optimization, stress management, or your health protocols.</Text>
-              </View>
-            }
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          renderItem={({ item }) => (
+            <View style={[styles.bubble, item.role === 'user' ? styles.userBubble : styles.aiBubble]}>
+              <Text style={[styles.messageText, item.role === 'user' ? styles.userText : styles.aiText]}>{item.content}</Text>
+            </View>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>Welcome to AI Coach</Text>
+              <Text style={styles.emptyText}>Ask me anything about wellness, sleep optimization, stress management, or your health protocols.</Text>
+            </View>
+          }
+        />
+
+        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <TextInput
+            style={styles.input}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Ask your coach..."
+            placeholderTextColor={palette.textMuted}
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            multiline={false}
+            blurOnSubmit={false}
           />
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={loading || !input.trim()}
+            style={styles.sendButton}
+          >
+            {loading ? <ActivityIndicator color={palette.primary} /> : <Text style={styles.sendText}>Send</Text>}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
 
-          <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-            <TextInput
-              style={styles.input}
-              value={input}
-              onChangeText={setInput}
-              placeholder="Ask your coach..."
-              placeholderTextColor={palette.textMuted}
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
-              multiline={false}
-              blurOnSubmit={false}
-            />
-            <TouchableOpacity
-              onPress={handleSend}
-              disabled={loading || !input.trim()}
-              style={styles.sendButton}
-            >
-              {loading ? <ActivityIndicator color={palette.primary} /> : <Text style={styles.sendText}>Send</Text>}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+// Wrapper component that provides SafeAreaProvider context for the Modal
+export const ChatModal: React.FC<Props> = ({ visible, onClose }) => {
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <SafeAreaProvider>
+        <ChatModalContent visible={visible} onClose={onClose} />
+      </SafeAreaProvider>
     </Modal>
   );
 };

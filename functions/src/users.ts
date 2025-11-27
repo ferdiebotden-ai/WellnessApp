@@ -160,17 +160,41 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
   try {
     const { uid } = await authenticateRequest(req);
     const supabase = getUserClient(uid);
-    const { data, error } = await supabase
+
+    // Fetch user profile first
+    const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('*, module_enrollment(*)')
+      .select('*')
       .eq('id', uid)
       .single();
 
-    if (error) {
-      throw error;
+    if (userError) {
+      throw userError;
     }
 
-    res.status(200).json({ user: data });
+    // Attempt to fetch module_enrollment separately to avoid schema relationship issues
+    let moduleEnrollments: unknown[] = [];
+    try {
+      const { data: enrollments } = await supabase
+        .from('module_enrollment')
+        .select('*')
+        .eq('user_id', uid);
+
+      if (enrollments) {
+        moduleEnrollments = enrollments;
+      }
+    } catch (enrollmentError) {
+      // Log but don't fail - module_enrollment is optional
+      console.warn('Failed to fetch module enrollments:', enrollmentError);
+    }
+
+    // Combine user data with enrollments
+    const userWithEnrollments = {
+      ...userData,
+      module_enrollment: moduleEnrollments
+    };
+
+    res.status(200).json({ user: userWithEnrollments });
   } catch (error) {
     const { status, message } = resolveError(error);
     res.status(status).json({ error: message });
