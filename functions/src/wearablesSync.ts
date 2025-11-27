@@ -294,11 +294,11 @@ function computeHrvImprovement(rows: ArchiveHistoryRow[]): number | null {
   return Number.parseFloat(improvement.toFixed(2));
 }
 
-async function updateUserHealthMetrics(client: SupabaseClient, userId: string): Promise<void> {
+async function updateUserHealthMetrics(client: SupabaseClient, supabaseUserId: string): Promise<void> {
   const { data: history, error: historyError } = await client
     .from('wearable_data_archive')
     .select('hrv_score, sleep_hours, recorded_at')
-    .eq('user_id', userId)
+    .eq('user_id', supabaseUserId)
     .order('recorded_at', { ascending: false })
     .limit(HISTORY_LOOKBACK);
 
@@ -313,7 +313,7 @@ async function updateUserHealthMetrics(client: SupabaseClient, userId: string): 
   const { data: userRow, error: userError } = await client
     .from('users')
     .select('healthMetrics')
-    .eq('id', userId)
+    .eq('id', supabaseUserId)
     .single();
 
   if (userError) {
@@ -334,7 +334,7 @@ async function updateUserHealthMetrics(client: SupabaseClient, userId: string): 
   const { error: updateError } = await client
     .from('users')
     .update({ healthMetrics: updatedMetrics })
-    .eq('id', userId);
+    .eq('id', supabaseUserId);
 
   if (updateError) {
     throw Object.assign(new Error(`Failed to update user metrics: ${updateError.message}`), { status: 500 });
@@ -360,13 +360,29 @@ export async function syncWearableData(req: Request, res: Response): Promise<voi
     const decoded = await verifyFirebaseToken(token);
     const { userId, source, capturedAt, metrics } = parsePayload(req.body);
 
+    // userId from payload should match the Firebase UID from the token
     if (decoded.uid !== userId) {
       throw Object.assign(new Error('Authenticated user mismatch'), { status: 403 });
     }
 
+    const supabase = getServiceClient();
+
+    // Look up the user's Supabase UUID from their Firebase UID
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('firebase_uid', decoded.uid)
+      .single();
+
+    if (userError || !user) {
+      throw Object.assign(new Error('User not found'), { status: 404 });
+    }
+
+    const supabaseUserId = user.id;
+
     const normalized = normalizeWearableMetrics(metrics);
     const archiveRow: WearableArchiveRow = {
-      user_id: userId,
+      user_id: supabaseUserId,  // Use Supabase UUID, not Firebase UID
       source,
       recorded_at: capturedAt,
       hrv_score: normalized.hrvScore,
@@ -379,10 +395,8 @@ export async function syncWearableData(req: Request, res: Response): Promise<voi
       raw_payload: metrics,
     };
 
-    const supabase = getServiceClient();
-
     await insertArchiveRow(supabase, archiveRow);
-    await updateUserHealthMetrics(supabase, userId);
+    await updateUserHealthMetrics(supabase, supabaseUserId);
 
     res.status(200).json({ success: true });
   } catch (error) {

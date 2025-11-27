@@ -175,9 +175,23 @@ export const onProtocolLogWritten = async (event: FirestoreCloudEvent): Promise<
     ? progressTargetRaw
     : DEFAULT_PROGRESS_TARGET;
 
+  // Look up the user's Supabase UUID from their Firebase UID
+  const { data: user, error: userLookupError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('firebase_uid', userId)
+    .maybeSingle();
+
+  if (userLookupError || !user) {
+    console.warn('onProtocolLogWritten: user not found in Supabase', { userId });
+    return;
+  }
+
+  const supabaseUserId = user.id;
+
   const insertResult = await supabase.from('protocol_logs').insert([
     {
-      user_id: userId,
+      user_id: supabaseUserId,
       module_id: moduleId,
       protocol_id: protocolId,
       module_enrollment_id: enrollmentId,
@@ -195,7 +209,7 @@ export const onProtocolLogWritten = async (event: FirestoreCloudEvent): Promise<
   const enrollmentResponse = await supabase
     .from('module_enrollment')
     .select('id,current_streak,longest_streak,last_active_date,progress_pct')
-    .match({ user_id: userId, module_id: moduleId })
+    .match({ user_id: supabaseUserId, module_id: moduleId })
     .maybeSingle();
 
   if (enrollmentResponse.error) {
@@ -219,7 +233,7 @@ export const onProtocolLogWritten = async (event: FirestoreCloudEvent): Promise<
     const logsResponse = await supabase
       .from('protocol_logs')
       .select('id')
-      .match({ user_id: userId, module_id: moduleId });
+      .match({ user_id: supabaseUserId, module_id: moduleId });
 
     if (logsResponse.error) {
       throw new Error(`Failed to count protocol logs: ${logsResponse.error.message}`);
@@ -248,7 +262,7 @@ export const onProtocolLogWritten = async (event: FirestoreCloudEvent): Promise<
     const userResponse = await supabase
       .from('users')
       .select('id,"earnedBadges"')
-      .eq('id', userId)
+      .eq('id', supabaseUserId)
       .maybeSingle();
 
     if (userResponse.error) {
@@ -262,7 +276,7 @@ export const onProtocolLogWritten = async (event: FirestoreCloudEvent): Promise<
       const updateBadges = await supabase
         .from('users')
         .update({ earnedBadges: [...earned, badgeId] })
-        .eq('id', userId);
+        .eq('id', supabaseUserId);
 
       if (updateBadges.error) {
         throw new Error(`Failed to update earned badges: ${updateBadges.error.message}`);

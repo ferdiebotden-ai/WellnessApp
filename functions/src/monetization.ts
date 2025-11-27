@@ -77,19 +77,19 @@ export async function getMonetizationStatus(req: Request, res: Response): Promis
     const { uid } = await authenticateRequest(req);
     const serviceClient = getServiceClient();
 
-    // 1. Fetch user profile
+    // 1. Fetch user profile (query by firebase_uid)
     const { data: user, error: userError } = await serviceClient
       .from('users')
-      .select('tier, trial_start_date, trial_end_date, subscription_id')
-      .eq('id', uid)
+      .select('id, tier, trial_start_date, trial_end_date, subscription_id')
+      .eq('firebase_uid', uid)
       .single();
 
     if (userError || !user) {
       throw userError || new Error('User not found');
     }
 
-    // 2. Calculate chat queries used this week
-    const queriesUsed = await getChatQueriesThisWeek(uid);
+    // 2. Calculate chat queries used this week (use Supabase UUID for foreign key)
+    const queriesUsed = await getChatQueriesThisWeek(user.id);
 
     // 3. Determine chat weekly limit based on tier
     let chatWeeklyLimit: number;

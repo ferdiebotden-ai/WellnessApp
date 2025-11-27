@@ -63,11 +63,11 @@ export async function completeOnboarding(req: Request, res: Response): Promise<v
 
     const serviceClient = getServiceClient();
 
-    // 1. Fetch current user profile
+    // 1. Fetch current user profile (query by firebase_uid)
     const { data: user, error: userError } = await serviceClient
       .from('users')
       .select('*')
-      .eq('id', uid)
+      .eq('firebase_uid', uid)
       .single();
 
     if (userError || !user) {
@@ -86,7 +86,7 @@ export async function completeOnboarding(req: Request, res: Response): Promise<v
       return;
     }
 
-    // 3. Update user profile to mark onboarding complete
+    // 3. Update user profile to mark onboarding complete (use Supabase UUID)
     const { error: updateError } = await serviceClient
       .from('users')
       .update({
@@ -96,25 +96,25 @@ export async function completeOnboarding(req: Request, res: Response): Promise<v
           primary_module_id: body.primary_module_id
         }
       })
-      .eq('id', uid);
+      .eq('id', user.id);
 
     if (updateError) {
       throw updateError;
     }
 
-    // 4. Check if enrollment already exists
+    // 4. Check if enrollment already exists (use Supabase UUID for foreign key)
     const { data: existingEnrollment } = await serviceClient
       .from('module_enrollment')
       .select('*')
-      .eq('user_id', uid)
+      .eq('user_id', user.id)
       .eq('module_id', body.primary_module_id)
       .maybeSingle();
 
     if (!existingEnrollment) {
-      // 5. Create module enrollment
+      // 5. Create module enrollment (use Supabase UUID for user_id foreign key)
       const now = new Date();
       const enrollment: ModuleEnrollmentInsert = {
-        user_id: uid,
+        user_id: user.id,
         module_id: body.primary_module_id,
         is_primary: true,
         enrolled_at: now.toISOString(),

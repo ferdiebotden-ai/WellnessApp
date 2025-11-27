@@ -50,9 +50,12 @@ export const postChat = async (req: Request, res: Response): Promise<void> => {
     // 2. Fetch User Context
     const { data: profile } = await supabase
       .from('users')
-      .select('display_name, healthMetrics')
-      .eq('id', uid)
+      .select('id, display_name, healthMetrics')
+      .eq('firebase_uid', uid)
       .single();
+
+    // Get the Supabase UUID for foreign key relationships
+    const supabaseUserId = profile?.id;
 
     const context = `
       User: ${profile?.display_name || 'Performance Professional'}
@@ -108,17 +111,19 @@ export const postChat = async (req: Request, res: Response): Promise<void> => {
       citations: ragResults.map(r => r.citations).flat(),
     });
 
-    // Log to Audit Log
-    await supabase.from('ai_audit_log').insert({
-      user_id: uid,
-      decision_type: 'chat_response',
-      model_used: getCompletionModelName(),
-      prompt: userPrompt,
-      response: responseText,
-      reasoning: 'Chat response with RAG',
-      citations: ragResults.map(r => r.citations).flat(),
-      conversation_id: convId,
-    });
+    // Log to Audit Log (use Supabase UUID for foreign key)
+    if (supabaseUserId) {
+      await supabase.from('ai_audit_log').insert({
+        user_id: supabaseUserId,
+        decision_type: 'chat_response',
+        model_used: getCompletionModelName(),
+        prompt: userPrompt,
+        response: responseText,
+        reasoning: 'Chat response with RAG',
+        citations: ragResults.map(r => r.citations).flat(),
+        conversation_id: convId,
+      });
+    }
 
     res.status(200).json({
       response: responseText,

@@ -6,7 +6,7 @@ import { getConfig } from './config';
 import { extractBearerToken, isPatchPayloadAllowed } from './utils/http';
 
 interface UserProfileInsert {
-  id: string;
+  firebase_uid: string;
   email?: string | null;
   display_name?: string | null;
   tier?: string;
@@ -62,7 +62,7 @@ function buildUserInsert(uid: string, email?: string | null, displayName?: strin
   const { defaultTrialDays } = getConfig();
   const trialEnd = new Date(now.getTime() + defaultTrialDays * 24 * 60 * 60 * 1000);
   return {
-    id: uid,
+    firebase_uid: uid,
     email: email ?? null,
     display_name: displayName ?? null,
     tier: 'trial',
@@ -126,7 +126,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
     const { uid, email } = await authenticateRequest(req);
     const body = (req.body ?? {}) as { display_name?: string | null };
     const serviceClient = getServiceClient();
-    const existing = await serviceClient.from('users').select('*').eq('id', uid).maybeSingle();
+    const existing = await serviceClient.from('users').select('*').eq('firebase_uid', uid).maybeSingle();
 
     if (existing.error) {
       throw existing.error;
@@ -165,7 +165,7 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', uid)
+      .eq('firebase_uid', uid)
       .single();
 
     if (userError) {
@@ -173,12 +173,13 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
     }
 
     // Attempt to fetch module_enrollment separately to avoid schema relationship issues
+    // Use the Supabase UUID (userData.id), not the Firebase UID
     let moduleEnrollments: unknown[] = [];
     try {
       const { data: enrollments } = await supabase
         .from('module_enrollment')
         .select('*')
-        .eq('user_id', uid);
+        .eq('user_id', userData.id);
 
       if (enrollments) {
         moduleEnrollments = enrollments;
@@ -225,7 +226,7 @@ export async function updateCurrentUser(req: Request, res: Response): Promise<vo
     const { data, error } = await supabase
       .from('users')
       .update(updates)
-      .eq('id', uid)
+      .eq('firebase_uid', uid)
       .select()
       .single();
 

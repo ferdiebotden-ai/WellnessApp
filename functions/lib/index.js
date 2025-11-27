@@ -3,7 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.api = exports.generateAdaptiveNudges = exports.generateDailySchedules = void 0;
 const functions_framework_1 = require("@google-cloud/functions-framework");
 const api_1 = require("./api");
-// Export HTTP Cloud Function
+/**
+ * WellnessApp Cloud Functions - Entry Point
+ *
+ * This module exports three Cloud Functions:
+ * 1. api - HTTP-triggered Express app for all REST endpoints
+ * 2. generateDailySchedules - Pub/Sub triggered daily scheduler
+ * 3. generateAdaptiveNudges - Pub/Sub triggered nudge engine
+ */
+// Export Pub/Sub-triggered functions
 var dailyScheduler_1 = require("./dailyScheduler");
 Object.defineProperty(exports, "generateDailySchedules", { enumerable: true, get: function () { return dailyScheduler_1.generateDailySchedules; } });
 var nudgeEngine_1 = require("./nudgeEngine");

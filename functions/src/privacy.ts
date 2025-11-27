@@ -118,17 +118,30 @@ export const getPrivacyDashboardData = async (req: Request, res: Response): Prom
     const { uid } = await authenticateRequest(req);
     const supabase = getUserClient(uid);
 
+    // First get the user's Supabase UUID from their firebase_uid
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('firebase_uid', uid)
+      .single();
+
+    if (userError || !user) {
+      throw userError || new Error('User not found');
+    }
+
+    const supabaseUserId = user.id;
+
     const [protocolLogs, aiAudit] = await Promise.all([
       supabase
         .from('protocol_logs')
         .select('id, protocol_id, module_id, status, logged_at, metadata')
-        .eq('user_id', uid)
+        .eq('user_id', supabaseUserId)
         .order('logged_at', { ascending: false })
         .limit(100),
       supabase
         .from('ai_audit_log')
         .select('id, action, agent, model, summary, created_at, metadata')
-        .eq('user_id', uid)
+        .eq('user_id', supabaseUserId)
         .order('created_at', { ascending: false })
         .limit(100),
     ]);
@@ -197,24 +210,37 @@ const persistArchiveToStorage = async (userId: string, archive: Buffer): Promise
   return { filePath, signedUrl };
 };
 
-const fetchUserDataset = async (userId: string) => {
+const fetchUserDataset = async (firebaseUid: string) => {
   const supabase = getServiceClient();
+
+  // Look up the user's Supabase UUID from their Firebase UID
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('firebase_uid', firebaseUid)
+    .single();
+
+  if (userError || !user) {
+    throw userError || new Error('User not found');
+  }
+
+  const supabaseUserId = user.id;
 
   const [protocolLogs, aiAudit, wearableArchive] = await Promise.all([
     supabase
       .from('protocol_logs')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', supabaseUserId)
       .order('logged_at', { ascending: false }),
     supabase
       .from('ai_audit_log')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', supabaseUserId)
       .order('created_at', { ascending: false }),
     supabase
       .from('wearable_data_archive')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', supabaseUserId)
       .order('recorded_at', { ascending: false }),
   ]);
 
@@ -269,18 +295,35 @@ const purgeFirestoreData = async (firestore: Firestore, userId: string): Promise
   await firestore.collection('users').doc(userId).delete().catch(() => undefined);
 };
 
-const purgeSupabaseData = async (userId: string): Promise<void> => {
+const purgeSupabaseData = async (firebaseUid: string): Promise<void> => {
   const supabase = getServiceClient();
-  const deletionTargets: Array<{ table: string; column: string }> = [
-    { table: 'ai_audit_log', column: 'user_id' },
-    { table: 'protocol_logs', column: 'user_id' },
-    { table: 'wearable_data_archive', column: 'user_id' },
-    { table: 'module_enrollment', column: 'user_id' },
-    { table: 'users', column: 'id' },
+
+  // Look up the user's Supabase UUID from their Firebase UID
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('firebase_uid', firebaseUid)
+    .maybeSingle();
+
+  // If user doesn't exist, nothing to delete
+  if (!user) {
+    console.info('User not found in Supabase, skipping deletion');
+    return;
+  }
+
+  const supabaseUserId = user.id;
+
+  // Delete from related tables first (using Supabase UUID), then users table
+  const deletionTargets: Array<{ table: string; column: string; value: string }> = [
+    { table: 'ai_audit_log', column: 'user_id', value: supabaseUserId },
+    { table: 'protocol_logs', column: 'user_id', value: supabaseUserId },
+    { table: 'wearable_data_archive', column: 'user_id', value: supabaseUserId },
+    { table: 'module_enrollment', column: 'user_id', value: supabaseUserId },
+    { table: 'users', column: 'id', value: supabaseUserId },
   ];
 
   for (const target of deletionTargets) {
-    const { error } = await supabase.from(target.table).delete().eq(target.column, userId);
+    const { error } = await supabase.from(target.table).delete().eq(target.column, target.value);
     if (error) {
       throw error;
     }

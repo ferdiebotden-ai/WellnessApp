@@ -127,15 +127,16 @@ export async function handleRevenueCatWebhook(req: RequestWithRawBody, res: Resp
   }
 
   const supabase = getServiceClient();
-  const userId = event.app_user_id;
+  const firebaseUid = event.app_user_id;
   const subscriptionId = resolveSubscriptionId(event);
 
   try {
+    // RevenueCat app_user_id is the Firebase UID, need to query by firebase_uid
     if (ACTIVATING_EVENTS.has(event.type)) {
       const { error } = await supabase
         .from('users')
         .update({ tier: 'core', subscription_id: subscriptionId })
-        .eq('id', userId)
+        .eq('firebase_uid', firebaseUid)
         .select('id')
         .maybeSingle();
 
@@ -151,7 +152,7 @@ export async function handleRevenueCatWebhook(req: RequestWithRawBody, res: Resp
       const { error } = await supabase
         .from('users')
         .update({ tier: 'free', subscription_id: null })
-        .eq('id', userId)
+        .eq('firebase_uid', firebaseUid)
         .select('id')
         .maybeSingle();
 

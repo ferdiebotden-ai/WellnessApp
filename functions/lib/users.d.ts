@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 interface UserProfileInsert {
-    id: string;
+    firebase_uid: string;
     email?: string | null;
     display_name?: string | null;
     tier?: string;

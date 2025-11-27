@@ -13,11 +13,17 @@ const PROJECT_ID = 'wellness-os-app';
 const LOCATION = 'us-central1';
 const COMPLETION_MODEL = 'gemini-2.0-flash-001';
 const EMBEDDING_MODEL = 'text-embedding-005';
-// Initialize Vertex AI client
-const vertexAI = new vertexai_1.VertexAI({
-    project: PROJECT_ID,
-    location: LOCATION,
-});
+// Initialize Vertex AI client lazily
+let vertexAI = null;
+function getVertexAI() {
+    if (!vertexAI) {
+        vertexAI = new vertexai_1.VertexAI({
+            project: PROJECT_ID,
+            location: LOCATION,
+        });
+    }
+    return vertexAI;
+}
 // Safety settings for wellness coaching context
 const safetySettings = [
     {
@@ -45,7 +51,7 @@ const safetySettings = [
  * @returns Generated text response
  */
 async function generateCompletion(systemPrompt, userPrompt, temperature = 0.7) {
-    const generativeModel = vertexAI.getGenerativeModel({
+    const generativeModel = getVertexAI().getGenerativeModel({
         model: COMPLETION_MODEL,
         safetySettings,
         generationConfig: {

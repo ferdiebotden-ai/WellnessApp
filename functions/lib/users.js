@@ -46,7 +46,7 @@ function buildUserInsert(uid, email, displayName) {
     const { defaultTrialDays } = (0, config_1.getConfig)();
     const trialEnd = new Date(now.getTime() + defaultTrialDays * 24 * 60 * 60 * 1000);
     return {
-        id: uid,
+        firebase_uid: uid,
         email: email ?? null,
         display_name: displayName ?? null,
         tier: 'trial',
@@ -106,7 +106,7 @@ async function createUser(req, res) {
         const { uid, email } = await authenticateRequest(req);
         const body = (req.body ?? {});
         const serviceClient = (0, supabaseClient_1.getServiceClient)();
-        const existing = await serviceClient.from('users').select('*').eq('id', uid).maybeSingle();
+        const existing = await serviceClient.from('users').select('*').eq('firebase_uid', uid).maybeSingle();
         if (existing.error) {
             throw existing.error;
         }
@@ -138,18 +138,19 @@ async function getCurrentUser(req, res) {
         const { data: userData, error: userError } = await supabase
             .from('users')
             .select('*')
-            .eq('id', uid)
+            .eq('firebase_uid', uid)
             .single();
         if (userError) {
             throw userError;
         }
         // Attempt to fetch module_enrollment separately to avoid schema relationship issues
+        // Use the Supabase UUID (userData.id), not the Firebase UID
         let moduleEnrollments = [];
         try {
             const { data: enrollments } = await supabase
                 .from('module_enrollment')
                 .select('*')
-                .eq('user_id', uid);
+                .eq('user_id', userData.id);
             if (enrollments) {
                 moduleEnrollments = enrollments;
             }
@@ -190,7 +191,7 @@ async function updateCurrentUser(req, res) {
         const { data, error } = await supabase
             .from('users')
             .update(updates)
-            .eq('id', uid)
+            .eq('firebase_uid', uid)
             .select()
             .single();
         if (error) {
