@@ -65,7 +65,7 @@ export const useTaskFeed = (userId?: string | null): UseTaskFeedResult => {
     }
 
     // Short-circuit if Firestore is unavailable (memory-only mode)
-    if (isUsingMemoryPersistenceMode) {
+    if (isUsingMemoryPersistenceMode()) {
       // Return empty task list - app continues to function
       setTaskBuckets({});
       setLoading(false);

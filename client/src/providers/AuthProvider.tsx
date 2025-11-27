@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const newProfile = createMemoryProfile();
     
     // Try to persist to Firestore if available (non-blocking)
-    if (!isUsingMemoryPersistenceMode) {
+    if (!isUsingMemoryPersistenceMode()) {
       try {
         await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
           email: newProfile.email,
@@ -199,13 +199,13 @@ export const useUpdateOnboarding = () => {
         throw new Error('No user is authenticated');
       }
 
-      console.log(`🎯 useUpdateOnboarding called with completed=${completed}, memory mode=${isUsingMemoryPersistenceMode}`);
+      console.log(`🎯 useUpdateOnboarding called with completed=${completed}, memory mode=${isUsingMemoryPersistenceMode()}`);
       
       // Always update local state first for immediate UI feedback
       setOnboardingStatusLocal(completed ? 'completed' : 'pending');
       
       // Try to persist to Firestore if available
-      if (!isUsingMemoryPersistenceMode) {
+      if (!isUsingMemoryPersistenceMode()) {
         try {
           await updateOnboardingStatus(user.id, completed);
           await refreshUserProfile();

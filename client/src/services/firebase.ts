@@ -1,83 +1,31 @@
 import { Platform } from 'react-native';
 import { FirebaseApp, initializeApp, getApps } from 'firebase/app';
 import {
+  Auth,
   getAuth,
   initializeAuth,
-  type Auth,
+  inMemoryPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
-import {
-  Firestore,
-  getFirestore,
-  initializeFirestore,
-  memoryLocalCache,
-} from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 
-// Platform-specific imports
-let getReactNativePersistence: typeof import('firebase/auth').getReactNativePersistence | null = null;
-let browserLocalPersistence: typeof import('firebase/auth').browserLocalPersistence | null = null;
-let persistentLocalCache: typeof import('firebase/firestore').persistentLocalCache | null = null;
-let persistentMultipleTabManager: typeof import('firebase/firestore').persistentMultipleTabManager | null = null;
-
-if (Platform.OS === 'web') {
-  // Web-specific imports
-  try {
-    const authModule = require('firebase/auth');
-    browserLocalPersistence = authModule.browserLocalPersistence;
-  } catch (e) {
-    console.warn('Failed to import browserLocalPersistence');
-  }
-  try {
-    const firestoreModule = require('firebase/firestore');
-    persistentLocalCache = firestoreModule.persistentLocalCache;
-    persistentMultipleTabManager = firestoreModule.persistentMultipleTabManager;
-  } catch (e) {
-    console.warn('Failed to import Firestore web persistence');
-  }
-} else {
-  // React Native imports
-  try {
-    const authModule = require('firebase/auth');
-    getReactNativePersistence = authModule.getReactNativePersistence;
-  } catch (e) {
-    console.warn('Failed to import getReactNativePersistence');
-  }
-}
-
-// Detect if AsyncStorage native module is actually present in the bundle
-let ReactNativeAsyncStorage: typeof import('@react-native-async-storage/async-storage').default | null = null;
-let isUsingMemoryPersistence = false;
-let hasLoggedPersistenceWarning = false;
-
+// getReactNativePersistence is only available in React Native builds
+// Import it conditionally to avoid TypeScript errors in web builds
+let getReactNativePersistence: ((storage: unknown) => unknown) | undefined;
 if (Platform.OS !== 'web') {
   try {
-    // Try to import AsyncStorage synchronously
-    const AsyncStorageModule = require('@react-native-async-storage/async-storage');
-    ReactNativeAsyncStorage = AsyncStorageModule.default || AsyncStorageModule;
-    
-    // Verify the module is actually functional by checking for a method
-    if (ReactNativeAsyncStorage && typeof ReactNativeAsyncStorage.getItem === 'function') {
-      console.log('✅ AsyncStorage native module loaded successfully');
-    } else {
-      throw new Error('AsyncStorage module loaded but not functional');
-    }
-  } catch (error) {
-    // Native module not linked or not functional - gracefully degrade
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    isUsingMemoryPersistence = true;
-    if (!hasLoggedPersistenceWarning) {
-      console.log(
-        `ℹ️ AsyncStorage not available (native module not found). Auth and Firestore will use memory-only persistence.\n` +
-        `   Error: ${errorMessage}\n` +
-        `   To enable persistence: Rebuild native app with 'npx expo prebuild' and 'npx expo run:ios'`
-      );
-      hasLoggedPersistenceWarning = true;
-    }
-    ReactNativeAsyncStorage = null;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const authRN = require('firebase/auth');
+    getReactNativePersistence = authRN.getReactNativePersistence;
+  } catch {
+    // Not available in this environment
   }
 }
 
 // Export persistence status for other modules
-export const isUsingMemoryPersistenceMode = isUsingMemoryPersistence;
+// This will be set when Firebase is actually initialized
+let isUsingMemoryPersistence = false;
+export const isUsingMemoryPersistenceMode = (): boolean => isUsingMemoryPersistence;
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
@@ -88,12 +36,17 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:000000000000:web:demoappid',
 };
 
-// Validate Firebase configuration
+// Validate Firebase configuration (deferred to avoid early console output)
+let configValidated = false;
 const validateFirebaseConfig = () => {
+  if (configValidated) return;
+  configValidated = true;
+
   const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
   const missing = requiredKeys.filter(
     (key) =>
-      !firebaseConfig[key] || firebaseConfig[key].startsWith('demo-')
+      !firebaseConfig[key as keyof typeof firebaseConfig] ||
+      firebaseConfig[key as keyof typeof firebaseConfig].startsWith('demo-')
   );
 
   if (missing.length > 0) {
@@ -112,8 +65,6 @@ const validateFirebaseConfig = () => {
   }
 };
 
-validateFirebaseConfig();
-
 let cachedApp: FirebaseApp | null = null;
 let cachedDb: Firestore | null = null;
 let cachedAuth: Auth | null = null;
@@ -122,6 +73,8 @@ export const getFirebaseApp = (): FirebaseApp => {
   if (cachedApp) {
     return cachedApp;
   }
+
+  validateFirebaseConfig();
 
   const existingApps = getApps();
   if (existingApps.length > 0) {
@@ -133,28 +86,106 @@ export const getFirebaseApp = (): FirebaseApp => {
   return cachedApp;
 };
 
+/**
+ * Detects if running in Expo Go (no native modules available).
+ */
+const isExpoGo = (): boolean => {
+  try {
+    const Constants = require('expo-constants').default;
+    return Constants.executionEnvironment === 'storeClient';
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Gets or initializes Firebase Auth with platform-appropriate persistence.
+ * - Expo Go: Uses inMemoryPersistence (no native modules required)
+ * - Native builds: Uses AsyncStorage persistence
+ * - Web: Uses browserLocalPersistence
+ */
+export const getFirebaseAuth = (): Auth => {
+  if (cachedAuth) {
+    return cachedAuth;
+  }
+
+  const app = getFirebaseApp();
+
+  // Web platform
+  if (Platform.OS === 'web') {
+    try {
+      cachedAuth = initializeAuth(app, { persistence: browserLocalPersistence });
+      console.log('WEB: Firebase Auth initialized');
+      return cachedAuth;
+    } catch (error) {
+      cachedAuth = getAuth(app);
+      return cachedAuth;
+    }
+  }
+
+  // Expo Go: Use inMemoryPersistence (avoids native module errors)
+  if (isExpoGo()) {
+    isUsingMemoryPersistence = true;
+    console.log('EXPO GO: Using in-memory persistence (auth state will not persist between restarts)');
+    try {
+      cachedAuth = initializeAuth(app, { persistence: inMemoryPersistence });
+      return cachedAuth;
+    } catch (error) {
+      cachedAuth = getAuth(app);
+      return cachedAuth;
+    }
+  }
+
+  // Native build: Try AsyncStorage persistence
+  try {
+    const AsyncStorageModule = require('@react-native-async-storage/async-storage');
+    const ReactNativeAsyncStorage = AsyncStorageModule.default || AsyncStorageModule;
+
+    if (ReactNativeAsyncStorage?.getItem && getReactNativePersistence) {
+      cachedAuth = initializeAuth(app, {
+        persistence: getReactNativePersistence(ReactNativeAsyncStorage) as Auth['config']['persistence'],
+      });
+      console.log('NATIVE: Firebase Auth with AsyncStorage persistence');
+      return cachedAuth;
+    }
+  } catch (error) {
+    console.warn('AsyncStorage unavailable:', error);
+  }
+
+  // Fallback: Memory persistence
+  isUsingMemoryPersistence = true;
+  try {
+    cachedAuth = initializeAuth(app, { persistence: inMemoryPersistence });
+    console.log('FALLBACK: Firebase Auth with memory persistence');
+    return cachedAuth;
+  } catch (error) {
+    cachedAuth = getAuth(app);
+    return cachedAuth;
+  }
+};
+
+/**
+ * Gets or initializes Firestore with appropriate caching.
+ */
 const initializeOfflineFirestore = (app: FirebaseApp): Firestore => {
   if (cachedDb) {
     return cachedDb;
   }
 
+  // Dynamically import Firestore modules
+  const { getFirestore, initializeFirestore, memoryLocalCache } = require('firebase/firestore');
+
   // Web platform: use web-specific persistence
   if (Platform.OS === 'web') {
     try {
-      if (persistentLocalCache && persistentMultipleTabManager) {
-        cachedDb = initializeFirestore(app, {
-          localCache: persistentLocalCache({
-            tabManager: persistentMultipleTabManager(),
-          }),
-        });
-        console.log('WEB: Firestore initialized with web persistence');
-        return cachedDb;
-      } else {
-        // Fallback to standard Firestore
-        cachedDb = getFirestore(app);
-        console.log('WEB: Firestore initialized (standard mode)');
-        return cachedDb;
-      }
+      const { persistentLocalCache, persistentMultipleTabManager } = require('firebase/firestore');
+      cachedDb = initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+        }),
+      });
+      console.log('WEB: Firestore initialized with web persistence');
+      return cachedDb;
     } catch (error) {
       console.error('Failed to initialize Firestore web persistence:', error);
       cachedDb = getFirestore(app);
@@ -168,28 +199,19 @@ const initializeOfflineFirestore = (app: FirebaseApp): Firestore => {
       cachedDb = initializeFirestore(app, {
         localCache: memoryLocalCache(),
       });
-      if (!hasLoggedPersistenceWarning) {
-        console.log('Firestore initialized with memory-only cache (AsyncStorage unavailable)');
-      }
+      console.log('Firestore initialized with memory-only cache');
       return cachedDb;
     } catch (error) {
       console.error('Failed to initialize Firestore with memory cache:', error);
-      // Fallback to standard initialization
-      try {
-        cachedDb = getFirestore(app);
-        console.log('Firestore initialized (fallback mode - no cache)');
-        return cachedDb;
-      } catch (fallbackError) {
-        console.error('Failed to initialize Firestore:', fallbackError);
-        throw fallbackError;
-      }
+      cachedDb = getFirestore(app);
+      return cachedDb;
     }
   }
 
-  // Standard initialization when AsyncStorage is available
+  // Standard initialization
   try {
     cachedDb = getFirestore(app);
-    console.log('Firestore initialized with persistent cache');
+    console.log('Firestore initialized');
     return cachedDb;
   } catch (error) {
     console.error('Failed to initialize Firestore:', error);
@@ -197,106 +219,42 @@ const initializeOfflineFirestore = (app: FirebaseApp): Firestore => {
   }
 };
 
+// Lazy initialization via Proxy - delays Firebase initialization until first property access
+// This ensures React Native's runtime is fully ready before Firebase tries to use native modules
+
+let _lazyAuth: Auth | null = null;
+let _lazyDb: Firestore | null = null;
+
 /**
- * Gets or initializes Firebase Auth with platform-appropriate persistence.
- * - Web: Uses browserLocalPersistence
- * - React Native: Uses AsyncStorage persistence via getReactNativePersistence
+ * Lazily initialized Firebase Auth instance.
+ * Firebase is only initialized when you first access a property on this object.
  */
-export const getFirebaseAuth = (): Auth => {
-  if (cachedAuth) {
-    return cachedAuth;
-  }
-
-  const app = getFirebaseApp();
-
-  // Web platform: use browser persistence
-  if (Platform.OS === 'web') {
-    try {
-      if (browserLocalPersistence) {
-        cachedAuth = initializeAuth(app, {
-          persistence: browserLocalPersistence,
-        });
-        console.log('WEB: Firebase Auth initialized with browser persistence');
-        return cachedAuth;
-      } else {
-        // Fallback to standard getAuth
-        cachedAuth = getAuth(app);
-        console.log('WEB: Firebase Auth initialized (standard mode)');
-        return cachedAuth;
-      }
-    } catch (error) {
-      // Auth might already be initialized
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (
-        errorMessage.includes('already initialized') ||
-        errorMessage.includes('already exists')
-      ) {
-        try {
-          cachedAuth = getAuth(app);
-          console.log('WEB: Using existing Firebase Auth instance');
-          return cachedAuth;
-        } catch (getAuthError) {
-          console.error('Failed to get existing auth instance:', getAuthError);
-          throw getAuthError;
-        }
-      } else {
-        console.error('Failed to initialize Firebase Auth on web:', error);
-        throw error;
-      }
+export const firebaseAuth: Auth = new Proxy({} as Auth, {
+  get(_target, prop) {
+    if (!_lazyAuth) {
+      _lazyAuth = getFirebaseAuth();
     }
-  }
-
-  // React Native: Use AsyncStorage persistence
-  if (ReactNativeAsyncStorage && getReactNativePersistence) {
-    try {
-      cachedAuth = initializeAuth(app, {
-        persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-      });
-      return cachedAuth;
-    } catch (error) {
-      // If initializeAuth fails (e.g., auth already initialized elsewhere),
-      // fall back to getAuth
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      if (
-        errorMessage.includes('already initialized') ||
-        errorMessage.includes('already exists')
-      ) {
-        // Auth was already initialized, get the existing instance
-        try {
-          cachedAuth = getAuth(app);
-          console.warn(
-            'Auth already initialized, using existing instance without persistence'
-          );
-          return cachedAuth;
-        } catch (getAuthError) {
-          console.error('Failed to get existing auth instance:', getAuthError);
-          throw getAuthError;
-        }
-      } else {
-        // Unexpected error during initialization
-        console.error('Failed to initialize Firebase Auth:', error);
-        throw error;
-      }
+    const value = (_lazyAuth as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === 'function') {
+      return value.bind(_lazyAuth);
     }
-  } else {
-    // AsyncStorage not available - initialize without persistence
-    // This will work but auth won't persist between app restarts
-    try {
-      cachedAuth = initializeAuth(app);
-      return cachedAuth;
-    } catch (error) {
-      // If initializeAuth fails, try getAuth
-      try {
-        cachedAuth = getAuth(app);
-        return cachedAuth;
-      } catch (getAuthError) {
-        console.error('Failed to initialize Firebase Auth:', getAuthError);
-        throw getAuthError;
-      }
-    }
-  }
-};
+    return value;
+  },
+});
 
-export const firebaseAuth = getFirebaseAuth();
-export const firebaseDb = initializeOfflineFirestore(getFirebaseApp());
+/**
+ * Lazily initialized Firestore instance.
+ * Firebase is only initialized when you first access a property on this object.
+ */
+export const firebaseDb: Firestore = new Proxy({} as Firestore, {
+  get(_target, prop) {
+    if (!_lazyDb) {
+      _lazyDb = initializeOfflineFirestore(getFirebaseApp());
+    }
+    const value = (_lazyDb as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === 'function') {
+      return value.bind(_lazyDb);
+    }
+    return value;
+  },
+});

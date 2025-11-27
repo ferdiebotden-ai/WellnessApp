@@ -13,7 +13,7 @@ import {
   persistentMultipleTabManager,
 } from 'firebase/firestore';
 
-export const isUsingMemoryPersistenceMode = false;
+export const isUsingMemoryPersistenceMode = (): boolean => false;
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
@@ -109,6 +109,40 @@ export const getFirebaseAuth = (): Auth => {
   }
 };
 
-export const firebaseAuth = getFirebaseAuth();
-export const firebaseDb = initializeOfflineFirestore(getFirebaseApp());
+// Lazy initialization - matches firebase.ts pattern for consistency
+
+let _lazyAuth: Auth | null = null;
+let _lazyDb: Firestore | null = null;
+
+/**
+ * Lazily initialized Firebase Auth instance.
+ */
+export const firebaseAuth: Auth = new Proxy({} as Auth, {
+  get(_target, prop) {
+    if (!_lazyAuth) {
+      _lazyAuth = getFirebaseAuth();
+    }
+    const value = (_lazyAuth as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === 'function') {
+      return value.bind(_lazyAuth);
+    }
+    return value;
+  },
+});
+
+/**
+ * Lazily initialized Firestore instance.
+ */
+export const firebaseDb: Firestore = new Proxy({} as Firestore, {
+  get(_target, prop) {
+    if (!_lazyDb) {
+      _lazyDb = initializeOfflineFirestore(getFirebaseApp());
+    }
+    const value = (_lazyDb as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === 'function') {
+      return value.bind(_lazyDb);
+    }
+    return value;
+  },
+});
 

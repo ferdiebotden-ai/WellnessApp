@@ -37,7 +37,7 @@ export const signUpWithEmail = async (
     };
 
     // Only attempt Firestore write if available
-    if (!isUsingMemoryPersistenceMode) {
+    if (!isUsingMemoryPersistenceMode()) {
       try {
         await setDoc(doc(firebaseDb, USERS_COLLECTION, user.uid), userProfile);
       } catch (firestoreError) {
@@ -136,7 +136,7 @@ export const signOut = async (): Promise<void> => {
  */
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   // Short-circuit if Firestore is unavailable (memory-only mode)
-  if (isUsingMemoryPersistenceMode) {
+  if (isUsingMemoryPersistenceMode()) {
     if (!hasLoggedFirestoreWarning) {
       console.log('ℹ️ Firestore unavailable (memory-only mode), skipping profile fetch');
       hasLoggedFirestoreWarning = true;
@@ -178,7 +178,7 @@ export const updateOnboardingStatus = async (
   completed: boolean
 ): Promise<void> => {
   // Short-circuit if Firestore is unavailable (memory-only mode)
-  if (isUsingMemoryPersistenceMode) {
+  if (isUsingMemoryPersistenceMode()) {
     // Status is tracked in memory by AuthProvider, no need to persist
     return;
   }

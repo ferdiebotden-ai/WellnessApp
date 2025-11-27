@@ -1,4 +1,4 @@
-import { getAuth } from 'firebase/auth';
+import { firebaseAuth } from './firebase';
 import type { ModuleSummary } from '../types/module';
 import type { MonetizationStatus } from '../types/monetization';
 import type { UserPreferences, UserProfile } from '../types/user';
@@ -34,8 +34,7 @@ const DEV_CORE_MODULES: ModuleSummary[] = [
 ];
 
 const request = async <T>(path: string, method: HttpMethod, body?: unknown): Promise<T> => {
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
+  const currentUser = firebaseAuth.currentUser;
   if (!currentUser) {
     throw new Error('User is not authenticated');
   }
