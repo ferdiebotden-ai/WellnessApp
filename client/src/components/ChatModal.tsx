@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { sendChatQuery } from '../services/api';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export const ChatModal: React.FC<Props> = ({ visible, onClose }) => {
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,66 +61,69 @@ export const ChatModal: React.FC<Props> = ({ visible, onClose }) => {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>AI Coach</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeText}>Close</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+        >
+          <View style={styles.header}>
+            <Text style={styles.title}>AI Coach</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+          </View>
 
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          renderItem={({ item }) => (
-            <View style={[styles.bubble, item.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-              <Text style={[styles.messageText, item.role === 'user' ? styles.userText : styles.aiText]}>{item.content}</Text>
-            </View>
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>Welcome to AI Coach</Text>
-              <Text style={styles.emptyText}>Ask me anything about wellness, sleep optimization, stress management, or your health protocols.</Text>
-            </View>
-          }
-        />
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={input}
-            onChangeText={setInput}
-            placeholder="Ask your coach..."
-            placeholderTextColor={palette.textMuted}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-            multiline={false}
-            blurOnSubmit={false}
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            renderItem={({ item }) => (
+              <View style={[styles.bubble, item.role === 'user' ? styles.userBubble : styles.aiBubble]}>
+                <Text style={[styles.messageText, item.role === 'user' ? styles.userText : styles.aiText]}>{item.content}</Text>
+              </View>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyTitle}>Welcome to AI Coach</Text>
+                <Text style={styles.emptyText}>Ask me anything about wellness, sleep optimization, stress management, or your health protocols.</Text>
+              </View>
+            }
           />
-          <TouchableOpacity
-            onPress={handleSend}
-            disabled={loading || !input.trim()}
-            style={styles.sendButton}
-          >
-            {loading ? <ActivityIndicator color={palette.primary} /> : <Text style={styles.sendText}>Send</Text>}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+
+          <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            <TextInput
+              style={styles.input}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Ask your coach..."
+              placeholderTextColor={palette.textMuted}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              multiline={false}
+              blurOnSubmit={false}
+            />
+            <TouchableOpacity
+              onPress={handleSend}
+              disabled={loading || !input.trim()}
+              style={styles.sendButton}
+            >
+              {loading ? <ActivityIndicator color={palette.primary} /> : <Text style={styles.sendText}>Send</Text>}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
+  keyboardView: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: palette.border },
   title: { ...typography.heading, color: palette.textPrimary },
   closeText: { ...typography.body, color: palette.primary },
@@ -132,7 +137,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Extra padding for iOS home indicator
     borderTopWidth: 1,
     borderTopColor: palette.border,
     alignItems: 'center',
