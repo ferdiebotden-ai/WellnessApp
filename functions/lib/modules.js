@@ -36,7 +36,7 @@ async function getModules(req, res) {
         // Build query
         let query = serviceClient
             .from('modules')
-            .select('id, name, tier, headline, description, icon_svg, outcomeMetric, starterProtocols')
+            .select('id, name, tier, headline, description, icon_svg, outcome_metric, starter_protocols')
             .order('tier', { ascending: true })
             .order('name', { ascending: true });
         // Apply tier filter if provided
@@ -48,6 +48,7 @@ async function getModules(req, res) {
             throw error;
         }
         // Map to ModuleSummary format (matching client expectations)
+        // Database uses snake_case, client expects camelCase
         const modules = (data || []).map((row) => ({
             id: row.id,
             name: row.name,
@@ -55,8 +56,8 @@ async function getModules(req, res) {
             headline: row.headline || '',
             description: row.description || '',
             icon_svg: row.icon_svg,
-            outcomeMetric: row.outcomeMetric,
-            starterProtocols: row.starterProtocols
+            outcomeMetric: row.outcome_metric,
+            starterProtocols: row.starter_protocols
         }));
         res.status(200).json(modules);
     }

@@ -52,7 +52,7 @@ export async function getModules(req: Request, res: Response): Promise<void> {
     // Build query
     let query = serviceClient
       .from('modules')
-      .select('id, name, tier, headline, description, icon_svg, outcomeMetric, starterProtocols')
+      .select('id, name, tier, headline, description, icon_svg, outcome_metric, starter_protocols')
       .order('tier', { ascending: true })
       .order('name', { ascending: true });
 
@@ -68,6 +68,7 @@ export async function getModules(req: Request, res: Response): Promise<void> {
     }
 
     // Map to ModuleSummary format (matching client expectations)
+    // Database uses snake_case, client expects camelCase
     const modules: ModuleSummary[] = (data || []).map((row) => ({
       id: row.id,
       name: row.name,
@@ -75,8 +76,8 @@ export async function getModules(req: Request, res: Response): Promise<void> {
       headline: row.headline || '',
       description: row.description || '',
       icon_svg: row.icon_svg,
-      outcomeMetric: row.outcomeMetric,
-      starterProtocols: row.starterProtocols
+      outcomeMetric: row.outcome_metric,
+      starterProtocols: row.starter_protocols
     }));
 
     res.status(200).json(modules);
