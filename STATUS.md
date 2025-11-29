@@ -6,33 +6,46 @@
 ---
 
 ## Current Phase
-**Phase 1: Spinal Cord (Infrastructure & Data)** — 0% Complete
+**Phase 1: Spinal Cord (Infrastructure & Data)** — 50% Complete
 
 ---
 
 ## Last Session
-**Date:** November 29, 2025 (Session 2)
+**Date:** November 29, 2025 (Session 3)
 **Accomplished:**
-- Major root folder cleanup — archived 35+ outdated files
-- Created `archive/` folder with 5 subfolders (debrief-reports, old-prd-versions, deployment-history, legacy-docs, opus-setup)
-- Deleted duplicate `Codex Debrief Reports/` folder
-- Cleaned `Claude Reference Docs/` — kept only active files (BACKEND_ARCHITECTURE.md, AI_NORTH_STAR_GUIDE.md, Design Files/)
-- Updated `.gitignore` to exclude `archive/`
-- Root now has 11 clean, active markdown files
+- **ROOT CAUSE FIXED**: App showing mock data due to missing `client/.env` file
+- Discovered backend is deployed as **Cloud Run** (not Cloud Functions):
+  - Wrong URL: `https://us-central1-wellness-os-app.cloudfunctions.net/api` (404)
+  - Correct URL: `https://api-26324650924.us-central1.run.app` (200 OK)
+- Created `client/.env` with correct Cloud Run API URL + Firebase config
+- Updated `mcp.json` with new GitHub PAT
+- Verified API endpoints:
+  - `GET /` → `{"status":"ok","service":"wellness-api"}`
+  - `GET /api/modules` → Returns 8 modules from Supabase ✅
+  - Auth working correctly ✅
+  - Protocol search needs Pinecone setup ⚠️
 
 **Blockers:**
-- None
+- Protocol search fails (Pinecone may need vector seeding)
 
 ---
 
 ## Next Session Priority
-1. Begin Phase 1: Infrastructure & Data implementation per APEX_OS_FINAL_PRD.md
-2. Audit Cloud Functions deployment status
-3. Verify Supabase migrations and seed protocol library
+1. Restart Expo and verify real data loads in app
+2. Seed Pinecone vectors for protocol search
+3. Test full user flow (auth → onboarding → modules)
 
 ---
 
 ## Session History (Last 5)
+
+### Session 3 (November 29, 2025)
+- Fixed root cause: Missing `client/.env` causing mock data display
+- Discovered API is Cloud Run (`api-26324650924.us-central1.run.app`) not Cloud Functions
+- Created `client/.env` with correct API URL and Firebase config
+- Updated GitHub PAT in `mcp.json`
+- API verified working: modules, auth, health check all functional
+- Phase 1 progress: 0% → 50%
 
 ### Session 2 (November 29, 2025)
 - Root folder cleanup complete
@@ -60,9 +73,11 @@
 ## Known Issues / Tech Debt
 *Track items that need future attention*
 
-- [ ] Review and clean up legacy Cloud Functions
-- [ ] Verify Supabase migrations are up to date
+- [x] ~~Review and clean up legacy Cloud Functions~~ (Not applicable - using Cloud Run)
+- [x] ~~Verify Supabase migrations are up to date~~ (Modules API working)
 - [ ] Check Firebase RTDB structure
+- [ ] Seed Pinecone vectors (protocol search failing)
+- [ ] Documentation says Cloud Functions URL but actual deployment is Cloud Run
 
 ---
 
@@ -86,10 +101,11 @@ cd functions && npm run deploy
 **Environment:**
 - Node: v18+
 - Expo SDK: 54
-- Firebase Project: wellness-os-app (Gen 2 Functions)
+- Firebase Project: wellness-os-app
 - Supabase Project: vcrdogdyjljtwgoxpkew
 - Pinecone Index: wellness-protocols
+- **API URL (Cloud Run):** https://api-26324650924.us-central1.run.app
 
 ---
 
-*Last Updated: November 29, 2025*
+*Last Updated: November 29, 2025 (Session 3)*
