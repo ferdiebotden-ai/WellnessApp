@@ -33,3 +33,16 @@ coverage/
 *.pem
 .cache/
 
+# Claude Code (credentials)
+.env.claude
+.claude/settings.local.json
+mcp.json
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Archived documentation (historical reference, not for version control)
+archive/
+
