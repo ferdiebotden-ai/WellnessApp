@@ -37,27 +37,35 @@
 
 ## Next Session Priority
 
-### Step 1: Commit and Push Changes
-The seed script has been updated with clean slate logic. Commit and push to trigger CI.
+### Protocol RAG Pipeline: COMPLETE ✅
+The protocol search API now returns full enriched data including descriptions, benefits, constraints, and scientific citations. This was the main blocker for Phase 1.
 
-### Step 2: Trigger Seed Workflow
-1. Go to GitHub repo → Actions tab
-2. Find "Manual: Seed Database & RAG" workflow
-3. Click "Run workflow"
-4. Wait for green checkmark
+### Next Tasks (in priority order):
 
-### Step 3: Verify Fix
-**Supabase Check:**
-```sql
-SELECT id, name, description, benefits FROM protocols LIMIT 3;
-```
-**Expected:** IDs like `morning_light_exposure`, all fields populated
+1. **Verify Cloud Scheduler Jobs**
+   - Cloud Scheduler was previously configured but status unknown
+   - Check GCP Console → Cloud Scheduler for job status
+   - Jobs may include: daily nudge generation, weekly synthesis, etc.
 
-**API Check:**
+2. **Check Firebase RTDB Structure**
+   - Verify real-time database structure for nudges/logs
+   - Confirm write patterns work for immediate UI updates
+
+3. **Phase 2 Readiness**
+   - Once Phase 1 infrastructure is confirmed working, move to Phase 2 (AI & Reasoning)
+   - Phase 2 includes: Pinecone RAG pipeline (done), Nudge decision engine, MVD logic, Weekly synthesis
+
+### Quick Verification Commands
 ```bash
-curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning light"
+# Test protocol search API
+curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=sleep"
+
+# Test modules API
+curl "https://api-26324650924.us-central1.run.app/api/modules"
+
+# Check health
+curl "https://api-26324650924.us-central1.run.app/health"
 ```
-**Expected:** `description`, `benefits`, `citations` have actual values (not null)
 
 ---
 
@@ -128,9 +136,9 @@ curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning
 - [x] ~~Apply migration to Supabase~~ (Migration applied, columns exist)
 - [x] ~~Clean up old `proto_*` vectors in Pinecone~~ (Seed script now clears before upserting)
 - [x] ~~Commit seed script fix and re-run seed~~ (VERIFIED WORKING - protocols return full data)
-- [ ] Configure Cloud Scheduler for daily/hourly jobs
+- [ ] **Verify Cloud Scheduler jobs** (previously configured, status unknown) ← NEXT PRIORITY
 - [ ] Check Firebase RTDB structure
-- [ ] Documentation says Cloud Functions URL but actual deployment is Cloud Run
+- [ ] Update documentation for Cloud Run URLs (currently says Cloud Functions)
 
 ---
 
