@@ -177,4 +177,43 @@ Phase 3: Nervous System (Real Data Flow)
 
 ---
 
-*Last Updated: November 29, 2025*
+## 10. SKILLS & PLUGINS
+
+Claude Code has access to specialized skills that should be used proactively for specific tasks:
+
+### Frontend Development
+| Task | Skill | When to Use |
+|------|-------|-------------|
+| Building UI components | `example-skills:frontend-design` | New screens, complex components, landing pages |
+| Visual design/posters | `example-skills:canvas-design` | Marketing assets, visual artifacts |
+| Theming/styling | `example-skills:theme-factory` | Applying consistent themes to artifacts |
+
+### Testing
+| Task | Skill | When to Use |
+|------|-------|-------------|
+| Web E2E testing | `example-skills:webapp-testing` | Running Playwright tests, testing Expo web build |
+
+### Documents
+| Task | Skill | When to Use |
+|------|-------|-------------|
+| Spreadsheets | `document-skills:xlsx` | Creating/editing Excel files, data analysis |
+| Word documents | `document-skills:docx` | Reports, documentation with formatting |
+| Presentations | `document-skills:pptx` | Slide decks, pitch materials |
+| PDFs | `document-skills:pdf` | PDF manipulation, form filling |
+
+### n8n Workflows (if applicable)
+| Task | Skill | When to Use |
+|------|-------|-------------|
+| JavaScript in n8n | `n8n-mcp-skills:n8n-code-javascript` | Writing Code nodes |
+| Workflow patterns | `n8n-mcp-skills:n8n-workflow-patterns` | Designing workflow architecture |
+| Validation | `n8n-mcp-skills:n8n-validation-expert` | Debugging validation errors |
+
+### Usage Rules
+1. **Proactive invocation**: When a task matches a skill description, invoke it without being asked
+2. **Frontend work**: Always consider `frontend-design` for new UI components
+3. **After implementing UI**: Use `webapp-testing` to verify the Expo web build works
+4. **Document creation**: Use the appropriate document skill for professional output
+
+---
+
+*Last Updated: November 30, 2025*

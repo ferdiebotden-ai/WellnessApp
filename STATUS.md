@@ -6,70 +6,91 @@
 ---
 
 ## Current Phase
-**Phase 1: Spinal Cord (Infrastructure & Data)** — 80% Complete
+**Phase 1: Spinal Cord (Infrastructure & Data)** — 95% Complete ✅
 
 ---
 
 ## Last Session
-**Date:** November 30, 2025 (Session 7)
+**Date:** November 30, 2025 (Session 8)
 **Accomplished:**
-- Diagnosed root cause of null enriched fields: **ID mismatch**
-- Old Supabase rows have `proto_*` IDs, new seed data uses `morning_light_exposure` IDs
-- Pinecone vectors pointed to old IDs, causing API to fetch wrong rows
-- Fixed seed script to delete existing data before upserting (clean slate approach)
+- ✅ Installed Google Cloud CLI on local machine for direct GCP management
+- ✅ Verified Cloud Scheduler jobs are ENABLED and running (via screenshot + gcloud)
+- ✅ Fixed missing environment variables on Cloud Functions (SUPABASE_ANON_KEY, JWT_SECRET, PINECONE_API_KEY)
+- ✅ Created missing `module_enrollment` table migration
+- ✅ Verified scheduler functions execute without errors
+- ✅ Corrected documentation: Using **Firestore** (not Firebase RTDB)
 
-**Root Cause (CONFIRMED):**
-| Layer | Old IDs | New IDs |
-|-------|---------|---------|
-| Supabase | `proto_morning_light` | `morning_light_exposure` |
-| Pinecone | `proto_morning_light` | (should be new IDs) |
+**Issues Found & Fixed:**
+| Issue | Root Cause | Fix |
+|-------|-----------|-----|
+| Scheduler functions failing | Missing env vars (SUPABASE_ANON_KEY, etc.) | Added via `gcloud run services update` |
+| Schema cache error | `module_enrollment` table didn't exist | Created migration `20251130000000_create_module_enrollment.sql` |
+| Functions not finding new table | Supabase schema cache | Restarted Cloud Run services |
 
-**Fix Applied:**
-1. Added `deleteAllPineconeVectors()` function to clear old vectors
-2. Added Supabase delete step before protocol upsert
-3. Added Pinecone clear step before vector upsert
-4. Seed now performs clean slate before seeding
+**Cloud Scheduler Status (Verified):**
+| Job Name | State | Last Run | Result |
+|----------|-------|----------|--------|
+| daily-scheduler | ENABLED | Nov 30, 12:00 AM | ✅ Success |
+| hourly-nudge-engine | ENABLED | Nov 30, 6:40 PM | ✅ Success |
 
-**Files Modified:**
-- `scripts/seed-full-system.ts` (added clean slate logic)
+**Files Created:**
+- `supabase/migrations/20251130000000_create_module_enrollment.sql`
 
 ---
 
 ## Next Session Priority
 
-### Protocol RAG Pipeline: COMPLETE ✅
-The protocol search API now returns full enriched data including descriptions, benefits, constraints, and scientific citations. This was the main blocker for Phase 1.
+### Phase 1: NEARLY COMPLETE ✅
+All infrastructure is verified working:
+- ✅ API endpoints (modules, protocols, health)
+- ✅ Protocol RAG pipeline with enriched data
+- ✅ Cloud Scheduler jobs running
+- ✅ Cloud Functions executing without errors
+- ⏳ Nudges/schedules will generate once users enroll in modules
 
-### Next Tasks (in priority order):
+### Remaining for Phase 1:
+1. **Test end-to-end flow** with a real user enrollment
+   - Create test user in Supabase
+   - Enroll in a module via `module_enrollment` table
+   - Wait for hourly nudge job to generate nudge
+   - Verify nudge appears in Firestore
 
-1. **Verify Cloud Scheduler Jobs**
-   - Cloud Scheduler was previously configured but status unknown
-   - Check GCP Console → Cloud Scheduler for job status
-   - Jobs may include: daily nudge generation, weekly synthesis, etc.
+2. **Add Firestore security rules** (recommended for HIPAA compliance)
 
-2. **Check Firebase RTDB Structure**
-   - Verify real-time database structure for nudges/logs
-   - Confirm write patterns work for immediate UI updates
-
-3. **Phase 2 Readiness**
-   - Once Phase 1 infrastructure is confirmed working, move to Phase 2 (AI & Reasoning)
-   - Phase 2 includes: Pinecone RAG pipeline (done), Nudge decision engine, MVD logic, Weekly synthesis
+### Ready for Phase 2: Brain (AI & Reasoning)
+Once Phase 1 verification complete:
+- Nudge decision engine refinement
+- MVD (Minimum Viable Day) logic
+- Weekly synthesis generator
 
 ### Quick Verification Commands
 ```bash
-# Test protocol search API
+# Test API endpoints
+curl "https://api-26324650924.us-central1.run.app/"
+curl "https://api-26324650924.us-central1.run.app/api/modules"
 curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=sleep"
 
-# Test modules API
-curl "https://api-26324650924.us-central1.run.app/api/modules"
+# Trigger scheduler jobs manually (requires gcloud CLI)
+gcloud scheduler jobs run hourly-nudge-engine --location=us-central1 --project=wellness-os-app
+gcloud scheduler jobs run daily-scheduler --location=us-central1 --project=wellness-os-app
 
-# Check health
-curl "https://api-26324650924.us-central1.run.app/health"
+# Check function logs
+gcloud functions logs read generateAdaptiveNudges --project=wellness-os-app --limit=20
 ```
 
 ---
 
 ## Session History (Last 5)
+
+### Session 8 (November 30, 2025)
+- Installed Google Cloud CLI for direct GCP management
+- Verified Cloud Scheduler: Both jobs ENABLED and running successfully
+- Fixed Cloud Functions: Added missing env vars (SUPABASE_ANON_KEY, JWT_SECRET, PINECONE_API_KEY, REVENUECAT_WEBHOOK_SECRET)
+- Created `module_enrollment` table (was completely missing from database)
+- Restarted Cloud Run services to refresh Supabase schema cache
+- **VERIFIED:** Scheduler functions now execute without errors
+- Clarified architecture: Using Firestore for real-time data, not Firebase RTDB
+- Phase 1 progress: 80% → 95%
 
 ### Session 7 (November 30, 2025)
 - Diagnosed root cause: ID mismatch between old `proto_*` and new `morning_light_exposure` IDs
@@ -136,9 +157,14 @@ curl "https://api-26324650924.us-central1.run.app/health"
 - [x] ~~Apply migration to Supabase~~ (Migration applied, columns exist)
 - [x] ~~Clean up old `proto_*` vectors in Pinecone~~ (Seed script now clears before upserting)
 - [x] ~~Commit seed script fix and re-run seed~~ (VERIFIED WORKING - protocols return full data)
-- [ ] **Verify Cloud Scheduler jobs** (previously configured, status unknown) ← NEXT PRIORITY
-- [ ] Check Firebase RTDB structure
-- [ ] Update documentation for Cloud Run URLs (currently says Cloud Functions)
+- [x] ~~Verify Cloud Scheduler jobs~~ (Session 8: Both jobs ENABLED and running)
+- [x] ~~Check Firebase RTDB structure~~ (Session 8: Using Firestore, not RTDB)
+- [x] ~~Missing Cloud Function env vars~~ (Session 8: Added SUPABASE_ANON_KEY, JWT_SECRET, PINECONE_API_KEY)
+- [x] ~~Missing module_enrollment table~~ (Session 8: Created migration 20251130000000)
+- [ ] Add Firestore security rules (HIPAA compliance)
+- [ ] Test end-to-end nudge generation with enrolled user
+- [ ] Update VERIFY_NOW.md with correct Cloud Run URLs
+- [ ] Consider moving scheduler config to Terraform (IaC best practice)
 
 ---
 
@@ -172,4 +198,4 @@ curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning
 
 ---
 
-*Last Updated: November 30, 2025 (Session 7)*
+*Last Updated: November 30, 2025 (Session 8)*
