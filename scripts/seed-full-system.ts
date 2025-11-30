@@ -138,6 +138,25 @@ async function upsertToPinecone(
 }
 
 /**
+ * Delete all vectors from Pinecone index (clean slate before seeding)
+ */
+async function deleteAllPineconeVectors(apiKey: string, host: string): Promise<void> {
+  const response = await fetch(`${host}/vectors/delete`, {
+    method: 'POST',
+    headers: {
+      'Api-Key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ deleteAll: true }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Pinecone deleteAll failed: ${response.status} ${body}`);
+  }
+}
+
+/**
  * Main seeding function
  */
 async function seedFullSystem() {
@@ -163,6 +182,15 @@ async function seedFullSystem() {
     // 2. Connect to Supabase
     console.log('🔌 Connecting to Supabase...');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // 2.5. Delete existing protocols (clean slate for consistent IDs)
+    console.log('🗑️  Deleting existing protocols from Supabase...');
+    const { error: deleteError } = await supabase.from('protocols').delete().neq('id', '');
+    if (deleteError) {
+      console.warn(`⚠️  Warning: Could not delete existing protocols: ${deleteError.message}`);
+    } else {
+      console.log('✅ Existing protocols deleted.\n');
+    }
 
     // 3. Upsert to Supabase
     console.log('💾 Upserting protocols to Supabase...');
@@ -199,6 +227,11 @@ async function seedFullSystem() {
     console.log('🔍 Resolving Pinecone index host...');
     const pineconeHost = await getPineconeHost(PINECONE_API_KEY, PINECONE_INDEX_NAME);
     console.log(`✅ Pinecone host: ${pineconeHost}\n`);
+
+    // 4.5. Clear existing Pinecone vectors (clean slate)
+    console.log('🗑️  Clearing existing Pinecone vectors...');
+    await deleteAllPineconeVectors(PINECONE_API_KEY, pineconeHost);
+    console.log('✅ Pinecone vectors cleared.\n');
 
     // 5. Generate Embeddings & Prepare Vectors
     console.log('🤖 Generating embeddings with Vertex AI...');

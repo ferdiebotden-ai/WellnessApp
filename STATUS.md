@@ -6,66 +6,69 @@
 ---
 
 ## Current Phase
-**Phase 1: Spinal Cord (Infrastructure & Data)** — 70% Complete
+**Phase 1: Spinal Cord (Infrastructure & Data)** — 75% Complete
 
 ---
 
 ## Last Session
-**Date:** November 29, 2025 (Session 6)
+**Date:** November 30, 2025 (Session 7)
 **Accomplished:**
-- Fixed Vertex AI IAM permission (added `roles/aiplatform.user` to service account)
-- Seed script runs successfully in GitHub Actions (18 protocols + embeddings)
-- Diagnosed why protocol search still returns null enriched fields
+- Diagnosed root cause of null enriched fields: **ID mismatch**
+- Old Supabase rows have `proto_*` IDs, new seed data uses `morning_light_exposure` IDs
+- Pinecone vectors pointed to old IDs, causing API to fetch wrong rows
+- Fixed seed script to delete existing data before upserting (clean slate approach)
 
-**Root Cause Identified:**
-Protocol search returns `description: null`, `benefits: null`, etc. because:
-1. Pinecone has OLD vectors with `proto_*` IDs from previous seeding
-2. The migration `20251129000000_add_protocol_fields.sql` may not have been applied to Supabase
-3. Without the columns existing, Supabase ignores enriched fields during upsert
+**Root Cause (CONFIRMED):**
+| Layer | Old IDs | New IDs |
+|-------|---------|---------|
+| Supabase | `proto_morning_light` | `morning_light_exposure` |
+| Pinecone | `proto_morning_light` | (should be new IDs) |
 
-**Files Created/Modified:**
-- `supabase/migrations/20251129000000_add_protocol_fields.sql` (needs commit)
-- `scripts/seed-full-system.ts` (updated, needs commit)
+**Fix Applied:**
+1. Added `deleteAllPineconeVectors()` function to clear old vectors
+2. Added Supabase delete step before protocol upsert
+3. Added Pinecone clear step before vector upsert
+4. Seed now performs clean slate before seeding
+
+**Files Modified:**
+- `scripts/seed-full-system.ts` (added clean slate logic)
 
 ---
 
-## Next Session Priority (CRITICAL)
+## Next Session Priority
 
-### Step 1: Verify Migration Was Applied
-Run in Supabase Dashboard → SQL Editor:
+### Step 1: Commit and Push Changes
+The seed script has been updated with clean slate logic. Commit and push to trigger CI.
+
+### Step 2: Trigger Seed Workflow
+1. Go to GitHub repo → Actions tab
+2. Find "Manual: Seed Database & RAG" workflow
+3. Click "Run workflow"
+4. Wait for green checkmark
+
+### Step 3: Verify Fix
+**Supabase Check:**
 ```sql
-SELECT column_name, data_type
-FROM information_schema.columns
-WHERE table_name = 'protocols'
-  AND column_name IN ('description', 'benefits', 'constraints', 'citations', 'tier_required', 'is_active');
+SELECT id, name, description, benefits FROM protocols LIMIT 3;
 ```
-**Expected:** 6 rows. If 0 rows, migration needs to be applied.
+**Expected:** IDs like `morning_light_exposure`, all fields populated
 
-### Step 2: Apply Migration (if needed)
-Run in SQL Editor:
-```sql
-ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS description text;
-ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS tier_required text CHECK (tier_required IS NULL OR tier_required IN ('core', 'pro', 'elite'));
-ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS benefits text;
-ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS constraints text;
-ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS citations text[] DEFAULT ARRAY[]::text[];
-ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL DEFAULT true;
-CREATE INDEX IF NOT EXISTS idx_protocols_is_active ON public.protocols (is_active) WHERE is_active = true;
-CREATE INDEX IF NOT EXISTS idx_protocols_tier_required ON public.protocols (tier_required);
-```
-
-### Step 3: Re-Run Seed Script
-Trigger "Manual: Seed Database & RAG" GitHub Action after confirming columns exist.
-
-### Step 4: Verify Fix
+**API Check:**
 ```bash
 curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning light"
 ```
-Protocols should have filled `description`, `benefits`, `citations` fields.
+**Expected:** `description`, `benefits`, `citations` have actual values (not null)
 
 ---
 
 ## Session History (Last 5)
+
+### Session 7 (November 30, 2025)
+- Diagnosed root cause: ID mismatch between old `proto_*` and new `morning_light_exposure` IDs
+- Updated seed script with clean slate approach (delete before upsert)
+- Added `deleteAllPineconeVectors()` function
+- Added Supabase delete step and Pinecone clear step
+- Phase 1 progress: 70% → 75%
 
 ### Session 6 (November 29, 2025)
 - Fixed Vertex AI IAM permission (added `roles/aiplatform.user`)
@@ -121,9 +124,9 @@ Protocols should have filled `description`, `benefits`, `citations` fields.
 - [x] ~~Verify Supabase migrations are up to date~~ (Modules API working)
 - [x] ~~Protocol schema mismatch~~ (Migration created: 20251129000000_add_protocol_fields.sql)
 - [x] ~~Vertex AI IAM permission denied~~ (Fixed: added roles/aiplatform.user)
-- [ ] **Apply migration to Supabase** (manual step via Dashboard) ← CURRENT BLOCKER
-- [ ] Re-run seed script after migration applied
-- [ ] Clean up old `proto_*` vectors in Pinecone (optional)
+- [x] ~~Apply migration to Supabase~~ (Migration applied, columns exist)
+- [x] ~~Clean up old `proto_*` vectors in Pinecone~~ (Seed script now clears before upserting)
+- [ ] **Commit seed script fix and re-run seed** ← CURRENT PRIORITY
 - [ ] Configure Cloud Scheduler for daily/hourly jobs
 - [ ] Check Firebase RTDB structure
 - [ ] Documentation says Cloud Functions URL but actual deployment is Cloud Run
@@ -160,4 +163,4 @@ curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning
 
 ---
 
-*Last Updated: November 29, 2025 (Session 6)*
+*Last Updated: November 30, 2025 (Session 7)*
