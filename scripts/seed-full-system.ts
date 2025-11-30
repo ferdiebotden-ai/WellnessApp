@@ -166,19 +166,24 @@ async function seedFullSystem() {
 
     // 3. Upsert to Supabase
     console.log('💾 Upserting protocols to Supabase...');
-    
-    // Map to only the columns that exist in the protocols table schema
-    // Schema: id, name, short_name, category, summary, evidence_level, created_at, updated_at
+
+    // Map to all columns in the protocols table schema (after 20251129 migration)
+    // Schema: id, name, short_name, category, summary, evidence_level,
+    //         description, tier_required, benefits, constraints, citations, is_active
     const supabaseData = protocolsData.map(p => ({
       id: p.id,
       name: p.name,
       short_name: p.short_name,
       category: p.category,
       summary: p.summary,
-      evidence_level: p.evidence_level
+      evidence_level: p.evidence_level,
+      description: p.description,
+      tier_required: p.tier_required,
+      benefits: p.benefits,
+      constraints: p.constraints,
+      citations: p.citations,
+      is_active: true
       // Note: created_at and updated_at are auto-managed by the database
-      // Note: description, benefits, constraints, citations, tier_required are NOT in protocols table
-      //       They may be stored elsewhere (e.g., module_protocol_map for tier_required)
     }));
 
     const { error: upsertError } = await supabase

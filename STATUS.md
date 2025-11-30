@@ -6,38 +6,86 @@
 ---
 
 ## Current Phase
-**Phase 1: Spinal Cord (Infrastructure & Data)** — 50% Complete
+**Phase 1: Spinal Cord (Infrastructure & Data)** — 70% Complete
 
 ---
 
 ## Last Session
-**Date:** November 29, 2025 (Session 3)
+**Date:** November 29, 2025 (Session 6)
 **Accomplished:**
-- **ROOT CAUSE FIXED**: App showing mock data due to missing `client/.env` file
-- Discovered backend is deployed as **Cloud Run** (not Cloud Functions):
-  - Wrong URL: `https://us-central1-wellness-os-app.cloudfunctions.net/api` (404)
-  - Correct URL: `https://api-26324650924.us-central1.run.app` (200 OK)
-- Created `client/.env` with correct Cloud Run API URL + Firebase config
-- Updated `mcp.json` with new GitHub PAT
-- Verified API endpoints:
-  - `GET /` → `{"status":"ok","service":"wellness-api"}`
-  - `GET /api/modules` → Returns 8 modules from Supabase ✅
-  - Auth working correctly ✅
-  - Protocol search needs Pinecone setup ⚠️
+- Fixed Vertex AI IAM permission (added `roles/aiplatform.user` to service account)
+- Seed script runs successfully in GitHub Actions (18 protocols + embeddings)
+- Diagnosed why protocol search still returns null enriched fields
 
-**Blockers:**
-- Protocol search fails (Pinecone may need vector seeding)
+**Root Cause Identified:**
+Protocol search returns `description: null`, `benefits: null`, etc. because:
+1. Pinecone has OLD vectors with `proto_*` IDs from previous seeding
+2. The migration `20251129000000_add_protocol_fields.sql` may not have been applied to Supabase
+3. Without the columns existing, Supabase ignores enriched fields during upsert
+
+**Files Created/Modified:**
+- `supabase/migrations/20251129000000_add_protocol_fields.sql` (needs commit)
+- `scripts/seed-full-system.ts` (updated, needs commit)
 
 ---
 
-## Next Session Priority
-1. Restart Expo and verify real data loads in app
-2. Seed Pinecone vectors for protocol search
-3. Test full user flow (auth → onboarding → modules)
+## Next Session Priority (CRITICAL)
+
+### Step 1: Verify Migration Was Applied
+Run in Supabase Dashboard → SQL Editor:
+```sql
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'protocols'
+  AND column_name IN ('description', 'benefits', 'constraints', 'citations', 'tier_required', 'is_active');
+```
+**Expected:** 6 rows. If 0 rows, migration needs to be applied.
+
+### Step 2: Apply Migration (if needed)
+Run in SQL Editor:
+```sql
+ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS tier_required text CHECK (tier_required IS NULL OR tier_required IN ('core', 'pro', 'elite'));
+ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS benefits text;
+ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS constraints text;
+ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS citations text[] DEFAULT ARRAY[]::text[];
+ALTER TABLE public.protocols ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL DEFAULT true;
+CREATE INDEX IF NOT EXISTS idx_protocols_is_active ON public.protocols (is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_protocols_tier_required ON public.protocols (tier_required);
+```
+
+### Step 3: Re-Run Seed Script
+Trigger "Manual: Seed Database & RAG" GitHub Action after confirming columns exist.
+
+### Step 4: Verify Fix
+```bash
+curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning light"
+```
+Protocols should have filled `description`, `benefits`, `citations` fields.
 
 ---
 
 ## Session History (Last 5)
+
+### Session 6 (November 29, 2025)
+- Fixed Vertex AI IAM permission (added `roles/aiplatform.user`)
+- Seed script runs successfully (green checkmark in GitHub Actions)
+- Protocol search still returns null enriched fields
+- Root cause: Migration likely not applied to Supabase before seed ran
+- Phase 1 progress: 65% → 70%
+
+### Session 5 (November 29, 2025)
+- GitHub MCP: Switched to Docker approach (more reliable on Windows)
+- Discovered protocol search schema mismatch (missing columns)
+- Created migration `20251129000000_add_protocol_fields.sql`
+- Updated seed script to include all protocol fields
+- Phase 1 progress: 50% → 65%
+
+### Session 4 (November 29, 2025)
+- Diagnosed GitHub MCP authentication failure
+- Root cause: Windows npx requires `cmd /c` wrapper
+- Updated mcp.json with proper config (inline env, cmd wrapper)
+- Awaiting Claude Code restart to verify fix
 
 ### Session 3 (November 29, 2025)
 - Fixed root cause: Missing `client/.env` causing mock data display
@@ -53,11 +101,6 @@
 - Deleted duplicate Codex Debrief Reports folder
 - Codebase ready for Phase 1 implementation
 
-### Session 1 (November 29, 2025)
-- Claude Code environment setup complete
-- CLAUDE.md, STATUS.md, mcp.json configured
-- Ready for Phase 1 implementation
-
 ---
 
 ## Architecture Decisions Log
@@ -67,6 +110,7 @@
 |------|----------|-----------|
 | 2025-11-29 | Hybrid DB (Supabase READ / Firebase WRITE) | Real-time updates without polling |
 | 2025-11-29 | Opus 4.5 as default model | Best reasoning for architecture decisions |
+| 2025-11-29 | Vertex AI for embeddings | Uses `text-embedding-005` (768 dims), integrated with GCP |
 
 ---
 
@@ -75,8 +119,13 @@
 
 - [x] ~~Review and clean up legacy Cloud Functions~~ (Not applicable - using Cloud Run)
 - [x] ~~Verify Supabase migrations are up to date~~ (Modules API working)
+- [x] ~~Protocol schema mismatch~~ (Migration created: 20251129000000_add_protocol_fields.sql)
+- [x] ~~Vertex AI IAM permission denied~~ (Fixed: added roles/aiplatform.user)
+- [ ] **Apply migration to Supabase** (manual step via Dashboard) ← CURRENT BLOCKER
+- [ ] Re-run seed script after migration applied
+- [ ] Clean up old `proto_*` vectors in Pinecone (optional)
+- [ ] Configure Cloud Scheduler for daily/hourly jobs
 - [ ] Check Firebase RTDB structure
-- [ ] Seed Pinecone vectors (protocol search failing)
 - [ ] Documentation says Cloud Functions URL but actual deployment is Cloud Run
 
 ---
@@ -96,6 +145,9 @@ cd functions && npm run serve
 
 # Deploy functions
 cd functions && npm run deploy
+
+# Test protocol search
+curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning light"
 ```
 
 **Environment:**
@@ -108,4 +160,4 @@ cd functions && npm run deploy
 
 ---
 
-*Last Updated: November 29, 2025 (Session 3)*
+*Last Updated: November 29, 2025 (Session 6)*
