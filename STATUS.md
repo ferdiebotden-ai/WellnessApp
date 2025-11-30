@@ -6,7 +6,7 @@
 ---
 
 ## Current Phase
-**Phase 1: Spinal Cord (Infrastructure & Data)** — 75% Complete
+**Phase 1: Spinal Cord (Infrastructure & Data)** — 80% Complete
 
 ---
 
@@ -68,7 +68,8 @@ curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning
 - Updated seed script with clean slate approach (delete before upsert)
 - Added `deleteAllPineconeVectors()` function
 - Added Supabase delete step and Pinecone clear step
-- Phase 1 progress: 70% → 75%
+- **VERIFIED:** Protocol search now returns full data (description, benefits, citations)
+- Phase 1 progress: 70% → 80%
 
 ### Session 6 (November 29, 2025)
 - Fixed Vertex AI IAM permission (added `roles/aiplatform.user`)
@@ -126,7 +127,7 @@ curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning
 - [x] ~~Vertex AI IAM permission denied~~ (Fixed: added roles/aiplatform.user)
 - [x] ~~Apply migration to Supabase~~ (Migration applied, columns exist)
 - [x] ~~Clean up old `proto_*` vectors in Pinecone~~ (Seed script now clears before upserting)
-- [ ] **Commit seed script fix and re-run seed** ← CURRENT PRIORITY
+- [x] ~~Commit seed script fix and re-run seed~~ (VERIFIED WORKING - protocols return full data)
 - [ ] Configure Cloud Scheduler for daily/hourly jobs
 - [ ] Check Firebase RTDB structure
 - [ ] Documentation says Cloud Functions URL but actual deployment is Cloud Run
