@@ -249,4 +249,50 @@ claude mcp list
 
 ---
 
+## 12. GOOGLE CLOUD ACCESS
+
+Claude Code has authenticated access to Google Cloud Platform via service account.
+
+### Authentication
+| Component | Value |
+|-----------|-------|
+| Service Account | `github-deployer@wellness-os-app.iam.gserviceaccount.com` |
+| Key Location | `~/.config/gcloud/github-deployer-sa.json` |
+| Default Project | `wellness-os-app` |
+| Region | `us-central1` |
+
+### Available Permissions
+| Role | Capability |
+|------|------------|
+| Cloud Run Admin | Deploy, manage, describe services |
+| Cloud Functions Developer | Deploy Gen2 functions |
+| Cloud Scheduler Viewer | List and monitor scheduler jobs |
+| Logging Viewer | Read Cloud Run and function logs |
+
+### Common Commands
+```bash
+# List Cloud Run services
+gcloud run services list --region=us-central1
+
+# Check scheduler jobs
+gcloud scheduler jobs list --location=us-central1
+
+# View function logs
+gcloud run services logs read api --region=us-central1 --limit=20
+
+# Trigger scheduler manually
+gcloud scheduler jobs run hourly-nudge-engine --location=us-central1
+
+# Check API health
+curl https://api-26324650924.us-central1.run.app/
+```
+
+### When to Use
+- Checking deployment status
+- Viewing logs for debugging
+- Triggering scheduler jobs manually
+- Verifying Cloud Run service health
+
+---
+
 *Last Updated: December 1, 2025*
