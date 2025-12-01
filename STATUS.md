@@ -41,6 +41,32 @@ cd ~/projects/WellnessApp && code .
 ---
 
 ## Last Session
+**Date:** December 1, 2025 (Session 9)
+**Accomplished:**
+- ✅ Installed GitHub MCP server for PR/issue management and auto-sync
+- ✅ Enabled Expo New Architecture (`newArchEnabled: true` in app.json)
+- ✅ Updated CLAUDE.md with Section 11 (MCP Servers) and auto-sync workflow
+- ✅ Added critical rules 7 & 8 for git sync discipline
+- ✅ Installed `example-skills` plugin (frontend-design, webapp-testing, etc.)
+- ✅ Researched Playwright MCP vs skill (chose skill for lower context usage)
+- ✅ Verified setup aligns with December 2025 best practices
+
+**Setup Changes:**
+| Component | Change |
+|-----------|--------|
+| GitHub MCP | Installed via `claude mcp add github` |
+| New Architecture | Enabled in `client/app.json` |
+| Auto-Sync Workflow | Commit + push after each task |
+| Skills Plugin | `example-skills@anthropic-agent-skills` |
+
+**Files Modified:**
+- `~/.claude.json` (GitHub MCP config)
+- `client/app.json` (newArchEnabled)
+- `CLAUDE.md` (Section 11 + rules 7, 8)
+
+---
+
+## Previous Session
 **Date:** November 30, 2025 (Session 8)
 **Accomplished:**
 - ✅ Installed Google Cloud CLI on local machine for direct GCP management
@@ -111,6 +137,14 @@ gcloud functions logs read generateAdaptiveNudges --project=wellness-os-app --li
 ---
 
 ## Session History (Last 5)
+
+### Session 9 (December 1, 2025)
+- Installed GitHub MCP server for PR/issue management
+- Enabled Expo New Architecture in app.json
+- Updated CLAUDE.md with MCP Servers section and auto-sync workflow
+- Installed example-skills plugin (pending restart)
+- Researched best practices for Claude Code + Opus 4.5 setup
+- Phase 1 progress: 95% (unchanged)
 
 ### Session 8 (November 30, 2025)
 - Installed Google Cloud CLI for direct GCP management
@@ -237,4 +271,4 @@ code .
 
 ---
 
-*Last Updated: December 1, 2025 (Session 9 - WSL Migration)*
+*Last Updated: December 1, 2025 (Session 9 - Claude Code Setup Optimization)*

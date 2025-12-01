@@ -62,33 +62,37 @@ scripts/           # Automation scripts for developer tooling
 
 ---
 
-## Development Workflow with OpenAI Codex
+## Development Workflow with Claude Code
 
-This project uses **OpenAI Codex** as an autonomous coding agent integrated with GitHub. Here's how the workflow operates:
+This project uses **Claude Code** (Anthropic's CLI for Claude) as the AI development agent, powered by **Claude Opus 4.5**. Here's how the workflow operates:
 
-### Phase 1: Codex Writes Code (Autonomous)
-1. **Human** provides a mission prompt to Codex via ChatGPT web interface
-2. **Codex** reads the repository structure and `AGENTS.md` configuration
-3. **Codex** writes production code (GCFs, APIs, React components)
-4. **Codex** writes test files (Jest `.test.ts` for backend, Playwright `.spec.ts` for frontend)
-5. **Codex** commits changes to a feature branch (`feature/mission-XXX-description`)
-6. **Codex** creates a pull request
+### AI Agent Setup
+- **Model:** Claude Opus 4.5 (200k context window)
+- **MCP Servers:** GitHub (PR/issue management), IDE (diagnostics)
+- **Skills:** frontend-design, webapp-testing, canvas-design, theme-factory
+- **Configuration:** See `CLAUDE.md` for complete agent instructions
 
-**Important:** Codex does NOT run tests. It only writes the test files.
+### Development Cycle
+1. **Human** provides task description to Claude Code
+2. **Claude** reads `STATUS.md` for current project state
+3. **Claude** creates execution plan and waits for approval
+4. **Claude** writes production code (complete implementations, no placeholders)
+5. **Claude** commits changes after each completed task (auto-sync workflow)
+6. **Claude** pushes to remote and updates `STATUS.md`
 
-### Phase 2: GitHub Actions Runs Tests (Automatic)
-1. Pull request creation triggers CI/CD pipeline
-2. GitHub Actions installs dependencies (`npm ci`)
-3. For frontend missions: Installs Playwright browsers (`npx playwright install`)
-4. Runs appropriate test suite:
-   - Backend: `npm run test:backend` (Jest)
-   - Frontend: `npm run test:ci` (Playwright)
-5. Reports test results on the PR
+### Auto-Sync Workflow
+After completing each task that modifies code:
+1. Stage all changes: `git add -A`
+2. Commit with descriptive message
+3. Push to remote: `git push origin <branch>`
+4. Mark task as completed
 
-### Phase 3: Human Review & Merge
-1. Developer reviews code changes and test results
-2. If tests pass and code looks good → Merge PR
-3. If tests fail → Request Codex to fix issues
+**Important:** Claude commits and pushes after each task for continuous GitHub sync.
+
+### GitHub Actions (CI/CD)
+1. Push to `main` triggers CI/CD pipeline
+2. GitHub Actions runs linting, testing, and deployment
+3. Test results available in Actions tab
 
 ---
 
@@ -261,8 +265,8 @@ Feature flags can be tested locally by modifying `client/src/services/featureFla
 
 ## Configuration Files
 
-### `AGENTS.md`
-Instructs Codex on project conventions, coding standards, and testing strategy. **Critical:** This file tells Codex to write tests but NOT run them.
+### `CLAUDE.md`
+Instructs Claude Code on project conventions, coding standards, and development workflow. **Critical:** This file defines the auto-sync workflow and session state management via `STATUS.md`.
 
 ### `package.json`
 - `test:ci` - Playwright tests (run by GitHub Actions)
@@ -279,18 +283,19 @@ Configuration for frontend E2E testing with Playwright.
 
 ## Contributing
 
-### For AI Agents (Codex)
-Read `AGENTS.md` for complete instructions. Your job is to:
-1. Write clean, tested code
-2. Create test files (don't run them)
-3. Commit to a feature branch
-4. Create a pull request
+### For AI Agents (Claude Code)
+Read `CLAUDE.md` for complete instructions. Your job is to:
+1. Read `STATUS.md` before starting work
+2. Create execution plan and wait for approval
+3. Write complete implementations (no placeholders)
+4. Commit and push after each completed task
+5. Update `STATUS.md` at session end
 
 ### For Human Developers
-1. Review PRs created by Codex
-2. Check that tests pass in GitHub Actions
-3. Merge approved PRs
-4. Provide feedback to Codex if changes are needed
+1. Review commits pushed by Claude Code
+2. Check that CI/CD passes in GitHub Actions
+3. Provide feedback on implementation choices
+4. Approve or request changes via conversation
 
 ---
 
@@ -318,7 +323,8 @@ Follow the documentation inside each directory to deploy infrastructure in your 
 
 ## Support
 
-For questions about the Codex workflow or mission specifications, refer to:
-- `AGENTS.md` - Codex configuration and conventions
-- `WellnessOS-Codex-Prompting-and-Agent-Config-Merged.md` - Detailed prompt guide
-- `Master-Blueprint-Wellness-OS-V3.2-Gemini-Synthesis.md` - Complete mission specifications
+For questions about the development workflow or project setup, refer to:
+- `CLAUDE.md` - Claude Code configuration and conventions
+- `STATUS.md` - Current project state and session history
+- `SETUP.md` - Backend Brain setup guide (Vertex AI, Supabase, Pinecone)
+- `client/EXPO_SETUP.md` - Mobile app development setup

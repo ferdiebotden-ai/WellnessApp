@@ -1,12 +1,18 @@
-# Expo Development Setup - SDK 51 + Development Build
+# Expo Development Setup - SDK 54 + Development Build
 
 ## Overview
 
-This project uses **Expo SDK 51** with **Development Build** (custom development client). Unlike Expo Go, Development Build includes native code, allowing full access to all native modules.
+This project uses **Expo SDK 54** with **Development Build** (custom development client) and **New Architecture** enabled. Unlike Expo Go, Development Build includes native code, allowing full access to all native modules.
+
+### New Architecture
+As of December 2025, this project has `newArchEnabled: true` in `app.json`. This is required because:
+- Legacy architecture will be removed in a late 2025 React Native release
+- ~75% of SDK 52+ projects already use New Architecture
+- All expo-* packages support it as of SDK 53
 
 ## Prerequisites
 
-- **Node.js** 18+ (recommended: 20+)
+- **Node.js** 20+ (LTS recommended)
 - **npm** or **yarn**
 - **Android Studio** (for Android development)
 - **Xcode 15+** (for iOS development, macOS only)
@@ -301,5 +307,10 @@ After logging in with Firebase credentials:
 ## Additional Resources
 
 - [Expo Development Build Docs](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Expo SDK 51 Docs](https://docs.expo.dev/)
+- [Expo SDK 54 Docs](https://docs.expo.dev/)
+- [New Architecture Guide](https://docs.expo.dev/guides/new-architecture/)
 - [EAS Build Docs](https://docs.expo.dev/build/introduction/)
+
+---
+
+*Last Updated: December 1, 2025*
