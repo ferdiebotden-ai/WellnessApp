@@ -150,6 +150,8 @@ Before marking any task complete:
 4. **ALWAYS** cite evidence for wellness features (link to protocol)
 5. **ALWAYS** update STATUS.md at session end
 6. **ALWAYS** wait for plan approval before writing code
+7. **ALWAYS** commit and push changes after completing each task that modifies code
+8. **NEVER** mark a task complete without committing if files were changed
 
 ---
 
@@ -216,4 +218,35 @@ Claude Code has access to specialized skills that should be used proactively for
 
 ---
 
-*Last Updated: November 30, 2025*
+## 11. MCP SERVERS
+
+Claude Code connects to external services via MCP (Model Context Protocol) servers:
+
+| Server | Purpose | Status |
+|--------|---------|--------|
+| `github` | PR/issue management, repo sync | Configured |
+| `ide` | VS Code diagnostics, Jupyter kernel | Built-in |
+
+### Auto-Sync Workflow (After Each Task)
+
+When a todo item is marked complete and involves code changes:
+
+1. Stage all changes: `git add -A`
+2. Commit with descriptive message referencing the task
+3. Push to remote: `git push origin <branch>`
+4. Only then mark the task as completed in the todo list
+
+**Critical:** Every completed task that modifies files MUST be committed and pushed before moving to the next task. This ensures continuous sync with GitHub.
+
+### Verification Commands
+```bash
+# Check MCP server status
+claude mcp list
+
+# Verify GitHub connection (in Claude Code)
+/mcp
+```
+
+---
+
+*Last Updated: December 1, 2025*
