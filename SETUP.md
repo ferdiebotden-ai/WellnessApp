@@ -1,5 +1,8 @@
 # Backend Brain Setup Guide
 
+> **Environment Note:** All commands in this guide should be run from WSL2 (Ubuntu) terminal.
+> Open the project with: `cd ~/projects/WellnessApp && code .`
+
 This guide walks you through activating your Backend Brain functions (daily scheduler, nudge engine, and chat API) using Vertex AI Gemini 2.0 Flash.
 
 ## ✅ What's Already Done (Code Changes)

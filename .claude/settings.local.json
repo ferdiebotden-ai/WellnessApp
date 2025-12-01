@@ -5,14 +5,17 @@
   "permissions": {
     "allow": [
       "Bash(curl:*)",
-      "Bash(where:*)",
+      "Bash(which:*)",
       "Bash(gcloud:*)",
       "Bash(firebase:*)",
       "Bash(gh:*)",
       "Bash(supabase:*)",
-      "Bash(Get-ChildItem -Force)",
-      "Bash(Select-Object Name, LastWriteTime)",
-      "Bash(Format-Table -AutoSize)"
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "mcp__github__list_commits",
+      "mcp__n8n-mcp__n8n_health_check",
+      "mcp__n8n-mcp__n8n_diagnostic"
     ],
     "deny": [],
     "ask": [

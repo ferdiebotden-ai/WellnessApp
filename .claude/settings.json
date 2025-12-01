@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(cd:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "Read(./)",
+      "Edit(./)",
+      "WebSearch",
+      "WebFetch",
+      "WebFetch(domain:docs.expo.dev)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:cloud.google.com)",
+      "WebFetch(domain:reactnative.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:notion.so)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.env.claude)",
+      "Read(./secrets/**)",
+      "Edit(./.env)",
+      "Edit(./.env.*)",
+      "Edit(./.env.claude)"
+    ]
+  },
+  "includeCoAuthoredBy": true
+}

@@ -5,6 +5,36 @@
 
 ---
 
+## Development Environment
+
+**Primary Setup:** WSL2 + Ubuntu 24.04 + VS Code Remote
+**Migrated:** December 1, 2025
+
+| Component | Version | Location |
+|-----------|---------|----------|
+| OS | Ubuntu 24.04 (WSL2) | Windows 11 host |
+| Node.js | v20.19.6 (via nvm) | WSL |
+| npm | 10.9.2 | WSL |
+| Editor | VS Code + WSL Remote | Windows → WSL |
+| Project Path | `/home/ferdi/projects/WellnessApp` | WSL filesystem |
+
+**Installed CLIs:**
+- Claude Code CLI (`claude --version`)
+- Firebase CLI (`firebase --version`)
+- Supabase CLI (`supabase --version`)
+- Google Cloud SDK (`gcloud --version`)
+- GitHub CLI (`gh --version`)
+
+**Quick Start:**
+```bash
+# Open project in VS Code (from WSL terminal)
+cd ~/projects/WellnessApp && code .
+
+# Or use the desktop shortcut: "WellnessApp (WSL)"
+```
+
+---
+
 ## Current Phase
 **Phase 1: Spinal Cord (Infrastructure & Data)** — 95% Complete ✅
 
@@ -170,8 +200,11 @@ gcloud functions logs read generateAdaptiveNudges --project=wellness-os-app --li
 
 ## Quick Reference
 
-**Key Commands:**
+**Key Commands (run from WSL terminal):**
 ```bash
+# Navigate to project
+cd ~/projects/WellnessApp
+
 # Type check
 cd client && npx tsc --noEmit
 
@@ -186,16 +219,22 @@ cd functions && npm run deploy
 
 # Test protocol search
 curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning light"
+
+# Open in VS Code
+code .
 ```
 
-**Environment:**
-- Node: v18+
-- Expo SDK: 54
+**Cloud Environment:**
 - Firebase Project: wellness-os-app
 - Supabase Project: vcrdogdyjljtwgoxpkew
 - Pinecone Index: wellness-protocols
 - **API URL (Cloud Run):** https://api-26324650924.us-central1.run.app
 
+**Local Environment (WSL2):**
+- Node: v20.19.6 (via nvm)
+- Expo SDK: 54
+- Project: `/home/ferdi/projects/WellnessApp`
+
 ---
 
-*Last Updated: November 30, 2025 (Session 8)*
+*Last Updated: December 1, 2025 (Session 9 - WSL Migration)*

@@ -3,6 +3,51 @@
 ## Overview
 Wellness OS V3.2 is a HIPAA-compliant health and wellness management platform. This repository contains the complete codebase including infrastructure provisioning, backend services, and frontend application.
 
+---
+
+## Local Development Setup (WSL2)
+
+**Environment:** WSL2 + Ubuntu 24.04 + VS Code Remote
+
+### Prerequisites
+- Windows 11 with WSL2 enabled
+- Ubuntu 24.04 installed in WSL
+- VS Code with "WSL" extension
+- Node.js v20+ (via nvm)
+
+### Quick Start
+```bash
+# Open project (use desktop shortcut "WellnessApp (WSL)" or from terminal):
+cd ~/projects/WellnessApp && code .
+
+# Install dependencies (first time only)
+npm install
+cd client && npm install --legacy-peer-deps && cd ..
+cd functions && npm install && cd ..
+
+# Start the Expo dev server
+cd client && npx expo start
+
+# Run type checking
+cd client && npx tsc --noEmit
+```
+
+### Available CLIs
+All development tools are installed in WSL:
+- `claude` - Claude Code AI assistant
+- `firebase` - Firebase CLI
+- `supabase` - Supabase CLI
+- `gcloud` - Google Cloud SDK
+- `gh` - GitHub CLI
+
+### Project Location
+```
+WSL Path: /home/ferdi/projects/WellnessApp
+Windows:  \\wsl$\Ubuntu\home\ferdi\projects\WellnessApp
+```
+
+---
+
 ## Repository Structure
 
 ```
