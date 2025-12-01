@@ -4,8 +4,14 @@
   "description": "Wellness OS V3.2 - HIPAA-compliant health and wellness management platform",
   "main": "index.js",
   "scripts": {
-    "test:ci": "npx playwright test",
-    "test:backend": "jest",
+    "test": "npm run test:client && npm run test:functions && npm run test:backend",
+    "test:client": "cd client && npm test",
+    "test:functions": "cd functions && npm test",
+    "test:backend": "cd backend && npm test",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:debug": "npx playwright test --debug",
+    "test:ci": "npx playwright test --reporter=github",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
   },

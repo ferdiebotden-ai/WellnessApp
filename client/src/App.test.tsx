@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { App } from './App';
 
-const analyticsMock = {
+const mockAnalytics = {
   init: jest.fn().mockResolvedValue(undefined),
   identifyUser: jest.fn().mockResolvedValue(undefined),
   trackUserSignup: jest.fn().mockResolvedValue(undefined),
@@ -18,11 +18,11 @@ const analyticsMock = {
 
 jest.mock('./services/AnalyticsService', () => ({
   __esModule: true,
-  default: analyticsMock,
-  analytics: analyticsMock,
+  default: mockAnalytics,
+  analytics: mockAnalytics,
 }));
 
-const revenueCatMock = {
+const mockRevenueCat = {
   configure: jest.fn().mockResolvedValue(undefined),
   purchaseCorePackage: jest.fn().mockResolvedValue({
     productIdentifier: 'core_monthly',
@@ -33,7 +33,7 @@ const revenueCatMock = {
 };
 
 jest.mock('./services/RevenueCatService', () => ({
-  revenueCat: revenueCatMock,
+  revenueCat: mockRevenueCat,
 }));
 
 jest.mock('./hooks/useTaskFeed', () => ({
@@ -167,11 +167,11 @@ describe('App', () => {
 
   it('configures RevenueCat with the current user on mount', async () => {
     render(<App />);
-    expect(revenueCatMock.configure).toHaveBeenCalledWith('test-user');
+    expect(mockRevenueCat.configure).toHaveBeenCalledWith('test-user');
   });
 
   it('initiates RevenueCat purchase flow when paywall subscribe is pressed', async () => {
-    __mock.mockValue.isPaywallVisible = true;
+    monetizationMock.mockValue.isPaywallVisible = true;
 
     const { getByTestId } = render(<App />);
     const subscribeButton = getByTestId('subscribe-core');
@@ -179,10 +179,10 @@ describe('App', () => {
 
     await new Promise((resolve) => setImmediate(resolve));
 
-    expect(analyticsMock.trackSubscriptionStarted).toHaveBeenCalled();
-    expect(revenueCatMock.purchaseCorePackage).toHaveBeenCalled();
-    expect(__mock.mockValue.refreshStatus).toHaveBeenCalled();
-    expect(__mock.mockValue.closePaywall).toHaveBeenCalled();
+    expect(mockAnalytics.trackSubscriptionStarted).toHaveBeenCalled();
+    expect(mockRevenueCat.purchaseCorePackage).toHaveBeenCalled();
+    expect(monetizationMock.mockValue.refreshStatus).toHaveBeenCalled();
+    expect(monetizationMock.mockValue.closePaywall).toHaveBeenCalled();
     expect(Alert.alert).toHaveBeenCalledWith(
       'Welcome to Core',
       expect.stringContaining('Your subscription is active')

@@ -1,20 +1,15 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "target": "ES2019",
-    "module": "commonjs",
-    "jsx": "react",
     "strict": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "baseUrl": "src"
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "*.ts",
+    "*.tsx"
   ],
   "exclude": [
     "node_modules"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

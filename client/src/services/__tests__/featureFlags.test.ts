@@ -1,37 +1,37 @@
-import { describe, it, expect, beforeEach, vi } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { featureFlags, FEATURE_FLAG_KEYS } from '../featureFlags';
 import * as firebaseRemoteConfig from 'firebase/remote-config';
 
 // Mock Firebase Remote Config
-vi.mock('firebase/remote-config', () => ({
-  getRemoteConfig: vi.fn(),
-  getValue: vi.fn(),
+jest.mock('firebase/remote-config', () => ({
+  getRemoteConfig: jest.fn(),
+  getValue: jest.fn(),
 }));
 
 // Mock Firebase app
-vi.mock('../firebase', () => ({
-  getFirebaseApp: vi.fn(() => ({})),
+jest.mock('../firebase', () => ({
+  getFirebaseApp: jest.fn(() => ({})),
 }));
 
 describe('FeatureFlagService', () => {
   let mockRemoteConfig: {
     defaultConfig: Record<string, boolean>;
     settings: { minimumFetchIntervalMillis: number };
-    fetchAndActivate: ReturnType<typeof vi.fn>;
-    ensureInitialized: ReturnType<typeof vi.fn>;
+    fetchAndActivate: jest.Mock;
+    ensureInitialized: jest.Mock;
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mockRemoteConfig = {
       defaultConfig: {},
       settings: { minimumFetchIntervalMillis: 0 },
-      fetchAndActivate: vi.fn().mockResolvedValue(true),
-      ensureInitialized: vi.fn().mockResolvedValue(undefined),
+      fetchAndActivate: jest.fn().mockResolvedValue(true),
+      ensureInitialized: jest.fn().mockResolvedValue(undefined),
     };
 
-    (firebaseRemoteConfig.getRemoteConfig as ReturnType<typeof vi.fn>).mockReturnValue(mockRemoteConfig);
-    (firebaseRemoteConfig.getValue as ReturnType<typeof vi.fn>).mockImplementation((config, key) => ({
+    (firebaseRemoteConfig.getRemoteConfig as jest.Mock).mockReturnValue(mockRemoteConfig);
+    (firebaseRemoteConfig.getValue as jest.Mock).mockImplementation((_config: unknown, key: string) => ({
       asBoolean: () => mockRemoteConfig.defaultConfig[key] ?? true,
     }));
   });
