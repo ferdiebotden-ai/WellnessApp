@@ -37,11 +37,50 @@ cd ~/projects/WellnessApp && code .
 
 ## Current Phase
 **Phase 1: Spinal Cord (Infrastructure & Data)** — 100% Complete ✅
-**Phase 2: Brain (AI & Reasoning)** — In Progress 🧠 (Session 2 of 13)
+**Phase 2: Brain (AI & Reasoning)** — In Progress 🧠 (Session 3 of 13)
 
 ---
 
 ## Last Session
+**Date:** December 2, 2025 (Session 18)
+**Focus:** Phase II - Session 3: Memory Layer Integration
+
+**Accomplished:**
+- ✅ Integrated Memory into NudgeEngine (`nudgeEngine.ts`):
+  - Added `getRelevantMemories()` call before nudge generation
+  - Memory context now included in AI prompt for personalization
+  - Memory IDs logged in `ai_audit_log.memory_ids_used`
+  - Protocol ID added to taskDoc for feedback tracking
+- ✅ Created Firestore trigger (`onNudgeFeedback.ts`):
+  - Fires on `live_nudges/{userId}/entries/{nudgeId}` status change
+  - Creates memory via `createFromNudgeFeedback()` in real-time
+  - Maps status to feedback types (completed, dismissed, snoozed)
+- ✅ Added Memory Maintenance Scheduler (`dailyScheduler.ts`):
+  - New `runMemoryMaintenance()` function
+  - Calls `applyMemoryDecay()` for global decay
+  - Calls `pruneMemories()` for each user (max 150 enforced)
+- ✅ Exported new functions in `index.ts`
+- ✅ Installed `firebase-functions@^4.9.0` for Firestore triggers
+- ✅ TypeScript compiles cleanly
+- ✅ Committed and pushed: `16cdb30`
+
+**Files Modified/Created:**
+```
+functions/src/nudgeEngine.ts       — Added memory retrieval + context
+functions/src/dailyScheduler.ts    — Added runMemoryMaintenance()
+functions/src/onNudgeFeedback.ts   — NEW: Firestore trigger for feedback
+functions/src/index.ts             — Exported new functions
+functions/package.json             — Added firebase-functions dependency
+```
+
+**Memory Layer Now Complete:**
+- Memories influence nudge personalization (nudgeEngine)
+- User feedback creates memories in real-time (onNudgeFeedback)
+- Daily maintenance decays/prunes memories (runMemoryMaintenance)
+
+---
+
+## Previous Session
 **Date:** December 2, 2025 (Session 17)
 **Focus:** Phase II - Session 2: Memory Layer Implementation (Part 1)
 
@@ -71,7 +110,7 @@ functions/src/memory/index.ts     — Module exports
 
 ---
 
-## Previous Session
+## Previous Session (Earlier)
 **Date:** December 2, 2025 (Session 16)
 **Focus:** Fix Web Preview Authentication & Onboarding Issues
 
@@ -208,34 +247,35 @@ functions/src/memory/index.ts     — Module exports
 
 ## Next Session Priority
 
-### Phase 2: Session 3 — Memory Layer (Part 2: Integration)
+### Phase 2: Session 4 — Confidence Scoring
 
 **Reference Documents:**
 - `PRD Documents/APEX_OS_PRD_FINAL_v6.md` — Master PRD (canonical)
 - `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Implementation guide
-- `~/.claude/plans/jolly-orbiting-locket.md` — Detailed implementation plan
 
-### Session 3 Tasks
-1. **Integrate Memory into NudgeEngine** — `functions/src/nudgeEngine.ts`
-   - Add memory retrieval before AI prompt generation
-   - Include relevant memories in context
-   - Update AI prompt with memory context
+### Session 4 Tasks
+1. **Create Confidence Scorer** — `functions/src/reasoning/confidenceScorer.ts`
+   - Implement 5 scoring factors:
+     - `protocol_fit` (0.25) — How well protocol matches user's goal
+     - `memory_support` (0.25) — Supporting memories for recommendation
+     - `timing_fit` (0.20) — Appropriateness of timing
+     - `conflict_risk` (0.15) — Inverse of conflict probability
+     - `evidence_strength` (0.15) — Protocol's evidence level
 
-2. **Create Memory Decay Scheduler** — Add to `functions/src/dailyScheduler.ts`
-   - Call `applyMemoryDecay()` daily
-   - Call `pruneMemories()` for each active user
+2. **Integrate into NudgeEngine** — Modify `functions/src/nudgeEngine.ts`
+   - Add confidence scoring before delivery
+   - Include score in nudge payload and audit log
+   - Mark recommendations <0.4 for suppression
 
-3. **Hook Nudge Feedback to Memory** — Update `functions/src/analyzeNudgeFeedback.ts`
-   - When user completes/dismisses nudge, create memory
-   - Use `createFromNudgeFeedback()` function
+3. **Update Nudge Types** — Extend interfaces to include confidence
 
 ### P0 Progress (Sessions 1-6)
 | Session | Component | Status |
 |---------|-----------|--------|
 | 1 | Database Migrations | ✅ Complete & Applied |
 | 2 | Memory Layer (Part 1: Types & CRUD) | ✅ Complete |
-| 3 | Memory Layer (Part 2: Integration) | 🔜 Next |
-| 4 | Confidence Scoring | ⏳ Pending |
+| 3 | Memory Layer (Part 2: Integration) | ✅ Complete |
+| 4 | Confidence Scoring | 🔜 Next |
 | 5 | Suppression Engine | ⏳ Pending |
 | 6 | Safety & Compliance | ⏳ Pending |
 
@@ -404,4 +444,4 @@ code .
 
 ---
 
-*Last Updated: December 2, 2025 (Session 17 - Phase II Session 2: Memory Layer Part 1 Complete)*
+*Last Updated: December 2, 2025 (Session 18 - Phase II Session 3: Memory Layer Integration Complete)*
