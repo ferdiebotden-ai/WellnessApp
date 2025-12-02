@@ -42,6 +42,34 @@ cd ~/projects/WellnessApp && code .
 ---
 
 ## Last Session
+**Date:** December 2, 2025 (Session 14)
+**Accomplished:**
+- ✅ Set up web browser preview (simplest dev workflow)
+- ✅ Installed web dependencies: `react-dom`, `react-native-web`
+- ✅ Created ADB shim at `~/android-sdk/platform-tools/adb` for WSL→Windows bridge
+- ✅ Configured ANDROID_HOME in `.bashrc` pointing to shim directory
+- ✅ Successfully launched Android emulator with Expo Go auto-install
+- ✅ Verified web preview working at http://localhost:8081
+- ✅ Updated CLAUDE.md Section 13 with preview environment documentation
+
+**App Preview Setup (Complete):**
+| Method | Command | Status |
+|--------|---------|--------|
+| Web Browser | `npx expo start --web` | ✅ Ready (http://localhost:8081) |
+| Android Emulator | `npx expo start --android` | ✅ Ready (Expo Go installed) |
+| iOS Device | `npx expo start` + Expo Go | ✅ Ready (scan QR) |
+
+**Environment Configuration:**
+| Component | Location | Status |
+|-----------|----------|--------|
+| Web deps | `client/package.json` | Installed |
+| ADB shim | `~/android-sdk/platform-tools/adb` | Created |
+| ANDROID_HOME | `~/android-sdk` (in .bashrc) | Set |
+| Expo Go | Android emulator | Installed |
+
+---
+
+## Previous Session
 **Date:** December 2, 2025 (Session 13)
 **Accomplished:**
 - ✅ Researched mobile emulator options for WSL2 + VS Code development
@@ -51,20 +79,6 @@ cd ~/projects/WellnessApp && code .
 - ✅ User installed Android Studio on Windows with Pixel 9 AVD (API 36.1)
 - ✅ Configured WSL2 mirrored networking for ADB bridge
 - ✅ Analyzed iOS vs Android parity (95% identical for UI, wearables differ)
-
-**Android Development Setup:**
-| Component | Version | Location |
-|-----------|---------|----------|
-| Android Studio | Latest | Windows |
-| Android Emulator | 36.2.12 | Windows |
-| AVD | Pixel 9, API 36.1 | Windows |
-| System Image | Google Play x86_64 | Windows |
-| ADB Bridge | Via mirrored networking | WSL ↔ Windows |
-
-**Files Created:**
-- `scripts/android-bridge.sh` — Connects WSL to Windows ADB
-- `scripts/start-android.sh` — One-command Expo + Android launcher
-- `scripts/check-android-setup.sh` — Verifies setup is complete
 
 ---
 

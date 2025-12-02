@@ -295,60 +295,62 @@ curl https://api-26324650924.us-central1.run.app/
 
 ---
 
-## 13. ANDROID DEVELOPMENT (WSL2)
+## 13. APP PREVIEW & DEVELOPMENT
 
-The Android emulator runs on **Windows**, bridged to WSL via ADB with mirrored networking.
+### Preview Methods (Choose One)
 
-### Setup (Already Configured)
+| Method | Command | URL | Best For |
+|--------|---------|-----|----------|
+| **Web Browser (Recommended)** | `cd client && npx expo start --web` | http://localhost:8081 | Daily dev, fastest iteration |
+| iOS Device | `cd client && npx expo start` + Expo Go | Scan QR code | Native feel testing |
+| Android Emulator | `cd client && npx expo start --android` | Auto-launches | Native Android testing |
+
+### Starting the Dev Server
+
+**Web Preview (Simplest — Use This):**
+```bash
+cd /home/ferdi/projects/WellnessApp/client && npx expo start --web
+```
+Then open http://localhost:8081 in your browser.
+
+**Run in Background:**
+```bash
+cd /home/ferdi/projects/WellnessApp/client && npx expo start --web &
+```
+
+### Android Emulator (Optional)
+
+The Android emulator runs on **Windows**, bridged to WSL via ADB shim.
+
+**Setup (Already Configured):**
 | Component | Location | Status |
 |-----------|----------|--------|
 | Android Studio | Windows | Installed |
 | Pixel 9 AVD (API 36.1) | Windows | Created |
-| ADB Bridge Scripts | `scripts/` | Created |
+| ADB Shim | `~/android-sdk/platform-tools/adb` | Configured |
+| ANDROID_HOME | `~/android-sdk` (in .bashrc) | Set |
 | WSL Mirrored Networking | `C:\Users\ferdi\.wslconfig` | Configured |
+| Expo Go | Installed on emulator | Ready |
 
-### Quick Start Commands
+**Android Workflow:**
+1. Start emulator in Android Studio (Windows)
+2. Run: `cd client && npx expo start --android`
+3. Expo Go auto-launches with the app
+
+**Run Android in Background:**
 ```bash
-# Check if setup is complete (run before first use)
-npm run android:check
-
-# Start app on Android emulator
-npm run start:android
-
-# Start web preview (instant, no emulator needed)
-npm run start:web
+export ANDROID_HOME="$HOME/android-sdk" && cd /home/ferdi/projects/WellnessApp/client && npx expo start --android &
 ```
 
-### Daily Workflow
-1. **Start emulator on Windows:** Open Android Studio → Device Manager → Play ▶ on Pixel 9
-2. **Wait for boot:** See Android home screen
-3. **Run from WSL:** `npm run start:android`
-
-### If "Run the server in the background" is requested
-```bash
-# Start Expo dev server for Android (background)
-cd client && npx expo start --android &
-
-# Or for web preview (background)
-cd client && npx expo start --web &
-```
-
-### Troubleshooting
-```bash
-# Verify ADB connection
-npm run android:check
-
-# If emulator not detected, ensure:
-# 1. Emulator is running in Android Studio (Windows)
-# 2. WSL was restarted after .wslconfig change
-# 3. Run: wsl --shutdown (PowerShell) then restart terminal
-```
+### Web Dependencies (Installed)
+- `react-dom@19.1.0`
+- `react-native-web@^0.21.0`
 
 ### Platform Parity Notes
-- **UI/UX:** 95% identical between iOS and Android
-- **Wearables:** iOS uses HealthKit (native), Android uses Health Connect (derived values)
-- **For daily development:** Android emulator is sufficient
-- **iOS testing:** Requires EAS Build + TestFlight (no simulator on Windows)
+- **UI/UX:** 95% identical across web, iOS, Android
+- **Wearables:** iOS uses HealthKit, Android uses Health Connect
+- **For daily development:** Web browser is fastest
+- **Native testing:** Use iOS device (Expo Go) or Android emulator
 
 ---
 
