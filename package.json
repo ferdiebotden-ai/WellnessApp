@@ -13,7 +13,10 @@
     "test:e2e:debug": "npx playwright test --debug",
     "test:ci": "npx playwright test --reporter=github",
     "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "start:web": "cd client && npm run start:web",
+    "start:android": "./scripts/start-android.sh",
+    "android:check": "./scripts/check-android-setup.sh"
   },
   "repository": {
     "type": "git",
