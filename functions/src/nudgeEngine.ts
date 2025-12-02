@@ -10,6 +10,7 @@ import {
   mapProtocols,
 } from './protocolSearch';
 import { generateCompletion, getCompletionModelName } from './vertexAI';
+import { getRelevantMemories, ScoredMemory } from './memory';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -96,6 +97,19 @@ export const generateAdaptiveNudges = async (
       Last Active: ${primaryModule.last_active_date || 'Never'}
     `;
 
+    // Memory Layer: Retrieve relevant user memories
+    const memories: ScoredMemory[] = await getRelevantMemories(userId, {
+      module_id: primaryModule.module_id,
+      min_confidence: 0.2
+    }, 5);
+
+    // Format memories for AI context
+    const memoryContext = memories.length > 0
+      ? `\n      User Memories (learned patterns):\n${memories.map(m =>
+          `      - [${m.type}] ${m.content} (confidence: ${m.confidence.toFixed(2)})`
+        ).join('\n')}`
+      : '';
+
     // RAG: Find relevant protocol
     // Query based on module + "optimization"
     const query = `${primaryModule.module_id} optimization strategies`;
@@ -108,12 +122,12 @@ export const generateAdaptiveNudges = async (
     const ragContext = ragResults.map(p => `Protocol: ${p.name}\nBenefits: ${p.benefits}\nEvidence: ${p.citations.join(', ')}`).join('\n\n');
 
     const userPrompt = `
-      Context: ${context}
+      Context: ${context}${memoryContext}
 
       Relevant Protocols:
       ${ragContext}
 
-      Task: Generate a short, punchy, evidence-based nudge (max 2 sentences) to motivate the user to engage with their ${primaryModule.module_id} module today. Suggest one of the relevant protocols if appropriate.
+      Task: Generate a short, punchy, evidence-based nudge (max 2 sentences) to motivate the user to engage with their ${primaryModule.module_id} module today. Suggest one of the relevant protocols if appropriate. Consider the user's memories and past preferences if available.
     `;
 
     // Generate Nudge
@@ -132,6 +146,7 @@ export const generateAdaptiveNudges = async (
     };
 
     // Write as a task document with client-expected fields
+    const suggestedProtocolId = ragResults.length > 0 ? ragResults[0].id : undefined;
     const taskDoc = {
       title: nudgeText, // Client expects 'title' field
       status: 'pending' as const,
@@ -139,22 +154,28 @@ export const generateAdaptiveNudges = async (
       emphasis: 'high', // Nudges are high priority
       type: 'proactive_coach',
       module_id: primaryModule.module_id,
+      protocol_id: suggestedProtocolId, // For memory feedback tracking
       citations: nudgePayload.citations,
       created_at: now,
     };
 
     await firestore.collection('live_nudges').doc(userId).collection('entries').add(taskDoc);
 
-    // Log to Audit Log
+    // Log to Audit Log (includes memory IDs for traceability)
+    const memoryIdsUsed = memories.map(m => m.id);
     await supabase.from('ai_audit_log').insert({
       user_id: userId,
       decision_type: 'nudge_generated',
       model_used: getCompletionModelName(),
       prompt: userPrompt,
       response: nudgeText,
-      reasoning: 'Proactive engagement',
+      reasoning: memories.length > 0
+        ? `Proactive engagement with ${memories.length} user memories considered`
+        : 'Proactive engagement',
       citations: nudgePayload.citations,
       module_id: primaryModule.module_id,
+      protocol_id: suggestedProtocolId,
+      memory_ids_used: memoryIdsUsed.length > 0 ? memoryIdsUsed : null,
     });
   }
 };

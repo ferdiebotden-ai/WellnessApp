@@ -1,6 +1,7 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { getFirebaseApp } from './firebaseAdmin';
 import { getServiceClient } from './supabaseClient';
+import { applyMemoryDecay, pruneMemories } from './memory';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -178,6 +179,68 @@ export const generateDailySchedules = async (
 
   if (batchCount > 0) {
     await batch.commit();
+  }
+};
+
+/**
+ * Memory Layer Maintenance Job
+ *
+ * Runs daily to:
+ * 1. Apply confidence decay to all memories (PostgreSQL function)
+ * 2. Prune expired/low-confidence memories for each user (max 150 per user)
+ *
+ * Scheduled via Cloud Scheduler (recommended: 4:00 AM UTC daily)
+ *
+ * Reference: APEX_OS_PRD_FINAL_v6.md - Section 3.2 Memory Layer
+ */
+export const runMemoryMaintenance = async (
+  _event: ScheduledEvent,
+  _context: ScheduledContext,
+): Promise<void> => {
+  const supabase = getServiceClient();
+
+  console.log('[MemoryMaintenance] Starting daily memory maintenance...');
+
+  try {
+    // 1. Apply global decay using PostgreSQL function (efficient)
+    const decayedCount = await applyMemoryDecay();
+    console.log(`[MemoryMaintenance] Applied decay to ${decayedCount} memories`);
+
+    // 2. Get all users with memories
+    const { data: usersWithMemories, error: usersError } = await supabase
+      .from('user_memories')
+      .select('user_id')
+      .gte('confidence', 0.1); // Only users with active memories
+
+    if (usersError) {
+      throw new Error(`Failed to fetch users with memories: ${usersError.message}`);
+    }
+
+    // Get unique user IDs
+    const userIds = [...new Set(usersWithMemories?.map(row => row.user_id) || [])];
+    console.log(`[MemoryMaintenance] Pruning memories for ${userIds.length} users`);
+
+    // 3. Prune each user's memories (enforces 150 max, removes expired/low-confidence)
+    let totalPruned = 0;
+    for (const userId of userIds) {
+      try {
+        const prunedCount = await pruneMemories(userId);
+        totalPruned += prunedCount;
+        if (prunedCount > 0) {
+          console.log(`[MemoryMaintenance] Pruned ${prunedCount} memories for user ${userId}`);
+        }
+      } catch (pruneError) {
+        console.error(`[MemoryMaintenance] Failed to prune user ${userId}:`, pruneError);
+        // Continue with other users
+      }
+    }
+
+    console.log(
+      `[MemoryMaintenance] Complete. Decayed: ${decayedCount}, Pruned: ${totalPruned}`
+    );
+  } catch (error) {
+    console.error('[MemoryMaintenance] Failed:', error);
+    throw error;
   }
 };
 
