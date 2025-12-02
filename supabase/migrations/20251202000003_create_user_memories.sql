@@ -53,9 +53,9 @@ CREATE INDEX IF NOT EXISTS idx_user_memories_confidence ON public.user_memories(
 CREATE INDEX IF NOT EXISTS idx_user_memories_last_used ON public.user_memories(last_used_at DESC);
 CREATE INDEX IF NOT EXISTS idx_user_memories_user_confidence ON public.user_memories(user_id, confidence DESC);
 
--- Partial index for active (non-expired) memories
+-- Partial index for high-confidence memories (expires_at check done at query time)
 CREATE INDEX IF NOT EXISTS idx_user_memories_active ON public.user_memories(user_id, confidence DESC)
-    WHERE (expires_at IS NULL OR expires_at > NOW()) AND confidence >= 0.1;
+    WHERE confidence >= 0.1;
 
 -- Enable Row Level Security
 ALTER TABLE public.user_memories ENABLE ROW LEVEL SECURITY;

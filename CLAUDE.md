@@ -295,7 +295,56 @@ curl https://api-26324650924.us-central1.run.app/
 
 ---
 
-## 13. APP PREVIEW & DEVELOPMENT
+## 13. SUPABASE CLI ACCESS
+
+Claude Code has authenticated access to Supabase via Personal Access Token.
+
+### Authentication
+| Component | Value |
+|-----------|-------|
+| CLI Version | 2.62.10 |
+| Token Location | `~/.bashrc` (SUPABASE_ACCESS_TOKEN) |
+| Project Ref | `vcrdogdyjljtwgoxpkew` |
+| Project Name | Wellness-OS |
+
+### Available Commands
+| Command | Purpose |
+|---------|---------|
+| `supabase db push` | Apply local migrations to remote |
+| `supabase db pull` | Pull remote schema to local |
+| `supabase db diff` | Compare local vs remote schemas |
+| `supabase db dump` | Backup database schema/data |
+| `supabase migration list` | Show migration status |
+| `supabase migration repair` | Fix migration history |
+| `supabase projects list` | List all projects |
+
+### Common Commands
+```bash
+# Apply new migrations
+supabase db push
+
+# Preview migrations without applying
+supabase db push --dry-run
+
+# Check migration status
+supabase migration list
+
+# Pull remote schema changes
+supabase db pull
+
+# Dump schema for backup
+supabase db dump --schema public > backup.sql
+```
+
+### When to Use
+- Creating and applying new database migrations
+- Checking schema differences between local and remote
+- Backing up database schemas
+- Syncing migration history
+
+---
+
+## 14. APP PREVIEW & DEVELOPMENT
 
 ### Preview Methods (Choose One)
 
