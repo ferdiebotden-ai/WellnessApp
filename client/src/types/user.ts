@@ -31,4 +31,8 @@ export interface UserProfile {
   earnedBadges?: string[];
   subscription_id?: string | null;
   module_enrollment?: ModuleEnrollmentRow[];
+  /** Primary wellness goal selected during onboarding */
+  primary_goal?: 'better_sleep' | 'more_energy' | 'sharper_focus' | 'faster_recovery' | null;
+  /** Wearable device the user tracks with, selected during onboarding */
+  wearable_source?: 'oura' | 'whoop' | 'apple_health' | 'google_fit' | 'garmin' | null;
 }

@@ -84,11 +84,17 @@ class AnalyticsService {
   }
 
   /**
-   * Tracks completion of the onboarding flow along with the selected module.
+   * Tracks completion of the onboarding flow with goal and wearable selection.
    */
-  async trackOnboardingComplete(params: { primaryModuleId: string }): Promise<void> {
+  async trackOnboardingComplete(params: {
+    primaryModuleId: string;
+    goal?: string;
+    wearable?: string | null;
+  }): Promise<void> {
     await this.track('onboarding_complete', {
       primary_module_id: params.primaryModuleId,
+      goal: params.goal ?? null,
+      wearable: params.wearable ?? null,
     });
   }
 

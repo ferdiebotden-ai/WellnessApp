@@ -1,10 +1,17 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ModuleOnboardingScreen } from '../screens/ModuleOnboardingScreen';
+import {
+  AICoachIntroScreen,
+  GoalSelectionScreen,
+  WearableConnectionScreen,
+} from '../screens/onboarding';
 import { palette } from '../theme/palette';
+import type { PrimaryGoal } from '../types/onboarding';
 
 export type OnboardingStackParamList = {
-  ModuleOnboarding: undefined;
+  AICoachIntro: undefined;
+  GoalSelection: undefined;
+  WearableConnection: { selectedGoal: PrimaryGoal };
 };
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -12,22 +19,35 @@ const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 /**
  * Navigation stack for authenticated users who haven't completed onboarding.
  *
- * Flow: Module selection → Main app
+ * Flow: AI Intro → Goal Selection → Wearable Connection → Main app
  *
- * Note: Biometric/PIN protection is an optional feature users can enable later
- * in Settings, following industry best practices (Headspace, Calm, Noom, etc.)
+ * Design: Conversational AI onboarding with typographic/cinematic intro,
+ * tap-to-advance goal selection, and optional wearable connection.
+ *
+ * Note: No trial language - users go directly into the app experience.
  */
 export const OnboardingStackNavigator: React.FC = () => {
   return (
     <Stack.Navigator
-      initialRouteName="ModuleOnboarding"
+      initialRouteName="AICoachIntro"
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: palette.background },
+        animation: 'fade',
+        animationDuration: 300,
       }}
     >
-      <Stack.Screen name="ModuleOnboarding" component={ModuleOnboardingScreen} />
+      <Stack.Screen name="AICoachIntro" component={AICoachIntroScreen} />
+      <Stack.Screen
+        name="GoalSelection"
+        component={GoalSelectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="WearableConnection"
+        component={WearableConnectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
     </Stack.Navigator>
   );
 };
-

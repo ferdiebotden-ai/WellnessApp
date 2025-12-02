@@ -3,6 +3,7 @@ import type { ModuleSummary } from '../types/module';
 import type { MonetizationStatus } from '../types/monetization';
 import type { UserPreferences, UserProfile } from '../types/user';
 import type { WearableSyncPayload } from './wearables/aggregators';
+import type { OnboardingCompletePayload } from '../types/onboarding';
 
 type HttpMethod = 'GET' | 'POST' | 'DELETE' | 'PATCH';
 
@@ -72,14 +73,24 @@ export const fetchCoreModules = async () => {
   }
 };
 
-export const completeOnboarding = async (primaryModuleId: string) => {
+/**
+ * Completes onboarding with goal and optional wearable selection.
+ * Accepts the new conversational onboarding payload with primary_goal and wearable_source.
+ */
+export const completeOnboarding = async (payload: OnboardingCompletePayload) => {
   try {
     return await request<{
       success: boolean;
       trial_start_date: string;
       trial_end_date: string;
       primary_module_id: string;
-    }>('/api/onboarding/complete', 'POST', { primary_module_id: primaryModuleId });
+      primary_goal: string;
+      wearable_source: string | null;
+    }>('/api/onboarding/complete', 'POST', {
+      primary_goal: payload.primary_goal,
+      wearable_source: payload.wearable_source ?? null,
+      primary_module_id: payload.primary_module_id,
+    });
   } catch (error) {
     console.warn('Backend API unavailable, simulating onboarding completion.', error);
     const now = new Date();
@@ -89,7 +100,9 @@ export const completeOnboarding = async (primaryModuleId: string) => {
       success: true,
       trial_start_date: trialStart,
       trial_end_date: trialEnd,
-      primary_module_id: primaryModuleId,
+      primary_module_id: payload.primary_module_id ?? '',
+      primary_goal: payload.primary_goal,
+      wearable_source: payload.wearable_source ?? null,
     };
   }
 };

@@ -42,6 +42,67 @@ cd ~/projects/WellnessApp && code .
 ---
 
 ## Last Session
+**Date:** December 2, 2025 (Session 19)
+**Focus:** Conversational AI Onboarding Redesign
+
+**Accomplished:**
+- ✅ Complete redesign of onboarding flow from "module picker + trial button" to "conversational AI coach"
+- ✅ Created database migration for `primary_goal` and `wearable_source` fields
+- ✅ Created new onboarding types (`client/src/types/onboarding.ts`):
+  - `PrimaryGoal` and `WearableSource` types
+  - `ONBOARDING_GOALS` and `ONBOARDING_WEARABLES` constants
+  - Goal → Module mapping
+- ✅ Built new components with animations:
+  - `GoalCard.tsx` - Large tappable goal card with spring animations
+  - `WearableCard.tsx` - Wearable option cards with skip button
+- ✅ Created 3-screen conversational onboarding flow:
+  - `AICoachIntroScreen.tsx` - Typographic/cinematic intro with staggered text animations
+  - `GoalSelectionScreen.tsx` - 4 goal cards with tap-to-advance
+  - `WearableConnectionScreen.tsx` - Optional wearable selection with prominent skip
+- ✅ Updated `OnboardingStack.tsx` navigation to use new screens
+- ✅ Updated client API (`api.ts`) to accept new payload with `primary_goal` and `wearable_source`
+- ✅ Updated backend API (`onboarding.ts`) with goal→module mapping and validation
+- ✅ Updated analytics service to track new onboarding data
+- ✅ Removed old `ModuleOnboardingScreen.tsx` and its test file
+- ✅ Installed `react-native-reanimated` for animations
+- ✅ Applied database migration via `supabase db push`
+
+**Files Created:**
+```
+supabase/migrations/20251202100000_add_onboarding_preferences.sql
+client/src/types/onboarding.ts
+client/src/components/GoalCard.tsx
+client/src/components/WearableCard.tsx
+client/src/screens/onboarding/AICoachIntroScreen.tsx
+client/src/screens/onboarding/GoalSelectionScreen.tsx
+client/src/screens/onboarding/WearableConnectionScreen.tsx
+client/src/screens/onboarding/index.ts
+```
+
+**Files Modified:**
+```
+client/src/navigation/OnboardingStack.tsx  — New 3-screen flow
+client/src/services/api.ts                 — Updated completeOnboarding payload
+client/src/services/AnalyticsService.ts    — Added goal/wearable tracking
+client/src/types/user.ts                   — Added primary_goal, wearable_source
+functions/src/onboarding.ts                — Updated with goal validation + mapping
+```
+
+**Files Removed:**
+```
+client/src/screens/ModuleOnboardingScreen.tsx
+client/src/screens/ModuleOnboardingScreen.test.tsx
+```
+
+**Design Decisions:**
+- Typographic/cinematic intro instead of chat bubbles (more premium)
+- Tap-to-advance on goal selection (no "Next" button - feels elevated)
+- Wearable optional with prominent "Skip for now" (user decision)
+- No trial language anywhere (user decision)
+
+---
+
+## Previous Session
 **Date:** December 2, 2025 (Session 18)
 **Focus:** Phase II - Session 3: Memory Layer Integration
 
