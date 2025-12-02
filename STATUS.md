@@ -37,11 +37,55 @@ cd ~/projects/WellnessApp && code .
 
 ## Current Phase
 **Phase 1: Spinal Cord (Infrastructure & Data)** — 100% Complete ✅
-**Phase 2: Brain (AI & Reasoning)** — In Progress 🧠 (Session 1 of 13)
+**Phase 2: Brain (AI & Reasoning)** — In Progress 🧠 (Session 2 of 13)
 
 ---
 
 ## Last Session
+**Date:** December 2, 2025 (Session 17)
+**Focus:** Phase II - Session 2: Memory Layer Implementation (Part 1)
+
+**Accomplished:**
+- ✅ Created `functions/src/memory/types.ts` with:
+  - 6 memory types enum (nudge_feedback, protocol_effectiveness, preferred_time, stated_preference, pattern_detected, preference_constraint)
+  - Memory interface with confidence/decay fields
+  - Config constants (max 150 memories, decay rates, thresholds)
+  - Type priorities and default expiration days
+- ✅ Created `functions/src/memory/userMemory.ts` with:
+  - `storeMemory()` - Create/update with deduplication
+  - `reinforceMemory()` - Boost confidence when pattern reoccurs
+  - `getRelevantMemories()` - Context-aware retrieval with scoring
+  - `applyMemoryDecay()` - Daily confidence decay
+  - `pruneMemories()` - Enforce 150 max per user
+  - Convenience creators for nudge feedback and preferences
+- ✅ Created `functions/src/memory/index.ts` for module exports
+- ✅ TypeScript compiles cleanly
+- ✅ Committed and pushed: `cb89f00`
+
+**Files Created:**
+```
+functions/src/memory/types.ts     — Type definitions, enums, config
+functions/src/memory/userMemory.ts — Core CRUD operations
+functions/src/memory/index.ts     — Module exports
+```
+
+---
+
+## Previous Session
+**Date:** December 2, 2025 (Session 16)
+**Focus:** Fix Web Preview Authentication & Onboarding Issues
+
+**Accomplished:**
+- ✅ Fixed Firebase Auth — Created `client/.env` with Firebase Web SDK config
+- ✅ Fixed duplicate modules — Deleted old entries from Supabase
+- ✅ Fixed trial button component — Changed `<Text onPress>` to `<PrimaryButton>`
+
+**User Feedback — Rethink Onboarding UX:**
+> "Why are we choosing one single module at the start? We should just go straight to the home screen and add whatever modules the user wants."
+
+---
+
+## Previous Session
 **Date:** December 2, 2025 (Session 15)
 **Focus:** Phase II - Session 1: Database Foundation + Supabase CLI Setup
 
@@ -49,30 +93,9 @@ cd ~/projects/WellnessApp && code .
 - ✅ Reviewed PRD Documents (APEX_OS_PRD_FINAL_v6.md, PHASE_II_IMPLEMENTATION_PLAN.md)
 - ✅ Assessed Phase 2 readiness - confirmed Phase 1 prerequisites complete
 - ✅ Explored codebase: functions/src, database schemas, client components
-- ✅ Identified blocking issue: `protocol_logs` table missing (referenced but no migration)
-- ✅ Confirmed `ai_audit_log` table exists with 5 columns, 19 rows
 - ✅ Created 4 database migrations for Phase 2
-- ✅ **Set up Supabase CLI access** (like Google Cloud CLI setup)
-- ✅ **Applied all 4 migrations via `supabase db push`**
-- ✅ Updated CLAUDE.md with Section 13: Supabase CLI Access
-
-**Supabase CLI Setup (Complete):**
-| Step | Status |
-|------|--------|
-| Generate Personal Access Token | ✅ Done |
-| Add SUPABASE_ACCESS_TOKEN to ~/.bashrc | ✅ Done |
-| Link project (vcrdogdyjljtwgoxpkew) | ✅ Done |
-| Apply migrations | ✅ Done |
-
-**Migrations Applied:**
-| Migration | Table | Status |
-|-----------|-------|--------|
-| `20251202000001` | protocol_logs | ✅ Applied |
-| `20251202000002` | ai_audit_log | ✅ Applied |
-| `20251202000003` | user_memories | ✅ Applied |
-| `20251202000004` | weekly_syntheses | ✅ Applied |
-
-**Phase 2 Plan:** `/home/ferdi/.claude/plans/jolly-orbiting-locket.md`
+- ✅ Set up Supabase CLI access
+- ✅ Applied all 4 migrations via `supabase db push`
 
 ---
 
@@ -185,30 +208,33 @@ cd ~/projects/WellnessApp && code .
 
 ## Next Session Priority
 
-### Phase 2: Session 2 — Memory Layer (Part 1)
-**Prerequisite:** Apply 4 migrations to Supabase first (see Last Session notes)
+### Phase 2: Session 3 — Memory Layer (Part 2: Integration)
 
 **Reference Documents:**
 - `PRD Documents/APEX_OS_PRD_FINAL_v6.md` — Master PRD (canonical)
 - `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Implementation guide
 - `~/.claude/plans/jolly-orbiting-locket.md` — Detailed implementation plan
 
-### Session 2 Tasks
-1. **Create Memory Types** — `functions/src/memory/types.ts`
-   - 6 memory types enum
-   - Memory interface with confidence/decay fields
+### Session 3 Tasks
+1. **Integrate Memory into NudgeEngine** — `functions/src/nudgeEngine.ts`
+   - Add memory retrieval before AI prompt generation
+   - Include relevant memories in context
+   - Update AI prompt with memory context
 
-2. **Create Memory CRUD** — `functions/src/memory/userMemory.ts`
-   - `storeMemory()` - Create/update memories
-   - `getRelevantMemories()` - Context-aware retrieval
-   - `applyMemoryDecay()` - Daily confidence decay
-   - `pruneMemories()` - Enforce 150 max per user
+2. **Create Memory Decay Scheduler** — Add to `functions/src/dailyScheduler.ts`
+   - Call `applyMemoryDecay()` daily
+   - Call `pruneMemories()` for each active user
+
+3. **Hook Nudge Feedback to Memory** — Update `functions/src/analyzeNudgeFeedback.ts`
+   - When user completes/dismisses nudge, create memory
+   - Use `createFromNudgeFeedback()` function
 
 ### P0 Progress (Sessions 1-6)
 | Session | Component | Status |
 |---------|-----------|--------|
-| 1 | Database Migrations | ✅ Complete (pending apply) |
-| 2-3 | Memory Layer | 🔜 Next |
+| 1 | Database Migrations | ✅ Complete & Applied |
+| 2 | Memory Layer (Part 1: Types & CRUD) | ✅ Complete |
+| 3 | Memory Layer (Part 2: Integration) | 🔜 Next |
 | 4 | Confidence Scoring | ⏳ Pending |
 | 5 | Suppression Engine | ⏳ Pending |
 | 6 | Safety & Compliance | ⏳ Pending |
@@ -378,4 +404,4 @@ code .
 
 ---
 
-*Last Updated: December 1, 2025 (Session 11 - Phase 1 Complete: E2E Nudge Flow Verified)*
+*Last Updated: December 2, 2025 (Session 17 - Phase II Session 2: Memory Layer Part 1 Complete)*
