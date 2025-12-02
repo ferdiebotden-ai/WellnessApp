@@ -37,11 +37,40 @@ cd ~/projects/WellnessApp && code .
 
 ## Current Phase
 **Phase 1: Spinal Cord (Infrastructure & Data)** — 100% Complete ✅
-**Phase 2: Brain (AI & Reasoning)** — Ready to Start 🚀
+**Phase 2: Brain (AI & Reasoning)** — In Progress 🧠 (Session 1 of 13)
 
 ---
 
 ## Last Session
+**Date:** December 2, 2025 (Session 15)
+**Focus:** Phase II - Session 1: Database Foundation
+
+**Accomplished:**
+- ✅ Reviewed PRD Documents (APEX_OS_PRD_FINAL_v6.md, PHASE_II_IMPLEMENTATION_PLAN.md)
+- ✅ Assessed Phase 2 readiness - confirmed Phase 1 prerequisites complete
+- ✅ Explored codebase: functions/src, database schemas, client components
+- ✅ Identified blocking issue: `protocol_logs` table missing (referenced but no migration)
+- ✅ Confirmed `ai_audit_log` table exists with 5 columns, 19 rows
+- ✅ Created 4 database migrations for Phase 2:
+
+**Migrations Created:**
+| Migration | Table | Purpose |
+|-----------|-------|---------|
+| `20251202000001_create_protocol_logs.sql` | protocol_logs | Protocol completion history (CREATE) |
+| `20251202000002_extend_ai_audit_log.sql` | ai_audit_log | Add confidence_score, suppression tracking (ALTER) |
+| `20251202000003_create_user_memories.sql` | user_memories | Memory Layer storage with decay logic (CREATE) |
+| `20251202000004_create_weekly_syntheses.sql` | weekly_syntheses | Weekly narrative summaries (CREATE) |
+
+**Action Required:** Apply migrations via Supabase Dashboard SQL Editor:
+- Project: `vcrdogdyjljtwgoxpkew`
+- URL: https://supabase.com/dashboard/project/vcrdogdyjljtwgoxpkew/sql
+- Apply in order: 000001 → 000002 → 000003 → 000004
+
+**Phase 2 Plan Created:** `/home/ferdi/.claude/plans/jolly-orbiting-locket.md`
+
+---
+
+## Previous Session
 **Date:** December 2, 2025 (Session 14)
 **Accomplished:**
 - ✅ Set up web browser preview (simplest dev workflow)
@@ -51,21 +80,6 @@ cd ~/projects/WellnessApp && code .
 - ✅ Successfully launched Android emulator with Expo Go auto-install
 - ✅ Verified web preview working at http://localhost:8081
 - ✅ Updated CLAUDE.md Section 13 with preview environment documentation
-
-**App Preview Setup (Complete):**
-| Method | Command | Status |
-|--------|---------|--------|
-| Web Browser | `npx expo start --web` | ✅ Ready (http://localhost:8081) |
-| Android Emulator | `npx expo start --android` | ✅ Ready (Expo Go installed) |
-| iOS Device | `npx expo start` + Expo Go | ✅ Ready (scan QR) |
-
-**Environment Configuration:**
-| Component | Location | Status |
-|-----------|----------|--------|
-| Web deps | `client/package.json` | Installed |
-| ADB shim | `~/android-sdk/platform-tools/adb` | Created |
-| ANDROID_HOME | `~/android-sdk` (in .bashrc) | Set |
-| Expo Go | Android emulator | Installed |
 
 ---
 
@@ -165,27 +179,33 @@ cd ~/projects/WellnessApp && code .
 
 ## Next Session Priority
 
-### Phase 2: Brain (AI & Reasoning) — Begin Implementation
+### Phase 2: Session 2 — Memory Layer (Part 1)
+**Prerequisite:** Apply 4 migrations to Supabase first (see Last Session notes)
+
 **Reference Documents:**
-- `PRD Refinement/APEX_OS_PRD_FINAL_v6.md` — Master PRD (canonical)
-- `PRD Refinement/PHASE_II_IMPLEMENTATION_PLAN.md` — Implementation guide
+- `PRD Documents/APEX_OS_PRD_FINAL_v6.md` — Master PRD (canonical)
+- `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Implementation guide
+- `~/.claude/plans/jolly-orbiting-locket.md` — Detailed implementation plan
 
-### P0 Components (Sessions 1-6)
-1. **Memory Layer** — Store/retrieve user learnings
-   - Create: `functions/src/memory/userMemory.ts`
-   - 6 memory types, decay logic, max 150 per user
+### Session 2 Tasks
+1. **Create Memory Types** — `functions/src/memory/types.ts`
+   - 6 memory types enum
+   - Memory interface with confidence/decay fields
 
-2. **Confidence Scoring** — Score AI recommendations
-   - Create: `functions/src/reasoning/confidenceScorer.ts`
-   - 5 scoring factors, threshold filtering
+2. **Create Memory CRUD** — `functions/src/memory/userMemory.ts`
+   - `storeMemory()` - Create/update memories
+   - `getRelevantMemories()` - Context-aware retrieval
+   - `applyMemoryDecay()` - Daily confidence decay
+   - `pruneMemories()` - Enforce 150 max per user
 
-3. **Suppression Engine** — 9-rule intelligent suppression
-   - Create: `functions/src/suppression/suppressionEngine.ts`
-   - Max 5 nudges/day, priority overrides
-
-4. **Safety & Compliance** — Crisis detection, GDPR endpoints
-   - Create: `functions/src/safety/crisisDetection.ts`
-   - Create: `functions/src/compliance/dataPrivacy.ts`
+### P0 Progress (Sessions 1-6)
+| Session | Component | Status |
+|---------|-----------|--------|
+| 1 | Database Migrations | ✅ Complete (pending apply) |
+| 2-3 | Memory Layer | 🔜 Next |
+| 4 | Confidence Scoring | ⏳ Pending |
+| 5 | Suppression Engine | ⏳ Pending |
+| 6 | Safety & Compliance | ⏳ Pending |
 
 ### Current Test Status
 ```
