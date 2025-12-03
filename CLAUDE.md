@@ -52,7 +52,7 @@ Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies 
 
 ### Before Coding
 1. Read `STATUS.md` — Know current project state
-2. Read relevant PRD/docs for the feature (`@APEX_OS_MASTER_PRD_V3.md`)
+2. Read relevant PRD/docs for the feature (`PRD Documents/APEX_OS_PRD_FINAL_v6.md`)
 3. Output bulleted **Execution Plan** for approval
 4. **Wait for approval** before writing code
 
@@ -119,10 +119,10 @@ Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies 
 ## 6. KEY FILES
 
 ```
-@APEX_OS_FINAL_PRD.md     — Product requirements (the source of truth)
-@Master_Protocol_Library.md    — 18 protocols with evidence and citations
-@APP_FUNCTIONALITY_STATUS.md   — Current feature completion status
-STATUS.md                      — Session state (YOU maintain this)
+PRD Documents/APEX_OS_PRD_FINAL_v6.md     — Master PRD (source of truth)
+PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md — Implementation roadmap
+Master_Protocol_Library.md                — 18 protocols with evidence
+STATUS.md                                 — Session state (YOU maintain this)
 
 /client/                       — React Native app
 /functions/                    — Cloud Functions
