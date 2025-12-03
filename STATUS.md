@@ -28,52 +28,49 @@
 
 ## Last Session
 
-**Date:** December 3, 2025 (Session 27)
-**Focus:** Phase II - Session 10: MVD Detector
+**Date:** December 3, 2025 (Session 28)
+**Focus:** Phase 3 Synthesis Planning & Multi-Agent Workflow
 
 **Accomplished:**
-- Implemented MVD (Minimum Viable Day) Detector — automatic "easy mode" for struggling users
-- Created `functions/src/mvd/` module with 7 files (~650 lines):
-  - `types.ts` — MVDTrigger, MVDType, MVDState, MVD_CONFIG
-  - `mvdProtocols.ts` — Protocol sets per MVD type (full/semi_active/travel)
-  - `mvdStateManager.ts` — Firestore CRUD for `user_state/{userId}`
-  - `mvdDataFetcher.ts` — Supabase queries (recovery, completion history)
-  - `mvdDetector.ts` — Detection logic for 4 triggers
-  - `mvdApi.ts` — API handlers for manual activation
-  - `index.ts` — Module exports
-- Integrated MVD into `nudgeEngine.ts`:
-  - Replaced hardcoded `mvdActive = false` with real state fetch
-  - Added detection + exit condition checks
-  - Type-aware protocol filtering
-- Integrated MVD into `dailyScheduler.ts`:
-  - Filters protocols based on MVD type during schedule generation
-- Created API endpoints:
-  - `POST /api/mvd/activate` — "Tough Day" button
-  - `GET /api/mvd/status` — Get current MVD state
-  - `POST /api/mvd/deactivate` — Manual exit
-  - `POST /api/mvd/detect` — Debug endpoint
-- 50 unit tests passing in `mvdDetector.test.ts`
-- **Deferred:** `heavy_calendar` trigger to Phase 3 (needs Calendar API OAuth)
+- Conducted project assessment: Phase 2 at 77% (10/13 sessions), ~148K tokens of research documents
+- Wrote 6 Perplexity Deep Research prompts for Phase 3 preparation
+- Created `GEMINI.md` for Gemini 3 Pro configuration (research synthesis role)
+- Attempted Gemini 3 synthesis — failed due to shallow output
+- Created `OPUS_SYNTHESIS_PROMPT.md` — comprehensive mission brief for Opus 4.5
+- Updated STATUS.md with clear handoff instructions for next session
 
 **Files Created:**
 ```
-functions/src/mvd/types.ts              — Type definitions (~100 lines)
-functions/src/mvd/mvdProtocols.ts       — Protocol sets + filtering (~130 lines)
-functions/src/mvd/mvdStateManager.ts    — Firestore CRUD (~200 lines)
-functions/src/mvd/mvdDataFetcher.ts     — Supabase queries (~180 lines)
-functions/src/mvd/mvdDetector.ts        — Detection logic (~220 lines)
-functions/src/mvd/mvdApi.ts             — API handlers (~230 lines)
-functions/src/mvd/index.ts              — Module exports (~50 lines)
-functions/tests/mvdDetector.test.ts     — 50 unit tests (~400 lines)
+GEMINI.md                                        — Gemini 3 Pro configuration (~260 lines)
+PRD Documents/OPUS_SYNTHESIS_PROMPT.md           — Opus 4.5 synthesis prompt (~420 lines)
 ```
 
 **Files Modified:**
 ```
-functions/src/nudgeEngine.ts            — MVD integration (~40 lines changed)
-functions/src/dailyScheduler.ts         — MVD filtering (~15 lines added)
-functions/src/api.ts                    — MVD routes (~10 lines added)
-PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md — Marked Component 6 complete
+STATUS.md                                        — Updated with synthesis mission
 ```
+
+**Deleted (Failed Gemini Outputs):**
+```
+PRD Documents/APEX_OS_PRD_v7_OPUS.md             — Gemini's shallow PRD attempt
+PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md   — Gemini's incomplete plan
+PRD Documents/.../GEMINI_SYNTHESIS_PROMPT.md     — No longer needed
+```
+
+**Commit:** `1c41505` — docs: add Phase 3 synthesis prompt and Gemini configuration
+
+---
+
+## Previous Session
+
+**Date:** December 3, 2025 (Session 27)
+**Focus:** Phase II - Session 10: MVD Detector
+
+**Accomplished:**
+- Implemented MVD Detector — automatic "easy mode" for struggling users
+- Created `functions/src/mvd/` module with 7 files (~650 lines)
+- 50 unit tests passing
+- **Deferred:** `heavy_calendar` trigger to Phase 3
 
 **Commit:** `21f994d` — feat(phase2): implement MVD Detector (Session 10)
 
@@ -82,59 +79,13 @@ PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md — Marked Component 6 complete
 ## Previous Session
 
 **Date:** December 3, 2025 (Session 26)
-**Focus:** PRD Documentation Update — Onboarding, Widgets, Progress Infrastructure
+**Focus:** PRD Documentation Update
 
 **Accomplished:**
-- Added **Section 2.5: Progress Infrastructure** to main PRD
-- Added **Section 2.6: Onboarding Experience** to main PRD
-- Renamed Widget PRD and Analytics files
-- Updated Widget PRD with gamification/analytics updates
+- Added Progress Infrastructure and Onboarding sections to PRD
+- Updated Widget PRD with gamification/analytics
 
 **Commit:** `f7f03b0` — docs: add Progress Infrastructure, Onboarding, and Widget PRD documentation (Session 26)
-
----
-
-## Previous Session
-
-**Date:** December 3, 2025 (Session 25)
-**Focus:** Phase II - Session 9: Weekly Synthesis (Part 2)
-
-**Accomplished:**
-- Upgraded Gemini 2.0 Flash → **Gemini 2.5 Flash** (GA since June 2025)
-  - Better "thinking" capabilities for narrative generation
-  - 54% on SWE-Bench (vs 48.9% for older versions)
-  - Drop-in replacement, same API
-- Implemented narrative generator with 5-section structure:
-  - Win, Watch, Pattern, Trajectory, Experiment
-  - ~200 words target (150-250 range)
-  - Safety scanning via scanAIOutput()
-- Created Expo Push notification system:
-  - `user_push_tokens` table in Supabase
-  - Backend: `pushService.ts` with Expo Push API
-  - Client: `pushNotifications.ts` with token registration
-  - API endpoints: POST/DELETE `/api/push-tokens`
-- Implemented scheduled function `generateWeeklySyntheses`:
-  - Pub/Sub triggered, Sunday 8:45am UTC
-  - Timezone-aware delivery using `getUserLocalHour()`
-  - Stores synthesis + sends push notification
-- 10 unit tests for narrative generation (all passing)
-- Updated CLAUDE.md tech stack
-- Migrations applied to remote Supabase
-
-**Files Created:**
-```
-functions/src/synthesis/narrativeGenerator.ts     — AI narrative generation (~280 lines)
-functions/src/notifications/pushService.ts        — Expo Push API wrapper (~210 lines)
-functions/src/notifications/index.ts              — Module exports (~13 lines)
-functions/src/weeklySynthesisScheduler.ts         — Scheduled function (~220 lines)
-functions/src/pushTokens.ts                       — Push token API handlers (~125 lines)
-client/src/services/pushNotifications.ts          — Client token registration (~210 lines)
-functions/tests/narrativeGenerator.test.ts        — 10 unit tests (~240 lines)
-supabase/migrations/20251203200000_add_notification_sent_to_syntheses.sql
-supabase/migrations/20251203200001_create_user_push_tokens.sql
-```
-
-**Commit:** `6b20b34` — feat(phase2): implement Weekly Synthesis Part 2 (Session 9)
 
 ---
 
@@ -220,4 +171,4 @@ None currently.
 
 ---
 
-*Last Updated: December 3, 2025 (Session 28 — Phase 3 Synthesis Ready)*
+*Last Updated: December 3, 2025 (Session 28)*
