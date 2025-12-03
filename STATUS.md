@@ -61,6 +61,8 @@ functions/src/suppression/index.ts           — Module exports
 functions/src/nudgeEngine.ts — Integrated suppression engine
 ```
 
+**Commit:** `e1489d3` — feat(phase2): implement Suppression Engine Part 1 (Session 5)
+
 ---
 
 ## Previous Session
