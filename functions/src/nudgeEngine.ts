@@ -26,6 +26,10 @@ import {
   SuppressionResult,
   SUPPRESSION_CONFIG,
 } from './suppression';
+import {
+  scanAIOutput,
+  getSafeFallbackResponse,
+} from './safety';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -344,7 +348,30 @@ export const generateAdaptiveNudges = async (
     `;
 
     // Generate Nudge
-    const nudgeText = await generateCompletion(SYSTEM_PROMPT, userPrompt);
+    let nudgeText = await generateCompletion(SYSTEM_PROMPT, userPrompt);
+
+    // Safety Check: Scan AI-generated nudge before delivery
+    const nudgeScan = scanAIOutput(nudgeText, 'nudge');
+    if (!nudgeScan.safe) {
+      // Log the flagged content and skip this nudge
+      console.warn(`[NudgeEngine] Nudge flagged for user ${userId}:`, nudgeScan.reason);
+      await supabase.from('ai_audit_log').insert({
+        user_id: userId,
+        decision_type: 'nudge_safety_flagged',
+        model_used: getCompletionModelName(),
+        prompt: userPrompt,
+        response: 'FLAGGED - Nudge not delivered',
+        reasoning: nudgeScan.reason || 'Nudge content flagged by safety scanner',
+        module_id: primaryModule.module_id,
+        protocol_id: bestMatch.protocol.id,
+        metadata: {
+          flagged_keywords: nudgeScan.flaggedKeywords,
+          severity: nudgeScan.severity,
+        },
+      });
+      // Replace with safe fallback nudge
+      nudgeText = getSafeFallbackResponse('nudge');
+    }
 
     // Write to Firestore (match client's expected task structure)
     const now = new Date().toISOString();

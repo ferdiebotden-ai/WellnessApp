@@ -226,7 +226,7 @@ const fetchUserDataset = async (firebaseUid: string) => {
 
   const supabaseUserId = user.id;
 
-  const [protocolLogs, aiAudit, wearableArchive] = await Promise.all([
+  const [protocolLogs, aiAudit, wearableArchive, userMemories, weeklySyntheses] = await Promise.all([
     supabase
       .from('protocol_logs')
       .select('*')
@@ -242,6 +242,18 @@ const fetchUserDataset = async (firebaseUid: string) => {
       .select('*')
       .eq('user_id', supabaseUserId)
       .order('recorded_at', { ascending: false }),
+    // Phase 2: User memories from Memory Layer
+    supabase
+      .from('user_memories')
+      .select('*')
+      .eq('user_id', supabaseUserId)
+      .order('created_at', { ascending: false }),
+    // Phase 2: Weekly syntheses
+    supabase
+      .from('weekly_syntheses')
+      .select('*')
+      .eq('user_id', supabaseUserId)
+      .order('week_start', { ascending: false }),
   ]);
 
   if (protocolLogs.error) {
@@ -256,10 +268,16 @@ const fetchUserDataset = async (firebaseUid: string) => {
     throw wearableArchive.error;
   }
 
+  // Phase 2 tables may not exist yet - handle gracefully
+  const memoriesData = userMemories.error ? [] : (userMemories.data ?? []);
+  const synthesesData = weeklySyntheses.error ? [] : (weeklySyntheses.data ?? []);
+
   return {
     protocolLogs: protocolLogs.data ?? [],
     aiAuditLog: aiAudit.data ?? [],
     wearableArchive: wearableArchive.data ?? [],
+    userMemories: memoriesData,
+    weeklySyntheses: synthesesData,
   };
 };
 
@@ -277,6 +295,9 @@ export const handleUserExportJob = async (event: PubSubMessage): Promise<void> =
   archive.file('protocol_logs.json', JSON.stringify(dataset.protocolLogs, null, 2));
   archive.file('ai_audit_log.json', JSON.stringify(dataset.aiAuditLog, null, 2));
   archive.file('wearable_archive.json', JSON.stringify(dataset.wearableArchive, null, 2));
+  // Phase 2: Include user memories and weekly syntheses
+  archive.file('user_memories.json', JSON.stringify(dataset.userMemories, null, 2));
+  archive.file('weekly_syntheses.json', JSON.stringify(dataset.weeklySyntheses, null, 2));
 
   const buffer = await archive.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
@@ -314,10 +335,14 @@ const purgeSupabaseData = async (firebaseUid: string): Promise<void> => {
   const supabaseUserId = user.id;
 
   // Delete from related tables first (using Supabase UUID), then users table
+  // Order matters: delete from dependent tables before parent tables
   const deletionTargets: Array<{ table: string; column: string; value: string }> = [
     { table: 'ai_audit_log', column: 'user_id', value: supabaseUserId },
     { table: 'protocol_logs', column: 'user_id', value: supabaseUserId },
     { table: 'wearable_data_archive', column: 'user_id', value: supabaseUserId },
+    // Phase 2: User memories and weekly syntheses
+    { table: 'user_memories', column: 'user_id', value: supabaseUserId },
+    { table: 'weekly_syntheses', column: 'user_id', value: supabaseUserId },
     { table: 'module_enrollment', column: 'user_id', value: supabaseUserId },
     { table: 'users', column: 'id', value: supabaseUserId },
   ];
