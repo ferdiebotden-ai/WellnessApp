@@ -65,7 +65,7 @@ functions/src/synthesis/index.ts          — Barrel exports (~40 lines)
 functions/tests/synthesis.test.ts         — 51 unit tests (~510 lines)
 ```
 
-**Commit:** Pending
+**Commit:** `fd6d1fe` — feat(phase2): implement Weekly Synthesis Part 1 (Session 8)
 
 ---
 
