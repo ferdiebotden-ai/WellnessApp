@@ -77,7 +77,7 @@ functions/src/nudgeEngine.ts — AI output safety check before delivery
 functions/src/privacy.ts     — Added user_memories and weekly_syntheses
 ```
 
-**Commit:** `5c07948` — feat(phase2): implement Safety & Compliance (Session 7)
+**Commit:** `1a14264` — feat(phase2): implement Safety & Compliance (Session 7)
 
 ---
 
