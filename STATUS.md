@@ -140,32 +140,31 @@ supabase/migrations/20251203200001_create_user_push_tokens.sql
 
 ## Next Session Priority
 
-### Session 11: Reasoning Transparency UI
+### Phase 3 Research Synthesis & PRD v7 Creation
+
+**⚠️ FIRST:** Read `PRD Documents/OPUS_SYNTHESIS_PROMPT.md` — it contains your full mission brief.
+
+**Context:** 6 Perplexity Deep Research documents are ready for synthesis. A previous Gemini 3 attempt failed — this requires Opus 4.5's full capabilities.
+
+**Deliverables:**
+1. `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` — Implementation roadmap
+2. `PRD Documents/APEX_OS_PRD_v7.md` — Cohesive master PRD
+
+**Process (detailed in prompt file):**
+- Phase 1: Read 10 source documents (research + PRD + protocols)
+- Phase 2: Explore codebase (functions/, client/, migrations/)
+- Phase 3: Create implementation plan with TypeScript interfaces
+- Phase 4: Create PRD v7 incorporating all phases cohesively
+
+**Current Source of Truth (until v7 approved):**
+- `PRD Documents/APEX_OS_PRD_FINAL_v6.md` — Master PRD
+- `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Template for Phase 3 plan
+
+---
+
+### After Synthesis: Session 11 (Reasoning Transparency UI)
 
 **Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Component 7
-
-**Tasks:**
-1. Reasoning UI:
-   - Modify `client/src/components/NudgeCard.tsx`
-   - Create `client/src/components/ReasoningExpansion.tsx`
-   - Add "Why?" tap handler with expand animation
-
-2. Panel Sections:
-   - Mechanism (physiological explanation)
-   - Evidence (citation + DOI link)
-   - Your Data (personalized stat)
-   - Confidence (level + explanation)
-
-3. Animation:
-   - Expand duration: 200ms ease-out
-   - Content fade-in: 100ms delay
-   - Collapse on outside tap
-
-**Acceptance Criteria:**
-- [ ] "Why?" tap expands reasoning panel
-- [ ] All 4 sections displayed
-- [ ] DOI links open in browser
-- [ ] Smooth expand/collapse animation
 
 ---
 
@@ -221,4 +220,4 @@ None currently.
 
 ---
 
-*Last Updated: December 3, 2025 (Session 27)*
+*Last Updated: December 3, 2025 (Session 28 — Phase 3 Synthesis Ready)*
