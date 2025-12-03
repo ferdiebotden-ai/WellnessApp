@@ -46,7 +46,7 @@ Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies 
 | Navigation | Expo Router |
 | Animation | React Native Reanimated (60fps) |
 | Backend | Google Cloud Functions (Gen 2) |
-| AI | Vertex AI (Gemini 2.0 Flash) via nudgeEngine |
+| AI | Vertex AI (Gemini 2.5 Flash) via nudgeEngine |
 | Data | Supabase (Postgres 15) + Firebase (RTDB) |
 | Vectors | Pinecone (for Protocol RAG) |
 

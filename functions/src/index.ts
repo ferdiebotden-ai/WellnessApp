@@ -10,11 +10,13 @@ import { apiApp } from './api';
  * 3. generateAdaptiveNudges - Pub/Sub triggered nudge engine
  * 4. runMemoryMaintenance - Pub/Sub triggered memory decay/pruning (daily)
  * 5. onNudgeFeedback - Firestore triggered memory creation from feedback
+ * 6. generateWeeklySyntheses - Pub/Sub triggered weekly synthesis (Sunday 8:45am UTC)
  */
 
 // Export Pub/Sub-triggered functions
 export { generateDailySchedules, runMemoryMaintenance } from './dailyScheduler';
 export { generateAdaptiveNudges } from './nudgeEngine';
+export { generateWeeklySyntheses } from './weeklySynthesisScheduler';
 
 // Export Firestore-triggered functions (Memory Layer)
 export { onNudgeFeedback } from './onNudgeFeedback';

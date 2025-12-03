@@ -10,6 +10,7 @@ import { handleRevenueCatWebhook } from './revenuecatWebhook';
 import { completeOnboarding } from './onboarding';
 import { getMonetizationStatus } from './monetization';
 import { getModules } from './modules';
+import { registerPushToken, deactivatePushTokens } from './pushTokens';
 
 const app = express();
 
@@ -39,6 +40,10 @@ app.post('/api/waitlist', joinWaitlist);
 app.post('/api/wearables/sync', syncWearableData);
 app.get('/api/protocols/search', searchProtocols);
 app.get('/api/modules', getModules);
+
+// Push notification routes
+app.post('/api/push-tokens', registerPushToken);
+app.delete('/api/push-tokens', deactivatePushTokens);
 
 // Webhooks
 app.post('/api/webhooks/revenuecat', handleRevenueCatWebhook);

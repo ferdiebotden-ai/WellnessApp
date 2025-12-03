@@ -203,3 +203,73 @@ export interface EnrolledProtocolRow {
   protocol_id: string;
   module_id: string;
 }
+
+/**
+ * The 5 required sections in a weekly synthesis narrative
+ */
+export type NarrativeSection = 'Win' | 'Watch' | 'Pattern' | 'Trajectory' | 'Experiment';
+
+/**
+ * All narrative sections that should be present
+ */
+export const NARRATIVE_SECTIONS: NarrativeSection[] = [
+  'Win',
+  'Watch',
+  'Pattern',
+  'Trajectory',
+  'Experiment',
+];
+
+/**
+ * Result of weekly synthesis narrative generation
+ * Stored in weekly_syntheses table
+ */
+export interface WeeklySynthesisResult {
+  /** User identifier */
+  user_id: string;
+  /** Start of week (Monday) as ISO date string */
+  week_start: string;
+  /** End of week (Sunday) as ISO date string */
+  week_end: string;
+  /** AI-generated narrative (~200 words with 5 sections) */
+  narrative: string;
+  /** Snapshot of WeeklyMetrics at generation time */
+  metrics_snapshot: WeeklyMetrics;
+  /** ISO timestamp when synthesis was generated */
+  generated_at: string;
+  /** Word count of narrative */
+  word_count: number;
+  /** Sections detected in narrative (ideally all 5) */
+  sections_detected: NarrativeSection[];
+}
+
+/**
+ * User context needed for narrative generation
+ */
+export interface UserSynthesisContext {
+  /** User's display name for personalization */
+  display_name: string;
+  /** User's primary wellness goal */
+  primary_goal?: string;
+  /** IANA timezone string (e.g., 'America/New_York') */
+  timezone?: string;
+}
+
+/**
+ * Push notification message for weekly synthesis
+ */
+export interface SynthesisNotification {
+  /** Expo Push Token */
+  to: string;
+  /** Notification title */
+  title: string;
+  /** Notification body */
+  body: string;
+  /** Additional data payload */
+  data: {
+    type: 'weekly_synthesis';
+    synthesis_id: string;
+  };
+  /** Sound setting */
+  sound: 'default' | null;
+}

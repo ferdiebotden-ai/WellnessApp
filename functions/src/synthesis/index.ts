@@ -21,6 +21,11 @@ export type {
   WearableDataRow,
   ProtocolNameRow,
   EnrolledProtocolRow,
+  // New types for narrative generation
+  WeeklySynthesisResult,
+  UserSynthesisContext,
+  NarrativeSection,
+  SynthesisNotification,
 } from './types';
 
 // Constants
@@ -28,6 +33,7 @@ export {
   SYNTHESIS_CONFIG,
   OUTCOME_EXPECTED_DIRECTION,
   OUTCOME_METRIC_NAMES,
+  NARRATIVE_SECTIONS,
 } from './types';
 
 // Correlation utilities (reusable for Component 9: Outcome Correlation)
@@ -44,3 +50,9 @@ export {
   getWeekMonday,
   getWeekSunday,
 } from './weeklySynthesis';
+
+// Narrative generation
+export {
+  generateWeeklyNarrative,
+  validateNarrative,
+} from './narrativeGenerator';
