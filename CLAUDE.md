@@ -6,14 +6,6 @@
 
 ---
 
-## 0. OPUS 4.5 OPTIMIZATION NOTES
-
-This file is optimized for Claude Opus 4.5's characteristics:
-- **More responsive to system prompts** — Normal language works; aggressive caps/emphasis unnecessary
-- **Excels at filesystem discovery** — Reads STATUS.md for state rather than relying on context compaction
-- **Incremental progress** — Focus on completing one task well before starting the next
-- **Word sensitivity** — When extended thinking is off, prefer "consider/evaluate" over "think"
-
 **Slash Commands Available:** `/start`, `/close`, `/status`, `/verify`, `/plan`
 
 ---
@@ -362,9 +354,7 @@ supabase db dump --schema public > backup.sql
 
 | Method | Command | URL | Best For |
 |--------|---------|-----|----------|
-| **Web Browser (Recommended)** | `cd client && npx expo start --web` | http://localhost:8081 | Daily dev, fastest iteration |
-| iOS Device | `cd client && npx expo start` + Expo Go | Scan QR code | Native feel testing |
-| Android Emulator | `cd client && npx expo start --android` | Auto-launches | Native Android testing |
+| **Web Browser (Recommended)** | `cd client && npx expo start --web` | http://localhost:8081 | Daily dev, fastest iteration
 
 ### Starting the Dev Server
 
@@ -378,41 +368,5 @@ Then open http://localhost:8081 in your browser.
 ```bash
 cd /home/ferdi/projects/WellnessApp/client && npx expo start --web &
 ```
-
-### Android Emulator (Optional)
-
-The Android emulator runs on **Windows**, bridged to WSL via ADB shim.
-
-**Setup (Already Configured):**
-| Component | Location | Status |
-|-----------|----------|--------|
-| Android Studio | Windows | Installed |
-| Pixel 9 AVD (API 36.1) | Windows | Created |
-| ADB Shim | `~/android-sdk/platform-tools/adb` | Configured |
-| ANDROID_HOME | `~/android-sdk` (in .bashrc) | Set |
-| WSL Mirrored Networking | `C:\Users\ferdi\.wslconfig` | Configured |
-| Expo Go | Installed on emulator | Ready |
-
-**Android Workflow:**
-1. Start emulator in Android Studio (Windows)
-2. Run: `cd client && npx expo start --android`
-3. Expo Go auto-launches with the app
-
-**Run Android in Background:**
-```bash
-export ANDROID_HOME="$HOME/android-sdk" && cd /home/ferdi/projects/WellnessApp/client && npx expo start --android &
-```
-
-### Web Dependencies (Installed)
-- `react-dom@19.1.0`
-- `react-native-web@^0.21.0`
-
-### Platform Parity Notes
-- **UI/UX:** 95% identical across web, iOS, Android
-- **Wearables:** iOS uses HealthKit, Android uses Health Connect
-- **For daily development:** Web browser is fastest
-- **Native testing:** Use iOS device (Expo Go) or Android emulator
-
----
 
 *Last Updated: December 2, 2025*
