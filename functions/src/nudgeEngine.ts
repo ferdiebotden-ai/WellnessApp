@@ -24,6 +24,7 @@ import {
   getUserLocalHour,
   parseQuietHour,
   SuppressionResult,
+  SUPPRESSION_CONFIG,
 } from './suppression';
 
 // Interfaces
@@ -68,6 +69,55 @@ type ScheduledEvent = { data?: string } | undefined;
 type ScheduledContext = { timestamp?: string } | undefined;
 
 const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis. **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
+
+/**
+ * Protocol IDs that qualify as morning anchors
+ * Morning anchors are exempt from low_recovery suppression
+ */
+const MORNING_ANCHOR_PROTOCOL_IDS = [
+  'proto_morning_light',
+  'morning_light_exposure',
+  'proto_hydration_electrolytes',
+  'hydration_electrolytes',
+] as const;
+
+/**
+ * Protocol IDs approved for Minimum Viable Day (MVD) mode
+ * Only these protocols are delivered when MVD mode is active
+ * Reference: PHASE_II_IMPLEMENTATION_PLAN.md - MVD Protocol Sets
+ */
+const MVD_APPROVED_PROTOCOL_IDS = [
+  'proto_morning_light',
+  'morning_light_exposure',
+  'proto_hydration_electrolytes',
+  'hydration_electrolytes',
+  'proto_sleep_optimization',
+  'sleep_optimization',
+  'proto_evening_light',
+  'evening_light_management',
+  'proto_walking_breaks',
+  'walking_breaks',
+  'proto_caffeine_timing',
+  'caffeine_timing',
+] as const;
+
+/**
+ * Check if a protocol qualifies as a morning anchor
+ */
+function isMorningAnchorProtocol(protocolId: string): boolean {
+  return MORNING_ANCHOR_PROTOCOL_IDS.some(
+    (id) => protocolId.toLowerCase().includes(id.toLowerCase())
+  );
+}
+
+/**
+ * Check if a protocol is approved for MVD mode
+ */
+function isMvdApprovedProtocol(protocolId: string): boolean {
+  return MVD_APPROVED_PROTOCOL_IDS.some(
+    (id) => protocolId.toLowerCase().includes(id.toLowerCase())
+  );
+}
 
 /**
  * Get today's nudge statistics for a user (for suppression engine)
@@ -227,6 +277,15 @@ export const generateAdaptiveNudges = async (
     const nudgeStats = await getTodayNudgeStats(firestore, userId);
     const userTimezone = profile.preferences?.timezone;
 
+    // Get user's current streak (TODO: fetch from user_stats table in Phase 3)
+    const currentStreak = 0; // Default until streak tracking is implemented
+
+    // Check if MVD mode is active (TODO: fetch from Firebase user state in Phase 3)
+    const mvdActive = false; // Default until MVD detector is implemented
+
+    // Get recovery score from health metrics (default to healthy if not available)
+    const recoveryScore = profile.healthMetrics?.readinessScore ?? 100;
+
     const suppressionContext = buildSuppressionContext({
       nudgePriority: 'STANDARD', // All scheduled nudges are STANDARD priority
       confidenceScore: bestMatch.confidence.overall,
@@ -240,6 +299,12 @@ export const generateAdaptiveNudges = async (
       lastNudgeDeliveredAt: nudgeStats.lastNudgeDeliveredAt,
       dismissalsToday: nudgeStats.dismissalsToday,
       meetingHoursToday: 0, // TODO: Calendar integration in Phase 3
+      // Part 2 suppression fields
+      recoveryScore,
+      isMorningAnchor: isMorningAnchorProtocol(bestMatch.protocol.id),
+      currentStreak,
+      mvdActive,
+      isMvdApprovedNudge: isMvdApprovedProtocol(bestMatch.protocol.id),
     });
 
     const suppressionResult: SuppressionResult = evaluateSuppression(suppressionContext);

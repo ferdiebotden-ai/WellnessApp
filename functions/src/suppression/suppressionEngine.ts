@@ -76,6 +76,23 @@ export function evaluateSuppression(context: SuppressionContext): SuppressionRes
  *
  * @param params - Parameters to build context from
  * @returns Complete SuppressionContext ready for evaluation
+ *
+ * @example
+ * const context = buildSuppressionContext({
+ *   nudgePriority: 'STANDARD',
+ *   confidenceScore: 0.75,
+ *   userLocalHour: 14,
+ *   userPreferences: { timezone: 'America/New_York' },
+ *   nudgesDeliveredToday: 2,
+ *   lastNudgeDeliveredAt: new Date(),
+ *   dismissalsToday: 0,
+ *   meetingHoursToday: 1,
+ *   recoveryScore: 65,
+ *   isMorningAnchor: false,
+ *   currentStreak: 5,
+ *   mvdActive: false,
+ *   isMvdApprovedNudge: false,
+ * });
  */
 export function buildSuppressionContext(params: {
   nudgePriority: NudgePriority;
@@ -90,6 +107,16 @@ export function buildSuppressionContext(params: {
   lastNudgeDeliveredAt: Date | null;
   dismissalsToday: number;
   meetingHoursToday: number;
+  /** Recovery score from wearable (0-100), defaults to 100 (healthy) */
+  recoveryScore?: number;
+  /** Whether this is a morning anchor protocol */
+  isMorningAnchor?: boolean;
+  /** User's current protocol completion streak */
+  currentStreak?: number;
+  /** Whether MVD mode is active */
+  mvdActive?: boolean;
+  /** Whether this nudge is approved for MVD mode */
+  isMvdApprovedNudge?: boolean;
 }): SuppressionContext {
   return {
     nudgePriority: params.nudgePriority,
@@ -106,6 +133,12 @@ export function buildSuppressionContext(params: {
     lastNudgeDeliveredAt: params.lastNudgeDeliveredAt,
     dismissalsToday: params.dismissalsToday,
     meetingHoursToday: params.meetingHoursToday,
+    // New fields for Part 2 rules (with sensible defaults)
+    recoveryScore: params.recoveryScore ?? 100, // Default to healthy
+    isMorningAnchor: params.isMorningAnchor ?? false,
+    currentStreak: params.currentStreak ?? 0,
+    mvdActive: params.mvdActive ?? false,
+    isMvdApprovedNudge: params.isMvdApprovedNudge ?? false,
   };
 }
 

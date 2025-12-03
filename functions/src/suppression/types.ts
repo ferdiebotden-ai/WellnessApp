@@ -46,6 +46,16 @@ export interface SuppressionContext {
   nudgePriority: NudgePriority;
   /** Confidence score from the reasoning module (0-1) */
   confidenceScore: number;
+  /** Recovery score from wearable data (0-100) */
+  recoveryScore: number;
+  /** Whether this nudge is a morning anchor protocol (exempt from low_recovery) */
+  isMorningAnchor: boolean;
+  /** User's current streak (consecutive days of protocol completion) */
+  currentStreak: number;
+  /** Whether MVD (Minimum Viable Day) mode is currently active */
+  mvdActive: boolean;
+  /** Whether this nudge is approved for MVD mode */
+  isMvdApprovedNudge: boolean;
 }
 
 /**
@@ -99,6 +109,15 @@ export const SUPPRESSION_CONFIG = {
   /** Default quiet hours if not configured */
   DEFAULT_QUIET_START: 22, // 10pm
   DEFAULT_QUIET_END: 6, // 6am
+  /** Recovery score below which morning-only mode activates */
+  LOW_RECOVERY_THRESHOLD: 30,
+  /** Streak days after which frequency is reduced by 50% */
+  STREAK_THRESHOLD: 7,
+  /** Minimum confidence score required to deliver a nudge */
+  LOW_CONFIDENCE_THRESHOLD: 0.4,
+  /** Morning hours range for morning anchor protocols (5-10am) */
+  MORNING_HOURS_START: 5,
+  MORNING_HOURS_END: 10,
 } as const;
 
 /**
@@ -110,4 +129,8 @@ export const RULE_IDS = {
   COOLDOWN: 'cooldown',
   FATIGUE_DETECTION: 'fatigue_detection',
   MEETING_AWARENESS: 'meeting_awareness',
+  LOW_RECOVERY: 'low_recovery',
+  STREAK_RESPECT: 'streak_respect',
+  LOW_CONFIDENCE: 'low_confidence',
+  MVD_ACTIVE: 'mvd_active',
 } as const;
