@@ -11,6 +11,12 @@ import { completeOnboarding } from './onboarding';
 import { getMonetizationStatus } from './monetization';
 import { getModules } from './modules';
 import { registerPushToken, deactivatePushTokens } from './pushTokens';
+import {
+  activateMVDManually,
+  getMVDStatus,
+  deactivateMVDManually,
+  triggerMVDDetection,
+} from './mvd/mvdApi';
 
 const app = express();
 
@@ -44,6 +50,12 @@ app.get('/api/modules', getModules);
 // Push notification routes
 app.post('/api/push-tokens', registerPushToken);
 app.delete('/api/push-tokens', deactivatePushTokens);
+
+// MVD (Minimum Viable Day) routes
+app.post('/api/mvd/activate', activateMVDManually);
+app.get('/api/mvd/status', getMVDStatus);
+app.post('/api/mvd/deactivate', deactivateMVDManually);
+app.post('/api/mvd/detect', triggerMVDDetection);
 
 // Webhooks
 app.post('/api/webhooks/revenuecat', handleRevenueCatWebhook);

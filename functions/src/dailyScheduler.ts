@@ -2,6 +2,10 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getFirebaseApp } from './firebaseAdmin';
 import { getServiceClient } from './supabaseClient';
 import { applyMemoryDecay, pruneMemories } from './memory';
+import {
+  getMVDState,
+  isProtocolApprovedForMVD,
+} from './mvd';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -114,8 +118,20 @@ export const generateDailySchedules = async (
     const dailyProtocols: DailyScheduleProtocol[] = [];
     const scheduledProtocolIds = new Set<string>();
 
+    // Check if user is in MVD mode - filter protocols accordingly
+    const mvdState = await getMVDState(userId);
+    const mvdActive = mvdState?.mvd_active ?? false;
+    const mvdType = mvdState?.mvd_type ?? null;
+
     for (const enrollment of userModules) {
-      const protocolIds = moduleProtocols.get(enrollment.module_id) || [];
+      let protocolIds = moduleProtocols.get(enrollment.module_id) || [];
+
+      // Filter protocols based on MVD state
+      if (mvdActive && mvdType) {
+        protocolIds = protocolIds.filter((pid) =>
+          isProtocolApprovedForMVD(pid, mvdType)
+        );
+      }
       
       for (const pid of protocolIds) {
         if (scheduledProtocolIds.has(pid)) continue; // Avoid duplicates across modules

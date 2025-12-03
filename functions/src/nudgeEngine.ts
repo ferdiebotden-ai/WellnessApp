@@ -30,6 +30,14 @@ import {
   scanAIOutput,
   getSafeFallbackResponse,
 } from './safety';
+import {
+  getMVDState,
+  detectAndMaybeActivateMVD,
+  checkAndMaybeExitMVD,
+  buildMVDDetectionContext,
+  isProtocolApprovedForMVD,
+  MVDState,
+} from './mvd';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -86,26 +94,6 @@ const MORNING_ANCHOR_PROTOCOL_IDS = [
 ] as const;
 
 /**
- * Protocol IDs approved for Minimum Viable Day (MVD) mode
- * Only these protocols are delivered when MVD mode is active
- * Reference: PHASE_II_IMPLEMENTATION_PLAN.md - MVD Protocol Sets
- */
-const MVD_APPROVED_PROTOCOL_IDS = [
-  'proto_morning_light',
-  'morning_light_exposure',
-  'proto_hydration_electrolytes',
-  'hydration_electrolytes',
-  'proto_sleep_optimization',
-  'sleep_optimization',
-  'proto_evening_light',
-  'evening_light_management',
-  'proto_walking_breaks',
-  'walking_breaks',
-  'proto_caffeine_timing',
-  'caffeine_timing',
-] as const;
-
-/**
  * Check if a protocol qualifies as a morning anchor
  */
 function isMorningAnchorProtocol(protocolId: string): boolean {
@@ -114,14 +102,8 @@ function isMorningAnchorProtocol(protocolId: string): boolean {
   );
 }
 
-/**
- * Check if a protocol is approved for MVD mode
- */
-function isMvdApprovedProtocol(protocolId: string): boolean {
-  return MVD_APPROVED_PROTOCOL_IDS.some(
-    (id) => protocolId.toLowerCase().includes(id.toLowerCase())
-  );
-}
+// Note: MVD protocol approval now handled by mvd/mvdProtocols.ts
+// with type-aware filtering (full, semi_active, travel)
 
 /**
  * Get today's nudge statistics for a user (for suppression engine)
@@ -284,11 +266,40 @@ export const generateAdaptiveNudges = async (
     // Get user's current streak (TODO: fetch from user_stats table in Phase 3)
     const currentStreak = 0; // Default until streak tracking is implemented
 
-    // Check if MVD mode is active (TODO: fetch from Firebase user state in Phase 3)
-    const mvdActive = false; // Default until MVD detector is implemented
-
     // Get recovery score from health metrics (default to healthy if not available)
     const recoveryScore = profile.healthMetrics?.readinessScore ?? 100;
+
+    // MVD Detection: Check if we should activate or exit MVD mode
+    let mvdState: MVDState | null = await getMVDState(userId);
+
+    // Check exit condition first if MVD is active
+    if (mvdState?.mvd_active) {
+      const exited = await checkAndMaybeExitMVD(userId, recoveryScore);
+      if (exited) {
+        console.log(`[NudgeEngine] MVD exited for user ${userId} - recovery improved to ${recoveryScore}%`);
+        mvdState = null; // Clear state after exit
+      }
+    }
+
+    // Check activation if not currently active
+    if (!mvdState?.mvd_active) {
+      const mvdContext = await buildMVDDetectionContext(
+        userId,
+        userTimezone, // Use as device timezone (best available)
+        false // Not manual activation
+      );
+      const detection = await detectAndMaybeActivateMVD(mvdContext);
+      if (detection.wasActivated) {
+        console.log(
+          `[NudgeEngine] MVD activated for user ${userId}: ` +
+          `trigger=${detection.trigger}, type=${detection.mvdType}`
+        );
+        mvdState = await getMVDState(userId);
+      }
+    }
+
+    const mvdActive = mvdState?.mvd_active ?? false;
+    const mvdType = mvdState?.mvd_type ?? null;
 
     const suppressionContext = buildSuppressionContext({
       nudgePriority: 'STANDARD', // All scheduled nudges are STANDARD priority
@@ -308,7 +319,8 @@ export const generateAdaptiveNudges = async (
       isMorningAnchor: isMorningAnchorProtocol(bestMatch.protocol.id),
       currentStreak,
       mvdActive,
-      isMvdApprovedNudge: isMvdApprovedProtocol(bestMatch.protocol.id),
+      // Use type-aware protocol approval (checks against MVD_PROTOCOL_SETS)
+      isMvdApprovedNudge: isProtocolApprovedForMVD(bestMatch.protocol.id, mvdType),
     });
 
     const suppressionResult: SuppressionResult = evaluateSuppression(suppressionContext);

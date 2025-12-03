@@ -622,10 +622,12 @@ Prevents all-or-nothing dropout. Users don't quit feeling like failures.
 
 **Trigger Conditions:**
 
+> **Note (Session 10):** The `heavy_calendar` trigger (6+ meeting hours) has been deferred to Phase 3 as it requires Google/Apple Calendar OAuth integration. The remaining 4 triggers are implemented and functional.
+
 ```typescript
 type MVDTrigger =
   | 'low_recovery'       // Recovery <35%
-  | 'heavy_calendar'     // 6+ meeting hours
+  | 'heavy_calendar'     // 6+ meeting hours [DEFERRED TO PHASE 3]
   | 'manual_activation'  // User tapped "Tough Day"
   | 'travel_detected'    // Timezone change >2h
   | 'consistency_drop';  // <50% completion for 3+ days
@@ -670,19 +672,25 @@ const MVD_PROTOCOLS = {
 ```
 
 **Acceptance Criteria:**
-- [ ] All 5 trigger conditions implemented
-- [ ] Correct MVD type selected (full/semi_active/travel)
-- [ ] Only MVD-approved protocols shown in schedule
-- [ ] Auto-deactivation when recovery >50%
-- [ ] User can manually activate via "Tough Day" button
-- [ ] MVD state persists in Firebase for real-time UI
+- [x] 4 of 5 trigger conditions implemented (heavy_calendar deferred)
+- [x] Correct MVD type selected (full/semi_active/travel)
+- [x] Only MVD-approved protocols shown in schedule
+- [x] Auto-deactivation when recovery >50%
+- [x] User can manually activate via "Tough Day" button
+- [x] MVD state persists in Firebase for real-time UI
+
+**Implementation Notes (Session 10 - December 3, 2025):**
+- Created `functions/src/mvd/` module with 7 files (~650 lines)
+- 50 unit tests passing in `functions/tests/mvdDetector.test.ts`
+- API endpoints: `POST /api/mvd/activate`, `GET /api/mvd/status`, `POST /api/mvd/deactivate`
+- Travel detection uses user profile timezone vs device timezone from request
 
 **Test Cases:**
-1. Recovery 30% → Full MVD activated
-2. 7 hours meetings → Full MVD activated
-3. Timezone +4h → Travel MVD activated
-4. <40% completion 3 days → Semi-active MVD
-5. MVD active + recovery 55% → MVD deactivated
+1. Recovery 30% → Full MVD activated ✅
+2. 7 hours meetings → Full MVD activated [DEFERRED - needs Calendar API]
+3. Timezone +4h → Travel MVD activated ✅
+4. <40% completion 3 days → Semi-active MVD ✅
+5. MVD active + recovery 55% → MVD deactivated ✅
 
 ---
 

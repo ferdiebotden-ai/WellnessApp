@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 2: Brain (AI & Reasoning) |
-| **Session** | 9 of 13 complete |
-| **Progress** | 69% of Phase 2 |
+| **Session** | 10 of 13 complete |
+| **Progress** | 77% of Phase 2 |
 | **Branch** | main |
 
 ---
@@ -28,31 +28,67 @@
 
 ## Last Session
 
+**Date:** December 3, 2025 (Session 27)
+**Focus:** Phase II - Session 10: MVD Detector
+
+**Accomplished:**
+- Implemented MVD (Minimum Viable Day) Detector — automatic "easy mode" for struggling users
+- Created `functions/src/mvd/` module with 7 files (~650 lines):
+  - `types.ts` — MVDTrigger, MVDType, MVDState, MVD_CONFIG
+  - `mvdProtocols.ts` — Protocol sets per MVD type (full/semi_active/travel)
+  - `mvdStateManager.ts` — Firestore CRUD for `user_state/{userId}`
+  - `mvdDataFetcher.ts` — Supabase queries (recovery, completion history)
+  - `mvdDetector.ts` — Detection logic for 4 triggers
+  - `mvdApi.ts` — API handlers for manual activation
+  - `index.ts` — Module exports
+- Integrated MVD into `nudgeEngine.ts`:
+  - Replaced hardcoded `mvdActive = false` with real state fetch
+  - Added detection + exit condition checks
+  - Type-aware protocol filtering
+- Integrated MVD into `dailyScheduler.ts`:
+  - Filters protocols based on MVD type during schedule generation
+- Created API endpoints:
+  - `POST /api/mvd/activate` — "Tough Day" button
+  - `GET /api/mvd/status` — Get current MVD state
+  - `POST /api/mvd/deactivate` — Manual exit
+  - `POST /api/mvd/detect` — Debug endpoint
+- 50 unit tests passing in `mvdDetector.test.ts`
+- **Deferred:** `heavy_calendar` trigger to Phase 3 (needs Calendar API OAuth)
+
+**Files Created:**
+```
+functions/src/mvd/types.ts              — Type definitions (~100 lines)
+functions/src/mvd/mvdProtocols.ts       — Protocol sets + filtering (~130 lines)
+functions/src/mvd/mvdStateManager.ts    — Firestore CRUD (~200 lines)
+functions/src/mvd/mvdDataFetcher.ts     — Supabase queries (~180 lines)
+functions/src/mvd/mvdDetector.ts        — Detection logic (~220 lines)
+functions/src/mvd/mvdApi.ts             — API handlers (~230 lines)
+functions/src/mvd/index.ts              — Module exports (~50 lines)
+functions/tests/mvdDetector.test.ts     — 50 unit tests (~400 lines)
+```
+
+**Files Modified:**
+```
+functions/src/nudgeEngine.ts            — MVD integration (~40 lines changed)
+functions/src/dailyScheduler.ts         — MVD filtering (~15 lines added)
+functions/src/api.ts                    — MVD routes (~10 lines added)
+PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md — Marked Component 6 complete
+```
+
+**Commit:** `pending`
+
+---
+
+## Previous Session
+
 **Date:** December 3, 2025 (Session 26)
 **Focus:** PRD Documentation Update — Onboarding, Widgets, Progress Infrastructure
 
 **Accomplished:**
 - Added **Section 2.5: Progress Infrastructure** to main PRD
-  - Replaces rigid "no gamification" with nuanced intrinsic motivation approach
-  - Defines EMBRACE (consistency indicators, progress markers, unlocking) vs AVOID (loss aversion, points, leaderboards)
 - Added **Section 2.6: Onboarding Experience** to main PRD
-  - Documents implemented 3-screen conversational flow (AI Intro → Goal → Wearable)
-  - Specifies recommended 4th screen: "Your Schedule" (wake time + notification style)
-  - Includes Goal → Module mapping table
-- Renamed Widget PRD: `# APEX OS FEATURE PRD Lock Screen &.md` → `APEX_OS_WIDGET_PRD_v1.md`
-- Renamed Analytics Research: `# APEX OS Widget Analytics Research.md` → `APEX_OS_WIDGET_ANALYTICS_v1.md`
-- Added Widget PRD cross-reference in Section 3.1 (Morning Anchor)
-- Updated Widget PRD:
-  - Section 1.2 now references Progress Infrastructure (PRD v6 Section 2.5)
-  - Added Appendix C: Widget Analytics with metrics quick reference
-- Updated gamification language in Section 1.1 (NOT table)
-
-**Files Modified:**
-```
-PRD Documents/APEX_OS_PRD_FINAL_v6.md    — Added sections 2.5, 2.6 + widget reference
-PRD Documents/APEX_OS_WIDGET_PRD_v1.md   — Renamed + gamification/analytics updates
-PRD Documents/APEX_OS_WIDGET_ANALYTICS_v1.md — Renamed
-```
+- Renamed Widget PRD and Analytics files
+- Updated Widget PRD with gamification/analytics updates
 
 **Commit:** `f7f03b0` — docs: add Progress Infrastructure, Onboarding, and Widget PRD documentation (Session 26)
 
@@ -118,31 +154,32 @@ supabase/migrations/20251203200001_create_user_push_tokens.sql
 
 ## Next Session Priority
 
-### Session 10: MVD Detector
+### Session 11: Reasoning Transparency UI
 
-**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Component 6
+**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Component 7
 
 **Tasks:**
-1. MVD Detection:
-   - Create `functions/src/mvd/mvdDetector.ts`
-   - Implement 5 trigger conditions (low_recovery, heavy_calendar, manual, travel, consistency_drop)
-   - Define MVD protocol sets (full, semi_active, travel)
+1. Reasoning UI:
+   - Modify `client/src/components/NudgeCard.tsx`
+   - Create `client/src/components/ReasoningExpansion.tsx`
+   - Add "Why?" tap handler with expand animation
 
-2. MVD Activation:
-   - Auto-activate when triggers detected
-   - Auto-deactivate when recovery >50%
-   - Store MVD state in Firebase for real-time UI
+2. Panel Sections:
+   - Mechanism (physiological explanation)
+   - Evidence (citation + DOI link)
+   - Your Data (personalized stat)
+   - Confidence (level + explanation)
 
-3. Integration:
-   - Modify dailyScheduler to check MVD status
-   - Only show MVD-approved protocols when active
+3. Animation:
+   - Expand duration: 200ms ease-out
+   - Content fade-in: 100ms delay
+   - Collapse on outside tap
 
 **Acceptance Criteria:**
-- [ ] All 5 trigger conditions implemented
-- [ ] Correct MVD type selected (full/semi_active/travel)
-- [ ] Only MVD-approved protocols shown in schedule
-- [ ] Auto-deactivation when recovery >50%
-- [ ] User can manually activate via "Tough Day" button
+- [ ] "Why?" tap expands reasoning panel
+- [ ] All 4 sections displayed
+- [ ] DOI links open in browser
+- [ ] Smooth expand/collapse animation
 
 ---
 
@@ -172,7 +209,7 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 
 ```
 Client:    45/64 passing (Jest)
-Functions: 213 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative
+Functions: 263 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD
 E2E:       1 passing (nudge flow)
 ```
 
@@ -194,7 +231,8 @@ None currently.
 | 7 | Safety & Compliance | ✅ Complete (18+ keywords, 93 tests) |
 | 8 | Weekly Synthesis Part 1 | ✅ Complete (aggregation, correlations, 51 tests) |
 | 9 | Weekly Synthesis Part 2 | ✅ Complete (narrative gen, push, scheduler, 10 tests) |
+| 10 | MVD Detector | ✅ Complete (4 triggers, 50 tests, calendar deferred) |
 
 ---
 
-*Last Updated: December 3, 2025 (Session 26)*
+*Last Updated: December 3, 2025 (Session 27)*
