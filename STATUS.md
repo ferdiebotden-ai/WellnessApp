@@ -62,7 +62,7 @@ functions/src/nudgeEngine.ts                 — Pass new context fields, protoc
 functions/tests/suppression.test.ts          — 52 unit tests for all rules
 ```
 
-**Commit:** Pending
+**Commit:** `d498f65` — feat(phase2): implement Suppression Engine Part 2 (Session 6)
 
 ---
 
