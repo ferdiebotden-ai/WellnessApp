@@ -54,6 +54,8 @@ PRD Documents/APEX_OS_WIDGET_PRD_v1.md   — Renamed + gamification/analytics up
 PRD Documents/APEX_OS_WIDGET_ANALYTICS_v1.md — Renamed
 ```
 
+**Commit:** `f7f03b0` — docs: add Progress Infrastructure, Onboarding, and Widget PRD documentation (Session 26)
+
 ---
 
 ## Previous Session
