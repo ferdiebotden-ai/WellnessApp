@@ -18,6 +18,13 @@ import {
   ConfidenceScore,
   PrimaryGoal,
 } from './reasoning';
+import {
+  evaluateSuppression,
+  buildSuppressionContext,
+  getUserLocalHour,
+  parseQuietHour,
+  SuppressionResult,
+} from './suppression';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -37,6 +44,12 @@ interface UserProfileRow {
     protocolAdherencePct?: number;
     readinessScore?: number;
   } | null;
+  preferences?: {
+    quiet_hours_enabled?: boolean;
+    quiet_start_time?: string; // HH:MM format
+    quiet_end_time?: string; // HH:MM format
+    timezone?: string; // IANA timezone
+  } | null;
 }
 
 interface NudgePayload {
@@ -55,6 +68,55 @@ type ScheduledEvent = { data?: string } | undefined;
 type ScheduledContext = { timestamp?: string } | undefined;
 
 const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis. **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
+
+/**
+ * Get today's nudge statistics for a user (for suppression engine)
+ *
+ * @param firestore - Firestore instance
+ * @param userId - User ID to check
+ * @returns Stats: nudgesDeliveredToday, lastNudgeDeliveredAt, dismissalsToday
+ */
+async function getTodayNudgeStats(
+  firestore: FirebaseFirestore.Firestore,
+  userId: string
+): Promise<{
+  nudgesDeliveredToday: number;
+  lastNudgeDeliveredAt: Date | null;
+  dismissalsToday: number;
+}> {
+  const now = new Date();
+  const startOfDay = new Date(now);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  const entriesRef = firestore
+    .collection('live_nudges')
+    .doc(userId)
+    .collection('entries');
+
+  const todaySnapshot = await entriesRef
+    .where('created_at', '>=', startOfDay.toISOString())
+    .get();
+
+  let nudgesDeliveredToday = 0;
+  let lastNudgeDeliveredAt: Date | null = null;
+  let dismissalsToday = 0;
+
+  todaySnapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    nudgesDeliveredToday++;
+
+    const createdAt = new Date(data.created_at);
+    if (!lastNudgeDeliveredAt || createdAt > lastNudgeDeliveredAt) {
+      lastNudgeDeliveredAt = createdAt;
+    }
+
+    if (data.status === 'dismissed') {
+      dismissalsToday++;
+    }
+  });
+
+  return { nudgesDeliveredToday, lastNudgeDeliveredAt, dismissalsToday };
+}
 
 export const generateAdaptiveNudges = async (
   _event: ScheduledEvent,
@@ -83,10 +145,10 @@ export const generateAdaptiveNudges = async (
   // Process each user (limit to 50 for MVP batch)
   const userIds = Array.from(userEnrollments.keys()).slice(0, 50);
   
-  // Fetch profiles
+  // Fetch profiles (including preferences for suppression engine)
   const { data: profilesData, error: profilesError } = await supabase
     .from('users')
-    .select('id, display_name, healthMetrics, primary_goal')
+    .select('id, display_name, healthMetrics, primary_goal, preferences')
     .in('id', userIds);
     
   if (profilesError) throw new Error(profilesError.message);
@@ -161,6 +223,50 @@ export const generateAdaptiveNudges = async (
     // Select the highest-confidence protocol
     const bestMatch = validProtocols.sort((a, b) => b.confidence.overall - a.confidence.overall)[0];
 
+    // Suppression Engine: Check if we should deliver this nudge
+    const nudgeStats = await getTodayNudgeStats(firestore, userId);
+    const userTimezone = profile.preferences?.timezone;
+
+    const suppressionContext = buildSuppressionContext({
+      nudgePriority: 'STANDARD', // All scheduled nudges are STANDARD priority
+      confidenceScore: bestMatch.confidence.overall,
+      userLocalHour: getUserLocalHour(new Date(), userTimezone),
+      userPreferences: {
+        quiet_hours_start: parseQuietHour(profile.preferences?.quiet_start_time),
+        quiet_hours_end: parseQuietHour(profile.preferences?.quiet_end_time),
+        timezone: userTimezone,
+      },
+      nudgesDeliveredToday: nudgeStats.nudgesDeliveredToday,
+      lastNudgeDeliveredAt: nudgeStats.lastNudgeDeliveredAt,
+      dismissalsToday: nudgeStats.dismissalsToday,
+      meetingHoursToday: 0, // TODO: Calendar integration in Phase 3
+    });
+
+    const suppressionResult: SuppressionResult = evaluateSuppression(suppressionContext);
+
+    if (!suppressionResult.shouldDeliver) {
+      // Nudge was suppressed - log to audit and skip this user
+      await supabase.from('ai_audit_log').insert({
+        user_id: userId,
+        decision_type: 'nudge_suppressed',
+        model_used: getCompletionModelName(),
+        reasoning: suppressionResult.reason,
+        module_id: primaryModule.module_id,
+        protocol_id: bestMatch.protocol.id,
+        confidence_score: bestMatch.confidence.overall,
+        confidence_factors: bestMatch.confidence.factors,
+        was_suppressed: true,
+        suppression_rule: suppressionResult.suppressedBy,
+        suppression_reason: suppressionResult.reason,
+      });
+
+      console.log(
+        `[NudgeEngine] Nudge suppressed for user ${userId}: ` +
+          `${suppressionResult.suppressedBy} - ${suppressionResult.reason}`
+      );
+      continue;
+    }
+
     const ragContext = ragResults.map(p => `Protocol: ${p.name}\nBenefits: ${p.benefits}\nEvidence: ${p.citations.join(', ')}`).join('\n\n');
 
     const userPrompt = `
@@ -225,6 +331,10 @@ export const generateAdaptiveNudges = async (
       confidence_score: bestMatch.confidence.overall,
       confidence_factors: bestMatch.confidence.factors,
       suppressed_count: suppressedCount,
+      // Suppression tracking (passed all rules)
+      was_suppressed: false,
+      suppression_rule: null,
+      suppression_reason: null,
     });
   }
 };
