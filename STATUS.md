@@ -28,6 +28,36 @@
 
 ## Last Session
 
+**Date:** December 3, 2025 (Session 26)
+**Focus:** PRD Documentation Update — Onboarding, Widgets, Progress Infrastructure
+
+**Accomplished:**
+- Added **Section 2.5: Progress Infrastructure** to main PRD
+  - Replaces rigid "no gamification" with nuanced intrinsic motivation approach
+  - Defines EMBRACE (consistency indicators, progress markers, unlocking) vs AVOID (loss aversion, points, leaderboards)
+- Added **Section 2.6: Onboarding Experience** to main PRD
+  - Documents implemented 3-screen conversational flow (AI Intro → Goal → Wearable)
+  - Specifies recommended 4th screen: "Your Schedule" (wake time + notification style)
+  - Includes Goal → Module mapping table
+- Renamed Widget PRD: `# APEX OS FEATURE PRD Lock Screen &.md` → `APEX_OS_WIDGET_PRD_v1.md`
+- Renamed Analytics Research: `# APEX OS Widget Analytics Research.md` → `APEX_OS_WIDGET_ANALYTICS_v1.md`
+- Added Widget PRD cross-reference in Section 3.1 (Morning Anchor)
+- Updated Widget PRD:
+  - Section 1.2 now references Progress Infrastructure (PRD v6 Section 2.5)
+  - Added Appendix C: Widget Analytics with metrics quick reference
+- Updated gamification language in Section 1.1 (NOT table)
+
+**Files Modified:**
+```
+PRD Documents/APEX_OS_PRD_FINAL_v6.md    — Added sections 2.5, 2.6 + widget reference
+PRD Documents/APEX_OS_WIDGET_PRD_v1.md   — Renamed + gamification/analytics updates
+PRD Documents/APEX_OS_WIDGET_ANALYTICS_v1.md — Renamed
+```
+
+---
+
+## Previous Session
+
 **Date:** December 3, 2025 (Session 25)
 **Focus:** Phase II - Session 9: Weekly Synthesis (Part 2)
 
@@ -165,4 +195,4 @@ None currently.
 
 ---
 
-*Last Updated: December 3, 2025 (Session 25)*
+*Last Updated: December 3, 2025 (Session 26)*

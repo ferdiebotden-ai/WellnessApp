@@ -112,7 +112,7 @@ Before marking any task complete, verify:
 
 | NOT This | Why Not |
 |----------|---------|
-| Gamified habit tracker | Badges and streaks are manipulation, not motivation |
+| Gamified habit tracker | Progress Infrastructure replaces extrinsic manipulation (see 2.5) |
 | Meditation app | NSDR is one protocol of 18, not the product |
 | Health chatbot | Proactively guides; doesn't wait to be asked |
 | Social platform | No leaderboards, no sharing—this is personal |
@@ -310,6 +310,158 @@ Every protocol includes:
 - **Dosing:** Specific parameters (duration, timing, intensity)
 - **Contraindications:** Safety warnings and exclusions
 
+## 2.5 Progress Infrastructure
+
+### Philosophy: Intrinsic Motivation Enhancement
+
+Apex OS uses **Progress Infrastructure**—subtle retention mechanics that enhance intrinsic motivation without extrinsic manipulation. This replaces simplistic "no gamification" with a nuanced approach.
+
+**Core Principle:** The Optimized Professional doesn't need badges to feel accomplished. They need visibility into their own progress and evidence that their effort produces outcomes.
+
+### What We EMBRACE (Intrinsic)
+
+| Mechanic | Implementation | Example |
+|----------|----------------|---------|
+| **Consistency Indicators** | Factual counts, not pressure | "Morning Light: 5 of 7 mornings this week" |
+| **Personal Progress Markers** | HRV/sleep trends over time | "Your HRV baseline has improved 8% since starting" |
+| **Protocol Unlocking** | Earn access through consistency | "Complete Foundation 14 days → unlock Performance tier" |
+| **Subtle Milestones** | Acknowledged in profile, not pop-ups | "Day 30" badge visible in user profile |
+| **Trend Summaries** | Week/month progress narratives | Weekly Synthesis with specific data |
+
+### What We AVOID (Extrinsic)
+
+| Mechanic | Why It's Wrong for Apex | Alternative |
+|----------|-------------------------|-------------|
+| **Loss Aversion** ("Don't break your streak!") | Creates anxiety, not wellness | "Day 12 of Morning Light" (factual) |
+| **Points/XP Systems** | Trivializes evidence-based protocols | Progress = outcome improvement, not points |
+| **Leaderboards** | Comparison breaks "your journey" philosophy | Personal bests only |
+| **Pop-up Celebrations** | Patronizing to high-performers | Subtle acknowledgment in profile |
+| **Daily Rewards/Gifts** | Extrinsic manipulation | Value = protocol outcomes, not gifts |
+
+### Implementation Guidelines
+
+1. **Factual, not emotional:** "Day 12" not "Amazing streak! 🔥"
+2. **Outcome-focused:** "Sleep onset improved 14 min" matters more than "12-day streak"
+3. **No loss framing:** Never warn about "breaking" or "losing" progress
+4. **Subtle visibility:** Milestones visible on tap, not pushed
+5. **Evidence-linked:** Connect consistency to measured outcomes
+
+### Progress Unlock System
+
+| Tier | Unlock Criteria | Rationale |
+|------|-----------------|-----------|
+| **Foundation** | Immediately available | Core protocols for all users |
+| **Performance** | 14+ days with 70%+ Foundation adherence | Proves baseline habits established |
+| **Elite** | 30+ days with 60%+ Performance adherence | Demonstrates sustained commitment |
+
+## 2.6 Onboarding Experience
+
+### Flow Overview
+
+A 3-screen conversational flow that feels like meeting a coach, not configuring an app.
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  AI Coach   │ ─► │    Goal     │ ─► │  Wearable   │ ─► │    Your     │
+│   Intro     │    │  Selection  │    │ Connection  │    │  Schedule   │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+   Typographic        4 goal            5 devices        Wake time +
+   reveal + glow      cards             + "Skip"         Notification
+                                                         style
+```
+
+### Screen 1: AI Coach Intro
+
+**Purpose:** Establish premium aesthetic and product identity.
+
+| Element | Specification |
+|---------|---------------|
+| **Headline** | "Apex OS" (48pt, staggered reveal) |
+| **Subheadline** | "Your AI wellness operating system." |
+| **Tagline** | "Evidence-based. Personalized. Ambient." |
+| **Animation** | 800ms easing.out(cubic) per line, 1200ms stagger |
+| **Background** | Ambient teal glow at 0.05 opacity |
+
+### Screen 2: Goal Selection
+
+**Purpose:** Personalize the protocol journey.
+
+| Element | Specification |
+|---------|---------------|
+| **Header** | "What matters most right now?" |
+| **Options** | 4 animated goal cards |
+| **Animation** | Spring animation on press (scale 0.97), staggered FadeInDown |
+| **Auto-advance** | 600ms after selection |
+
+**Goal → Module Mapping:**
+
+| Goal | Primary Module | Icon |
+|------|----------------|------|
+| Better Sleep | `sleep_foundations` | 🌙 |
+| More Energy | `metabolic_reset` | ⚡ |
+| Sharper Focus | `metabolic_reset` | 🎯 |
+| Faster Recovery | `stress_resilience` | 💪 |
+
+### Screen 3: Wearable Connection
+
+**Purpose:** Enable recovery scoring (optional).
+
+| Element | Specification |
+|---------|---------------|
+| **Header** | "Do you track with a wearable?" |
+| **Options** | 5 device cards in 2-column grid |
+| **Skip Button** | Prominent, dashed border: "Skip for now" |
+| **Subtext** | "You can add this later in Settings" |
+
+**Supported Wearables:**
+
+| Device | Identifier | Icon |
+|--------|------------|------|
+| Oura Ring | `oura` | ⭕ |
+| WHOOP | `whoop` | 📊 |
+| Apple Watch | `apple_health` | ⌚ |
+| Google Fit | `google_fit` | 📱 |
+| Garmin | `garmin` | 🏃 |
+
+### Screen 4: Your Schedule (Recommended Enhancement)
+
+**Purpose:** Enable personalized nudge timing from Day 1.
+
+| Element | Specification |
+|---------|---------------|
+| **Wake Time Picker** | Default 6:30 AM, scrollable picker |
+| **Notification Style** | "Direct" vs "Supportive" toggle |
+| **Direct Description** | "Do this now" |
+| **Supportive Description** | "Consider trying" |
+
+**Database Fields:**
+
+```typescript
+{
+  primary_goal: 'better_sleep' | 'more_energy' | 'sharper_focus' | 'faster_recovery';
+  wearable_source: 'oura' | 'whoop' | 'apple_health' | 'google_fit' | 'garmin' | null;
+  typical_wake_time: string;    // "06:30"
+  notification_style: 'direct' | 'supportive';
+}
+```
+
+### Design Principles
+
+1. **No trial language during onboarding** — Trial banner appears post-onboarding only
+2. **No model selection** — Users don't need to choose AI models
+3. **Optional wearables** — Works without wearable (uses phone unlock + manual input)
+4. **Premium animations** — Spring animations (damping: 15, stiffness: 300)
+5. **Complete in <3 minutes** — Respect user's time
+
+### Current Implementation Status
+
+| Screen | Status | Commit |
+|--------|--------|--------|
+| AI Coach Intro | ✅ Implemented | fb4126b |
+| Goal Selection | ✅ Implemented | fb4126b |
+| Wearable Connection | ✅ Implemented | fb4126b |
+| Your Schedule | 📋 Specified | Future implementation |
+
 ---
 
 # PART 3: The Five Core Experiences
@@ -366,6 +518,8 @@ User wakes up. Within 30 seconds of first phone interaction, they see their day�
 | **Latency** | Recovery score + protocols displayed <2 seconds |
 | **Widget** | iOS: WidgetKit (Lock Screen), Android: App Widget |
 | **Fallback** | If no wearable data, use phone unlock time + manual input prompt |
+
+> **📱 Widget System:** For complete widget specifications including Lock Screen, Home Screen, StandBy mode, and Live Activities, see **APEX_OS_WIDGET_PRD_v1.md** (separate document). Widget analytics implementation is documented in **APEX_OS_WIDGET_ANALYTICS_v1.md**.
 
 ### Recovery Score Formula
 
