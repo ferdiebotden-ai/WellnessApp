@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 2: Brain (AI & Reasoning) |
-| **Session** | 3 of 13 complete |
-| **Progress** | 23% of Phase 2 |
+| **Session** | 4 of 13 complete |
+| **Progress** | 31% of Phase 2 |
 | **Branch** | main |
 
 ---
@@ -27,6 +27,40 @@
 ---
 
 ## Last Session
+
+**Date:** December 2, 2025 (Session 20)
+**Focus:** Phase II - Session 4: Confidence Scoring
+
+**Accomplished:**
+- Created `functions/src/reasoning/` module with 5-factor weighted scoring
+- Implemented all 5 scoring factors:
+  - `protocol_fit` (0.25) — Goal alignment via GOAL_MODULE_MAPPING
+  - `memory_support` (0.25) — Positive/negative memory signals
+  - `timing_fit` (0.20) — Time-of-day + recovery awareness
+  - `conflict_risk` (0.15) — Constraint conflicts detection
+  - `evidence_strength` (0.15) — Protocol evidence level mapping
+- Integrated into nudgeEngine.ts:
+  - Scores all protocols before selection
+  - Filters suppressed protocols (< 0.4 threshold)
+  - Selects highest-confidence protocol
+  - Logs confidence to Firestore and ai_audit_log
+- TypeScript compiles cleanly
+
+**Files Created:**
+```
+functions/src/reasoning/types.ts           — Type definitions + constants
+functions/src/reasoning/confidenceScorer.ts — 5-factor scoring logic
+functions/src/reasoning/index.ts           — Module exports
+```
+
+**Files Modified:**
+```
+functions/src/nudgeEngine.ts — Integrated confidence scoring
+```
+
+---
+
+## Previous Session
 
 **Date:** December 2, 2025 (Session 19)
 **Focus:** Conversational AI Onboarding Redesign
@@ -53,73 +87,34 @@ supabase/migrations/20251202100000_add_onboarding_preferences.sql
 
 ---
 
-## Previous Session
-
-**Date:** December 2, 2025 (Session 18)
-**Focus:** Phase II - Session 3: Memory Layer Integration
-
-**Accomplished:**
-- Integrated Memory into NudgeEngine (memories influence nudge personalization)
-- Created Firestore trigger for feedback→memory creation (onNudgeFeedback.ts)
-- Added Memory Maintenance to daily scheduler (decay + pruning)
-- Memory Layer now complete and live
-
-**Files Modified:**
-```
-functions/src/nudgeEngine.ts       — Added memory retrieval + context
-functions/src/dailyScheduler.ts    — Added runMemoryMaintenance()
-functions/src/onNudgeFeedback.ts   — NEW: Firestore trigger
-functions/src/index.ts             — Exported new functions
-```
-
-**Commit:** `16cdb30` — feat(phase2): integrate Memory Layer into NudgeEngine
-
----
-
-## Previous Session
-
-**Date:** December 2, 2025 (Session 17)
-**Focus:** Phase II - Session 2: Memory Layer Implementation (Part 1)
-
-**Accomplished:**
-- Created `functions/src/memory/types.ts` with 6 memory types
-- Created `functions/src/memory/userMemory.ts` with full CRUD + decay logic
-- Max 150 memories per user enforced
-- TypeScript compiles cleanly
-
-**Commit:** `cb89f00` — feat(phase2): implement Memory Layer types and CRUD
-
----
-
 ## Next Session Priority
 
-### Session 4: Confidence Scoring
+### Session 5: Suppression Engine (Part 1)
 
-**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Component 2
+**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Component 3
 
 **Tasks:**
-1. Create `functions/src/reasoning/` module:
-   - `types.ts` — ConfidenceScore, ConfidenceFactors interfaces
-   - `confidenceScorer.ts` — 5-factor weighted scoring
+1. Create `functions/src/suppression/` module:
+   - `types.ts` — SuppressionRule, SuppressionContext interfaces
+   - `rules.ts` — 9 suppression rules
+   - `suppressionEngine.ts` — Rule evaluation logic
    - `index.ts` — Module exports
 
-2. Implement 5 scoring factors:
-   - `protocol_fit` (0.25) — Goal alignment
-   - `memory_support` (0.25) — Supporting memories
-   - `timing_fit` (0.20) — Time appropriateness
-   - `conflict_risk` (0.15) — Inverse conflict probability
-   - `evidence_strength` (0.15) — Protocol evidence level
+2. Implement first 5 suppression rules:
+   - `daily_cap` — Max 5 nudges/day (priority 1)
+   - `quiet_hours` — No nudges during sleep hours (priority 2)
+   - `cooldown` — 2-hour minimum between nudges (priority 3)
+   - `fatigue_detection` — Pause after 3+ dismissals (priority 4)
+   - `meeting_awareness` — Suppress during heavy meeting days (priority 5)
 
-3. Integrate into `nudgeEngine.ts`:
-   - Call scoring before delivery
-   - Add confidence to nudge payload
-   - Log to ai_audit_log
+3. Priority override logic:
+   - CRITICAL nudges can override cooldown
+   - ADAPTIVE nudges can override meeting_awareness
 
 **Acceptance Criteria:**
-- [ ] All 5 scoring factors implemented
-- [ ] Weighted sum totals 1.0
-- [ ] Score <0.4 marked `should_suppress: true`
-- [ ] Confidence included in Nudge object
+- [ ] First 5 rules implemented
+- [ ] Priority override logic working
+- [ ] Suppressed nudges logged with reason
 - [ ] TypeScript compiles cleanly
 
 ---
@@ -167,10 +162,10 @@ None currently.
 | Session | Component | Status |
 |---------|-----------|--------|
 | 1-3 | Memory Layer | ✅ Complete |
-| 4 | Confidence Scoring | 🔜 Next |
-| 5 | Suppression Engine | ⏳ Pending |
+| 4 | Confidence Scoring | ✅ Complete |
+| 5 | Suppression Engine | 🔜 Next |
 | 6 | Safety & Compliance | ⏳ Pending |
 
 ---
 
-*Last Updated: December 2, 2025 (Session 19)*
+*Last Updated: December 2, 2025 (Session 20)*

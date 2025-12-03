@@ -11,6 +11,13 @@ import {
 } from './protocolSearch';
 import { generateCompletion, getCompletionModelName } from './vertexAI';
 import { getRelevantMemories, ScoredMemory } from './memory';
+import {
+  calculateConfidence,
+  getTimeOfDay,
+  NudgeContext,
+  ConfidenceScore,
+  PrimaryGoal,
+} from './reasoning';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -23,10 +30,12 @@ interface ModuleEnrollmentRow {
 interface UserProfileRow {
   id: string;
   display_name?: string | null;
+  primary_goal?: PrimaryGoal | null;
   healthMetrics?: {
     sleepQualityTrend?: number;
     hrvImprovementPct?: number;
     protocolAdherencePct?: number;
+    readinessScore?: number;
   } | null;
 }
 
@@ -39,6 +48,7 @@ interface NudgePayload {
   type: 'proactive_coach';
   generated_at: string;
   status: 'pending';
+  confidence?: ConfidenceScore;
 }
 
 type ScheduledEvent = { data?: string } | undefined;
@@ -76,7 +86,7 @@ export const generateAdaptiveNudges = async (
   // Fetch profiles
   const { data: profilesData, error: profilesError } = await supabase
     .from('users')
-    .select('id, display_name, healthMetrics')
+    .select('id, display_name, healthMetrics, primary_goal')
     .in('id', userIds);
     
   if (profilesError) throw new Error(profilesError.message);
@@ -119,6 +129,38 @@ export const generateAdaptiveNudges = async (
     const protocols = await fetchProtocols(supabase, matches.map(m => m.id));
     const ragResults = mapProtocols(matches, protocols);
 
+    // Confidence Scoring: Evaluate each protocol before selection
+    const currentHour = new Date().getUTCHours();
+    const timeOfDay = getTimeOfDay(currentHour);
+
+    const scoredProtocols = ragResults.map((protocol) => {
+      const nudgeContext: NudgeContext = {
+        user_id: userId,
+        primary_goal: profile.primary_goal || 'better_sleep',
+        module_id: primaryModule.module_id,
+        current_hour_utc: currentHour,
+        time_of_day: timeOfDay,
+        recovery_score: profile.healthMetrics?.readinessScore,
+        hrv_baseline_deviation: profile.healthMetrics?.hrvImprovementPct,
+        protocol,
+        memories,
+        other_protocols: ragResults.filter((p) => p.id !== protocol.id),
+      };
+      return { protocol, confidence: calculateConfidence(nudgeContext) };
+    });
+
+    // Filter out suppressed protocols and sort by confidence
+    const validProtocols = scoredProtocols.filter((sp) => !sp.confidence.should_suppress);
+
+    if (validProtocols.length === 0) {
+      // All protocols were suppressed - skip this user
+      console.log(`[NudgeEngine] All protocols suppressed for user ${userId} - skipping`);
+      continue;
+    }
+
+    // Select the highest-confidence protocol
+    const bestMatch = validProtocols.sort((a, b) => b.confidence.overall - a.confidence.overall)[0];
+
     const ragContext = ragResults.map(p => `Protocol: ${p.name}\nBenefits: ${p.benefits}\nEvidence: ${p.citations.join(', ')}`).join('\n\n');
 
     const userPrompt = `
@@ -135,18 +177,19 @@ export const generateAdaptiveNudges = async (
 
     // Write to Firestore (match client's expected task structure)
     const now = new Date().toISOString();
+    const suggestedProtocolId = bestMatch.protocol.id;
     const nudgePayload: NudgePayload = {
       nudge_text: nudgeText,
       module_id: primaryModule.module_id,
-      reasoning: 'AI generated based on module focus and RAG context',
-      citations: ragResults.length > 0 ? ragResults[0].citations : [],
+      reasoning: bestMatch.confidence.reasoning,
+      citations: bestMatch.protocol.citations,
       type: 'proactive_coach',
       generated_at: now,
       status: 'pending',
+      confidence: bestMatch.confidence,
     };
 
     // Write as a task document with client-expected fields
-    const suggestedProtocolId = ragResults.length > 0 ? ragResults[0].id : undefined;
     const taskDoc = {
       title: nudgeText, // Client expects 'title' field
       status: 'pending' as const,
@@ -157,25 +200,31 @@ export const generateAdaptiveNudges = async (
       protocol_id: suggestedProtocolId, // For memory feedback tracking
       citations: nudgePayload.citations,
       created_at: now,
+      // Confidence scoring fields
+      confidence_score: bestMatch.confidence.overall,
+      confidence_reasoning: bestMatch.confidence.reasoning,
     };
 
     await firestore.collection('live_nudges').doc(userId).collection('entries').add(taskDoc);
 
-    // Log to Audit Log (includes memory IDs for traceability)
-    const memoryIdsUsed = memories.map(m => m.id);
+    // Log to Audit Log (includes memory IDs and confidence for traceability)
+    const memoryIdsUsed = memories.map((m) => m.id);
+    const suppressedCount = scoredProtocols.length - validProtocols.length;
     await supabase.from('ai_audit_log').insert({
       user_id: userId,
       decision_type: 'nudge_generated',
       model_used: getCompletionModelName(),
       prompt: userPrompt,
       response: nudgeText,
-      reasoning: memories.length > 0
-        ? `Proactive engagement with ${memories.length} user memories considered`
-        : 'Proactive engagement',
+      reasoning: bestMatch.confidence.reasoning,
       citations: nudgePayload.citations,
       module_id: primaryModule.module_id,
       protocol_id: suggestedProtocolId,
       memory_ids_used: memoryIdsUsed.length > 0 ? memoryIdsUsed : null,
+      // Confidence scoring data
+      confidence_score: bestMatch.confidence.overall,
+      confidence_factors: bestMatch.confidence.factors,
+      suppressed_count: suppressedCount,
     });
   }
 };
