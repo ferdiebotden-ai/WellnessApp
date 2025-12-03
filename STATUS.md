@@ -1,508 +1,176 @@
 # Apex OS — Project Status
 
-> This file maintains session state for Claude Opus 4.5.
-> Claude updates this file at the end of each session.
+> Session state for Claude Opus 4.5. Update at end of each session.
+
+---
+
+## Current State
+
+| Attribute | Value |
+|-----------|-------|
+| **Phase** | Phase 2: Brain (AI & Reasoning) |
+| **Session** | 3 of 13 complete |
+| **Progress** | 23% of Phase 2 |
+| **Branch** | main |
 
 ---
 
 ## Development Environment
 
-**Primary Setup:** WSL2 + Ubuntu 24.04 + VS Code Remote
-**Migrated:** December 1, 2025
-
-| Component | Version | Location |
-|-----------|---------|----------|
-| OS | Ubuntu 24.04 (WSL2) | Windows 11 host |
-| Node.js | v20.19.6 (via nvm) | WSL |
-| npm | 10.9.2 | WSL |
-| Editor | VS Code + WSL Remote | Windows → WSL |
-| Project Path | `/home/ferdi/projects/WellnessApp` | WSL filesystem |
-
-**Installed CLIs:**
-- Claude Code CLI (`claude --version`)
-- Firebase CLI (`firebase --version`)
-- Supabase CLI (`supabase --version`)
-- Google Cloud SDK (`gcloud --version`)
-- GitHub CLI (`gh --version`)
-
-**Quick Start:**
-```bash
-# Open project in VS Code (from WSL terminal)
-cd ~/projects/WellnessApp && code .
-
-# Or use the desktop shortcut: "WellnessApp (WSL)"
-```
-
----
-
-## Current Phase
-**Phase 1: Spinal Cord (Infrastructure & Data)** — 100% Complete ✅
-**Phase 2: Brain (AI & Reasoning)** — In Progress 🧠 (Session 3 of 13)
+| Component | Value |
+|-----------|-------|
+| OS | Ubuntu 24.04 (WSL2) on Windows 11 |
+| Node.js | v20.19.6 (via nvm) |
+| Project Path | `/home/ferdi/projects/WellnessApp` |
+| Expo SDK | 54 |
 
 ---
 
 ## Last Session
+
 **Date:** December 2, 2025 (Session 19)
 **Focus:** Conversational AI Onboarding Redesign
 
 **Accomplished:**
-- ✅ Complete redesign of onboarding flow from "module picker + trial button" to "conversational AI coach"
-- ✅ Created database migration for `primary_goal` and `wearable_source` fields
-- ✅ Created new onboarding types (`client/src/types/onboarding.ts`):
-  - `PrimaryGoal` and `WearableSource` types
-  - `ONBOARDING_GOALS` and `ONBOARDING_WEARABLES` constants
-  - Goal → Module mapping
-- ✅ Built new components with animations:
-  - `GoalCard.tsx` - Large tappable goal card with spring animations
-  - `WearableCard.tsx` - Wearable option cards with skip button
-- ✅ Created 3-screen conversational onboarding flow:
-  - `AICoachIntroScreen.tsx` - Typographic/cinematic intro with staggered text animations
-  - `GoalSelectionScreen.tsx` - 4 goal cards with tap-to-advance
-  - `WearableConnectionScreen.tsx` - Optional wearable selection with prominent skip
-- ✅ Updated `OnboardingStack.tsx` navigation to use new screens
-- ✅ Updated client API (`api.ts`) to accept new payload with `primary_goal` and `wearable_source`
-- ✅ Updated backend API (`onboarding.ts`) with goal→module mapping and validation
-- ✅ Updated analytics service to track new onboarding data
-- ✅ Removed old `ModuleOnboardingScreen.tsx` and its test file
-- ✅ Installed `react-native-reanimated` for animations
-- ✅ Applied database migration via `supabase db push`
+- Complete redesign of onboarding from "module picker" to "conversational AI coach"
+- Created 3-screen flow: AICoachIntro → GoalSelection → WearableConnection
+- Built animated GoalCard and WearableCard components
+- Updated backend with goal→module mapping
+- Applied database migration for `primary_goal` and `wearable_source` fields
 
 **Files Created:**
 ```
-supabase/migrations/20251202100000_add_onboarding_preferences.sql
-client/src/types/onboarding.ts
-client/src/components/GoalCard.tsx
-client/src/components/WearableCard.tsx
 client/src/screens/onboarding/AICoachIntroScreen.tsx
 client/src/screens/onboarding/GoalSelectionScreen.tsx
 client/src/screens/onboarding/WearableConnectionScreen.tsx
-client/src/screens/onboarding/index.ts
+client/src/components/GoalCard.tsx
+client/src/components/WearableCard.tsx
+client/src/types/onboarding.ts
+supabase/migrations/20251202100000_add_onboarding_preferences.sql
 ```
 
-**Files Modified:**
-```
-client/src/navigation/OnboardingStack.tsx  — New 3-screen flow
-client/src/services/api.ts                 — Updated completeOnboarding payload
-client/src/services/AnalyticsService.ts    — Added goal/wearable tracking
-client/src/types/user.ts                   — Added primary_goal, wearable_source
-functions/src/onboarding.ts                — Updated with goal validation + mapping
-```
-
-**Files Removed:**
-```
-client/src/screens/ModuleOnboardingScreen.tsx
-client/src/screens/ModuleOnboardingScreen.test.tsx
-```
-
-**Design Decisions:**
-- Typographic/cinematic intro instead of chat bubbles (more premium)
-- Tap-to-advance on goal selection (no "Next" button - feels elevated)
-- Wearable optional with prominent "Skip for now" (user decision)
-- No trial language anywhere (user decision)
+**Commit:** `fb4126b` — feat(onboarding): implement conversational AI onboarding flow
 
 ---
 
 ## Previous Session
+
 **Date:** December 2, 2025 (Session 18)
 **Focus:** Phase II - Session 3: Memory Layer Integration
 
 **Accomplished:**
-- ✅ Integrated Memory into NudgeEngine (`nudgeEngine.ts`):
-  - Added `getRelevantMemories()` call before nudge generation
-  - Memory context now included in AI prompt for personalization
-  - Memory IDs logged in `ai_audit_log.memory_ids_used`
-  - Protocol ID added to taskDoc for feedback tracking
-- ✅ Created Firestore trigger (`onNudgeFeedback.ts`):
-  - Fires on `live_nudges/{userId}/entries/{nudgeId}` status change
-  - Creates memory via `createFromNudgeFeedback()` in real-time
-  - Maps status to feedback types (completed, dismissed, snoozed)
-- ✅ Added Memory Maintenance Scheduler (`dailyScheduler.ts`):
-  - New `runMemoryMaintenance()` function
-  - Calls `applyMemoryDecay()` for global decay
-  - Calls `pruneMemories()` for each user (max 150 enforced)
-- ✅ Exported new functions in `index.ts`
-- ✅ Installed `firebase-functions@^4.9.0` for Firestore triggers
-- ✅ TypeScript compiles cleanly
-- ✅ Committed and pushed: `16cdb30`
+- Integrated Memory into NudgeEngine (memories influence nudge personalization)
+- Created Firestore trigger for feedback→memory creation (onNudgeFeedback.ts)
+- Added Memory Maintenance to daily scheduler (decay + pruning)
+- Memory Layer now complete and live
 
-**Files Modified/Created:**
+**Files Modified:**
 ```
 functions/src/nudgeEngine.ts       — Added memory retrieval + context
 functions/src/dailyScheduler.ts    — Added runMemoryMaintenance()
-functions/src/onNudgeFeedback.ts   — NEW: Firestore trigger for feedback
+functions/src/onNudgeFeedback.ts   — NEW: Firestore trigger
 functions/src/index.ts             — Exported new functions
-functions/package.json             — Added firebase-functions dependency
 ```
 
-**Memory Layer Now Complete:**
-- Memories influence nudge personalization (nudgeEngine)
-- User feedback creates memories in real-time (onNudgeFeedback)
-- Daily maintenance decays/prunes memories (runMemoryMaintenance)
+**Commit:** `16cdb30` — feat(phase2): integrate Memory Layer into NudgeEngine
 
 ---
 
 ## Previous Session
+
 **Date:** December 2, 2025 (Session 17)
 **Focus:** Phase II - Session 2: Memory Layer Implementation (Part 1)
 
 **Accomplished:**
-- ✅ Created `functions/src/memory/types.ts` with:
-  - 6 memory types enum (nudge_feedback, protocol_effectiveness, preferred_time, stated_preference, pattern_detected, preference_constraint)
-  - Memory interface with confidence/decay fields
-  - Config constants (max 150 memories, decay rates, thresholds)
-  - Type priorities and default expiration days
-- ✅ Created `functions/src/memory/userMemory.ts` with:
-  - `storeMemory()` - Create/update with deduplication
-  - `reinforceMemory()` - Boost confidence when pattern reoccurs
-  - `getRelevantMemories()` - Context-aware retrieval with scoring
-  - `applyMemoryDecay()` - Daily confidence decay
-  - `pruneMemories()` - Enforce 150 max per user
-  - Convenience creators for nudge feedback and preferences
-- ✅ Created `functions/src/memory/index.ts` for module exports
-- ✅ TypeScript compiles cleanly
-- ✅ Committed and pushed: `cb89f00`
+- Created `functions/src/memory/types.ts` with 6 memory types
+- Created `functions/src/memory/userMemory.ts` with full CRUD + decay logic
+- Max 150 memories per user enforced
+- TypeScript compiles cleanly
 
-**Files Created:**
-```
-functions/src/memory/types.ts     — Type definitions, enums, config
-functions/src/memory/userMemory.ts — Core CRUD operations
-functions/src/memory/index.ts     — Module exports
-```
-
----
-
-## Previous Session (Earlier)
-**Date:** December 2, 2025 (Session 16)
-**Focus:** Fix Web Preview Authentication & Onboarding Issues
-
-**Accomplished:**
-- ✅ Fixed Firebase Auth — Created `client/.env` with Firebase Web SDK config
-- ✅ Fixed duplicate modules — Deleted old entries from Supabase
-- ✅ Fixed trial button component — Changed `<Text onPress>` to `<PrimaryButton>`
-
-**User Feedback — Rethink Onboarding UX:**
-> "Why are we choosing one single module at the start? We should just go straight to the home screen and add whatever modules the user wants."
-
----
-
-## Previous Session
-**Date:** December 2, 2025 (Session 15)
-**Focus:** Phase II - Session 1: Database Foundation + Supabase CLI Setup
-
-**Accomplished:**
-- ✅ Reviewed PRD Documents (APEX_OS_PRD_FINAL_v6.md, PHASE_II_IMPLEMENTATION_PLAN.md)
-- ✅ Assessed Phase 2 readiness - confirmed Phase 1 prerequisites complete
-- ✅ Explored codebase: functions/src, database schemas, client components
-- ✅ Created 4 database migrations for Phase 2
-- ✅ Set up Supabase CLI access
-- ✅ Applied all 4 migrations via `supabase db push`
-
----
-
-## Previous Session
-**Date:** December 2, 2025 (Session 14)
-**Accomplished:**
-- ✅ Set up web browser preview (simplest dev workflow)
-- ✅ Installed web dependencies: `react-dom`, `react-native-web`
-- ✅ Created ADB shim at `~/android-sdk/platform-tools/adb` for WSL→Windows bridge
-- ✅ Configured ANDROID_HOME in `.bashrc` pointing to shim directory
-- ✅ Successfully launched Android emulator with Expo Go auto-install
-- ✅ Verified web preview working at http://localhost:8081
-- ✅ Updated CLAUDE.md Section 13 with preview environment documentation
-
----
-
-## Previous Session
-**Date:** December 2, 2025 (Session 13)
-**Accomplished:**
-- ✅ Researched mobile emulator options for WSL2 + VS Code development
-- ✅ Determined Android emulator runs on Windows, bridges to WSL via ADB
-- ✅ Created Android development scripts: `scripts/android-bridge.sh`, `scripts/start-android.sh`, `scripts/check-android-setup.sh`
-- ✅ Added npm scripts: `npm run start:android`, `npm run android:check`, `npm run start:web`
-- ✅ User installed Android Studio on Windows with Pixel 9 AVD (API 36.1)
-- ✅ Configured WSL2 mirrored networking for ADB bridge
-- ✅ Analyzed iOS vs Android parity (95% identical for UI, wearables differ)
-
----
-
-## Previous Session
-**Date:** December 2, 2025 (Session 12)
-**Accomplished:**
-- ✅ Created definitive standalone PRD: `APEX_OS_PRD_FINAL_v6.md` (~8,500 words)
-- ✅ Created Phase II Implementation Plan: `PHASE_II_IMPLEMENTATION_PLAN.md`
-- ✅ Conducted comprehensive competitive research (Dec 2025 landscape)
-- ✅ Researched market data ($11.27B → $33.78B, 14.9% CAGR)
-- ✅ Researched AI-optimized PRD best practices (OpenAI template)
-- ✅ Documented all 5 Core Experiences with acceptance criteria
-- ✅ Defined 9 Phase 2 components with P0/P1/P2 prioritization
-- ✅ Created 13-session implementation roadmap
-
-**Documents Created:**
-- `PRD Refinement/APEX_OS_PRD_FINAL_v6.md` — Definitive standalone PRD
-- `PRD Refinement/PHASE_II_IMPLEMENTATION_PLAN.md` — 9-component implementation guide
-
----
-
-## Previous Session
-**Date:** December 1, 2025 (Session 11)
-**Accomplished:**
-- ✅ **PHASE 1 COMPLETE**: End-to-end nudge generation pipeline verified working
-- ✅ Created E2E test script (`scripts/test-e2e-nudge-flow.ts`)
-- ✅ Found existing user (ferdie.botden@gmail.com) in Firebase, created Supabase profile
-- ✅ Fixed `module_enrollment` FK constraint (was pointing to `auth.users`, now `public.users`)
-- ✅ Fixed Cloud Functions missing env vars (`SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `PINECONE_API_KEY`)
-- ✅ Verified nudges appear in Firestore with correct structure
-
----
-
-## Session Before That
-**Date:** December 1, 2025 (Session 10)
-**Accomplished:**
-- ✅ Complete testing infrastructure overhaul for Expo SDK 54 + React 19
-- ✅ Added comprehensive native module mocks to `client/src/setupTests.ts`
-- ✅ Fixed Jest configuration with proper module mappings
-- ✅ Configured Playwright E2E with webServer auto-start
-- ✅ Committed and pushed: `12955f5`
-
----
-
-## Session Before That
-**Date:** December 1, 2025 (Session 9)
-**Accomplished:**
-- ✅ Installed GitHub MCP server for PR/issue management and auto-sync
-- ✅ Enabled Expo New Architecture (`newArchEnabled: true` in app.json)
-- ✅ Updated CLAUDE.md with Section 11 (MCP Servers) and auto-sync workflow
-- ✅ Added critical rules 7 & 8 for git sync discipline
-- ✅ Installed `example-skills` plugin (frontend-design, webapp-testing, etc.)
-- ✅ Configured gcloud CLI with service account for GCP access
-
----
-
-## Session Before That
-**Date:** November 30, 2025 (Session 8)
-**Accomplished:**
-- ✅ Installed Google Cloud CLI on local machine for direct GCP management
-- ✅ Verified Cloud Scheduler jobs are ENABLED and running (via screenshot + gcloud)
-- ✅ Fixed missing environment variables on Cloud Functions (SUPABASE_ANON_KEY, JWT_SECRET, PINECONE_API_KEY)
-- ✅ Created missing `module_enrollment` table migration
-- ✅ Verified scheduler functions execute without errors
-- ✅ Corrected documentation: Using **Firestore** (not Firebase RTDB)
-
-**Issues Found & Fixed:**
-| Issue | Root Cause | Fix |
-|-------|-----------|-----|
-| Scheduler functions failing | Missing env vars (SUPABASE_ANON_KEY, etc.) | Added via `gcloud run services update` |
-| Schema cache error | `module_enrollment` table didn't exist | Created migration `20251130000000_create_module_enrollment.sql` |
-| Functions not finding new table | Supabase schema cache | Restarted Cloud Run services |
-
-**Cloud Scheduler Status (Verified):**
-| Job Name | State | Last Run | Result |
-|----------|-------|----------|--------|
-| daily-scheduler | ENABLED | Nov 30, 12:00 AM | ✅ Success |
-| hourly-nudge-engine | ENABLED | Nov 30, 6:40 PM | ✅ Success |
-
-**Files Created:**
-- `supabase/migrations/20251130000000_create_module_enrollment.sql`
+**Commit:** `cb89f00` — feat(phase2): implement Memory Layer types and CRUD
 
 ---
 
 ## Next Session Priority
 
-### Phase 2: Session 4 — Confidence Scoring
+### Session 4: Confidence Scoring
 
-**Reference Documents:**
-- `PRD Documents/APEX_OS_PRD_FINAL_v6.md` — Master PRD (canonical)
-- `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Implementation guide
+**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Component 2
 
-### Session 4 Tasks
-1. **Create Confidence Scorer** — `functions/src/reasoning/confidenceScorer.ts`
-   - Implement 5 scoring factors:
-     - `protocol_fit` (0.25) — How well protocol matches user's goal
-     - `memory_support` (0.25) — Supporting memories for recommendation
-     - `timing_fit` (0.20) — Appropriateness of timing
-     - `conflict_risk` (0.15) — Inverse of conflict probability
-     - `evidence_strength` (0.15) — Protocol's evidence level
+**Tasks:**
+1. Create `functions/src/reasoning/` module:
+   - `types.ts` — ConfidenceScore, ConfidenceFactors interfaces
+   - `confidenceScorer.ts` — 5-factor weighted scoring
+   - `index.ts` — Module exports
 
-2. **Integrate into NudgeEngine** — Modify `functions/src/nudgeEngine.ts`
-   - Add confidence scoring before delivery
-   - Include score in nudge payload and audit log
-   - Mark recommendations <0.4 for suppression
+2. Implement 5 scoring factors:
+   - `protocol_fit` (0.25) — Goal alignment
+   - `memory_support` (0.25) — Supporting memories
+   - `timing_fit` (0.20) — Time appropriateness
+   - `conflict_risk` (0.15) — Inverse conflict probability
+   - `evidence_strength` (0.15) — Protocol evidence level
 
-3. **Update Nudge Types** — Extend interfaces to include confidence
+3. Integrate into `nudgeEngine.ts`:
+   - Call scoring before delivery
+   - Add confidence to nudge payload
+   - Log to ai_audit_log
 
-### P0 Progress (Sessions 1-6)
-| Session | Component | Status |
-|---------|-----------|--------|
-| 1 | Database Migrations | ✅ Complete & Applied |
-| 2 | Memory Layer (Part 1: Types & CRUD) | ✅ Complete |
-| 3 | Memory Layer (Part 2: Integration) | ✅ Complete |
-| 4 | Confidence Scoring | 🔜 Next |
-| 5 | Suppression Engine | ⏳ Pending |
-| 6 | Safety & Compliance | ⏳ Pending |
-
-### Current Test Status
-```
-Client:    45/64 passing (Jest)
-Functions: 7 passing (Vitest)
-Backend:   3 passing (Jest)
-E2E:       ✅ 1 passing (nudge flow)
-```
-
-### Quick Verification Commands
-```bash
-# Test API endpoints
-curl "https://api-26324650924.us-central1.run.app/"
-curl "https://api-26324650924.us-central1.run.app/api/modules"
-curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=sleep"
-
-# Trigger scheduler jobs manually (requires gcloud CLI)
-gcloud scheduler jobs run hourly-nudge-engine --location=us-central1 --project=wellness-os-app
-gcloud scheduler jobs run daily-scheduler --location=us-central1 --project=wellness-os-app
-
-# Check function logs
-gcloud functions logs read generateAdaptiveNudges --project=wellness-os-app --limit=20
-```
-
----
-
-## Session History (Last 5)
-
-### Session 9 (December 1, 2025)
-- Installed GitHub MCP server for PR/issue management
-- Enabled Expo New Architecture in app.json
-- Updated CLAUDE.md with MCP Servers section (11) and Google Cloud Access (12)
-- Configured gcloud CLI with service account authentication
-- Added IAM roles: cloudscheduler.viewer, logging.viewer
-- Updated README.md and EXPO_SETUP.md for Claude Code workflow
-- Installed example-skills plugin (pending restart)
-- Phase 1 progress: 95% (unchanged)
-
-### Session 8 (November 30, 2025)
-- Installed Google Cloud CLI for direct GCP management
-- Verified Cloud Scheduler: Both jobs ENABLED and running successfully
-- Fixed Cloud Functions: Added missing env vars (SUPABASE_ANON_KEY, JWT_SECRET, PINECONE_API_KEY, REVENUECAT_WEBHOOK_SECRET)
-- Created `module_enrollment` table (was completely missing from database)
-- Restarted Cloud Run services to refresh Supabase schema cache
-- **VERIFIED:** Scheduler functions now execute without errors
-- Clarified architecture: Using Firestore for real-time data, not Firebase RTDB
-- Phase 1 progress: 80% → 95%
-
-### Session 7 (November 30, 2025)
-- Diagnosed root cause: ID mismatch between old `proto_*` and new `morning_light_exposure` IDs
-- Updated seed script with clean slate approach (delete before upsert)
-- Added `deleteAllPineconeVectors()` function
-- Added Supabase delete step and Pinecone clear step
-- **VERIFIED:** Protocol search now returns full data (description, benefits, citations)
-- Phase 1 progress: 70% → 80%
-
-### Session 6 (November 29, 2025)
-- Fixed Vertex AI IAM permission (added `roles/aiplatform.user`)
-- Seed script runs successfully (green checkmark in GitHub Actions)
-- Protocol search still returns null enriched fields
-- Root cause: Migration likely not applied to Supabase before seed ran
-- Phase 1 progress: 65% → 70%
-
-### Session 5 (November 29, 2025)
-- GitHub MCP: Switched to Docker approach (more reliable on Windows)
-- Discovered protocol search schema mismatch (missing columns)
-- Created migration `20251129000000_add_protocol_fields.sql`
-- Updated seed script to include all protocol fields
-- Phase 1 progress: 50% → 65%
-
-### Session 4 (November 29, 2025)
-- Diagnosed GitHub MCP authentication failure
-- Root cause: Windows npx requires `cmd /c` wrapper
-- Updated mcp.json with proper config (inline env, cmd wrapper)
-- Awaiting Claude Code restart to verify fix
-
-### Session 3 (November 29, 2025)
-- Fixed root cause: Missing `client/.env` causing mock data display
-- Discovered API is Cloud Run (`api-26324650924.us-central1.run.app`) not Cloud Functions
-- Created `client/.env` with correct API URL and Firebase config
-- Updated GitHub PAT in `mcp.json`
-- API verified working: modules, auth, health check all functional
-- Phase 1 progress: 0% → 50%
-
-### Session 2 (November 29, 2025)
-- Root folder cleanup complete
-- Archived: Mission debriefs (23), deployment history (9), legacy docs (10), old PRDs (3), Opus setup files
-- Deleted duplicate Codex Debrief Reports folder
-- Codebase ready for Phase 1 implementation
-
----
-
-## Architecture Decisions Log
-*Add decisions here as they are made*
-
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| 2025-11-29 | Hybrid DB (Supabase READ / Firebase WRITE) | Real-time updates without polling |
-| 2025-11-29 | Opus 4.5 as default model | Best reasoning for architecture decisions |
-| 2025-11-29 | Vertex AI for embeddings | Uses `text-embedding-005` (768 dims), integrated with GCP |
-
----
-
-## Known Issues / Tech Debt
-*Track items that need future attention*
-
-- [x] ~~Review and clean up legacy Cloud Functions~~ (Not applicable - using Cloud Run)
-- [x] ~~Verify Supabase migrations are up to date~~ (Modules API working)
-- [x] ~~Protocol schema mismatch~~ (Migration created: 20251129000000_add_protocol_fields.sql)
-- [x] ~~Vertex AI IAM permission denied~~ (Fixed: added roles/aiplatform.user)
-- [x] ~~Apply migration to Supabase~~ (Migration applied, columns exist)
-- [x] ~~Clean up old `proto_*` vectors in Pinecone~~ (Seed script now clears before upserting)
-- [x] ~~Commit seed script fix and re-run seed~~ (VERIFIED WORKING - protocols return full data)
-- [x] ~~Verify Cloud Scheduler jobs~~ (Session 8: Both jobs ENABLED and running)
-- [x] ~~Check Firebase RTDB structure~~ (Session 8: Using Firestore, not RTDB)
-- [x] ~~Missing Cloud Function env vars~~ (Session 8: Added SUPABASE_ANON_KEY, JWT_SECRET, PINECONE_API_KEY)
-- [x] ~~Missing module_enrollment table~~ (Session 8: Created migration 20251130000000)
-- [ ] Add Firestore security rules (HIPAA compliance)
-- [x] ~~Test end-to-end nudge generation with enrolled user~~ (Session 11: Verified working!)
-- [x] ~~Fix module_enrollment FK constraint~~ (Session 11: Now references public.users)
-- [x] ~~Fix Cloud Functions env vars~~ (Session 11: Added missing SUPABASE_ANON_KEY, etc.)
-- [ ] Update VERIFY_NOW.md with correct Cloud Run URLs
-- [ ] Consider moving scheduler config to Terraform (IaC best practice)
-- [ ] Fix ai_audit_log schema (missing created_at column)
+**Acceptance Criteria:**
+- [ ] All 5 scoring factors implemented
+- [ ] Weighted sum totals 1.0
+- [ ] Score <0.4 marked `should_suppress: true`
+- [ ] Confidence included in Nudge object
+- [ ] TypeScript compiles cleanly
 
 ---
 
 ## Quick Reference
 
-**Key Commands (run from WSL terminal):**
+**Dev Commands:**
 ```bash
-# Navigate to project
-cd ~/projects/WellnessApp
-
-# Type check
-cd client && npx tsc --noEmit
-
-# Start dev server
-cd client && npx expo start
-
-# Run backend locally
-cd functions && npm run serve
-
-# Deploy functions
-cd functions && npm run deploy
-
-# Test protocol search
-curl "https://api-26324650924.us-central1.run.app/api/protocols/search?q=morning light"
-
-# Open in VS Code
-code .
+cd ~/projects/WellnessApp/client && npx expo start --web  # Web preview
+cd ~/projects/WellnessApp/functions && npx tsc --noEmit   # Type check functions
+cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 ```
 
-**Cloud Environment:**
-- Firebase Project: wellness-os-app
-- Supabase Project: vcrdogdyjljtwgoxpkew
-- Pinecone Index: wellness-protocols
-- **API URL (Cloud Run):** https://api-26324650924.us-central1.run.app
+**API:** `https://api-26324650924.us-central1.run.app/`
+**Supabase:** `vcrdogdyjljtwgoxpkew`
+**Firebase:** `wellness-os-app`
 
-**Local Environment (WSL2):**
-- Node: v20.19.6 (via nvm)
-- Expo SDK: 54
-- Project: `/home/ferdi/projects/WellnessApp`
+**Slash Commands:**
+- `/start` — Begin session, read STATUS.md
+- `/close` — End session, verify sync, update STATUS.md
+- `/status` — Quick status check
+- `/verify` — Run quality gates
+- `/plan` — Enter planning mode
 
 ---
 
-*Last Updated: December 2, 2025 (Session 18 - Phase II Session 3: Memory Layer Integration Complete)*
+## Test Status
+
+```
+Client:    45/64 passing (Jest)
+Functions: 7 passing (Vitest)
+E2E:       1 passing (nudge flow)
+```
+
+---
+
+## Active Blockers
+
+None currently.
+
+---
+
+## P0 Progress (Phase 2)
+
+| Session | Component | Status |
+|---------|-----------|--------|
+| 1-3 | Memory Layer | ✅ Complete |
+| 4 | Confidence Scoring | 🔜 Next |
+| 5 | Suppression Engine | ⏳ Pending |
+| 6 | Safety & Compliance | ⏳ Pending |
+
+---
+
+*Last Updated: December 2, 2025 (Session 19)*

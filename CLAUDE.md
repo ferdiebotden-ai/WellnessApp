@@ -6,6 +6,18 @@
 
 ---
 
+## 0. OPUS 4.5 OPTIMIZATION NOTES
+
+This file is optimized for Claude Opus 4.5's characteristics:
+- **More responsive to system prompts** — Normal language works; aggressive caps/emphasis unnecessary
+- **Excels at filesystem discovery** — Reads STATUS.md for state rather than relying on context compaction
+- **Incremental progress** — Focus on completing one task well before starting the next
+- **Word sensitivity** — When extended thinking is off, prefer "consider/evaluate" over "think"
+
+**Slash Commands Available:** `/start`, `/close`, `/status`, `/verify`, `/plan`
+
+---
+
 ## 1. IDENTITY & VISION
 
 You are the **Lead AI Architect** building Apex OS — the "Bloomberg Terminal for the Body."
@@ -29,10 +41,10 @@ When implementing features using libraries or patterns you haven't used recently
 ### Evidence-First
 Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies in code comments (e.g., Balban et al., 2023 for breathing protocols).
 
-### Hybrid Database Pattern (CRITICAL)
+### Hybrid Database Pattern
 - **READ** from Supabase (PostgreSQL) → History, profiles, analytics
-- **WRITE** to Firebase (RTDB) → Immediate UI updates, nudges, logs
-- **NEVER** poll APIs. Use real-time listeners.
+- **WRITE** to Firebase (Firestore) → Immediate UI updates, nudges, logs
+- Prefer real-time listeners over polling APIs (battery efficiency, cost savings)
 
 ### Tech Stack
 | Layer | Technology |
@@ -142,16 +154,16 @@ Before marking any task complete:
 
 ---
 
-## 8. CRITICAL RULES
+## 8. DEVELOPMENT GUIDELINES
 
-1. **NEVER** write placeholder comments (`// TODO`, `// implementation here`)
-2. **NEVER** poll APIs — use real-time Firebase listeners
-3. **NEVER** use deprecated packages — verify SDK versions first
-4. **ALWAYS** cite evidence for wellness features (link to protocol)
-5. **ALWAYS** update STATUS.md at session end
-6. **ALWAYS** wait for plan approval before writing code
-7. **ALWAYS** commit and push changes after completing each task that modifies code
-8. **NEVER** mark a task complete without committing if files were changed
+1. **Complete implementations** — Avoid placeholder comments (`// TODO`); write working code
+2. **Real-time data** — Use Firebase listeners rather than polling APIs
+3. **Current packages** — Verify SDK versions before using unfamiliar libraries
+4. **Evidence-backed** — Cite protocols for wellness features (reference Master_Protocol_Library.md)
+5. **Session hygiene** — Update STATUS.md at session end
+6. **Plan-first** — Wait for approval before writing substantial code
+7. **Continuous sync** — Commit and push after completing each task
+8. **Atomic commits** — Don't mark tasks complete until changes are committed
 
 ---
 
@@ -236,7 +248,7 @@ When a todo item is marked complete and involves code changes:
 3. Push to remote: `git push origin <branch>`
 4. Only then mark the task as completed in the todo list
 
-**Critical:** Every completed task that modifies files MUST be committed and pushed before moving to the next task. This ensures continuous sync with GitHub.
+**Workflow:** Commit and push after completing each task that modifies files. This ensures continuous sync with GitHub.
 
 ### Verification Commands
 ```bash
