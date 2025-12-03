@@ -75,7 +75,7 @@ functions/src/api.ts                    — MVD routes (~10 lines added)
 PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md — Marked Component 6 complete
 ```
 
-**Commit:** `pending`
+**Commit:** `21f994d` — feat(phase2): implement MVD Detector (Session 10)
 
 ---
 
