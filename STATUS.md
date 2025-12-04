@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 40 (next) |
-| **Progress** | 18% of Phase 3 (2/11 sessions) |
+| **Session** | 41 (next) |
+| **Progress** | 27% of Phase 3 (3/11 sessions) |
 | **Branch** | main |
 
 ---
@@ -51,102 +51,88 @@
 
 ## Last Session
 
-**Date:** December 4, 2025 (Session 39)
-**Focus:** Phase 3 Session 2: HealthKit Integration + Playwright MCP Setup
+**Date:** December 4, 2025 (Session 40)
+**Focus:** Phase 3 Session 3: Recovery Score Engine
 
 **Accomplished:**
-- Created native Swift HealthKit module using Expo Modules API (`expo-healthkit-observer`)
-- Implemented HealthKitManager.swift with background delivery observers
-- Implemented ExpoHealthKitObserverModule.swift (Expo bridge layer)
-- Implemented ExpoHealthKitObserverAppDelegate.swift (app lifecycle hook)
-- Created TypeScript types and module exports with full type safety
-- Updated wearablesSync.ts with dual-table architecture (archive + daily_metrics)
-- Created useHealthKit React hook for clean HealthKit integration
-- Created WearableSettingsScreen.tsx with connection status, sync controls, and background toggle
-- Updated app.json with HealthKit entitlements and background modes
-- All TypeScript compiles successfully, no errors in new HealthKit files
-- **Added Playwright MCP for autonomous UI testing** (`claude mcp add playwright`)
-- Updated CLAUDE.md with Section 16 (Playwright MCP documentation)
-- Updated PHASE_III_IMPLEMENTATION_PLAN.md to mark HealthKit as complete
-- Committed Perplexity research papers for future reference
+- Created RecoveryScoreService with weighted algorithm:
+  - HRV (40%), RHR (25%), Sleep Quality (20%), Sleep Duration (10%), Respiratory Rate (5%)
+  - Temperature penalty applied when deviation > 0.3°C
+- Created BaselineService for 14-day rolling baselines with confidence levels
+- Implemented Z-score normalization with log-transformed HRV values
+- Weight redistribution when Oura-only metrics (respiratory rate, temp) unavailable
+- Edge case detection (alcohol, illness, travel, menstrual cycle)
+- 84 comprehensive unit tests covering all scenarios
+- Integrated recovery calculation into wearablesSync.ts
+- Created RecoveryScoreCard component with zone-colored display and expandable breakdown
+- Created useRecoveryScore hook for API integration
+- Added data source preference setting (Latest/Apple Health/Oura/WHOOP)
+- Dashboard integration in HomeScreen
 
 **Key Technical Decisions:**
-- Native Swift via Expo Modules API (not JS wrapper) for reliability
-- HRV stored as SDNN with `hrv_method:'sdnn'` tag (Apple's format, cannot convert to RMSSD)
-- Dual-write to both `wearable_data_archive` and `daily_metrics` tables
-- completionHandler() called within 2 seconds to avoid iOS 3-strike backoff
-- Requires expo-dev-client (not Expo Go) for native module support
-- Playwright MCP installed for future autonomous UI testing workflows
+- Separate baselines for SDNN (Apple) vs RMSSD (Oura) HRV - cannot compare directly
+- Zone mapping: Red (0-33), Yellow (34-66), Green (67-100)
+- Confidence levels: low (<7 days), medium (7-14), high (14+)
+- Weight redistribution via MutableWeights type to work with const weights
+- User-configurable data source preference stored in AsyncStorage
 
-**Commits:**
-- `e2341cb` — feat(phase3): implement HealthKit integration with native Swift module
-- `bbcf279` — docs(session39): add Playwright MCP, mark HealthKit complete
-- `c2ab068` — docs: finalize STATUS.md for Session 39 close
+**Commit:**
+- `531e9da` — feat(phase3): implement Recovery Score Engine with UI
 
 **Files Created:**
 ```
-modules/expo-healthkit-observer/package.json
-modules/expo-healthkit-observer/expo-module.config.json
-modules/expo-healthkit-observer/tsconfig.json
-modules/expo-healthkit-observer/ios/ExpoHealthKitObserver.podspec
-modules/expo-healthkit-observer/ios/HealthKitManager.swift
-modules/expo-healthkit-observer/ios/ExpoHealthKitObserverModule.swift
-modules/expo-healthkit-observer/ios/ExpoHealthKitObserverAppDelegate.swift
-modules/expo-healthkit-observer/src/types.ts
-modules/expo-healthkit-observer/src/ExpoHealthKitObserver.ts
-modules/expo-healthkit-observer/src/index.ts
-client/src/hooks/useHealthKit.ts
-client/src/screens/settings/WearableSettingsScreen.tsx
-PRD Documents/Perplexity Research Papers/autonomous UI testing for Claude Code Research Report.md
+functions/src/services/recoveryScore.ts — Core recovery calculation algorithm
+functions/src/services/baselineService.ts — 14-day rolling baseline management
+functions/src/services/index.ts — Barrel export for services
+functions/tests/recoveryScore.test.ts — 84 unit tests
+client/src/components/RecoveryScoreCard.tsx — Zone-colored score display
+client/src/hooks/useRecoveryScore.ts — API integration hook
+client/src/hooks/useDataSourcePreference.ts — Data source preference
 ```
 
 **Files Modified:**
 ```
-functions/src/wearablesSync.ts — Dual-table architecture with daily_metrics upsert
-client/app.json — HealthKit entitlements and background modes
-client/package.json — Added expo-build-properties
-CLAUDE.md — Added Section 16 (Playwright MCP)
-PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md — Marked Session 2 complete
+functions/src/wearablesSync.ts — Added calculateAndStoreRecovery integration
+client/src/screens/HomeScreen.tsx — RecoveryScoreCard integration
+client/src/screens/settings/WearableSettingsScreen.tsx — Data source preference UI
 ```
 
 ---
 
 ## Previous Session
 
-**Date:** December 4, 2025 (Session 38)
-**Focus:** AI Workspace Optimization (Perplexity + Claude Projects)
+**Date:** December 4, 2025 (Session 39)
+**Focus:** Phase 3 Session 2: HealthKit Integration + Playwright MCP Setup
 
 **Accomplished:**
-- Researched Perplexity Space custom instruction best practices
-- Enhanced user's Perplexity Space instructions for multi-domain research
-- Researched Claude Opus 4.5 prompting best practices (Anthropic docs)
-- Reviewed and enhanced Claude Projects co-founder instructions
+- Created native Swift HealthKit module using Expo Modules API (`expo-healthkit-observer`)
+- Implemented HealthKitManager.swift with background delivery observers
+- Created useHealthKit React hook and WearableSettingsScreen
+- Added Playwright MCP for autonomous UI testing
 
-**Commit:** `92de8d7` — docs: add research retrieval workflow, fix onboarding state update
+**Commits:**
+- `e2341cb` — feat(phase3): implement HealthKit integration with native Swift module
+- `bbcf279` — docs(session39): add Playwright MCP, mark HealthKit complete
 
 ---
 
 ## Next Session Priority
 
-### Phase 3 Session 3: Recovery Score Engine
+### Phase 3 Session 4: Wake Detection
 
-**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 3)
+**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 4)
 
 **Priority Tasks:**
-1. Create RecoveryScoreService with weighted algorithm (HRV, sleep quality, RHR)
-2. Handle SDNN HRV data (from HealthKit) vs RMSSD (from Oura)
-3. Calculate morning readiness score (0-100)
-4. Store scores in `daily_metrics.recovery_score`
-5. Surface recovery score in Dashboard UI
-
-**Files to Create:**
-- `functions/src/services/recoveryScore.ts`
-- `functions/src/services/recoveryScore.test.ts`
+1. Detect morning wake using sleep end time from HealthKit/Oura
+2. Trigger morning nudge generation when wake detected
+3. Handle timezone considerations for wake detection
+4. Create wake detection API endpoint
+5. Connect to nudge engine for Morning Stack generation
 
 **Key Considerations:**
-- Must handle both SDNN (Apple) and RMSSD (Oura) HRV methods
-- Consider sleep stages (deep, REM) vs total sleep time
-- Weight resting heart rate relative to user's baseline
+- Use sleep analysis end time as primary wake signal
+- Fallback to first activity if no sleep data
+- Handle cases where user wakes but doesn't sync immediately
 
 ### Prerequisites Before Testing HealthKit
 - Build iOS development client: `npx expo prebuild --platform ios`
@@ -193,7 +179,7 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 
 ```
 Client:    45/64 passing (Jest)
-Functions: 299 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine
+Functions: 383 passing (Vitest) — includes 84 recoveryScore + 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine
 E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded coverage
 ```
 
@@ -231,8 +217,8 @@ None currently.
 |---------|-----------|--------|
 | 1 | Database Migrations + Types | ✅ Complete (5 tables, 3 type files) |
 | 2 | HealthKit Integration (iOS) | ✅ Complete (expo-healthkit-observer module + UI) |
-| 3 | Recovery Score Engine | 🔜 Next |
-| 4 | Wake Detection | 🔲 Pending |
+| 3 | Recovery Score Engine | ✅ Complete (weighted algorithm, 84 tests, Dashboard UI) |
+| 4 | Wake Detection | 🔜 Next |
 | 5 | Calendar Integration | 🔲 Pending |
 | 6 | Real-time Sync (Firestore) | 🔲 Pending |
 | 7 | Reasoning UX (4-panel) | 🔲 Pending |
@@ -241,7 +227,7 @@ None currently.
 | 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
 | 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 2/11 sessions complete (18%)**
+**Phase 3 Status: 3/11 sessions complete (27%)**
 
 ---
 
@@ -264,4 +250,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 39 - HealthKit + Playwright MCP Complete)*
+*Last Updated: December 4, 2025 (Session 40 - Recovery Score Engine Complete)*
