@@ -3,9 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { extractBearerToken } from './utils/http';
 import { verifyFirebaseToken } from './firebaseAdmin';
 import { getServiceClient } from './supabaseClient';
+import type { DailyMetricsRow, HrvMethod, WearableSource as WearableSourceType } from './types/wearable.types';
 
 type WearableSource = 'apple_health' | 'google_fit';
-type WearableMetricType = 'sleep' | 'hrv' | 'rhr' | 'steps';
+type WearableMetricType = 'sleep' | 'hrv' | 'rhr' | 'steps' | 'activeCalories';
 
 interface WearableMetricReading {
   metric: WearableMetricType;
@@ -15,6 +16,10 @@ interface WearableMetricReading {
   endDate?: string;
   source?: WearableSource;
   metadata?: Record<string, unknown> | null;
+  /** HRV method: Apple uses SDNN, Health Connect may provide RMSSD */
+  hrvMethod?: HrvMethod;
+  /** Sleep stage for sleep readings */
+  sleepStage?: string;
 }
 
 interface WearableSyncPayload {
@@ -32,6 +37,25 @@ interface NormalizedWearableMetrics {
   restingHeartRate: number | null;
   steps: number | null;
   readinessScore: number | null;
+}
+
+/**
+ * Aggregated daily metrics for the daily_metrics table (Phase 3 canonical format).
+ */
+interface DailyMetricsNormalized {
+  sleepDurationHours: number | null;
+  sleepEfficiency: number | null;
+  bedtimeStart: string | null;
+  bedtimeEnd: string | null;
+  remPercentage: number | null;
+  deepPercentage: number | null;
+  lightPercentage: number | null;
+  awakePercentage: number | null;
+  hrvAvg: number | null;
+  hrvMethod: HrvMethod | null;
+  rhrAvg: number | null;
+  steps: number | null;
+  activeCalories: number | null;
 }
 
 interface WearableArchiveRow {
@@ -244,6 +268,217 @@ async function insertArchiveRow(
   }
 }
 
+/**
+ * Map sleep stage string to category.
+ */
+function getSleepCategory(stage: string | undefined): 'deep' | 'light' | 'rem' | 'awake' | null {
+  if (!stage) return null;
+  const normalized = stage.toLowerCase();
+  if (normalized.includes('deep')) return 'deep';
+  if (normalized.includes('rem')) return 'rem';
+  if (normalized.includes('awake')) return 'awake';
+  if (normalized.includes('core') || normalized.includes('light') || normalized.includes('asleep')) return 'light';
+  return null;
+}
+
+/**
+ * Normalize wearable readings into DailyMetricsNormalized format for Phase 3 daily_metrics table.
+ *
+ * Key implementation notes:
+ * - Apple HealthKit provides HRV as SDNN (24h aggregate), NOT RMSSD
+ * - Do NOT convert SDNN to RMSSD - they measure different things
+ * - Store hrvMethod to track the measurement method
+ */
+function normalizeToDailyMetrics(
+  metrics: WearableMetricReading[],
+  source: WearableSource
+): DailyMetricsNormalized {
+  const sleepReadings: WearableMetricReading[] = [];
+  const hrvValues: number[] = [];
+  const rhrValues: number[] = [];
+  const stepsValues: number[] = [];
+  const activeCaloriesValues: number[] = [];
+  let hrvMethod: HrvMethod | null = null;
+
+  for (const reading of metrics) {
+    const numericValue = typeof reading.value === 'number' ? reading.value : Number(reading.value);
+    if (!Number.isFinite(numericValue)) continue;
+
+    switch (reading.metric) {
+      case 'sleep':
+        sleepReadings.push(reading);
+        break;
+      case 'hrv':
+        hrvValues.push(numericValue);
+        // Track HRV method: Apple uses SDNN, Health Connect may use RMSSD
+        if (!hrvMethod) {
+          hrvMethod = reading.hrvMethod ?? (source === 'apple_health' ? 'sdnn' : 'rmssd');
+        }
+        break;
+      case 'rhr':
+        rhrValues.push(numericValue);
+        break;
+      case 'steps':
+        stepsValues.push(numericValue);
+        break;
+      case 'activeCalories':
+        activeCaloriesValues.push(numericValue);
+        break;
+    }
+  }
+
+  // Aggregate sleep data
+  let sleepDurationHours: number | null = null;
+  let bedtimeStart: string | null = null;
+  let bedtimeEnd: string | null = null;
+  let deepMinutes = 0;
+  let lightMinutes = 0;
+  let remMinutes = 0;
+  let awakeMinutes = 0;
+  let totalSleepMinutes = 0;
+
+  if (sleepReadings.length > 0) {
+    // Sort by start date to find bedtime boundaries
+    const sorted = sleepReadings
+      .filter((r) => r.startDate && r.endDate)
+      .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime());
+
+    if (sorted.length > 0) {
+      bedtimeStart = sorted[0].startDate!;
+      bedtimeEnd = sorted[sorted.length - 1].endDate!;
+    }
+
+    for (const reading of sleepReadings) {
+      const minutes = typeof reading.value === 'number' ? reading.value : Number(reading.value);
+      if (!Number.isFinite(minutes)) continue;
+
+      const category = getSleepCategory(reading.sleepStage);
+      totalSleepMinutes += minutes;
+
+      switch (category) {
+        case 'deep':
+          deepMinutes += minutes;
+          break;
+        case 'light':
+          lightMinutes += minutes;
+          break;
+        case 'rem':
+          remMinutes += minutes;
+          break;
+        case 'awake':
+          awakeMinutes += minutes;
+          break;
+      }
+    }
+
+    sleepDurationHours = totalSleepMinutes > 0
+      ? Number.parseFloat((totalSleepMinutes / 60).toFixed(2))
+      : null;
+  }
+
+  // Calculate sleep stage percentages
+  const actualSleepMinutes = deepMinutes + lightMinutes + remMinutes;
+  const remPercentage = actualSleepMinutes > 0
+    ? Math.round((remMinutes / actualSleepMinutes) * 100)
+    : null;
+  const deepPercentage = actualSleepMinutes > 0
+    ? Math.round((deepMinutes / actualSleepMinutes) * 100)
+    : null;
+  const lightPercentage = actualSleepMinutes > 0
+    ? Math.round((lightMinutes / actualSleepMinutes) * 100)
+    : null;
+  const awakePercentage = totalSleepMinutes > 0
+    ? Math.round((awakeMinutes / totalSleepMinutes) * 100)
+    : null;
+
+  // Sleep efficiency: actual sleep / time in bed
+  const sleepEfficiency = totalSleepMinutes > 0 && actualSleepMinutes > 0
+    ? Math.round((actualSleepMinutes / totalSleepMinutes) * 100)
+    : null;
+
+  // Average HRV (stored as-is, no conversion)
+  const hrvAvg = hrvValues.length > 0
+    ? Number.parseFloat((hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length).toFixed(2))
+    : null;
+
+  // Average RHR
+  const rhrAvg = rhrValues.length > 0
+    ? Number.parseFloat((rhrValues.reduce((a, b) => a + b, 0) / rhrValues.length).toFixed(1))
+    : null;
+
+  // Total steps
+  const steps = stepsValues.length > 0
+    ? Math.round(stepsValues.reduce((a, b) => a + b, 0))
+    : null;
+
+  // Total active calories
+  const activeCalories = activeCaloriesValues.length > 0
+    ? Math.round(activeCaloriesValues.reduce((a, b) => a + b, 0))
+    : null;
+
+  return {
+    sleepDurationHours,
+    sleepEfficiency,
+    bedtimeStart,
+    bedtimeEnd,
+    remPercentage,
+    deepPercentage,
+    lightPercentage,
+    awakePercentage,
+    hrvAvg,
+    hrvMethod,
+    rhrAvg,
+    steps,
+    activeCalories,
+  };
+}
+
+/**
+ * Upsert daily metrics into the daily_metrics table (Phase 3 canonical format).
+ * Uses user_id + date as unique key.
+ */
+async function upsertDailyMetrics(
+  client: SupabaseClient,
+  userId: string,
+  date: string,
+  source: WearableSource,
+  normalized: DailyMetricsNormalized,
+  rawPayload: WearableMetricReading[]
+): Promise<void> {
+  const row: Partial<DailyMetricsRow> = {
+    user_id: userId,
+    date,
+    sleep_duration_hours: normalized.sleepDurationHours,
+    sleep_efficiency: normalized.sleepEfficiency,
+    bedtime_start: normalized.bedtimeStart,
+    bedtime_end: normalized.bedtimeEnd,
+    rem_percentage: normalized.remPercentage,
+    deep_percentage: normalized.deepPercentage,
+    light_percentage: normalized.lightPercentage,
+    awake_percentage: normalized.awakePercentage,
+    hrv_avg: normalized.hrvAvg,
+    hrv_method: normalized.hrvMethod,
+    rhr_avg: normalized.rhrAvg,
+    steps: normalized.steps,
+    active_calories: normalized.activeCalories,
+    wearable_source: source === 'apple_health' ? 'apple_health' : 'health_connect',
+    raw_payload: rawPayload as unknown as Record<string, unknown>,
+    synced_at: new Date().toISOString(),
+  };
+
+  const { error } = await client
+    .from('daily_metrics')
+    .upsert(row, {
+      onConflict: 'user_id,date',
+      ignoreDuplicates: false,
+    });
+
+  if (error) {
+    console.error('[WearablesSync] Failed to upsert daily_metrics:', error.message);
+    // Don't throw - daily_metrics is supplementary, archive is primary
+  }
+}
+
 type ArchiveHistoryRow = {
   hrv_score: number | null;
   sleep_hours: number | null;
@@ -396,6 +631,12 @@ export async function syncWearableData(req: Request, res: Response): Promise<voi
     };
 
     await insertArchiveRow(supabase, archiveRow);
+
+    // Phase 3: Dual-write to daily_metrics table for Recovery Engine
+    const dateStr = capturedAt.split('T')[0]; // Extract YYYY-MM-DD from ISO timestamp
+    const dailyNormalized = normalizeToDailyMetrics(metrics, source);
+    await upsertDailyMetrics(supabase, supabaseUserId, dateStr, source, dailyNormalized, metrics);
+
     await updateUserHealthMetrics(supabase, supabaseUserId);
 
     res.status(200).json({ success: true });

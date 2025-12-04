@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 38 |
-| **Progress** | 18% of Phase 3 |
+| **Session** | 39 |
+| **Progress** | 36% of Phase 3 |
 | **Branch** | main |
 
 ---
@@ -51,6 +51,55 @@
 
 ## Last Session
 
+**Date:** December 4, 2025 (Session 39)
+**Focus:** Phase 3 Session 2: HealthKit Integration (iOS)
+
+**Accomplished:**
+- Created native Swift HealthKit module using Expo Modules API (`expo-healthkit-observer`)
+- Implemented HealthKitManager.swift with background delivery observers
+- Implemented ExpoHealthKitObserverModule.swift (Expo bridge layer)
+- Implemented ExpoHealthKitObserverAppDelegate.swift (app lifecycle hook)
+- Created TypeScript types and module exports with full type safety
+- Updated wearablesSync.ts with dual-table architecture (archive + daily_metrics)
+- Created useHealthKit React hook for clean HealthKit integration
+- Created WearableSettingsScreen.tsx with connection status, sync controls, and background toggle
+- Updated app.json with HealthKit entitlements and background modes
+- All TypeScript compiles successfully, no errors in new HealthKit files
+
+**Key Technical Decisions:**
+- Native Swift via Expo Modules API (not JS wrapper) for reliability
+- HRV stored as SDNN with `hrv_method:'sdnn'` tag (Apple's format, cannot convert to RMSSD)
+- Dual-write to both `wearable_data_archive` and `daily_metrics` tables
+- completionHandler() called within 2 seconds to avoid iOS 3-strike backoff
+- Requires expo-dev-client (not Expo Go) for native module support
+
+**Files Created:**
+```
+modules/expo-healthkit-observer/package.json
+modules/expo-healthkit-observer/expo-module.config.json
+modules/expo-healthkit-observer/tsconfig.json
+modules/expo-healthkit-observer/ios/ExpoHealthKitObserver.podspec
+modules/expo-healthkit-observer/ios/HealthKitManager.swift
+modules/expo-healthkit-observer/ios/ExpoHealthKitObserverModule.swift
+modules/expo-healthkit-observer/ios/ExpoHealthKitObserverAppDelegate.swift
+modules/expo-healthkit-observer/src/types.ts
+modules/expo-healthkit-observer/src/ExpoHealthKitObserver.ts
+modules/expo-healthkit-observer/src/index.ts
+client/src/hooks/useHealthKit.ts
+client/src/screens/settings/WearableSettingsScreen.tsx
+```
+
+**Files Modified:**
+```
+functions/src/wearablesSync.ts — Dual-table architecture with daily_metrics upsert
+client/app.json — HealthKit entitlements and background modes
+client/package.json — Added expo-build-properties
+```
+
+---
+
+## Previous Session
+
 **Date:** December 4, 2025 (Session 38)
 **Focus:** AI Workspace Optimization (Perplexity + Claude Projects)
 
@@ -59,62 +108,37 @@
 - Enhanced user's Perplexity Space instructions for multi-domain research
 - Researched Claude Opus 4.5 prompting best practices (Anthropic docs)
 - Reviewed and enhanced Claude Projects co-founder instructions
-- Added research retrieval workflow to CLAUDE.md
-- Fixed AuthProvider onboarding state update (removed unnecessary refresh)
 
-**Files Modified:**
-```
-CLAUDE.md — Added "Retrieving Research Results" section (lines 58-62)
-client/src/providers/AuthProvider.tsx — Optimized onboarding state update
-```
-
-**Commits:**
-- `8bb4929` — docs: add Perplexity research workflow to CLAUDE.md
-- `6643825` — docs: finalize STATUS.md for Session 37 close
-- `92de8d7` — docs: add research retrieval workflow, fix onboarding state update
-
----
-
-## Previous Session
-
-**Date:** December 4, 2025 (Session 37)
-**Focus:** Perplexity Research Workflow & CLAUDE.md Enhancement
-
-**Accomplished:**
-- Created Perplexity research workflow in CLAUDE.md (Self-Research + Deep Research tiers)
-- Added prompt template and guidelines for writing effective Perplexity prompts
-
-**Commit:** `8bb4929` — docs: add Perplexity research workflow to CLAUDE.md
+**Commit:** `92de8d7` — docs: add research retrieval workflow, fix onboarding state update
 
 ---
 
 ## Next Session Priority
 
-### Phase 3 Session 2: HealthKit Integration (iOS)
+### Phase 3 Session 3: Recovery Score Engine
 
-**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 2)
+**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 3)
 
 **Priority Tasks:**
-1. Choose library: `expo-health` vs `react-native-health`
-2. Configure HealthKit permissions (sleep, HRV, HR, steps, activity)
-3. Implement background delivery observers
-4. Normalize HealthKit data → `daily_metrics` table format
-5. Create wearable settings screen with HealthKit connection
+1. Create RecoveryScoreService with weighted algorithm (HRV, sleep quality, RHR)
+2. Handle SDNN HRV data (from HealthKit) vs RMSSD (from Oura)
+3. Calculate morning readiness score (0-100)
+4. Store scores in `daily_metrics.recovery_score`
+5. Surface recovery score in Dashboard UI
 
 **Files to Create:**
-- `client/src/services/healthkit/HealthKitClient.ts`
-- `client/src/services/healthkit/HealthKitNormalizer.ts`
-- `client/src/screens/settings/WearableConnectionScreen.tsx`
-- `client/src/hooks/useHealthKit.ts`
+- `functions/src/services/recoveryScore.ts`
+- `functions/src/services/recoveryScore.test.ts`
 
-**Research Needed:**
-- Review `PRD Documents/Phase_II_III_Rsearch_Files - Gemini Synthesis/APEX_OS_WEARABLE_APIS_v1.md`
-- Verify expo-health background delivery capabilities
-- Confirm iOS entitlements required
+**Key Considerations:**
+- Must handle both SDNN (Apple) and RMSSD (Oura) HRV methods
+- Consider sleep stages (deep, REM) vs total sleep time
+- Weight resting heart rate relative to user's baseline
 
-### Optional: Expand E2E Test Coverage
-- Create test user in Supabase (`e2e-test@apexos.dev`)
-- Enable authenticated navigation tests in `main-navigation.spec.ts`
+### Prerequisites Before Testing HealthKit
+- Build iOS development client: `npx expo prebuild --platform ios`
+- Run on physical iOS device (HealthKit not available in simulator)
+- Test on device with Apple Watch paired for real HRV data
 
 ---
 
@@ -193,8 +217,8 @@ None currently.
 | Session | Component | Status |
 |---------|-----------|--------|
 | 1 | Database Migrations + Types | ✅ Complete (5 tables, 3 type files) |
-| 2 | HealthKit Integration (iOS) | 🔜 Next — Background delivery, observers |
-| 3 | Recovery Score Engine | 🔲 Pending |
+| 2 | HealthKit Integration (iOS) | ✅ Complete (expo-healthkit-observer module + UI) |
+| 3 | Recovery Score Engine | 🔜 Next |
 | 4 | Wake Detection | 🔲 Pending |
 | 5 | Calendar Integration | 🔲 Pending |
 | 6 | Real-time Sync (Firestore) | 🔲 Pending |
@@ -204,7 +228,7 @@ None currently.
 | 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
 | 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 1/11 sessions complete (9%)**
+**Phase 3 Status: 2/11 sessions complete (18%)**
 
 ---
 
@@ -227,4 +251,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 38 - AI Workspace Optimization)*
+*Last Updated: December 4, 2025 (Session 39 - HealthKit Integration Complete)*

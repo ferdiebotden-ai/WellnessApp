@@ -16,7 +16,18 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.wellnessos.app"
+      "bundleIdentifier": "com.wellnessos.app",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "Apex OS analyzes your HRV, sleep, and activity data to personalize evidence-based recovery protocols.",
+        "NSHealthUpdateUsageDescription": "Apex OS records completed protocols and activity to Apple Health.",
+        "UIBackgroundModes": [
+          "processing"
+        ]
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.background-delivery": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +42,15 @@
     "newArchEnabled": true,
     "scheme": "wellnessos",
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
