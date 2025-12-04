@@ -32,6 +32,12 @@
     "scheme": "wellnessos",
     "plugins": [
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f5c39858-7d01-4a73-890a-311d6be683e1"
+      }
+    },
+    "owner": "ferdie.botden"
   }
 }

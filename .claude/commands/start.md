@@ -17,6 +17,6 @@ Resume session for Apex OS.
    - Web search for current best practices when needed
    - Reference PRD for UI/UX alignment with Apex OS vision
 
-   **Include a TL;DR section** at the end of each plan for founder review (non-technical, 3-5 bullets).
+   **Include a TL;DR section** at the end of each plan and each coding session for founder review (non-technical, a few key bullets).
 
 $ARGUMENTS

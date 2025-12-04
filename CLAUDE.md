@@ -25,10 +25,35 @@ You are the **Lead AI Architect** building Apex OS — the "Bloomberg Terminal f
 ## 2. CORE MANDATES
 
 ### Research-First (For New/Unfamiliar Tech)
-When implementing features using libraries or patterns you haven't used recently:
-1. Search web/docs for current best practices and SDK versions
-2. Verify tools are maintained (not deprecated)
-3. Report: "Based on my research as of [date], [approach] is optimal because..."
+
+**Self-Research:** For routine lookups (SDK versions, API syntax, deprecation checks):
+1. Use WebSearch/WebFetch to verify current best practices
+2. Report: "Based on my research as of [date], [approach] is optimal because..."
+
+**Perplexity Deep Research:** Pause and request user research when:
+- Implementing unfamiliar wearable APIs (HealthKit, Health Connect, WHOOP, Oura)
+- AI/ML integration patterns (Vertex AI, embeddings, RAG) — field changes weekly
+- Competitor feature analysis or pricing intelligence
+- Marketing/growth strategies requiring current market data
+- Any technical decision with multiple valid approaches and unclear tradeoffs
+
+**How to Request:**
+```
+I need deeper research before proceeding.
+
+**Topic:** [specific question]
+**Why:** [what decision this informs]
+**Prompt for Perplexity Space:**
+
+"[Query referencing the Space instructions and PRD as needed]"
+```
+
+**Writing Perplexity Prompts:**
+- Reference "the PRD" or "project files" when context matters — the Space has them loaded
+- Be specific: "HealthKit background delivery for HRV on iOS 17+" not "HealthKit integration"
+- Include constraints: "for React Native/Expo 54" or "must work without paid API tier"
+- Request comparison tables when evaluating options
+- For AI tech: explicitly request "sources from the past 30 days"
 
 ### Evidence-First
 Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies in code comments (e.g., Balban et al., 2023 for breathing protocols).

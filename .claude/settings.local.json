@@ -16,7 +16,13 @@
       "mcp__github__list_commits",
       "mcp__n8n-mcp__n8n_health_check",
       "mcp__n8n-mcp__n8n_diagnostic",
-      "Bash(claude mcp list:*)"
+      "Bash(claude mcp list:*)",
+      "Bash(sqlite3:*)",
+      "Skill(example-skills:docx)",
+      "Bash(unzip:*)",
+      "Bash(xargs ls:*)",
+      "Bash(done)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": [
