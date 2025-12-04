@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 2: Brain (AI & Reasoning) — Completion |
-| **Session** | 11 of 13 complete |
-| **Progress** | 85% of Phase 2 |
+| **Session** | 12 of 13 complete |
+| **Progress** | 92% of Phase 2 |
 | **Branch** | main |
 
 ---
@@ -28,6 +28,49 @@
 
 ## Last Session
 
+**Date:** December 3, 2025 (Session 31)
+**Focus:** Phase II Session 12 — AI Processing Animation + Why Engine
+
+**Accomplished:**
+
+**Part A: AI Processing Animation (Client)**
+- Created ShimmerText component with pulsing opacity animation (Reanimated)
+- Created AIThinkingState component with cycling messages + animated dots
+- Integrated into ChatModal (shows thinking state during AI response)
+- Integrated into TaskList (shows thinking state for generating nudges)
+
+**Part B: Why Engine (Backend)**
+- Created whyEngine.ts with WhyExpansion generation logic
+- Extract mechanism from protocol descriptions (first 2 sentences)
+- Parse DOI from citations with regex
+- Generate personalized "Your Data" via Gemini (max 150 chars)
+- Map confidence scores to High/Medium/Low levels
+- Added 36 unit tests (all passing)
+- Integrated into nudgeEngine.ts (line 371)
+- Add WhyExpansion to Firestore nudge documents
+
+**Files Created:**
+```
+functions/src/reasoning/whyEngine.ts        — WhyExpansion generation logic
+functions/tests/whyEngine.test.ts           — 36 unit tests
+client/src/components/AIThinkingState.tsx   — Animated thinking indicator
+client/src/components/ShimmerText.tsx       — Shimmer text animation
+```
+
+**Files Modified:**
+```
+functions/src/nudgeEngine.ts                — Integrated WhyExpansion
+client/src/components/ChatModal.tsx         — Added AIThinkingState
+client/src/components/TaskList.tsx          — Added AIThinkingState
+client/src/types/dashboard.ts               — Added WhyExpansion type
+```
+
+**Commit:** `ee1c136` — feat: add AI Processing Animation + Why Engine (Session 12)
+
+---
+
+## Previous Session
+
 **Date:** December 3, 2025 (Session 30)
 **Focus:** Phase II Session 11 — Outcome Correlation Verification + Dashboard
 
@@ -35,68 +78,36 @@
 - Verified correlation engine: 51 synthesis tests pass (Pearson r + p-value)
 - Created `GET /api/users/me/correlations` endpoint
 - Built CorrelationCard component (trend arrows, p-values, progress bars)
-- Built EmptyCorrelationState for users with < 14 days data
-- Enhanced InsightsScreen with "YOUR PATTERNS" section
-- Added useCorrelations hook + client-side types
-
-**Files Created:**
-```
-functions/src/correlations.ts               — API endpoint handler
-client/src/types/correlations.ts            — Client-side types
-client/src/components/CorrelationCard.tsx   — Single correlation display
-client/src/components/EmptyCorrelationState.tsx — Empty state component
-client/src/hooks/useCorrelations.ts         — Data fetching hook
-```
-
-**Files Modified:**
-```
-functions/src/api.ts                        — Registered new route
-client/src/screens/InsightsScreen.tsx       — Full dashboard implementation
-client/src/services/api.ts                  — Added fetchCorrelations function
-```
 
 **Commit:** `1bc0faa` — feat: add Correlation Dashboard API and UI (Session 11)
 
 ---
 
-## Previous Session
-
-**Date:** December 3, 2025 (Session 29)
-**Focus:** Phase II Completion Planning — Corrected Phase Status
-
-**Accomplished:**
-- Corrected Phase II status (was incorrectly marked as Phase 3)
-- Created completion plan for Sessions 11-13
-- Updated PRD with AI Processing Animation + Correlation Dashboard specs
-
-**Commits:**
-- `cc220af` — docs: correct Phase II status and add Sessions 11-13 specs (Session 29)
-
----
-
 ## Next Session Priority
 
-### Phase 2: Session 12 — AI Processing Animation + Why Engine
+### Phase 2: Session 13 — Reasoning Transparency UI (FINAL SESSION)
 
-**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Sessions 11-13 spec
+**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Session 13 spec
 
-**Goal:** Add AI "thinking" animation + backend reasoning transparency
+**Goal:** Create NudgeCard with "Why?" expansion panel
 
-**Part A: AI Processing Animation**
-- Create shimmer/pulsing animation component
-- Apply to nudge generation and chat responses
-- Progressive text reveal (Perplexity-style)
+**Part A: NudgeCard Component**
+- Create dedicated NudgeCard.tsx (replaces TaskList for nudges)
+- Add "Why?" link/button
+- Smooth expand/collapse animation (200ms)
 
-**Part B: Why Engine (Backend)**
-- Add `reasoning_chain` field to nudge generation
-- Store protocol citations and confidence factors
-- Return in nudge API response
+**Part B: 4-Panel Reasoning Expansion**
+- MECHANISM: Display whyExpansion.mechanism
+- EVIDENCE: Citation with DOI link + strength bar
+- YOUR DATA: Personalized insight
+- CONFIDENCE: Level with color (High=green, Medium=amber, Low=gray)
 
 **Acceptance Criteria:**
-- [ ] Shimmer animation displays during AI processing
-- [ ] Animation integrates with NudgeCard and chat
-- [ ] Backend returns reasoning_chain with citations
-- [ ] Smooth 60fps animation (Reanimated)
+- [ ] "Why?" tap expands reasoning panel
+- [ ] All 4 sections displayed correctly
+- [ ] DOI links open in external browser
+- [ ] Smooth expand/collapse animation (60fps)
+- [ ] Panel collapses on outside tap
 
 ---
 
@@ -104,7 +115,6 @@ client/src/services/api.ts                  — Added fetchCorrelations function
 
 | Session | Component | Description |
 |---------|-----------|-------------|
-| 12 | AI Processing Animation + Why Engine | Shimmer animation + backend reasoning |
 | 13 | Reasoning Transparency UI | NudgeCard + 4-panel Why? expansion |
 
 ---
@@ -147,7 +157,7 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 
 ```
 Client:    45/64 passing (Jest)
-Functions: 263 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD
+Functions: 299 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine
 E2E:       1 passing (nudge flow)
 ```
 
@@ -171,11 +181,11 @@ None currently.
 | 9 | Weekly Synthesis Part 2 | ✅ Complete (narrative gen, push, scheduler, 10 tests) |
 | 10 | MVD Detector | ✅ Complete (4 triggers, 50 tests, calendar deferred to Phase 3) |
 | 11 | Outcome Correlation | ✅ Complete (API + Dashboard UI, 8 files) |
-| 12 | AI Processing Animation + Why Engine | ⏳ Pending |
+| 12 | AI Processing Animation + Why Engine | ✅ Complete (shimmer animation, whyEngine, 36 tests) |
 | 13 | Reasoning Transparency UI | ⏳ Pending |
 
-**Phase 2 Status:** 11/13 sessions complete (85%) — 2 sessions remaining before Phase 3.
+**Phase 2 Status:** 12/13 sessions complete (92%) — 1 session remaining before Phase 3.
 
 ---
 
-*Last Updated: December 3, 2025 (Session 30 - Correlation Dashboard Complete)*
+*Last Updated: December 3, 2025 (Session 31 - AI Processing Animation + Why Engine Complete)*
