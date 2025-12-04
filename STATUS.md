@@ -53,6 +53,8 @@ client/src/screens/auth/ForgotPasswordScreen.tsx — Added testIDs
 STATUS.md                                    — Updated test status
 ```
 
+**Commit:** `4f0a25a` — test(e2e): expand Playwright test coverage for Phase 1-2 UI
+
 ---
 
 ## Previous Session
