@@ -50,6 +50,7 @@ tests/auth-flow.spec.ts                      — Updated to use getByTestId()
 **Commits:**
 - `acab384` — docs: add Playwright E2E testing documentation
 - `f9ef168` — fix(e2e): add testIDs to auth screens and update Playwright selectors
+- `381b4df` — docs: update CLAUDE.md Playwright section with fix pattern
 
 ---
 
@@ -160,4 +161,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 33 - Closed)*
+*Last Updated: December 4, 2025 (Session 33 - Playwright E2E Fixed)*
