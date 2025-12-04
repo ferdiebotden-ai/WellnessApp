@@ -28,60 +28,50 @@
 
 ## Last Session
 
-**Date:** December 4, 2025 (Session 32)
-**Focus:** Phase II Session 13 — Reasoning Transparency UI (PHASE 2 FINAL)
+**Date:** December 4, 2025 (Session 33)
+**Focus:** Playwright E2E Testing Setup & Documentation
 
 **Accomplished:**
-
-**Part A: NudgeCard Component**
-- Created NudgeCard.tsx with expandable "Why?" reasoning panel
-- Spring animation for expand/collapse (200ms, damping: 20, stiffness: 200)
-- Toggle behavior: tap "Why?" to expand/collapse
-- Displays title, meta info, completion checkmark
-
-**Part B: ReasoningExpansion Component (4 Panels)**
-- MECHANISM: First 1-2 sentences of protocol description
-- EVIDENCE: Citation + DOI link + strength progress bar
-- YOUR DATA: Personalized insight (max 150 chars)
-- CONFIDENCE: Level with color coding (High=green, Medium=amber, Low=gray)
-- Sequential fade-in animation (100ms delay between panels)
-
-**Files Created:**
-```
-client/src/components/NudgeCard.tsx           — NudgeCard with expand/collapse
-client/src/components/ReasoningExpansion.tsx  — 4-panel reasoning UI
-```
+- Verified Playwright v1.56.1 is working with Expo web build
+- Installed Chromium browser and system dependencies (libnspr4, libnss3, libasound2t64)
+- Ran smoke test: 1/5 auth-flow tests passing (selector issues identified)
+- Added Section 15 to CLAUDE.md with full Playwright documentation
+- Updated STATUS.md with E2E test status and action items
 
 **Files Modified:**
 ```
-client/src/components/TaskList.tsx            — Renders NudgeCard for whyExpansion
+CLAUDE.md   — Added Section 15: Playwright E2E Testing
+STATUS.md   — Updated test status, added Playwright subsection
 ```
 
-**Commit:** `47c3605` — feat: add Reasoning Transparency UI (Session 13 - Phase 2 Complete)
+**Commit:** `acab384` — docs: add Playwright E2E testing documentation
 
 ---
 
 ## Previous Session
 
-**Date:** December 3, 2025 (Session 31)
-**Focus:** Phase II Session 12 — AI Processing Animation + Why Engine
+**Date:** December 4, 2025 (Session 32)
+**Focus:** Phase II Session 13 — Reasoning Transparency UI (PHASE 2 FINAL)
 
 **Accomplished:**
-- Created ShimmerText + AIThinkingState components (Reanimated)
-- Created whyEngine.ts with WhyExpansion generation logic
-- 36 unit tests passing
+- Created NudgeCard.tsx with expandable "Why?" reasoning panel
+- Created ReasoningExpansion.tsx with 4 panels (Mechanism, Evidence, Your Data, Confidence)
+- Spring animations for expand/collapse
 
-**Commit:** `ee1c136` — feat: add AI Processing Animation + Why Engine (Session 12)
+**Commit:** `47c3605` — feat: add Reasoning Transparency UI (Session 13 - Phase 2 Complete)
 
 ---
 
 ## Next Session Priority
 
-### Phase 3: Nervous System (Real Data Flow)
+### Option A: Fix E2E Tests
+- Update Playwright test selectors to use `getByTestId()` or more specific locators
+- Get existing 23 tests passing before Phase 3
+- Add new tests for Phase 2 features (MVD, AI reasoning, nudges)
+
+### Option B: Phase 3: Nervous System (Real Data Flow)
 
 **Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md`
-
-**Overview:** Connect the AI brain to real-world data sources. Phase 3 brings in actual wearable data, calendar integration, and real-time recovery calculations.
 
 **Session 1 Priority: Wearable Data Sync**
 - Google Fit / Apple HealthKit OAuth
@@ -165,4 +155,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 33 - Playwright E2E Setup Documented)*
+*Last Updated: December 4, 2025 (Session 33 - Closed)*
