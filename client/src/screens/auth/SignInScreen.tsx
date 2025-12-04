@@ -86,6 +86,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
               autoCorrect={false}
               error={emailError}
               editable={!loading}
+              testID="signin-email-input"
             />
 
             <FormInput
@@ -98,12 +99,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
               autoCorrect={false}
               error={passwordError}
               editable={!loading}
+              testID="signin-password-input"
             />
 
             <TouchableOpacity
               onPress={() => navigation.navigate('ForgotPassword')}
               style={styles.forgotPasswordLink}
               disabled={loading}
+              testID="forgot-password-link"
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -114,6 +117,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
               loading={loading}
               disabled={loading}
               style={styles.signInButton}
+              testID="signin-submit-button"
             />
           </View>
 
@@ -122,6 +126,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               onPress={() => navigation.navigate('SignUp')}
               disabled={loading}
+              testID="goto-signup-link"
             >
               <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>

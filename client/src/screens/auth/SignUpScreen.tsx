@@ -126,6 +126,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               autoCorrect={false}
               error={emailError}
               editable={!loading}
+              testID="signup-email-input"
             />
 
             <FormInput
@@ -138,6 +139,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               autoCorrect={false}
               error={passwordError}
               editable={!loading}
+              testID="signup-password-input"
             />
 
             {password.length > 0 && (
@@ -159,12 +161,14 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               autoCorrect={false}
               error={confirmPasswordError}
               editable={!loading}
+              testID="signup-confirm-password-input"
             />
 
             <TouchableOpacity
               style={styles.termsContainer}
               onPress={() => setAcceptedTerms(!acceptedTerms)}
               disabled={loading}
+              testID="terms-checkbox"
             >
               <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
                 {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
@@ -180,6 +184,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               loading={loading}
               disabled={loading || !acceptedTerms}
               style={styles.signUpButton}
+              testID="signup-submit-button"
             />
           </View>
 
@@ -188,6 +193,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               onPress={() => navigation.navigate('SignIn')}
               disabled={loading}
+              testID="goto-signin-link"
             >
               <Text style={styles.footerLink}>Sign In</Text>
             </TouchableOpacity>
