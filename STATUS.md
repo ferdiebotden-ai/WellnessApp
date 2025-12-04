@@ -129,8 +129,14 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 ```
 Client:    45/64 passing (Jest)
 Functions: 299 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine
-E2E:       1 passing (nudge flow)
+E2E:       1/23 passing (Playwright) — selectors need updating for current UI
 ```
+
+### Playwright E2E Status
+- **Setup:** ✅ Working (Chromium installed, dependencies configured)
+- **Issue:** Most tests fail due to selector ambiguity (multiple elements match)
+- **Action Needed:** Update selectors to use `getByTestId()` or more specific locators
+- **See:** CLAUDE.md Section 15 for full Playwright documentation
 
 ---
 
@@ -159,4 +165,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 32 - Phase 2 Complete)*
+*Last Updated: December 4, 2025 (Session 33 - Playwright E2E Setup Documented)*

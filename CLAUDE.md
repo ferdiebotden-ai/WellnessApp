@@ -369,4 +369,92 @@ Then open http://localhost:8081 in your browser.
 cd /home/ferdi/projects/WellnessApp/client && npx expo start --web &
 ```
 
-*Last Updated: December 2, 2025*
+---
+
+## 15. PLAYWRIGHT E2E TESTING
+
+Playwright is configured and working for end-to-end testing of the Expo web build.
+
+### Setup Status
+| Component | Status |
+|-----------|--------|
+| Playwright Version | 1.56.1 |
+| Browser | Chromium (installed) |
+| Config | `playwright.config.ts` |
+| Test Directory | `./tests/` |
+| Base URL | http://localhost:19006 |
+
+### Running Tests
+
+```bash
+# Run all tests
+npx playwright test
+
+# Run specific test file
+npx playwright test auth-flow.spec.ts
+
+# Run with visible browser (headed mode)
+npx playwright test --headed
+
+# Run single test by name
+npx playwright test -g "should navigate to forgot password"
+
+# List all tests without running
+npx playwright test --list
+
+# Show HTML report after run
+npx playwright show-report
+```
+
+### Test Files (23 tests across 10 files)
+
+| File | Tests | Status |
+|------|-------|--------|
+| auth-flow.spec.ts | 5 | Needs selector fixes |
+| biometric-setup.spec.ts | 4 | Needs selector fixes |
+| biometric-auth.spec.ts | 2 | Needs selector fixes |
+| feature-flags.spec.ts | 3 | Skipped (native runtime) |
+| social-toggle.spec.ts | 3 | Needs selector fixes |
+| paywall-and-trial.spec.ts | 2 | Skipped (native runtime) |
+| subscription.spec.ts | 1 | API test |
+| privacy-dashboard.spec.ts | 1 | Skipped (native runtime) |
+| protocol-logging.spec.ts | 1 | Skipped (native runtime) |
+| waitlist.spec.ts | 1 | Skipped (native runtime) |
+
+### Known Issues
+
+**Selector Ambiguity:** Many tests fail with "strict mode violation" because selectors like `text=Sign Up` match multiple elements. Fix by using:
+- `getByTestId('element-id')` — preferred
+- `getByRole('button', { name: 'Sign Up' })` — semantic
+- `.first()` or `.nth(1)` — quick fix
+
+**Skipped Tests:** Some tests are marked `test.skip()` because they require native mobile runtime features not available in Expo web.
+
+### Configuration Details
+
+The `playwright.config.ts` auto-starts Expo web server:
+- Port: 19006
+- Timeout: 60s per test
+- Screenshots: on failure
+- Video: retained on failure
+- Traces: on first retry
+
+### First-Time Setup
+
+If browsers aren't installed:
+```bash
+# Install Chromium browser
+npx playwright install chromium
+
+# Install system dependencies (Ubuntu/WSL)
+sudo apt-get install -y libnspr4 libnss3 libasound2t64
+```
+
+### Test Output
+
+- Screenshots: `test-results/*/test-failed-*.png`
+- Videos: `test-results/*/video.webm`
+- HTML Report: `playwright-report/index.html`
+- Traces: `test-results/*/trace.zip`
+
+*Last Updated: December 4, 2025*
