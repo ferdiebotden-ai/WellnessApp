@@ -9,6 +9,7 @@ import { requestUserDataExport, requestUserDeletion, getPrivacyDashboardData } f
 import { handleRevenueCatWebhook } from './revenuecatWebhook';
 import { completeOnboarding } from './onboarding';
 import { getMonetizationStatus } from './monetization';
+import { getUserCorrelations } from './correlations';
 import { getModules } from './modules';
 import { registerPushToken, deactivatePushTokens } from './pushTokens';
 import {
@@ -38,6 +39,7 @@ app.delete('/api/users/me', requestUserDeletion);
 app.post('/api/users/me/export', requestUserDataExport);
 app.get('/api/users/me/privacy', getPrivacyDashboardData);
 app.get('/api/users/me/monetization', getMonetizationStatus);
+app.get('/api/users/me/correlations', getUserCorrelations);
 
 // Feature routes
 app.post('/api/chat', postChat);

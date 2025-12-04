@@ -1,6 +1,7 @@
 import { firebaseAuth } from './firebase';
 import type { ModuleSummary } from '../types/module';
 import type { MonetizationStatus } from '../types/monetization';
+import type { CorrelationsResponse } from '../types/correlations';
 import type { UserPreferences, UserProfile } from '../types/user';
 import type { WearableSyncPayload } from './wearables/aggregators';
 import type { OnboardingCompletePayload } from '../types/onboarding';
@@ -227,6 +228,25 @@ export const fetchMonetizationStatus = async (): Promise<MonetizationStatus> => 
       subscription_id: 'dev-subscription',
       chat_queries_used_this_week: 0,
       chat_weekly_limit: 999999, // Unlimited
+    };
+  }
+};
+
+/**
+ * Retrieves protocol-outcome correlations for the authenticated user.
+ * Falls back to empty correlations when the API is unavailable.
+ *
+ * @returns Correlations response with top correlations and days tracked.
+ */
+export const fetchCorrelations = async (): Promise<CorrelationsResponse> => {
+  try {
+    return await request<CorrelationsResponse>('/api/users/me/correlations', 'GET');
+  } catch (error) {
+    console.warn('Backend API unavailable, returning empty correlations.');
+    return {
+      correlations: [],
+      days_tracked: 0,
+      min_days_required: 14,
     };
   }
 };
