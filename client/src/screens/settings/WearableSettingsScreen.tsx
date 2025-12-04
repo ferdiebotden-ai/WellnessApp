@@ -24,6 +24,12 @@ import {
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
 import { useHealthKit } from '../../hooks/useHealthKit';
+import {
+  useDataSourcePreference,
+  DATA_SOURCE_LABELS,
+  DATA_SOURCE_DESCRIPTIONS,
+  type DataSourceOption,
+} from '../../hooks/useDataSourcePreference';
 
 const formatTimestamp = (date: Date | null): string => {
   if (!date) {
@@ -85,6 +91,12 @@ export const WearableSettingsScreen: React.FC = () => {
     lastSyncAt,
     error,
   } = useHealthKit();
+
+  const {
+    preference: dataSourcePreference,
+    loading: loadingPreference,
+    setPreference: setDataSourcePreference,
+  } = useDataSourcePreference();
 
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -150,6 +162,17 @@ export const WearableSettingsScreen: React.FC = () => {
       Alert.alert('Sync Failed', 'Unable to sync health data at this time.');
     }
   }, [syncNow]);
+
+  const handleDataSourceChange = useCallback(
+    async (source: DataSourceOption) => {
+      try {
+        await setDataSourcePreference(source);
+      } catch (err) {
+        Alert.alert('Error', 'Failed to save preference');
+      }
+    },
+    [setDataSourcePreference]
+  );
 
   if (isLoading) {
     return (
@@ -285,6 +308,34 @@ export const WearableSettingsScreen: React.FC = () => {
         </View>
       )}
 
+      {/* Data Source Preference Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Preferred Data Source</Text>
+          <Text style={styles.cardSubtitle}>
+            When multiple devices have data for the same metric, which source should be used for
+            your recovery score?
+          </Text>
+        </View>
+
+        {loadingPreference ? (
+          <ActivityIndicator size="small" color={palette.primary} />
+        ) : (
+          <View style={styles.optionList}>
+            {(['latest', 'apple_health', 'oura', 'whoop'] as DataSourceOption[]).map((option) => (
+              <DataSourceOptionItem
+                key={option}
+                option={option}
+                label={DATA_SOURCE_LABELS[option]}
+                description={DATA_SOURCE_DESCRIPTIONS[option]}
+                isSelected={dataSourcePreference === option}
+                onPress={() => handleDataSourceChange(option)}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+
       {/* Privacy Note */}
       <View style={styles.privacyNote}>
         <Text style={styles.privacyText}>
@@ -301,6 +352,35 @@ const DataTypeItem: React.FC<{ label: string }> = ({ label }) => (
     <View style={styles.dataTypeCheck} />
     <Text style={styles.dataTypeLabel}>{label}</Text>
   </View>
+);
+
+interface DataSourceOptionItemProps {
+  option: DataSourceOption;
+  label: string;
+  description: string;
+  isSelected: boolean;
+  onPress: () => void;
+}
+
+const DataSourceOptionItem: React.FC<DataSourceOptionItemProps> = ({
+  label,
+  description,
+  isSelected,
+  onPress,
+}) => (
+  <TouchableOpacity
+    style={[styles.optionItem, isSelected && styles.optionItemSelected]}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.optionContent}>
+      <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>{label}</Text>
+      <Text style={styles.optionDescription}>{description}</Text>
+    </View>
+    <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
+      {isSelected && <View style={styles.radioInner} />}
+    </View>
+  </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
@@ -487,6 +567,60 @@ const styles = StyleSheet.create({
     color: palette.textMuted,
     textAlign: 'center',
     lineHeight: 18,
+  },
+
+  // Data Source Preference
+  optionList: {
+    gap: 8,
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: palette.background,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  optionItemSelected: {
+    borderColor: palette.primary,
+    backgroundColor: palette.primary + '10',
+  },
+  optionContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  optionLabel: {
+    ...typography.body,
+    color: palette.white,
+    marginBottom: 2,
+  },
+  optionLabelSelected: {
+    color: palette.primary,
+    fontWeight: '600',
+  },
+  optionDescription: {
+    ...typography.caption,
+    color: palette.textMuted,
+  },
+  radioOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: palette.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOuterSelected: {
+    borderColor: palette.primary,
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: palette.primary,
   },
 });
 

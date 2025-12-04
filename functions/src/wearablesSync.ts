@@ -4,6 +4,13 @@ import { extractBearerToken } from './utils/http';
 import { verifyFirebaseToken } from './firebaseAdmin';
 import { getServiceClient } from './supabaseClient';
 import type { DailyMetricsRow, HrvMethod, WearableSource as WearableSourceType } from './types/wearable.types';
+import { toRecoveryScoreRow } from './types/recovery.types';
+import {
+  calculateRecoveryScore,
+  shouldCalculateRecovery,
+  type RecoveryInput,
+} from './services/recoveryScore';
+import { getUserBaseline, updateUserBaseline } from './services/baselineService';
 
 type WearableSource = 'apple_health' | 'google_fit';
 type WearableMetricType = 'sleep' | 'hrv' | 'rhr' | 'steps' | 'activeCalories';
@@ -529,6 +536,89 @@ function computeHrvImprovement(rows: ArchiveHistoryRow[]): number | null {
   return Number.parseFloat(improvement.toFixed(2));
 }
 
+/**
+ * Calculate and store recovery score after daily metrics upsert.
+ * Updates user baseline and calculates recovery if baseline requirements are met.
+ */
+async function calculateAndStoreRecovery(
+  client: SupabaseClient,
+  userId: string,
+  date: string
+): Promise<void> {
+  try {
+    // Step 1: Update user's baseline with the new data
+    const baseline = await updateUserBaseline(client, userId);
+
+    // Step 2: Check if we should calculate recovery
+    if (!shouldCalculateRecovery(baseline)) {
+      console.log('[RecoveryEngine] Baseline not ready, skipping recovery calculation');
+      return;
+    }
+
+    // Step 3: Get today's daily metrics
+    const { data: dailyMetrics, error: metricsError } = await client
+      .from('daily_metrics')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('date', date)
+      .single();
+
+    if (metricsError || !dailyMetrics) {
+      console.error('[RecoveryEngine] Failed to fetch daily metrics:', metricsError?.message);
+      return;
+    }
+
+    // Step 4: Calculate recovery score
+    const input: RecoveryInput = {
+      dailyMetrics: dailyMetrics as DailyMetricsRow,
+      userBaseline: baseline!,
+    };
+
+    const result = calculateRecoveryScore(input);
+
+    // Step 5: Upsert recovery score to recovery_scores table
+    const recoveryRow = toRecoveryScoreRow(userId, date, result);
+
+    const { error: recoveryError } = await client
+      .from('recovery_scores')
+      .upsert(
+        {
+          ...recoveryRow,
+          created_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id,date',
+          ignoreDuplicates: false,
+        }
+      );
+
+    if (recoveryError) {
+      console.error('[RecoveryEngine] Failed to upsert recovery score:', recoveryError.message);
+      return;
+    }
+
+    // Step 6: Also update daily_metrics with the recovery score
+    const { error: updateError } = await client
+      .from('daily_metrics')
+      .update({
+        recovery_score: result.score,
+        recovery_confidence: result.confidence,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .eq('date', date);
+
+    if (updateError) {
+      console.error('[RecoveryEngine] Failed to update daily_metrics with recovery:', updateError.message);
+    }
+
+    console.log(`[RecoveryEngine] Calculated recovery score: ${result.score} (${result.zone}) for ${date}`);
+  } catch (error) {
+    // Non-blocking: recovery calculation failure shouldn't break the sync
+    console.error('[RecoveryEngine] Recovery calculation failed:', (error as Error).message);
+  }
+}
+
 async function updateUserHealthMetrics(client: SupabaseClient, supabaseUserId: string): Promise<void> {
   const { data: history, error: historyError } = await client
     .from('wearable_data_archive')
@@ -636,6 +726,9 @@ export async function syncWearableData(req: Request, res: Response): Promise<voi
     const dateStr = capturedAt.split('T')[0]; // Extract YYYY-MM-DD from ISO timestamp
     const dailyNormalized = normalizeToDailyMetrics(metrics, source);
     await upsertDailyMetrics(supabase, supabaseUserId, dateStr, source, dailyNormalized, metrics);
+
+    // Phase 3: Update baseline and calculate recovery score
+    await calculateAndStoreRecovery(supabase, supabaseUserId, dateStr);
 
     await updateUserHealthMetrics(supabase, supabaseUserId);
 

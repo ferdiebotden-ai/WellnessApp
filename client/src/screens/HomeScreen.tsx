@@ -4,9 +4,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HealthMetricCard } from '../components/HealthMetricCard';
 import { ModuleEnrollmentCard } from '../components/ModuleEnrollmentCard';
 import { TaskList } from '../components/TaskList';
+import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
+import { useRecoveryScore } from '../hooks/useRecoveryScore';
 import type { HealthMetric, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
 import { LockedModuleCard } from '../components/LockedModuleCard';
@@ -49,6 +51,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const userId = firebaseAuth.currentUser?.uid ?? null;
   const { tasks, loading: loadingTasks } = useTaskFeed(userId);
   const { metrics, enrollments, loading: loadingDashboard } = useDashboardData();
+  const { data: recoveryData, baselineStatus, loading: loadingRecovery } = useRecoveryScore(userId ?? undefined);
   const { requestProModuleAccess } = useMonetization();
   const { isModuleEnabled } = useFeatureFlags();
 
@@ -127,6 +130,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContent} testID="home-scroll-view">
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Health Outcomes</Text>
+          <RecoveryScoreCard
+            data={recoveryData}
+            baselineStatus={baselineStatus}
+            loading={loadingRecovery}
+          />
           <View style={styles.metricsRow}>
             {metrics.length > 0 ? (
               metrics.map((metric) => (
