@@ -4,6 +4,7 @@ import type { DashboardTask } from '../types/dashboard';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { AIThinkingState } from './AIThinkingState';
+import { NudgeCard } from './NudgeCard';
 
 interface Props {
   loading: boolean;
@@ -17,6 +18,12 @@ const renderTask = ({ item }: { item: DashboardTask }) => {
     return <AIThinkingState visible={true} compact />;
   }
 
+  // Use NudgeCard for nudges with whyExpansion data (reasoning transparency)
+  if (item.whyExpansion) {
+    return <NudgeCard task={item} />;
+  }
+
+  // Default task item (scheduled tasks without reasoning)
   const timeLabel = item.scheduledAt ? item.scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Anytime';
   return (
     <View style={styles.taskItem}>
