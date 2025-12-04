@@ -406,29 +406,44 @@ npx playwright test --list
 npx playwright show-report
 ```
 
-### Test Files (23 tests across 10 files)
+### Test Files (25 tests across 10 files)
 
 | File | Tests | Status |
 |------|-------|--------|
-| auth-flow.spec.ts | 5 | Needs selector fixes |
-| biometric-setup.spec.ts | 4 | Needs selector fixes |
-| biometric-auth.spec.ts | 2 | Needs selector fixes |
+| auth-flow.spec.ts | 7 | ✅ Passing |
+| biometric-setup.spec.ts | 4 | Needs testID updates |
+| biometric-auth.spec.ts | 2 | Needs testID updates |
 | feature-flags.spec.ts | 3 | Skipped (native runtime) |
-| social-toggle.spec.ts | 3 | Needs selector fixes |
+| social-toggle.spec.ts | 3 | Needs testID updates |
 | paywall-and-trial.spec.ts | 2 | Skipped (native runtime) |
 | subscription.spec.ts | 1 | API test |
 | privacy-dashboard.spec.ts | 1 | Skipped (native runtime) |
 | protocol-logging.spec.ts | 1 | Skipped (native runtime) |
 | waitlist.spec.ts | 1 | Skipped (native runtime) |
 
-### Known Issues
+### How to Fix Failing Tests
 
-**Selector Ambiguity:** Many tests fail with "strict mode violation" because selectors like `text=Sign Up` match multiple elements. Fix by using:
-- `getByTestId('element-id')` — preferred
-- `getByRole('button', { name: 'Sign Up' })` — semantic
-- `.first()` or `.nth(1)` — quick fix
+The pattern used for auth-flow.spec.ts works for all tests:
 
-**Skipped Tests:** Some tests are marked `test.skip()` because they require native mobile runtime features not available in Expo web.
+1. **Add testID props** to React Native components:
+   ```tsx
+   <FormInput testID="signup-email-input" ... />
+   <PrimaryButton testID="signup-submit-button" ... />
+   <TouchableOpacity testID="terms-checkbox" ... />
+   ```
+
+2. **Update test selectors** to use getByTestId:
+   ```ts
+   // Before (fails with multiple matches)
+   await page.locator('text=Sign Up').click();
+
+   // After (precise targeting)
+   await page.getByTestId('goto-signup-link').click();
+   ```
+
+### Skipped Tests
+
+Some tests are marked `test.skip()` because they require native mobile runtime features not available in Expo web. These would need device testing via Detox or Maestro.
 
 ### Configuration Details
 
