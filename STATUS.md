@@ -9,7 +9,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 39 (closing) |
+| **Session** | 40 (next) |
 | **Progress** | 18% of Phase 3 (2/11 sessions) |
 | **Branch** | main |
 
@@ -81,6 +81,7 @@
 **Commits:**
 - `e2341cb` — feat(phase3): implement HealthKit integration with native Swift module
 - `bbcf279` — docs(session39): add Playwright MCP, mark HealthKit complete
+- `c2ab068` — docs: finalize STATUS.md for Session 39 close
 
 **Files Created:**
 ```
