@@ -8,9 +8,9 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | Phase 2: Brain (AI & Reasoning) — Completion |
-| **Session** | 12 of 13 complete |
-| **Progress** | 92% of Phase 2 |
+| **Phase** | Phase 2: Brain (AI & Reasoning) — ✅ COMPLETE |
+| **Session** | 13 of 13 complete |
+| **Progress** | 100% of Phase 2 |
 | **Branch** | main |
 
 ---
@@ -28,94 +28,65 @@
 
 ## Last Session
 
-**Date:** December 3, 2025 (Session 31)
-**Focus:** Phase II Session 12 — AI Processing Animation + Why Engine
+**Date:** December 4, 2025 (Session 32)
+**Focus:** Phase II Session 13 — Reasoning Transparency UI (PHASE 2 FINAL)
 
 **Accomplished:**
 
-**Part A: AI Processing Animation (Client)**
-- Created ShimmerText component with pulsing opacity animation (Reanimated)
-- Created AIThinkingState component with cycling messages + animated dots
-- Integrated into ChatModal (shows thinking state during AI response)
-- Integrated into TaskList (shows thinking state for generating nudges)
+**Part A: NudgeCard Component**
+- Created NudgeCard.tsx with expandable "Why?" reasoning panel
+- Spring animation for expand/collapse (200ms, damping: 20, stiffness: 200)
+- Toggle behavior: tap "Why?" to expand/collapse
+- Displays title, meta info, completion checkmark
 
-**Part B: Why Engine (Backend)**
-- Created whyEngine.ts with WhyExpansion generation logic
-- Extract mechanism from protocol descriptions (first 2 sentences)
-- Parse DOI from citations with regex
-- Generate personalized "Your Data" via Gemini (max 150 chars)
-- Map confidence scores to High/Medium/Low levels
-- Added 36 unit tests (all passing)
-- Integrated into nudgeEngine.ts (line 371)
-- Add WhyExpansion to Firestore nudge documents
+**Part B: ReasoningExpansion Component (4 Panels)**
+- MECHANISM: First 1-2 sentences of protocol description
+- EVIDENCE: Citation + DOI link + strength progress bar
+- YOUR DATA: Personalized insight (max 150 chars)
+- CONFIDENCE: Level with color coding (High=green, Medium=amber, Low=gray)
+- Sequential fade-in animation (100ms delay between panels)
 
 **Files Created:**
 ```
-functions/src/reasoning/whyEngine.ts        — WhyExpansion generation logic
-functions/tests/whyEngine.test.ts           — 36 unit tests
-client/src/components/AIThinkingState.tsx   — Animated thinking indicator
-client/src/components/ShimmerText.tsx       — Shimmer text animation
+client/src/components/NudgeCard.tsx           — NudgeCard with expand/collapse
+client/src/components/ReasoningExpansion.tsx  — 4-panel reasoning UI
 ```
 
 **Files Modified:**
 ```
-functions/src/nudgeEngine.ts                — Integrated WhyExpansion
-client/src/components/ChatModal.tsx         — Added AIThinkingState
-client/src/components/TaskList.tsx          — Added AIThinkingState
-client/src/types/dashboard.ts               — Added WhyExpansion type
+client/src/components/TaskList.tsx            — Renders NudgeCard for whyExpansion
 ```
 
-**Commit:** `ee1c136` — feat: add AI Processing Animation + Why Engine (Session 12)
+**Commit:** `47c3605` — feat: add Reasoning Transparency UI (Session 13 - Phase 2 Complete)
 
 ---
 
 ## Previous Session
 
-**Date:** December 3, 2025 (Session 30)
-**Focus:** Phase II Session 11 — Outcome Correlation Verification + Dashboard
+**Date:** December 3, 2025 (Session 31)
+**Focus:** Phase II Session 12 — AI Processing Animation + Why Engine
 
 **Accomplished:**
-- Verified correlation engine: 51 synthesis tests pass (Pearson r + p-value)
-- Created `GET /api/users/me/correlations` endpoint
-- Built CorrelationCard component (trend arrows, p-values, progress bars)
+- Created ShimmerText + AIThinkingState components (Reanimated)
+- Created whyEngine.ts with WhyExpansion generation logic
+- 36 unit tests passing
 
-**Commit:** `1bc0faa` — feat: add Correlation Dashboard API and UI (Session 11)
+**Commit:** `ee1c136` — feat: add AI Processing Animation + Why Engine (Session 12)
 
 ---
 
 ## Next Session Priority
 
-### Phase 2: Session 13 — Reasoning Transparency UI (FINAL SESSION)
+### Phase 3: Nervous System (Real Data Flow)
 
-**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Session 13 spec
+**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md`
 
-**Goal:** Create NudgeCard with "Why?" expansion panel
+**Overview:** Connect the AI brain to real-world data sources. Phase 3 brings in actual wearable data, calendar integration, and real-time recovery calculations.
 
-**Part A: NudgeCard Component**
-- Create dedicated NudgeCard.tsx (replaces TaskList for nudges)
-- Add "Why?" link/button
-- Smooth expand/collapse animation (200ms)
-
-**Part B: 4-Panel Reasoning Expansion**
-- MECHANISM: Display whyExpansion.mechanism
-- EVIDENCE: Citation with DOI link + strength bar
-- YOUR DATA: Personalized insight
-- CONFIDENCE: Level with color (High=green, Medium=amber, Low=gray)
-
-**Acceptance Criteria:**
-- [ ] "Why?" tap expands reasoning panel
-- [ ] All 4 sections displayed correctly
-- [ ] DOI links open in external browser
-- [ ] Smooth expand/collapse animation (60fps)
-- [ ] Panel collapses on outside tap
-
----
-
-### Phase 2 Remaining Sessions
-
-| Session | Component | Description |
-|---------|-----------|-------------|
-| 13 | Reasoning Transparency UI | NudgeCard + 4-panel Why? expansion |
+**Session 1 Priority: Wearable Data Sync**
+- Google Fit / Apple HealthKit OAuth
+- Real sleep, HRV, RHR data ingestion
+- Wake detection logic
 
 ---
 
@@ -182,10 +153,10 @@ None currently.
 | 10 | MVD Detector | ✅ Complete (4 triggers, 50 tests, calendar deferred to Phase 3) |
 | 11 | Outcome Correlation | ✅ Complete (API + Dashboard UI, 8 files) |
 | 12 | AI Processing Animation + Why Engine | ✅ Complete (shimmer animation, whyEngine, 36 tests) |
-| 13 | Reasoning Transparency UI | ⏳ Pending |
+| 13 | Reasoning Transparency UI | ✅ Complete (NudgeCard + 4-panel expansion) |
 
-**Phase 2 Status:** 12/13 sessions complete (92%) — 1 session remaining before Phase 3.
+**🎉 Phase 2 Status: 13/13 sessions complete (100%) — Ready for Phase 3**
 
 ---
 
-*Last Updated: December 3, 2025 (Session 31 - AI Processing Animation + Why Engine Complete)*
+*Last Updated: December 4, 2025 (Session 32 - Phase 2 Complete)*
