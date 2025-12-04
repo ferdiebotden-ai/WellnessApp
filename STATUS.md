@@ -9,7 +9,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 2 of 11 complete |
+| **Session** | 37 |
 | **Progress** | 18% of Phase 3 |
 | **Branch** | main |
 
@@ -51,41 +51,45 @@
 
 ## Last Session
 
-**Date:** December 4, 2025 (Session 36)
-**Focus:** Strategic Pivot — HealthKit-First Strategy
+**Date:** December 4, 2025 (Session 37)
+**Focus:** Perplexity Research Workflow & CLAUDE.md Enhancement
 
 **Accomplished:**
-- Researched Oura Ring API v2 in depth (OAuth, webhooks, rate limits, membership)
-- Discovered key blockers: Gen 3/4 users require $5.99/mo membership for API access
-- Discovered webhook unreliability (504/500 errors Dec 2025)
-- Made strategic decision to prioritize HealthKit over Oura cloud integration
-- Created `OURA_INTEGRATION_REFERENCE.md` to preserve all Oura research
-- Updated `PHASE_III_IMPLEMENTATION_PLAN.md` with new 11-session structure
-- HealthKit now Session 2, Oura deferred to Session 10
+- Explored full codebase structure and infrastructure
+- Researched Perplexity Space custom instruction best practices
+- Reviewed and enhanced user's existing Perplexity Space instructions
+- Added multi-domain research role (technical, business, science, marketing)
+- Added explicit fallback handling for missing information
+- Created Perplexity research workflow in CLAUDE.md:
+  - Self-Research tier for routine lookups
+  - Perplexity Deep Research tier for complex decisions
+  - Prompt template for requesting user research
+  - Guidelines for writing effective Perplexity prompts
 
-**Files Created/Modified:**
+**Files Modified:**
 ```
-PRD Documents/OURA_INTEGRATION_REFERENCE.md — Archived Oura research (263 lines)
-PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md — Restructured session order
-STATUS.md — Strategic decision documentation
+CLAUDE.md — Enhanced Research-First section (lines 27-56)
+.claude/commands/start.md — Minor TL;DR wording update
+.claude/settings.local.json — Added tool permissions
+client/app.json — Added EAS project config
 ```
 
-**Key Decision:** HealthKit is free, on-device, and Oura syncs to Apple Health anyway.
+**Commit:** `8bb4929` — docs: add Perplexity research workflow to CLAUDE.md
 
 ---
 
 ## Previous Session
 
-**Date:** December 4, 2025 (Session 35)
-**Focus:** Phase 3 Database Migrations & TypeScript Types
+**Date:** December 4, 2025 (Session 36)
+**Focus:** Strategic Pivot — HealthKit-First Strategy
 
 **Accomplished:**
-- Created Phase 3 database migration with 5 new tables
-- Created comprehensive TypeScript types for Phase 3
-- All tables have RLS policies and appropriate indexes
-- Migration applied to Supabase successfully
+- Researched Oura Ring API v2 in depth (OAuth, webhooks, rate limits, membership)
+- Made strategic decision to prioritize HealthKit over Oura cloud integration
+- Created `OURA_INTEGRATION_REFERENCE.md` to preserve all Oura research
+- Updated `PHASE_III_IMPLEMENTATION_PLAN.md` with new 11-session structure
 
-**Commit:** `310b3c1` — feat(phase3): add database migrations and TypeScript types for wearable infrastructure
+**Commit:** `0f3c666` — docs(phase3): pivot to HealthKit-first strategy, defer Oura
 
 ---
 
@@ -228,4 +232,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 36 - HealthKit-First Strategy Pivot)*
+*Last Updated: December 4, 2025 (Session 37 - Perplexity Research Workflow)*
