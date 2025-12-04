@@ -895,21 +895,236 @@ function pearsonCorrelation(x: number[], y: number[]): number {
 
 ## Implementation Sessions Roadmap
 
-| Session | Components | Focus | Deliverable |
-|---------|------------|-------|-------------|
-| **1** | Memory Layer (Part 1) | Data model, storage | Memory CRUD operations |
-| **2** | Memory Layer (Part 2) | Decay, pruning, retrieval | Complete memory system |
-| **3** | Confidence Scoring | All 5 factors | Scoring function |
-| **4** | Suppression Engine (Part 1) | Rules 1-5 | Core suppression |
-| **5** | Suppression Engine (Part 2) | Rules 6-9, override logic | Complete engine |
-| **6** | Safety & Compliance | Crisis detection, GDPR | Safety features |
-| **7** | Weekly Synthesis (Part 1) | Data aggregation | Metrics calculation |
-| **8** | Weekly Synthesis (Part 2) | Narrative generation | Complete synthesis |
-| **9** | MVD Detector | All triggers, protocol sets | MVD activation |
-| **10** | Reasoning UI | Client-side expansion | UI component |
-| **11** | "Why?" Content | Backend generation | Complete reasoning |
-| **12** | Outcome Correlation | Statistics, integration | Correlation engine |
-| **13** | Integration & Testing | E2E scenarios | Full Phase 2 verification |
+| Session | Components | Focus | Deliverable | Status |
+|---------|------------|-------|-------------|--------|
+| **1-3** | Memory Layer | Data model, decay, retrieval | Complete memory system | ✅ Complete |
+| **4** | Confidence Scoring | All 5 factors | Scoring function | ✅ Complete |
+| **5-6** | Suppression Engine | 9 rules, override logic | Complete engine | ✅ Complete |
+| **7** | Safety & Compliance | Crisis detection, GDPR | Safety features | ✅ Complete |
+| **8** | Weekly Synthesis (Part 1) | Data aggregation | Metrics + correlations | ✅ Complete |
+| **9** | Weekly Synthesis (Part 2) | Narrative generation | Push notifications | ✅ Complete |
+| **10** | MVD Detector | 4 triggers, protocol sets | MVD activation | ✅ Complete |
+| **11** | Outcome Correlation + Dashboard | Verify engine, add UI | Insights screen | ⏳ Pending |
+| **12** | AI Processing Animation + Why Engine | Shimmer UX, backend reasoning | Complete reasoning | ⏳ Pending |
+| **13** | Reasoning Transparency UI | NudgeCard, 4-panel expansion | Complete UI | ⏳ Pending |
+
+---
+
+## Session 11: Outcome Correlation Verification + Dashboard
+
+**Goal:** Verify existing correlation implementation and add user-facing dashboard
+
+### 11A: Verify Existing Implementation
+
+The correlation engine was implemented as part of Weekly Synthesis (Session 8). Verification required:
+
+**Files to Review:**
+- `functions/src/synthesis/correlations.ts` — Pearson correlation + p-value
+- `functions/src/synthesis/weeklySynthesis.ts` — `calculateCorrelations()` function
+- `functions/src/synthesis/types.ts` — SYNTHESIS_CONFIG constants
+
+**Verification Steps:**
+1. Run existing synthesis tests: `cd functions && npm test -- --grep correlation`
+2. Review correlation calculation logic (minimum 14 days, p<0.05 threshold)
+3. Verify integration with narrative generator
+4. Check metrics_summary.correlations JSON storage
+
+### 11B: Correlation Dashboard (New Feature)
+
+**Rationale:** Industry best practice (Dec 2025) shows users engage more when they can see personal health correlations visualized, not just in weekly narrative text.
+
+**Files to Create:**
+```
+client/src/components/CorrelationCard.tsx
+client/src/screens/InsightsScreen.tsx
+functions/src/endpoints/correlations.ts
+```
+
+**API Endpoint:** `GET /api/user/correlations`
+- Returns top correlations for user
+- Cached daily (correlations don't change intra-day)
+- 14+ days data required
+
+**UI Design (Apex OS aesthetic):**
+```
+┌─────────────────────────────────────┐
+│  YOUR PATTERNS                      │
+├─────────────────────────────────────┤
+│  ↑ Morning Light → Sleep Quality    │
+│    +23% improvement (p=0.02)        │
+│    [████████░░] 30 days tracked     │
+├─────────────────────────────────────┤
+│  ↑ NSDR → HRV Score                 │
+│    +18% improvement (p=0.04)        │
+│    [██████░░░░] 21 days tracked     │
+└─────────────────────────────────────┘
+```
+
+**Acceptance Criteria:**
+- [ ] Pearson correlation verified (unit tests pass)
+- [ ] Dashboard displays top 3 correlations with trend indicators
+- [ ] Color-coded: green (positive), amber (negative correlation)
+- [ ] "Not enough data" state for users with < 14 days
+
+---
+
+## Session 12: AI Processing Animation + Why Engine
+
+### 12A: AI Processing Animation ("Thinking State")
+
+**Goal:** Elegant shimmer animation while AI processes nudges/chat
+
+**Industry Best Practices Applied (Dec 2025):**
+1. Progressive text updates every ~3 seconds (Claude-style)
+2. Shimmer gradient effect on skeleton loader
+3. Human-like messaging ("Analyzing your day..." not "Processing request...")
+
+**Files to Create:**
+```
+client/src/components/AIThinkingState.tsx
+client/src/components/ShimmerText.tsx
+```
+
+**Animation Sequence:**
+```
+0-3s:  "Analyzing your data..."          [shimmer]
+3-6s:  "Researching protocols..."        [shimmer]
+6-9s:  "Tailoring to your needs..."      [shimmer]
+9s+:   "Almost there..."                 [shimmer]
+```
+
+**Technical Implementation:**
+- React Native Reanimated 3 for shimmer gradient
+- `withRepeat()` + `withTiming()` for continuous shimmer
+- Shared value for text opacity transitions
+- NativeWind styling (dark theme: #0F1218, shimmer: teal gradient)
+
+### 12B: "Why?" Engine (Backend)
+
+**Goal:** Generate structured reasoning content for nudges
+
+**File to Create:**
+```
+functions/src/reasoning/whyEngine.ts
+```
+
+**Interface:**
+```typescript
+interface WhyExpansion {
+  mechanism: string;        // 1-2 sentences, physiological
+  evidence: {
+    citation: string;       // Full citation text
+    doi?: string;           // Parsed DOI link
+    strength: EvidenceLevel;
+  };
+  your_data: string;        // Max 150 chars, personalized
+  confidence: {
+    level: 'High' | 'Medium' | 'Low';
+    explanation: string;
+  };
+}
+```
+
+**Generation Logic:**
+1. `mechanism` — Extract first 2 sentences from `protocol.description`
+2. `evidence.citation` — Use `protocol.citations[0]`
+3. `evidence.doi` — Parse DOI regex from citation string
+4. `your_data` — Use Gemini to generate personalized insight from memories (max 150 chars)
+5. `confidence.level` — Map score: >0.7 = High, 0.4-0.7 = Medium, <0.4 = Low
+
+**Integration Point:** Modify `nudgeEngine.ts` line ~363 (after nudge generation)
+
+**Acceptance Criteria:**
+- [ ] WhyExpansion generated for all nudges
+- [ ] DOI links parsed correctly
+- [ ] "Your Data" under 150 characters
+- [ ] Confidence explanation matches score
+
+---
+
+## Session 13: Reasoning Transparency UI
+
+### 13A: NudgeCard Component (New)
+
+**Goal:** Dedicated nudge display with "Why?" expansion capability
+
+**Current State:** Nudges render through generic `TaskList.tsx` with no special treatment
+
+**File to Create:**
+```
+client/src/components/NudgeCard.tsx
+```
+
+**Features:**
+1. Collapsed state: Headline + body + "Why?" link
+2. Expanded state: 4-panel reasoning system
+3. Smooth height animation (200ms ease-out)
+4. Tap outside to collapse
+
+### 13B: 4-Panel Reasoning Expansion (Perplexity-inspired)
+
+**Design:**
+```
+┌──────────────────────────────────────────┐
+│  Take a 10-minute walk before lunch.     │
+│                                          │
+│  [Why?]                                  │
+├──────────────────────────────────────────┤
+│  MECHANISM                               │
+│  Brief movement breaks reduce cortisol   │
+│  and improve afternoon focus...          │
+├──────────────────────────────────────────┤
+│  EVIDENCE                                │
+│  Oppezzo & Schwartz (2014) [1]           │
+│  Evidence: High ████████░░               │
+├──────────────────────────────────────────┤
+│  YOUR DATA                               │
+│  Your afternoon focus improved 32%       │
+│  on days you walked vs. skipped.         │
+├──────────────────────────────────────────┤
+│  CONFIDENCE                              │
+│  High — Based on 45 days of your data    │
+└──────────────────────────────────────────┘
+```
+
+**Files to Create:**
+```
+client/src/components/ReasoningExpansion.tsx
+client/src/components/ReasoningPanel.tsx
+```
+
+**Animation Sequence:**
+1. Card height animates from collapsed → expanded (200ms)
+2. Each panel fades in sequentially (100ms delay between panels)
+3. DOI link underlined, opens external browser on tap
+4. Confidence bar color: High=teal, Medium=amber, Low=gray
+
+### 13C: Type Extensions
+
+**Modify:** `client/src/types/dashboard.ts`
+
+```typescript
+export interface WhyExpansion {
+  mechanism: string;
+  evidence: {
+    citation: string;
+    doi?: string;
+    strength: 'Very High' | 'High' | 'Moderate' | 'Emerging';
+  };
+  your_data: string;
+  confidence: {
+    level: 'High' | 'Medium' | 'Low';
+    explanation: string;
+  };
+}
+```
+
+**Acceptance Criteria:**
+- [ ] "Why?" tap expands reasoning panel
+- [ ] All 4 sections displayed
+- [ ] DOI links open in external browser
+- [ ] Smooth expand/collapse animation (60fps)
+- [ ] Panel collapses on outside tap
 
 ---
 

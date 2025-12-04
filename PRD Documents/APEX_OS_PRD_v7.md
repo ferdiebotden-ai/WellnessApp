@@ -1790,7 +1790,116 @@ const panelAnimation = {
 - Confidence colors have text fallbacks
 - Minimum touch target: 44×44 points
 
-## 5.7 Lite Mode (No-Wearable Fallback)
+### AI Processing Animation ("Thinking State")
+
+When AI is processing a request (nudge generation, chat response, synthesis), display an elegant shimmer animation with progressive status text.
+
+**Animation Sequence:**
+```
+0-3s:  "Analyzing your data..."          [shimmer]
+3-6s:  "Researching protocols..."        [shimmer]
+6-9s:  "Tailoring to your needs..."      [shimmer]
+9s+:   "Almost there..."                 [shimmer]
+```
+
+**Technical Specification:**
+```typescript
+interface AIThinkingStateProps {
+  isVisible: boolean;
+  context?: 'nudge' | 'chat' | 'synthesis';
+  onComplete?: () => void;
+}
+
+const shimmerAnimation = {
+  gradient: ['#0F1218', '#1A2027', '#63E6BE20', '#1A2027', '#0F1218'],
+  duration: 1500,  // ms per sweep
+  repeat: -1       // infinite
+};
+```
+
+**Design Rationale (Dec 2025 Best Practices):**
+- Progressive text updates reduce perceived wait time
+- Human-like messaging ("Analyzing..." not "Processing...")
+- Shimmer effect draws attention away from delay
+- Text changes every ~3 seconds maintain engagement
+
+## 5.8 Correlation Dashboard
+
+### Purpose
+
+Visualize personal health correlations between protocol adherence and outcomes. Transforms Weekly Synthesis insights into an always-available, interactive display.
+
+### UI Design (Apex OS Aesthetic)
+
+```
+┌─────────────────────────────────────┐
+│  YOUR PATTERNS                      │
+├─────────────────────────────────────┤
+│  ↑ Morning Light → Sleep Quality    │
+│    +23% improvement (p=0.02)        │
+│    [████████░░] 30 days tracked     │
+├─────────────────────────────────────┤
+│  ↑ NSDR → HRV Score                 │
+│    +18% improvement (p=0.04)        │
+│    [██████░░░░] 21 days tracked     │
+├─────────────────────────────────────┤
+│  ↓ Late Caffeine → Sleep Onset      │
+│    -31% improvement (p=0.03)        │
+│    [████████░░] 28 days tracked     │
+└─────────────────────────────────────┘
+```
+
+### Data Requirements
+
+- Minimum 14 days of tracked data for correlations
+- p-value threshold: < 0.05 for significance
+- Maximum 5 correlations displayed (sorted by significance)
+
+### Empty State
+
+For users with < 14 days data:
+```
+┌─────────────────────────────────────┐
+│  YOUR PATTERNS                      │
+├─────────────────────────────────────┤
+│                                     │
+│  🔬 Building your patterns...       │
+│                                     │
+│  We need 14 days of data to find    │
+│  meaningful correlations.           │
+│                                     │
+│  [████░░░░░░] 6 of 14 days          │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+### API Endpoint
+
+```
+GET /api/user/correlations
+
+Response:
+{
+  "correlations": [
+    {
+      "protocol": "morning_light_exposure",
+      "protocol_name": "Morning Light Exposure",
+      "outcome": "sleep_quality",
+      "outcome_name": "Sleep Quality",
+      "r": 0.62,
+      "p_value": 0.02,
+      "is_significant": true,
+      "sample_size": 30,
+      "direction": "positive",
+      "interpretation": "On days you got morning light, sleep quality improved 23%"
+    }
+  ],
+  "days_tracked": 30,
+  "min_days_required": 14
+}
+```
+
+## 5.9 Lite Mode (No-Wearable Fallback)
 
 ### Purpose
 
