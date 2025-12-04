@@ -63,6 +63,8 @@ PRD Documents/APEX_OS_PRD_v7.md                   — Master PRD v7 (~2400 lines
 **Files Modified:**
 ```
 STATUS.md                                         — Updated for Phase 3 start
+CLAUDE.md                                         — Updated PRD references to v7
+.claude/commands/plan.md                          — Updated PRD references to v7
 ```
 
 **Research Documents Synthesized:**
@@ -76,7 +78,10 @@ PRD Documents/Phase_II_III_Research_Files - Gemini Synthesis/
 └── APEX_OS_REASONING_SYSTEM_v1.md        — 4-panel "Why?" UX
 ```
 
-**Commit:** `0a55a9e` — docs: create Phase III implementation plan and PRD v7 (Session 28)
+**Commits:**
+- `0a55a9e` — docs: create Phase III implementation plan and PRD v7 (Session 28)
+- `91fff61` — docs: add commit hash to Session 28 in STATUS.md
+- `27d8c7f` — docs: update CLAUDE.md and plan.md to reference PRD v7
 
 ---
 
