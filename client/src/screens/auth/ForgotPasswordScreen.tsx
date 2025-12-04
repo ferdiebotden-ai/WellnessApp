@@ -110,6 +110,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
               autoCorrect={false}
               error={emailError}
               editable={!loading}
+              testID="forgot-email-input"
             />
 
             <PrimaryButton
@@ -118,6 +119,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
               loading={loading}
               disabled={loading}
               style={styles.resetButton}
+              testID="forgot-reset-button"
             />
           </View>
         </ScrollView>

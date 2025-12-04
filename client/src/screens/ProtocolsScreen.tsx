@@ -4,7 +4,7 @@ import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 
 export const ProtocolsScreen: React.FC = () => (
-  <ScrollView contentContainerStyle={styles.container}>
+  <ScrollView contentContainerStyle={styles.container} testID="protocols-screen">
     <Text style={styles.heading}>Protocols</Text>
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Precision Recovery</Text>

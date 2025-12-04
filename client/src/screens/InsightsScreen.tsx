@@ -21,7 +21,7 @@ export const InsightsScreen: React.FC = () => {
   const hasCorrelations = correlations.length > 0;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} testID="insights-screen">
       {/* Section: Your Patterns */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>YOUR PATTERNS</Text>

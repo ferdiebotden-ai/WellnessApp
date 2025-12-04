@@ -122,9 +122,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="home-screen">
       <StatusBar barStyle="light-content" />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} testID="home-scroll-view">
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Health Outcomes</Text>
           <View style={styles.metricsRow}>

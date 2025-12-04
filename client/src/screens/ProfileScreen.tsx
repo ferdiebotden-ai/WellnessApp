@@ -65,7 +65,7 @@ export const ProfileScreen: React.FC = () => {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} testID="profile-screen">
       <Text style={styles.heading}>Profile</Text>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Professional Data</Text>

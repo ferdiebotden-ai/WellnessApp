@@ -28,6 +28,35 @@
 
 ## Last Session
 
+**Date:** December 4, 2025 (Session 34)
+**Focus:** Comprehensive E2E Test Coverage for Phase 1-2
+
+**Accomplished:**
+- Added testIDs to essential screens (HomeScreen, ProfileScreen, ProtocolsScreen, InsightsScreen, ForgotPasswordScreen)
+- Properly skipped biometric-setup tests (native-only, like biometric-auth)
+- Created auth helper (`tests/helpers/auth.ts`) for real login flow
+- Created `main-navigation.spec.ts` (7 tests: 5 passing, 2 skipped for auth)
+- Created `forgot-password.spec.ts` (3 tests, all passing)
+- All E2E tests now pass or are correctly skipped
+
+**Files Modified:**
+```
+tests/biometric-setup.spec.ts                — Properly skipped (native-only)
+tests/main-navigation.spec.ts                — NEW: 7 navigation tests
+tests/forgot-password.spec.ts                — NEW: 3 forgot password tests
+tests/helpers/auth.ts                        — NEW: Auth helper for real login
+client/src/screens/HomeScreen.tsx            — Added testIDs
+client/src/screens/ProfileScreen.tsx         — Added testID
+client/src/screens/ProtocolsScreen.tsx       — Added testID
+client/src/screens/InsightsScreen.tsx        — Added testID
+client/src/screens/auth/ForgotPasswordScreen.tsx — Added testIDs
+STATUS.md                                    — Updated test status
+```
+
+---
+
+## Previous Session
+
 **Date:** December 4, 2025 (Session 33)
 **Focus:** Playwright E2E Testing Setup & Fix
 
@@ -38,15 +67,6 @@
 - Fixed auth-flow tests by adding testIDs to auth screens
 - All 7 auth-flow tests now passing
 
-**Files Modified:**
-```
-CLAUDE.md                                    — Added Section 15: Playwright E2E Testing
-STATUS.md                                    — Updated test status
-client/src/screens/auth/SignInScreen.tsx     — Added testID props
-client/src/screens/auth/SignUpScreen.tsx     — Added testID props
-tests/auth-flow.spec.ts                      — Updated to use getByTestId()
-```
-
 **Commits:**
 - `acab384` — docs: add Playwright E2E testing documentation
 - `f9ef168` — fix(e2e): add testIDs to auth screens and update Playwright selectors
@@ -54,28 +74,9 @@ tests/auth-flow.spec.ts                      — Updated to use getByTestId()
 
 ---
 
-## Previous Session
-
-**Date:** December 4, 2025 (Session 32)
-**Focus:** Phase II Session 13 — Reasoning Transparency UI (PHASE 2 FINAL)
-
-**Accomplished:**
-- Created NudgeCard.tsx with expandable "Why?" reasoning panel
-- Created ReasoningExpansion.tsx with 4 panels (Mechanism, Evidence, Your Data, Confidence)
-- Spring animations for expand/collapse
-
-**Commit:** `47c3605` — feat: add Reasoning Transparency UI (Session 13 - Phase 2 Complete)
-
----
-
 ## Next Session Priority
 
-### Option A: Fix E2E Tests
-- Update Playwright test selectors to use `getByTestId()` or more specific locators
-- Get existing 23 tests passing before Phase 3
-- Add new tests for Phase 2 features (MVD, AI reasoning, nudges)
-
-### Option B: Phase 3: Nervous System (Real Data Flow)
+### Phase 3: Nervous System (Real Data Flow)
 
 **Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md`
 
@@ -83,6 +84,11 @@ tests/auth-flow.spec.ts                      — Updated to use getByTestId()
 - Google Fit / Apple HealthKit OAuth
 - Real sleep, HRV, RHR data ingestion
 - Wake detection logic
+
+### Optional: Expand E2E Test Coverage
+- Create test user in Supabase (`e2e-test@apexos.dev`)
+- Enable authenticated navigation tests in `main-navigation.spec.ts`
+- Add tests for Phase 2 features (nudges, reasoning panels) once test user exists
 
 ---
 
@@ -125,14 +131,28 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 ```
 Client:    45/64 passing (Jest)
 Functions: 299 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine
-E2E:       7/23 passing (Playwright) — auth-flow tests fixed
+E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded coverage
 ```
 
 ### Playwright E2E Status
 - **Setup:** ✅ Working (Chromium installed, dependencies configured)
-- **auth-flow.spec.ts:** ✅ 7/7 passing (testIDs added to auth screens)
-- **Remaining:** Other test files still need testID updates
+- **Test Files:** 12 files, 35 total tests
+- **Passing:** 15 tests (auth-flow: 7, main-navigation: 5, forgot-password: 3)
+- **Skipped:** 20 tests (native-only features: biometrics, feature flags, monetization, etc.)
 - **See:** CLAUDE.md Section 15 for full Playwright documentation
+
+### Test File Summary
+| File | Passing | Skipped | Notes |
+|------|---------|---------|-------|
+| auth-flow.spec.ts | 7 | 0 | All auth form tests |
+| main-navigation.spec.ts | 5 | 2 | Authenticated tests need test user |
+| forgot-password.spec.ts | 3 | 0 | Password reset UI |
+| biometric-setup.spec.ts | 0 | 4 | Native runtime only |
+| biometric-auth.spec.ts | 0 | 2 | Native runtime only |
+| feature-flags.spec.ts | 0 | 3 | Native runtime only |
+| social-toggle.spec.ts | 0 | 3 | Native runtime only |
+| paywall-and-trial.spec.ts | 0 | 2 | Native runtime only |
+| Others | 0 | 4 | Native runtime only |
 
 ---
 
@@ -161,4 +181,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 33 - Playwright E2E Fixed)*
+*Last Updated: December 4, 2025 (Session 34 - Comprehensive E2E Coverage)*
