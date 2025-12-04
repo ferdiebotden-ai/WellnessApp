@@ -29,22 +29,27 @@
 ## Last Session
 
 **Date:** December 4, 2025 (Session 33)
-**Focus:** Playwright E2E Testing Setup & Documentation
+**Focus:** Playwright E2E Testing Setup & Fix
 
 **Accomplished:**
 - Verified Playwright v1.56.1 is working with Expo web build
-- Installed Chromium browser and system dependencies (libnspr4, libnss3, libasound2t64)
-- Ran smoke test: 1/5 auth-flow tests passing (selector issues identified)
+- Installed Chromium browser and system dependencies
 - Added Section 15 to CLAUDE.md with full Playwright documentation
-- Updated STATUS.md with E2E test status and action items
+- Fixed auth-flow tests by adding testIDs to auth screens
+- All 7 auth-flow tests now passing
 
 **Files Modified:**
 ```
-CLAUDE.md   — Added Section 15: Playwright E2E Testing
-STATUS.md   — Updated test status, added Playwright subsection
+CLAUDE.md                                    — Added Section 15: Playwright E2E Testing
+STATUS.md                                    — Updated test status
+client/src/screens/auth/SignInScreen.tsx     — Added testID props
+client/src/screens/auth/SignUpScreen.tsx     — Added testID props
+tests/auth-flow.spec.ts                      — Updated to use getByTestId()
 ```
 
-**Commit:** `acab384` — docs: add Playwright E2E testing documentation
+**Commits:**
+- `acab384` — docs: add Playwright E2E testing documentation
+- `f9ef168` — fix(e2e): add testIDs to auth screens and update Playwright selectors
 
 ---
 
@@ -119,13 +124,13 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 ```
 Client:    45/64 passing (Jest)
 Functions: 299 passing (Vitest) — includes 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine
-E2E:       1/23 passing (Playwright) — selectors need updating for current UI
+E2E:       7/23 passing (Playwright) — auth-flow tests fixed
 ```
 
 ### Playwright E2E Status
 - **Setup:** ✅ Working (Chromium installed, dependencies configured)
-- **Issue:** Most tests fail due to selector ambiguity (multiple elements match)
-- **Action Needed:** Update selectors to use `getByTestId()` or more specific locators
+- **auth-flow.spec.ts:** ✅ 7/7 passing (testIDs added to auth screens)
+- **Remaining:** Other test files still need testID updates
 - **See:** CLAUDE.md Section 15 for full Playwright documentation
 
 ---
