@@ -31,6 +31,10 @@ import {
   getSafeFallbackResponse,
 } from './safety';
 import {
+  generateWhyExpansion,
+  WhyExpansion,
+} from './reasoning/whyEngine';
+import {
   getMVDState,
   detectAndMaybeActivateMVD,
   checkAndMaybeExitMVD,
@@ -75,6 +79,7 @@ interface NudgePayload {
   generated_at: string;
   status: 'pending';
   confidence?: ConfidenceScore;
+  why_expansion?: WhyExpansion;
 }
 
 type ScheduledEvent = { data?: string } | undefined;
@@ -362,6 +367,14 @@ export const generateAdaptiveNudges = async (
     // Generate Nudge
     let nudgeText = await generateCompletion(SYSTEM_PROMPT, userPrompt);
 
+    // Generate WhyExpansion for reasoning transparency (Session 12)
+    const whyExpansion = await generateWhyExpansion({
+      protocol: bestMatch.protocol,
+      confidence: bestMatch.confidence,
+      memories: memories,
+      userId: userId,
+    });
+
     // Safety Check: Scan AI-generated nudge before delivery
     const nudgeScan = scanAIOutput(nudgeText, 'nudge');
     if (!nudgeScan.safe) {
@@ -397,6 +410,7 @@ export const generateAdaptiveNudges = async (
       generated_at: now,
       status: 'pending',
       confidence: bestMatch.confidence,
+      why_expansion: whyExpansion,
     };
 
     // Write as a task document with client-expected fields
@@ -413,6 +427,8 @@ export const generateAdaptiveNudges = async (
       // Confidence scoring fields
       confidence_score: bestMatch.confidence.overall,
       confidence_reasoning: bestMatch.confidence.reasoning,
+      // Reasoning transparency (Session 12)
+      why_expansion: whyExpansion,
     };
 
     await firestore.collection('live_nudges').doc(userId).collection('entries').add(taskDoc);

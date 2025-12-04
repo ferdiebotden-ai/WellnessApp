@@ -1,8 +1,9 @@
 import React from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import type { DashboardTask } from '../types/dashboard';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { AIThinkingState } from './AIThinkingState';
 
 interface Props {
   loading: boolean;
@@ -11,6 +12,11 @@ interface Props {
 }
 
 const renderTask = ({ item }: { item: DashboardTask }) => {
+  // Show AI thinking state for nudges that are being generated
+  if (item.source === 'nudge' && item.isGenerating) {
+    return <AIThinkingState visible={true} compact />;
+  }
+
   const timeLabel = item.scheduledAt ? item.scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Anytime';
   return (
     <View style={styles.taskItem}>
@@ -27,8 +33,11 @@ export const TaskList: React.FC<Props> = ({ loading, tasks, emptyMessage }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator color={palette.primary} />
-        <Text style={styles.loadingText}>Syncing your day…</Text>
+        <AIThinkingState
+          visible={true}
+          messages={['Syncing your day...', 'Loading your schedule...', 'Getting ready...']}
+          interval={2000}
+        />
       </View>
     );
   }

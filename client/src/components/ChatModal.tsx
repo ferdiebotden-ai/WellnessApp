@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { sendChatQuery } from '../services/api';
+import { AIThinkingState } from './AIThinkingState';
 
 interface Message {
   id: string;
@@ -93,6 +94,13 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
               <Text style={styles.emptyText}>Ask me anything about wellness, sleep optimization, stress management, or your health protocols.</Text>
             </View>
           }
+          ListFooterComponent={
+            loading ? (
+              <View style={styles.thinkingContainer}>
+                <AIThinkingState visible={loading} compact />
+              </View>
+            ) : null
+          }
         />
 
         <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -110,9 +118,9 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
           <TouchableOpacity
             onPress={handleSend}
             disabled={loading || !input.trim()}
-            style={styles.sendButton}
+            style={[styles.sendButton, (loading || !input.trim()) && styles.sendButtonDisabled]}
           >
-            {loading ? <ActivityIndicator color={palette.primary} /> : <Text style={styles.sendText}>Send</Text>}
+            <Text style={[styles.sendText, (loading || !input.trim()) && styles.sendTextDisabled]}>Send</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -155,9 +163,12 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, padding: 12, backgroundColor: palette.surface, borderRadius: 20, color: palette.textPrimary, maxHeight: 100 },
   sendButton: { paddingHorizontal: 8, paddingVertical: 4 },
+  sendButtonDisabled: { opacity: 0.5 },
   sendText: { ...typography.subheading, color: palette.primary },
+  sendTextDisabled: { color: palette.textMuted },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, paddingTop: 60 },
   emptyTitle: { ...typography.heading, color: palette.textPrimary, marginBottom: 12, textAlign: 'center' },
   emptyText: { ...typography.body, color: palette.textSecondary, textAlign: 'center', lineHeight: 22 },
+  thinkingContainer: { alignSelf: 'flex-start', marginBottom: 10, maxWidth: '80%' },
 });
 
