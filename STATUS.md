@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 2: Brain (AI & Reasoning) — Completion |
-| **Session** | 10 of 13 complete |
-| **Progress** | 77% of Phase 2 |
+| **Session** | 11 of 13 complete |
+| **Progress** | 85% of Phase 2 |
 | **Branch** | main |
 
 ---
@@ -28,82 +28,75 @@
 
 ## Last Session
 
-**Date:** December 3, 2025 (Session 29)
-**Focus:** Phase II Completion Planning — Corrected Phase Status
-
-**Key Discovery:**
-- Phase II was incorrectly marked as "deferred to Phase 3"
-- STATUS.md showed "Phase 3: Session 1" but 3 Phase II components were incomplete
-- Corrected course: Complete Phase II (Sessions 11-13) before starting Phase 3
+**Date:** December 3, 2025 (Session 30)
+**Focus:** Phase II Session 11 — Outcome Correlation Verification + Dashboard
 
 **Accomplished:**
-- Reviewed Phase II implementation plan — identified 3 pending components
-- Discovered Outcome Correlation already implemented in `correlations.ts` (needs verification)
-- Researched industry best practices (Dec 2025) for AI UX:
-  - AI Thinking Animation (shimmer/progressive text)
-  - Reasoning Transparency (Perplexity-style citations)
-- Created comprehensive completion plan for Sessions 11-13
-- Updated all documentation to reflect correct Phase II status
+- Verified correlation engine: 51 synthesis tests pass (Pearson r + p-value)
+- Created `GET /api/users/me/correlations` endpoint
+- Built CorrelationCard component (trend arrows, p-values, progress bars)
+- Built EmptyCorrelationState for users with < 14 days data
+- Enhanced InsightsScreen with "YOUR PATTERNS" section
+- Added useCorrelations hook + client-side types
+
+**Files Created:**
+```
+functions/src/correlations.ts               — API endpoint handler
+client/src/types/correlations.ts            — Client-side types
+client/src/components/CorrelationCard.tsx   — Single correlation display
+client/src/components/EmptyCorrelationState.tsx — Empty state component
+client/src/hooks/useCorrelations.ts         — Data fetching hook
+```
 
 **Files Modified:**
 ```
-STATUS.md                                    — Corrected to Phase 2, Sessions 11-13 pending
-PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md — Added Sessions 11-13 specifications
-PRD Documents/APEX_OS_PRD_v7.md              — Added AI Processing Animation + Correlation Dashboard specs
+functions/src/api.ts                        — Registered new route
+client/src/screens/InsightsScreen.tsx       — Full dashboard implementation
+client/src/services/api.ts                  — Added fetchCorrelations function
 ```
 
-**New PRD Sections Added:**
-- Section 5.7: AI Processing Animation ("Thinking State") — shimmer UX spec
-- Section 5.8: Correlation Dashboard — UI design + API endpoint spec
-
-**Plan Created:**
-```
-.claude/plans/sorted-sauteeing-taco.md       — Phase II completion plan
-```
+**Commit:** `1bc0faa` — feat: add Correlation Dashboard API and UI (Session 11)
 
 ---
 
 ## Previous Session
 
-**Date:** December 3, 2025 (Session 28)
-**Focus:** Phase 3 Research Synthesis & PRD v7 Creation
+**Date:** December 3, 2025 (Session 29)
+**Focus:** Phase II Completion Planning — Corrected Phase Status
 
 **Accomplished:**
-- Read all 6 Perplexity Deep Research documents for Phase 3
-- Created `PHASE_III_IMPLEMENTATION_PLAN.md` (~3000 lines)
-- Created `APEX_OS_PRD_v7.md` — Master PRD with Phase 3 integration
-- Gap Analysis: Lite Mode, transparency requirements, user-configurable thresholds
+- Corrected Phase II status (was incorrectly marked as Phase 3)
+- Created completion plan for Sessions 11-13
+- Updated PRD with AI Processing Animation + Correlation Dashboard specs
 
 **Commits:**
-- `0a55a9e` — docs: create Phase III implementation plan and PRD v7 (Session 28)
-- `27d8c7f` — docs: update CLAUDE.md and plan.md to reference PRD v7
+- `cc220af` — docs: correct Phase II status and add Sessions 11-13 specs (Session 29)
 
 ---
 
 ## Next Session Priority
 
-### Phase 2: Session 11 — Outcome Correlation Verification + Dashboard
+### Phase 2: Session 12 — AI Processing Animation + Why Engine
 
-**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Component 9
+**Reference:** `PRD Documents/PHASE_II_IMPLEMENTATION_PLAN.md` — Sessions 11-13 spec
 
-**Goal:** Verify existing correlation engine and add user-facing dashboard
+**Goal:** Add AI "thinking" animation + backend reasoning transparency
 
-**Part A: Verify Existing Implementation**
-- Review `functions/src/synthesis/correlations.ts` — Pearson correlation + p-value
-- Run tests: `cd functions && npm test -- --grep correlation`
-- Confirm integration with weekly synthesis narrative
+**Part A: AI Processing Animation**
+- Create shimmer/pulsing animation component
+- Apply to nudge generation and chat responses
+- Progressive text reveal (Perplexity-style)
 
-**Part B: Correlation Dashboard (New)**
-- Create `client/src/components/CorrelationCard.tsx`
-- Create `client/src/screens/InsightsScreen.tsx`
-- API endpoint: `GET /api/user/correlations`
+**Part B: Why Engine (Backend)**
+- Add `reasoning_chain` field to nudge generation
+- Store protocol citations and confidence factors
+- Return in nudge API response
 
 **Acceptance Criteria:**
-- [ ] Pearson correlation calculated correctly (unit tests pass)
-- [ ] p-value significance threshold working (p < 0.05)
-- [ ] Correlations included in weekly synthesis narrative
-- [ ] Dashboard displays top correlations with trend indicators
-- [ ] "Not enough data" state for users with < 14 days
+- [ ] Shimmer animation displays during AI processing
+- [ ] Animation integrates with NudgeCard and chat
+- [ ] Backend returns reasoning_chain with citations
+- [ ] Smooth 60fps animation (Reanimated)
 
 ---
 
@@ -111,7 +104,6 @@ PRD Documents/APEX_OS_PRD_v7.md              — Added AI Processing Animation +
 
 | Session | Component | Description |
 |---------|-----------|-------------|
-| 11 | Outcome Correlation | Verify engine + add dashboard UI |
 | 12 | AI Processing Animation + Why Engine | Shimmer animation + backend reasoning |
 | 13 | Reasoning Transparency UI | NudgeCard + 4-panel Why? expansion |
 
@@ -178,14 +170,12 @@ None currently.
 | 8 | Weekly Synthesis Part 1 | ✅ Complete (aggregation, correlations, 51 tests) |
 | 9 | Weekly Synthesis Part 2 | ✅ Complete (narrative gen, push, scheduler, 10 tests) |
 | 10 | MVD Detector | ✅ Complete (4 triggers, 50 tests, calendar deferred to Phase 3) |
-| 11 | Outcome Correlation | ⏳ Pending (verify existing + add dashboard) |
+| 11 | Outcome Correlation | ✅ Complete (API + Dashboard UI, 8 files) |
 | 12 | AI Processing Animation + Why Engine | ⏳ Pending |
 | 13 | Reasoning Transparency UI | ⏳ Pending |
 
-**Phase 2 Status:** 10/13 sessions complete (77%) — 3 sessions remaining before Phase 3.
-
-**Key Discovery (Session 29):** Outcome Correlation appears already implemented in `correlations.ts` and integrated with Weekly Synthesis. Session 11 will verify and add dashboard UI.
+**Phase 2 Status:** 11/13 sessions complete (85%) — 2 sessions remaining before Phase 3.
 
 ---
 
-*Last Updated: December 3, 2025 (Session 29 - Phase II Completion Planning)*
+*Last Updated: December 3, 2025 (Session 30 - Correlation Dashboard Complete)*
