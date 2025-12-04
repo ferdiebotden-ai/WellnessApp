@@ -2501,20 +2501,23 @@ CREATE POLICY "Users can access own checkins"
 
 ## 12. IMPLEMENTATION SESSIONS
 
-### Session Order (Recommended)
+### Session Order (Revised December 4, 2025)
+
+> **Strategic Change:** HealthKit-first approach. Oura deferred due to membership requirements and webhook reliability issues. See `OURA_INTEGRATION_REFERENCE.md` for preserved research.
 
 | Session | Component | Dependencies | Deliverables |
 |---------|-----------|--------------|--------------|
-| 1 | Database Migrations | None | All tables created, RLS enabled |
-| 2 | Wearable Sync (Oura) | Session 1 | OAuth flow, webhook receiver, normalization |
-| 3 | Wearable Sync (HealthKit) | Session 1 | iOS background delivery, observer queries |
-| 4 | Recovery Score Engine | Sessions 2-3 | Formula implementation, baseline calculation |
-| 5 | Wake Detection | Sessions 2-4 | Multi-signal detection, Morning Anchor trigger |
-| 6 | Calendar Integration | Session 1 | Google OAuth, meeting load calculation |
-| 7 | Real-time Sync | Sessions 2-6 | Pub/Sub queue, Firestore sync |
-| 8 | Reasoning UX | Session 4 | 4-panel component, animations, DOI links |
-| 9 | Lite Mode | Sessions 1, 5 | Check-in UI, Energy Score |
-| 10 | Integration Testing | All | End-to-end flows verified |
+| 1 | Database Migrations + Types | None | ✅ COMPLETE — 5 tables, 3 type files |
+| 2 | HealthKit Integration (iOS) | Session 1 | iOS background delivery, observer queries, normalization |
+| 3 | Recovery Score Engine | Session 2 | Formula implementation, baseline calculation |
+| 4 | Wake Detection | Sessions 2-3 | Multi-signal detection, Morning Anchor trigger |
+| 5 | Calendar Integration | Session 1 | Google OAuth, meeting load calculation, MVD |
+| 6 | Real-time Sync (Firestore) | Sessions 2-5 | Pub/Sub queue, Firestore sync |
+| 7 | Reasoning UX | Session 3 | 4-panel component, animations, DOI links |
+| 8 | Lite Mode | Sessions 1, 4 | Check-in UI, Energy Score, phone unlock wake |
+| 9 | Health Connect (Android) | Session 2 | Android parity with iOS HealthKit |
+| 10 | Cloud Wearables (Oura, Garmin) | Session 3 | DEFERRED — OAuth flows, scheduled sync |
+| 11 | Integration Testing | All | End-to-end flows verified |
 
 ### Session 1: Database Migrations
 **Files to create:**
@@ -2526,109 +2529,150 @@ CREATE POLICY "Users can access own checkins"
 - [ ] RLS policies active
 - [ ] Indexes created
 
-### Session 2: Wearable Sync (Oura)
+### Session 2: HealthKit Integration (iOS)
+> **Priority:** This is now the primary wearable data source. HealthKit is free, on-device, and works with Apple Watch (market leader) plus any wearable that syncs to Apple Health (including Oura).
+
 **Files to create:**
-- `functions/src/types/wearable.types.ts`
-- `functions/src/services/wearable/OuraClient.ts`
-- `functions/src/services/wearable/MetricsNormalizer.ts`
-- `functions/src/services/wearable/WearableIngestionService.ts`
-- `functions/src/api/webhooks/oura.ts`
+- `client/src/services/health/HealthKitService.ts` — Main service class
+- `client/src/services/health/HealthKitObserver.ts` — Background delivery observer
+- `client/src/services/health/HealthKitNormalizer.ts` — Convert HealthKit → DailyMetrics
+- `client/src/hooks/useHealthKit.ts` — React hook for components
+- Native module configuration (iOS entitlements, Info.plist)
+
+**Data types to request:**
+- `HKCategoryTypeIdentifierSleepAnalysis` — Sleep sessions
+- `HKQuantityTypeIdentifierHeartRateVariabilitySDNN` — HRV (note: HealthKit uses SDNN, not RMSSD)
+- `HKQuantityTypeIdentifierRestingHeartRate` — Resting HR
+- `HKQuantityTypeIdentifierRespiratoryRate` — Respiratory rate
+- `HKQuantityTypeIdentifierStepCount` — Steps
+- `HKQuantityTypeIdentifierActiveEnergyBurned` — Active calories
 
 **Acceptance:**
-- [ ] OAuth flow connects Oura account
-- [ ] Webhook receives and queues events
-- [ ] Sleep data normalized to DailyMetrics
-- [ ] 30-day backfill completes
+- [ ] HealthKit permissions requested correctly (modal with explanation)
+- [ ] Background delivery enabled for sleep and HRV
+- [ ] Observer queries fire on new data availability
+- [ ] Data normalized to `DailyMetrics` format
+- [ ] Data synced to backend via `/api/wearables/sync`
+- [ ] HRV method stored as 'sdnn' (HealthKit native format)
+- [ ] Works with Apple Watch and any HealthKit-compatible wearable
 
-### Session 3: Wearable Sync (HealthKit)
+### Session 3: Recovery Score Engine
 **Files to create:**
-- `client/src/services/health/HealthKitObserver.ts`
-- `client/src/services/health/HealthKitClient.ts`
-- Native module configuration (iOS entitlements)
-
-**Acceptance:**
-- [ ] HealthKit permissions requested correctly
-- [ ] Background delivery enabled for sleep/HRV
-- [ ] Observer queries fire on new data
-- [ ] Data synced to backend
-
-### Session 4: Recovery Score Engine
-**Files to create:**
-- `functions/src/types/recovery.types.ts`
+- `functions/src/types/recovery.types.ts` — ✅ Already created (Session 1)
 - `functions/src/services/recovery/RecoveryCalculator.ts`
 - `functions/src/services/recovery/BaselineService.ts`
+- `functions/src/services/recovery/EdgeCaseDetector.ts`
 
 **Acceptance:**
-- [ ] Formula calculates with documented weights
-- [ ] Baseline updates daily with 14-day window
-- [ ] Edge cases detected (alcohol, illness)
+- [ ] Formula calculates with documented weights (HRV 40%, RHR 25%, etc.)
+- [ ] Baseline updates daily with 14-day rolling window
+- [ ] Edge cases detected (alcohol, illness, travel)
 - [ ] Confidence scores match expected ranges
+- [ ] Works with HealthKit data (SDNN → recovery score conversion)
 
-### Session 5: Wake Detection
+### Session 4: Wake Detection
 **Files to create:**
-- `functions/src/types/wake.types.ts`
+- `functions/src/types/wake.types.ts` — ✅ Already created (Session 1)
 - `functions/src/services/wake/WakeDetector.ts`
 - `client/src/services/wake/PhoneUnlockDetector.ts`
+- `client/src/services/wake/HealthKitWakeDetector.ts`
 
 **Acceptance:**
-- [ ] Wake detected from Oura bedtime_end
-- [ ] Wake detected from HealthKit sleep analysis
-- [ ] Phone unlock fallback works
+- [ ] Wake detected from HealthKit sleep analysis (`HKCategoryValueSleepAnalysisAsleepCore` end time)
+- [ ] Phone unlock fallback works (Lite Mode)
 - [ ] Morning Anchor triggers 5-15 min post-wake
+- [ ] Multiple wake detection methods ranked by confidence
 
-### Session 6: Calendar Integration
+### Session 5: Calendar Integration
 **Files to create:**
 - `functions/src/types/calendar.types.ts`
 - `functions/src/services/calendar/CalendarService.ts`
-- `functions/src/api/oauth/google-calendar.ts`
+- `functions/src/routes/calendar.routes.ts`
 
 **Acceptance:**
-- [ ] OAuth flow with freebusy scope
+- [ ] Google OAuth flow with `calendar.readonly` or `calendar.events.readonly` scope
+- [ ] FreeBusy API used (privacy-first: no event details)
 - [ ] Meeting load calculated correctly
-- [ ] Heavy day (4+ hours) triggers MVD
-- [ ] Metrics stored for trends
+- [ ] Heavy day (4+ hours) triggers MVD consideration
+- [ ] Metrics stored in `daily_metrics` for trends
 
-### Session 7: Real-time Sync
+### Session 6: Real-time Sync (Firestore)
 **Files to create:**
 - `functions/src/services/sync/SyncOrchestrator.ts`
 - `functions/src/services/sync/FirestoreSync.ts`
-- Cloud Pub/Sub topic and subscription
+- Cloud Pub/Sub topic and subscription configuration
 
 **Acceptance:**
-- [ ] Webhook → Pub/Sub → Worker flow works
-- [ ] Firestore updated after each sync
-- [ ] Client receives real-time updates
-- [ ] Idempotency prevents duplicates
+- [ ] HealthKit data → Backend → Firestore flow works
+- [ ] Firestore `todayMetrics` document updated after each sync
+- [ ] Client receives real-time updates via Firestore listeners
+- [ ] Idempotency prevents duplicate processing
+- [ ] Recovery score synced to Firestore for Morning Anchor
 
-### Session 8: Reasoning UX
+### Session 7: Reasoning UX
 **Files to create:**
-- `client/src/components/ReasoningPanel/`
-- `client/src/components/ConfidenceBadge/`
-- Animation configurations
+- `client/src/components/ReasoningPanel/` — 4-panel expansion
+- `client/src/components/ConfidenceBadge/` — Tier-colored badge
+- `client/src/components/RecoveryBreakdown/` — Component scores
+- Animation configurations (Reanimated)
 
 **Acceptance:**
-- [ ] 4-panel expansion animates smoothly (280ms)
-- [ ] DOI links open in WebView
-- [ ] Confidence badge colored by tier
-- [ ] Accessibility requirements met
+- [ ] 4-panel expansion animates smoothly (280ms spring animation)
+- [ ] DOI links open in in-app WebView
+- [ ] Confidence badge colored by tier (low=red, medium=yellow, high=green)
+- [ ] Accessibility requirements met (VoiceOver labels)
+- [ ] Component breakdown shows HRV, RHR, Sleep Quality, etc.
 
-### Session 9: Lite Mode
+### Session 8: Lite Mode
 **Files to create:**
-- `client/src/screens/LiteModeCheckIn.tsx`
-- `functions/src/services/litemode/LiteModeService.ts`
+- `client/src/screens/LiteModeCheckIn.tsx` — Morning check-in UI
+- `client/src/components/EnergyScoreCard.tsx` — Energy Score display
+- `functions/src/services/litemode/LiteModeService.ts` — Energy calculation
+- `client/src/services/wake/PhoneUnlockDetector.ts` — Wake detection fallback
 
 **Acceptance:**
-- [ ] Auto-activates without wearable
-- [ ] Morning check-in captures sleep + energy
-- [ ] Energy Score calculated and displayed
-- [ ] Phone unlock triggers Morning Anchor
+- [ ] Auto-activates when no wearable connected
+- [ ] Morning check-in captures: sleep hours (slider), energy level (1-5)
+- [ ] Energy Score calculated from manual inputs
+- [ ] Phone unlock triggers Morning Anchor (Lite Mode wake detection)
+- [ ] Nudges still work with lower personalization
 
-### Session 10: Integration Testing
+### Session 9: Health Connect (Android)
+**Files to create:**
+- `client/src/services/health/HealthConnectService.ts` — Main service
+- `client/src/services/health/HealthConnectNormalizer.ts` — Convert to DailyMetrics
+- Native module configuration (AndroidManifest.xml, permissions)
+
+**Acceptance:**
+- [ ] Health Connect permissions requested correctly
+- [ ] Sleep, HRV, HR, steps data queried
+- [ ] Data normalized to `DailyMetrics` format
+- [ ] Background sync via WorkManager
+- [ ] Parity with iOS HealthKit experience
+
+### Session 10: Cloud Wearables (Oura, Garmin, Fitbit)
+> **Status:** DEFERRED until core flow works. See `OURA_INTEGRATION_REFERENCE.md` for Oura research.
+
+**Files to create (when implemented):**
+- `functions/src/services/wearable/OuraClient.ts`
+- `functions/src/services/wearable/GarminClient.ts`
+- `functions/src/routes/oura.routes.ts` — OAuth endpoints
+- `functions/src/services/encryption/tokenEncryption.ts` — AES-256
+
+**Acceptance:**
+- [ ] OAuth flows for each provider
+- [ ] Token encryption (AES-256-GCM)
+- [ ] Proactive token refresh (before 24h expiry)
+- [ ] Scheduled sync via Cloud Scheduler
+- [ ] Data normalized to DailyMetrics
+
+### Session 11: Integration Testing
 **Focus:**
-- End-to-end flow: Wearable sync → Recovery calculation → Morning Anchor → Nudges
-- Edge cases: No wearable, missing data, webhook failures
+- End-to-end flow: HealthKit sync → Recovery calculation → Morning Anchor → Nudges
+- Edge cases: No wearable (Lite Mode), missing data, sync failures
 - Performance: <5 second Morning Anchor load
 - Accessibility: VoiceOver/TalkBack testing
+- Platform parity: iOS HealthKit and Android Health Connect
 
 ---
 
@@ -2645,13 +2689,14 @@ CREATE POLICY "Users can access own checkins"
 
 ### Before Marking Phase III Complete
 
-- [ ] All 7 components functional
-- [ ] End-to-end flow tested with real Oura account
-- [ ] Lite Mode fallback tested
+- [ ] All 10 components functional (Sessions 1-10)
+- [ ] End-to-end flow tested with real HealthKit data (iOS)
+- [ ] Lite Mode fallback tested (no wearable)
 - [ ] Recovery score matches expected values for test data
 - [ ] Morning Anchor triggers within 15 min of wake
 - [ ] Reasoning panel displays correctly
 - [ ] No console errors in production build
+- [ ] Health Connect parity with HealthKit (Android)
 
 ---
 

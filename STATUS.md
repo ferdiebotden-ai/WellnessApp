@@ -9,9 +9,32 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 1 of 10 complete |
-| **Progress** | 10% of Phase 3 |
+| **Session** | 2 of 11 complete |
+| **Progress** | 18% of Phase 3 |
 | **Branch** | main |
+
+---
+
+## Strategic Decision (Session 36)
+
+### HealthKit-First Strategy
+
+**Decision:** Prioritize HealthKit (iOS on-device) over Oura cloud integration.
+
+**Rationale:**
+| Factor | Oura | HealthKit |
+|--------|------|-----------|
+| Cost | $5.99/mo membership required (Gen 3/4) | **Free** |
+| Architecture | Cloud OAuth, token management | **On-device**, no OAuth |
+| Reliability | Webhooks unreliable (504 errors Dec 2025) | **Background delivery works** |
+| Market | Oura Ring users | **Apple Watch (market leader) + Oura via Health** |
+
+**Key Insight:** Oura syncs to Apple Health anyway, so HealthKit gives us Oura data plus all other Apple Health sources.
+
+**Impact:**
+- Oura moves from Session 2 → Session 10 (deferred)
+- HealthKit becomes Session 2 (next priority)
+- See `OURA_INTEGRATION_REFERENCE.md` for preserved Oura research
 
 ---
 
@@ -28,71 +51,67 @@
 
 ## Last Session
 
-**Date:** December 4, 2025 (Session 35)
-**Focus:** Phase 3 Database Migrations & TypeScript Types
+**Date:** December 4, 2025 (Session 36)
+**Focus:** Strategic Pivot — HealthKit-First Strategy
 
 **Accomplished:**
-- Created Phase 3 database migration with 5 new tables:
-  - `daily_metrics` — Normalized wearable data (canonical format)
-  - `user_baselines` — 14-day rolling baseline for recovery calculation
-  - `recovery_scores` — Calculated recovery history with component breakdown
-  - `wearable_integrations` — OAuth tokens for cloud wearables (Oura, Garmin, etc.)
-  - `wake_events` — Wake detection log for Morning Anchor
-- Created comprehensive TypeScript types for Phase 3:
-  - `wearable.types.ts` — DailyMetrics, WearableIntegration, Oura API types
-  - `recovery.types.ts` — UserBaseline, RecoveryResult, RecoveryRecommendation
-  - `wake.types.ts` — WakeEvent, WakeDetectionResult, MorningAnchorConfig
-- All tables have RLS policies and appropriate indexes
-- Migration applied to Supabase successfully
-- TypeScript compiles with no errors
+- Researched Oura Ring API v2 in depth (OAuth, webhooks, rate limits, membership)
+- Discovered key blockers: Gen 3/4 users require $5.99/mo membership for API access
+- Discovered webhook unreliability (504/500 errors Dec 2025)
+- Made strategic decision to prioritize HealthKit over Oura cloud integration
+- Created `OURA_INTEGRATION_REFERENCE.md` to preserve all Oura research
+- Updated `PHASE_III_IMPLEMENTATION_PLAN.md` with new 11-session structure
+- HealthKit now Session 2, Oura deferred to Session 10
 
-**Files Created:**
+**Files Created/Modified:**
 ```
-supabase/migrations/20251204000000_phase3_wearables_recovery.sql — 5 tables + RLS
-functions/src/types/wearable.types.ts    — Wearable data types + Oura API
-functions/src/types/recovery.types.ts    — Recovery score types
-functions/src/types/wake.types.ts        — Wake detection types
-functions/src/types/index.ts             — Type exports
+PRD Documents/OURA_INTEGRATION_REFERENCE.md — Archived Oura research (263 lines)
+PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md — Restructured session order
+STATUS.md — Strategic decision documentation
 ```
 
-**Migration Applied:** `20251204000000` — Phase 3 wearables and recovery infrastructure
+**Key Decision:** HealthKit is free, on-device, and Oura syncs to Apple Health anyway.
 
 ---
 
 ## Previous Session
 
-**Date:** December 4, 2025 (Session 34)
-**Focus:** Comprehensive E2E Test Coverage for Phase 1-2
+**Date:** December 4, 2025 (Session 35)
+**Focus:** Phase 3 Database Migrations & TypeScript Types
 
 **Accomplished:**
-- Added testIDs to essential screens (HomeScreen, ProfileScreen, ProtocolsScreen, InsightsScreen, ForgotPasswordScreen)
-- Properly skipped biometric-setup tests (native-only, like biometric-auth)
-- Created auth helper and navigation tests
-- All E2E tests now pass or are correctly skipped
+- Created Phase 3 database migration with 5 new tables
+- Created comprehensive TypeScript types for Phase 3
+- All tables have RLS policies and appropriate indexes
+- Migration applied to Supabase successfully
 
-**Commit:** `4f0a25a` — test(e2e): expand Playwright test coverage for Phase 1-2 UI
+**Commit:** `310b3c1` — feat(phase3): add database migrations and TypeScript types for wearable infrastructure
 
 ---
 
 ## Next Session Priority
 
-### Phase 3 Session 2: Oura OAuth + Webhook Receiver
+### Phase 3 Session 2: HealthKit Integration (iOS)
 
-**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 1)
+**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 2)
 
 **Priority Tasks:**
-1. Oura OAuth 2.0 flow (`/api/auth/oura/connect`, `/api/auth/oura/callback`)
-2. Token encryption and storage in `wearable_integrations` table
-3. `OuraClient` service for API calls
-4. Webhook receiver (`/api/webhooks/oura`) for real-time data
-5. Data normalization to `daily_metrics` table
-6. 30-day historical backfill on connection
+1. Choose library: `expo-health` vs `react-native-health`
+2. Configure HealthKit permissions (sleep, HRV, HR, steps, activity)
+3. Implement background delivery observers
+4. Normalize HealthKit data → `daily_metrics` table format
+5. Create wearable settings screen with HealthKit connection
 
 **Files to Create:**
-- `functions/src/services/wearable/OuraClient.ts`
-- `functions/src/routes/oura.routes.ts`
-- `functions/src/services/wearable/MetricsNormalizer.ts`
+- `client/src/services/healthkit/HealthKitClient.ts`
+- `client/src/services/healthkit/HealthKitNormalizer.ts`
 - `client/src/screens/settings/WearableConnectionScreen.tsx`
+- `client/src/hooks/useHealthKit.ts`
+
+**Research Needed:**
+- Review `PRD Documents/Phase_II_III_Rsearch_Files - Gemini Synthesis/APEX_OS_WEARABLE_APIS_v1.md`
+- Verify expo-health background delivery capabilities
+- Confirm iOS entitlements required
 
 ### Optional: Expand E2E Test Coverage
 - Create test user in Supabase (`e2e-test@apexos.dev`)
@@ -175,17 +194,18 @@ None currently.
 | Session | Component | Status |
 |---------|-----------|--------|
 | 1 | Database Migrations + Types | ✅ Complete (5 tables, 3 type files) |
-| 2 | Oura OAuth + Webhook | 🔲 Pending |
-| 3 | HealthKit Background Delivery | 🔲 Pending |
-| 4 | Recovery Score Engine | 🔲 Pending |
-| 5 | Wake Detection | 🔲 Pending |
-| 6 | Calendar Integration | 🔲 Pending |
-| 7 | Real-time Sync (Firestore) | 🔲 Pending |
-| 8 | Reasoning UX (4-panel) | 🔲 Pending |
-| 9 | Lite Mode (no-wearable fallback) | 🔲 Pending |
-| 10 | Integration Testing | 🔲 Pending |
+| 2 | HealthKit Integration (iOS) | 🔜 Next — Background delivery, observers |
+| 3 | Recovery Score Engine | 🔲 Pending |
+| 4 | Wake Detection | 🔲 Pending |
+| 5 | Calendar Integration | 🔲 Pending |
+| 6 | Real-time Sync (Firestore) | 🔲 Pending |
+| 7 | Reasoning UX (4-panel) | 🔲 Pending |
+| 8 | Lite Mode (no-wearable fallback) | 🔲 Pending |
+| 9 | Health Connect (Android) | 🔲 Pending |
+| 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
+| 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 1/10 sessions complete (10%)**
+**Phase 3 Status: 1/11 sessions complete (9%)**
 
 ---
 
@@ -208,4 +228,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 35 - Phase 3 Database Migrations)*
+*Last Updated: December 4, 2025 (Session 36 - HealthKit-First Strategy Pivot)*
