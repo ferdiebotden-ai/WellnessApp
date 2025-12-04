@@ -503,4 +503,37 @@ sudo apt-get install -y libnspr4 libnss3 libasound2t64
 - HTML Report: `playwright-report/index.html`
 - Traces: `test-results/*/trace.zip`
 
+---
+
+## 16. PLAYWRIGHT MCP (Autonomous UI Testing)
+
+Claude Code can autonomously test the Expo web app using Playwright MCP.
+
+### Verify MCP is Installed
+```bash
+claude mcp list
+# Should show: playwright (npx -y @playwright/mcp@latest)
+```
+
+### Usage
+1. Start Expo: `cd client && npx expo start --web`
+2. Ask Claude to test a screen:
+   ```
+   Use Playwright MCP to navigate to http://localhost:8081, take a screenshot,
+   check console for errors, and report any UI issues.
+   ```
+
+### Capabilities
+- `browser_screenshot` — Visual analysis
+- `browser_click`, `browser_type` — Interactions
+- Console log monitoring — JavaScript errors
+- `browser_wait_for` — Async loading
+
+### If MCP Not Working
+1. Ensure Xvfb installed: `sudo apt-get install xvfb`
+2. Restart Claude Code: `claude exit`
+3. Re-add: `claude mcp add playwright -- npx -y @playwright/mcp@latest`
+
+**Research:** `PRD Documents/Perplexity Research Papers/autonomous UI testing for Claude Code Research Report.md`
+
 *Last Updated: December 4, 2025*
