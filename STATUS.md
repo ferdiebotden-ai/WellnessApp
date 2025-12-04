@@ -8,9 +8,9 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | Phase 2: Brain (AI & Reasoning) — ✅ COMPLETE |
-| **Session** | 13 of 13 complete |
-| **Progress** | 100% of Phase 2 |
+| **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
+| **Session** | 1 of 10 complete |
+| **Progress** | 10% of Phase 3 |
 | **Branch** | main |
 
 ---
@@ -28,69 +28,75 @@
 
 ## Last Session
 
+**Date:** December 4, 2025 (Session 35)
+**Focus:** Phase 3 Database Migrations & TypeScript Types
+
+**Accomplished:**
+- Created Phase 3 database migration with 5 new tables:
+  - `daily_metrics` — Normalized wearable data (canonical format)
+  - `user_baselines` — 14-day rolling baseline for recovery calculation
+  - `recovery_scores` — Calculated recovery history with component breakdown
+  - `wearable_integrations` — OAuth tokens for cloud wearables (Oura, Garmin, etc.)
+  - `wake_events` — Wake detection log for Morning Anchor
+- Created comprehensive TypeScript types for Phase 3:
+  - `wearable.types.ts` — DailyMetrics, WearableIntegration, Oura API types
+  - `recovery.types.ts` — UserBaseline, RecoveryResult, RecoveryRecommendation
+  - `wake.types.ts` — WakeEvent, WakeDetectionResult, MorningAnchorConfig
+- All tables have RLS policies and appropriate indexes
+- Migration applied to Supabase successfully
+- TypeScript compiles with no errors
+
+**Files Created:**
+```
+supabase/migrations/20251204000000_phase3_wearables_recovery.sql — 5 tables + RLS
+functions/src/types/wearable.types.ts    — Wearable data types + Oura API
+functions/src/types/recovery.types.ts    — Recovery score types
+functions/src/types/wake.types.ts        — Wake detection types
+functions/src/types/index.ts             — Type exports
+```
+
+**Migration Applied:** `20251204000000` — Phase 3 wearables and recovery infrastructure
+
+---
+
+## Previous Session
+
 **Date:** December 4, 2025 (Session 34)
 **Focus:** Comprehensive E2E Test Coverage for Phase 1-2
 
 **Accomplished:**
 - Added testIDs to essential screens (HomeScreen, ProfileScreen, ProtocolsScreen, InsightsScreen, ForgotPasswordScreen)
 - Properly skipped biometric-setup tests (native-only, like biometric-auth)
-- Created auth helper (`tests/helpers/auth.ts`) for real login flow
-- Created `main-navigation.spec.ts` (7 tests: 5 passing, 2 skipped for auth)
-- Created `forgot-password.spec.ts` (3 tests, all passing)
+- Created auth helper and navigation tests
 - All E2E tests now pass or are correctly skipped
-
-**Files Modified:**
-```
-tests/biometric-setup.spec.ts                — Properly skipped (native-only)
-tests/main-navigation.spec.ts                — NEW: 7 navigation tests
-tests/forgot-password.spec.ts                — NEW: 3 forgot password tests
-tests/helpers/auth.ts                        — NEW: Auth helper for real login
-client/src/screens/HomeScreen.tsx            — Added testIDs
-client/src/screens/ProfileScreen.tsx         — Added testID
-client/src/screens/ProtocolsScreen.tsx       — Added testID
-client/src/screens/InsightsScreen.tsx        — Added testID
-client/src/screens/auth/ForgotPasswordScreen.tsx — Added testIDs
-STATUS.md                                    — Updated test status
-```
 
 **Commit:** `4f0a25a` — test(e2e): expand Playwright test coverage for Phase 1-2 UI
 
 ---
 
-## Previous Session
-
-**Date:** December 4, 2025 (Session 33)
-**Focus:** Playwright E2E Testing Setup & Fix
-
-**Accomplished:**
-- Verified Playwright v1.56.1 is working with Expo web build
-- Installed Chromium browser and system dependencies
-- Added Section 15 to CLAUDE.md with full Playwright documentation
-- Fixed auth-flow tests by adding testIDs to auth screens
-- All 7 auth-flow tests now passing
-
-**Commits:**
-- `acab384` — docs: add Playwright E2E testing documentation
-- `f9ef168` — fix(e2e): add testIDs to auth screens and update Playwright selectors
-- `381b4df` — docs: update CLAUDE.md Playwright section with fix pattern
-
----
-
 ## Next Session Priority
 
-### Phase 3: Nervous System (Real Data Flow)
+### Phase 3 Session 2: Oura OAuth + Webhook Receiver
 
-**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md`
+**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 1)
 
-**Session 1 Priority: Wearable Data Sync**
-- Google Fit / Apple HealthKit OAuth
-- Real sleep, HRV, RHR data ingestion
-- Wake detection logic
+**Priority Tasks:**
+1. Oura OAuth 2.0 flow (`/api/auth/oura/connect`, `/api/auth/oura/callback`)
+2. Token encryption and storage in `wearable_integrations` table
+3. `OuraClient` service for API calls
+4. Webhook receiver (`/api/webhooks/oura`) for real-time data
+5. Data normalization to `daily_metrics` table
+6. 30-day historical backfill on connection
+
+**Files to Create:**
+- `functions/src/services/wearable/OuraClient.ts`
+- `functions/src/routes/oura.routes.ts`
+- `functions/src/services/wearable/MetricsNormalizer.ts`
+- `client/src/screens/settings/WearableConnectionScreen.tsx`
 
 ### Optional: Expand E2E Test Coverage
 - Create test user in Supabase (`e2e-test@apexos.dev`)
 - Enable authenticated navigation tests in `main-navigation.spec.ts`
-- Add tests for Phase 2 features (nudges, reasoning panels) once test user exists
 
 ---
 
@@ -164,6 +170,25 @@ None currently.
 
 ---
 
+## Phase 3 Progress
+
+| Session | Component | Status |
+|---------|-----------|--------|
+| 1 | Database Migrations + Types | ✅ Complete (5 tables, 3 type files) |
+| 2 | Oura OAuth + Webhook | 🔲 Pending |
+| 3 | HealthKit Background Delivery | 🔲 Pending |
+| 4 | Recovery Score Engine | 🔲 Pending |
+| 5 | Wake Detection | 🔲 Pending |
+| 6 | Calendar Integration | 🔲 Pending |
+| 7 | Real-time Sync (Firestore) | 🔲 Pending |
+| 8 | Reasoning UX (4-panel) | 🔲 Pending |
+| 9 | Lite Mode (no-wearable fallback) | 🔲 Pending |
+| 10 | Integration Testing | 🔲 Pending |
+
+**Phase 3 Status: 1/10 sessions complete (10%)**
+
+---
+
 ## Phase 2 Completion Summary
 
 | Session | Component | Status |
@@ -179,8 +204,8 @@ None currently.
 | 12 | AI Processing Animation + Why Engine | ✅ Complete (shimmer animation, whyEngine, 36 tests) |
 | 13 | Reasoning Transparency UI | ✅ Complete (NudgeCard + 4-panel expansion) |
 
-**🎉 Phase 2 Status: 13/13 sessions complete (100%) — Ready for Phase 3**
+**🎉 Phase 2: 13/13 sessions complete (100%)**
 
 ---
 
-*Last Updated: December 4, 2025 (Session 34 - Comprehensive E2E Coverage)*
+*Last Updated: December 4, 2025 (Session 35 - Phase 3 Database Migrations)*
