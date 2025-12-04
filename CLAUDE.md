@@ -55,6 +55,12 @@ I need deeper research before proceeding.
 - Request comparison tables when evaluating options
 - For AI tech: explicitly request "sources from the past 30 days"
 
+**Retrieving Research Results:**
+- User will notify when reports are complete
+- Location: `PRD Documents/Perplexity Research Papers/`
+- Retrieve the latest report(s) matching the number of prompts requested
+- Archive older reports into category subfolders by subject
+
 ### Evidence-First
 Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies in code comments (e.g., Balban et al., 2023 for breathing protocols).
 

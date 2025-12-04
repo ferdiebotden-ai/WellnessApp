@@ -191,7 +191,7 @@ export const useAuth = (): AuthContextValue => {
  * Updates onboarding status for the current user.
  */
 export const useUpdateOnboarding = () => {
-  const { user, refreshUserProfile, setOnboardingStatusLocal } = useAuth();
+  const { user, setOnboardingStatusLocal } = useAuth();
 
   return useCallback(
     async (completed: boolean) => {
@@ -204,11 +204,12 @@ export const useUpdateOnboarding = () => {
       // Always update local state first for immediate UI feedback
       setOnboardingStatusLocal(completed ? 'completed' : 'pending');
       
-      // Try to persist to Firestore if available
+      // Try to persist to Firestore if available (fire-and-forget)
+      // Don't call refreshUserProfile() - local state is already correct
+      // and refreshing would overwrite it if Firestore fails
       if (!isUsingMemoryPersistenceMode()) {
         try {
           await updateOnboardingStatus(user.id, completed);
-          await refreshUserProfile();
         } catch (error) {
           console.warn('⚠️ Failed to persist onboarding status to Firestore:', error);
           // Local state already updated, so continue
@@ -217,7 +218,7 @@ export const useUpdateOnboarding = () => {
       
       console.log('✅ Onboarding status update complete');
     },
-    [user, refreshUserProfile, setOnboardingStatusLocal]
+    [user, setOnboardingStatusLocal]
   );
 };
 
