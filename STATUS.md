@@ -9,10 +9,10 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 48 (next) |
+| **Session** | 49 (next) |
 | **Progress** | 64% of Phase 3 (7/11 sessions) |
 | **Branch** | main |
-| **Blocker** | ⚠️ `is_primary` column missing — see Active Blockers |
+| **Blocker** | ✅ None — `is_primary` blocker resolved (Session 48) |
 
 ---
 
@@ -52,54 +52,42 @@
 
 ## Last Session
 
-**Date:** December 5, 2025 (Session 47)
-**Focus:** Firebase→Supabase User Sync Fix (Critical Bug)
+**Date:** December 5, 2025 (Session 48)
+**Focus:** Fix `is_primary` Column Blocker
 
-**Problem Discovered:**
-App showing "No active modules available" after onboarding. Root cause: Firebase UID vs Supabase UUID mismatch.
+**Problem:**
+Onboarding endpoint returned 500 error because `is_primary: true` was being inserted but column didn't exist in `module_enrollment` table.
 
 **Accomplished:**
-- ✅ Created `/api/users/sync` endpoint — bridges Firebase Auth → Supabase users table
-- ✅ Updated `onboardingComplete.ts` — looks up user by `firebase_uid`, uses UUID for FKs
-- ✅ Updated `firstWinNudge.ts` — accepts both Firebase UID and Supabase UUID
-- ✅ Added `syncUser()` in `api.ts` — client-side sync function
-- ✅ Added sync call in `AuthProvider.tsx` — syncs on auth state change
-- ✅ Added CORS middleware — allows localhost:8081/19006/3000
-- ✅ Fixed module ID mappings — changed `sleep_foundations` → `mod_sleep`
-- ✅ Deployed backend to Cloud Run
-- ✅ Committed and pushed all changes (commit `b0884f6`)
+- ✅ Created migration `20251205200000_add_is_primary_to_enrollment.sql`
+- ✅ Applied migration to Supabase with `supabase db push`
+- ✅ Added error logging to `onboardingComplete.ts`
+- ✅ Deployed backend to Cloud Run (revision `api-00143-q2w`)
+- ✅ Committed and pushed (commit `c6ce87e`)
 
-**Files Created (2 new):**
-- `backend/src/routes/userSync.ts` — User sync endpoint
-- `backend/src/server.ts` — Express server entry point
+**Files Created (1):**
+- `supabase/migrations/20251205200000_add_is_primary_to_enrollment.sql`
 
-**Files Modified (10):**
-- `backend/src/index.ts` — Added CORS, userSync route
-- `backend/src/routes/onboardingComplete.ts` — Firebase UID lookup, UUID for FK
-- `backend/src/services/firstWinNudge.ts` — Dual ID format support
-- `backend/src/services/firstWinNudge.test.ts` — Updated tests
-- `backend/package.json` — Added cors dependency
-- `client/src/providers/AuthProvider.tsx` — Added syncUser on auth change
-- `client/src/services/api.ts` — Added syncUser function
-- `client/src/services/AuthService.ts` — Minor sync integration
-- `client/src/types/onboarding.ts` — Fixed module ID mappings
+**Files Modified (1):**
+- `backend/src/routes/onboardingComplete.ts` — Added enrollment error logging
 
-**Blocker Found:** `module_enrollment` table missing `is_primary` column (see Active Blockers)
+**Result:** Blocker resolved. Onboarding should now complete successfully.
 
 ---
 
 ## Previous Session
 
-**Date:** December 5, 2025 (Session 46)
-**Focus:** Phase 3 Session 7 — Edge Case Badges + Confidence Breakdown UI
+**Date:** December 5, 2025 (Session 47)
+**Focus:** Firebase→Supabase User Sync Fix (Critical Bug)
 
 **Accomplished:**
-- Implemented edge case badges for health conditions (alcohol, illness, cycle)
-- Implemented confidence factor breakdown visualization
-- Integrated badges into RecoveryScoreCard and NudgeCard Why panel
-- Design: Bloomberg Terminal meets luxury health tech aesthetic
+- Created `/api/users/sync` endpoint
+- Updated `onboardingComplete.ts` for Firebase UID lookup
+- Added CORS middleware
+- Fixed module ID mappings
+- Deployed to Cloud Run (commit `b0884f6`)
 
-**Files:** 8 new + 4 modified
+**Blocker Found:** `is_primary` column missing → resolved in Session 48
 
 ---
 
@@ -194,132 +182,40 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 
 ## Active Blockers
 
-### ⚠️ CRITICAL: `module_enrollment` Table Missing `is_primary` Column
+✅ **No active blockers.**
 
-**Problem:**
-The `/api/onboarding/complete` endpoint returns 500 error because code tries to insert `is_primary: true` but the column doesn't exist.
-
-**Location:** `backend/src/routes/onboardingComplete.ts:84-89`
-```typescript
-const enrollmentPayload = {
-  user_id: supabaseUserId,
-  module_id: primaryModuleId,
-  is_primary: true,  // <-- THIS COLUMN DOESN'T EXIST IN DATABASE
-  enrolled_at: now.toISOString(),
-};
-```
-
-**Current Table Schema:** (from `supabase/migrations/20250529000001_create_module_enrollment.sql`)
-```sql
-create table public.module_enrollment (
-    id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references public.users (id) on delete cascade,
-    module_id text not null references public.modules (id) on delete cascade,
-    last_active_date date,
-    enrolled_at timestamptz not null default timezone('utc', now()),
-    created_at timestamptz not null default timezone('utc', now()),
-    updated_at timestamptz not null default timezone('utc', now()),
-    unique (user_id, module_id)
-);
-```
+The `is_primary` column issue was resolved in Session 48 via migration `20251205200000_add_is_primary_to_enrollment.sql`.
 
 ---
 
-## Execution Plan for Next Session
+## Next Session Execution Plan
 
-**Priority:** Fix the `is_primary` column blocker, then test end-to-end.
+**Session 49 Priority:** Phase 3 Session 8 — Lite Mode (No-Wearable Fallback)
 
-### Step 1: Add Migration (5 minutes)
-
-Create migration file:
-```bash
-touch supabase/migrations/20251205200000_add_is_primary_to_enrollment.sql
-```
-
-Content:
-```sql
--- Add is_primary column to module_enrollment
--- Allows tracking which module is the user's primary focus module
-
-ALTER TABLE public.module_enrollment
-ADD COLUMN IF NOT EXISTS is_primary boolean NOT NULL DEFAULT false;
-
--- Create index for efficient lookup of primary module
-CREATE INDEX IF NOT EXISTS idx_module_enrollment_is_primary
-ON public.module_enrollment (user_id, is_primary)
-WHERE is_primary = true;
-
-COMMENT ON COLUMN public.module_enrollment.is_primary IS
-'Whether this is the users primary focus module selected during onboarding';
-```
-
-### Step 2: Apply Migration (2 minutes)
-
-```bash
-supabase db push
-```
-
-### Step 3: Add Better Error Logging (3 minutes)
-
-Update `backend/src/routes/onboardingComplete.ts:95-98`:
-```typescript
-if (enrollmentError) {
-  console.error('[onboardingComplete] Enrollment error:', enrollmentError);  // ADD THIS
-  res.status(500).json({ error: 'Failed to enroll user in module' });
-  return;
-}
-```
-
-### Step 4: Deploy Backend (5 minutes)
-
-```bash
-cd backend && npm run build && gcloud run deploy api --source . --region us-central1 --project wellness-os-app
-```
-
-### Step 5: Test End-to-End (10 minutes)
-
+### Prerequisite: Manual E2E Test
+Before starting Lite Mode, verify the onboarding fix:
 1. Start Expo: `cd client && npx expo start --web`
-2. Create fresh test user (e.g., `test-e2e-final@example.com`)
-3. Complete onboarding selecting "Better Sleep"
-4. Verify:
-   - Console shows `✅ User synced to Supabase: created`
-   - No 500 error on `/api/onboarding/complete`
-   - User lands on HomeScreen (not onboarding)
-   - Check Supabase: `module_enrollment` row exists with `is_primary = true`
+2. Create fresh test user
+3. Complete onboarding → verify no 500 error
+4. Confirm landing on HomeScreen
 
-### Step 6: Commit & Update STATUS.md
+### Lite Mode Scope
+Enable app functionality for users without wearables:
+- Manual wellness inputs (sleep quality, energy level, mood)
+- Simplified recovery score without biometric data
+- Protocol recommendations based on user reports
+- Fallback UI when no wearable connected
 
-```bash
-git add -A
-git commit -m "fix(db): add is_primary column to module_enrollment"
-git push origin main
-```
+### Key Files to Review
+- `client/src/screens/HomeScreen.tsx` — Dashboard with wearable data
+- `functions/src/services/recoveryScore.ts` — Needs manual input support
+- `client/src/hooks/useRecoveryScore.ts` — Data source handling
 
-**Estimated Time:** ~25 minutes total
-
----
-
-### Alternative Fix (If Migration Is Problematic)
-
-Remove `is_primary` from the insert payload instead of adding column:
-
-Edit `backend/src/routes/onboardingComplete.ts:84-89`:
-```typescript
-const enrollmentPayload = {
-  user_id: supabaseUserId,
-  module_id: primaryModuleId,
-  // is_primary: true,  // REMOVE THIS LINE
-  enrolled_at: now.toISOString(),
-};
-```
-
-**Trade-off:** Loses ability to track primary module, but unblocks immediately.
-
----
-
-### No Deep Research Needed
-
-This is a straightforward schema mismatch, not an architectural issue. The column simply doesn't exist. The fix is deterministic.
+### Expected Deliverables
+- `ManualWellnessInput.tsx` — Input form component
+- `LiteModeRecoveryCard.tsx` — Simplified score display
+- Modified recovery calculation for manual-only mode
+- Graceful degradation when wearable unavailable
 
 ---
 
@@ -362,4 +258,4 @@ This is a straightforward schema mismatch, not an architectural issue. The colum
 
 ---
 
-*Last Updated: December 5, 2025 (Session 47 - Firebase→Supabase sync complete, is_primary column blocker documented)*
+*Last Updated: December 5, 2025 (Session 48 - is_primary column blocker resolved)*
