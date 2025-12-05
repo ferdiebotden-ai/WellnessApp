@@ -59,9 +59,11 @@ export function detectMVD(context: MVDDetectionContext): MVDDetectionResult {
     return recoveryResult;
   }
 
-  // Note: heavy_calendar trigger would be Priority 3
-  // Deferred to Phase 3 - requires Calendar API integration
-  // TODO: Implement heavy_calendar trigger when Calendar API is available
+  // Priority 3: Heavy calendar day (>= 4 meeting hours)
+  const calendarResult = checkHeavyCalendarTrigger(context);
+  if (calendarResult.shouldActivate) {
+    return calendarResult;
+  }
 
   // Priority 4: Consistency drop (3+ days of <50% completion)
   const consistencyResult = checkConsistencyDropTrigger(context);
@@ -133,6 +135,45 @@ function checkLowRecoveryTrigger(
     mvdType: null,
     exitCondition: null,
     reason: 'Recovery score within healthy range',
+  };
+}
+
+/**
+ * Check heavy calendar trigger: meeting hours >= 4
+ * Added in Phase 3 Session 5.
+ */
+function checkHeavyCalendarTrigger(
+  context: MVDDetectionContext
+): MVDDetectionResult {
+  const { meetingHoursToday } = context;
+
+  // Skip if no calendar data available
+  if (meetingHoursToday === null || meetingHoursToday === undefined) {
+    return {
+      shouldActivate: false,
+      trigger: null,
+      mvdType: null,
+      exitCondition: null,
+      reason: 'No calendar data available',
+    };
+  }
+
+  if (meetingHoursToday >= MVD_CONFIG.HEAVY_CALENDAR_THRESHOLD) {
+    return {
+      shouldActivate: true,
+      trigger: 'heavy_calendar',
+      mvdType: 'full',
+      exitCondition: 'End of calendar heavy day',
+      reason: `Heavy calendar day: ${meetingHoursToday.toFixed(1)}h of meetings (threshold: ${MVD_CONFIG.HEAVY_CALENDAR_THRESHOLD}h)`,
+    };
+  }
+
+  return {
+    shouldActivate: false,
+    trigger: null,
+    mvdType: null,
+    exitCondition: null,
+    reason: `Calendar load within limits: ${meetingHoursToday.toFixed(1)}h`,
   };
 }
 
@@ -212,6 +253,7 @@ export function selectMVDType(trigger: MVDTrigger): MVDType {
       return 'travel';
     case 'low_recovery':
     case 'manual_activation':
+    case 'heavy_calendar': // Heavy meeting day = full MVD (Phase 3 Session 5)
       return 'full';
     case 'consistency_drop':
       return 'semi_active';

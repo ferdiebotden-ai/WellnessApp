@@ -14,8 +14,8 @@ export type MVDTrigger =
   | 'low_recovery' // Recovery score <35%
   | 'manual_activation' // User tapped "Tough Day" button
   | 'travel_detected' // Timezone change >2 hours
+  | 'heavy_calendar' // Meeting hours >= 4 (Phase 3 Session 5)
   | 'consistency_drop'; // <50% completion for 3+ consecutive days
-// Note: 'heavy_calendar' (6+ meeting hours) deferred to Phase 3 - requires Calendar API integration
 
 /**
  * MVD mode types that determine which protocols are allowed
@@ -56,6 +56,8 @@ export interface MVDDetectionContext {
   completionHistory: number[];
   /** Whether this is a manual activation request */
   isManualActivation?: boolean;
+  /** Meeting hours today from calendar integration (Phase 3 Session 5) */
+  meetingHoursToday?: number | null;
 }
 
 /**
@@ -88,7 +90,8 @@ export const MVD_CONFIG = {
   CONSISTENCY_THRESHOLD: 50,
   /** Number of consecutive days needed for consistency_drop */
   CONSISTENCY_DAYS: 3,
-  // Note: HEAVY_CALENDAR_THRESHOLD (6 hours) deferred to Phase 3
+  /** Meeting hours threshold for heavy_calendar trigger (Phase 3 Session 5) */
+  HEAVY_CALENDAR_THRESHOLD: 4,
 } as const;
 
 /**

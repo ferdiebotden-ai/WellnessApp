@@ -19,6 +19,13 @@ import {
   triggerMVDDetection,
 } from './mvd/mvdApi';
 import { createWakeEvent, getTodayWakeEvent } from './wakeEvents';
+import {
+  syncCalendar,
+  getTodayCalendarMetrics,
+  getCalendarStatus,
+  disconnectCalendar,
+  getRecentCalendarMetrics,
+} from './calendarSync';
 
 const app = express();
 
@@ -63,6 +70,13 @@ app.post('/api/mvd/detect', triggerMVDDetection);
 // Wake detection routes (Phase 3 Session 4)
 app.post('/api/wake-events', createWakeEvent);
 app.get('/api/wake-events/today', getTodayWakeEvent);
+
+// Calendar integration routes (Phase 3 Session 5)
+app.post('/api/calendar/sync', syncCalendar);
+app.get('/api/calendar/today', getTodayCalendarMetrics);
+app.get('/api/calendar/status', getCalendarStatus);
+app.delete('/api/calendar/disconnect', disconnectCalendar);
+app.get('/api/calendar/recent', getRecentCalendarMetrics);
 
 // Webhooks
 app.post('/api/webhooks/revenuecat', handleRevenueCatWebhook);

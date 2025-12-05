@@ -10,6 +10,7 @@
 import { getServiceClient } from '../supabaseClient';
 import type { MVDDetectionContext } from './types';
 import { MVD_CONFIG } from './types';
+import { getCalendarService } from '../services/calendar';
 
 /**
  * Get the latest recovery score for a user from wearable data
@@ -196,6 +197,27 @@ function getTimezoneOffsetMinutes(date: Date, timezone: string): number | null {
 }
 
 /**
+ * Get today's meeting hours from calendar integration
+ * Returns null if no calendar is connected.
+ *
+ * Added in Phase 3 Session 5.
+ *
+ * @param userId - The user ID
+ * @returns Meeting hours today or null if no calendar data
+ */
+export async function getMeetingHoursToday(
+  userId: string
+): Promise<number | null> {
+  try {
+    const calendarService = getCalendarService();
+    return await calendarService.getMeetingHoursToday(userId);
+  } catch {
+    // Calendar not connected or error - return null
+    return null;
+  }
+}
+
+/**
  * Build the full MVD detection context for a user
  *
  * @param userId - The user ID
@@ -208,12 +230,14 @@ export async function buildMVDDetectionContext(
   deviceTimezone: string | null = null,
   isManualActivation: boolean = false
 ): Promise<MVDDetectionContext> {
-  // Fetch all data in parallel
-  const [recoveryScore, completionHistory, userTimezone] = await Promise.all([
-    getLatestRecoveryScore(userId),
-    getCompletionHistory(userId, MVD_CONFIG.CONSISTENCY_DAYS),
-    getUserTimezone(userId),
-  ]);
+  // Fetch all data in parallel (including calendar data)
+  const [recoveryScore, completionHistory, userTimezone, meetingHoursToday] =
+    await Promise.all([
+      getLatestRecoveryScore(userId),
+      getCompletionHistory(userId, MVD_CONFIG.CONSISTENCY_DAYS),
+      getUserTimezone(userId),
+      getMeetingHoursToday(userId),
+    ]);
 
   return {
     userId,
@@ -222,6 +246,7 @@ export async function buildMVDDetectionContext(
     deviceTimezone,
     completionHistory,
     isManualActivation,
+    meetingHoursToday,
   };
 }
 

@@ -38,6 +38,14 @@ export const ProfileScreen: React.FC = () => {
     navigation.navigate('PrivacyDashboard');
   }, [navigation]);
 
+  const handleWearableSettingsPress = useCallback(() => {
+    navigation.navigate('WearableSettings');
+  }, [navigation]);
+
+  const handleCalendarSettingsPress = useCallback(() => {
+    navigation.navigate('CalendarSettings');
+  }, [navigation]);
+
   const handleSocialAnonymousToggle = useCallback(
     async (value: boolean) => {
       try {
@@ -69,10 +77,26 @@ export const ProfileScreen: React.FC = () => {
     <ScrollView contentContainerStyle={styles.container} testID="profile-screen">
       <Text style={styles.heading}>Profile</Text>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Professional Data</Text>
+        <Text style={styles.cardTitle}>Data Integrations</Text>
         <Text style={styles.cardBody}>
-          Update your biometric integrations, preferred clinician, and emergency contact information from this secure view.
+          Connect your wearables and calendars to personalize your recovery protocols.
         </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.secondaryButton}
+          onPress={handleWearableSettingsPress}
+          testID="open-wearable-settings"
+        >
+          <Text style={styles.secondaryButtonText}>Wearable Settings</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.secondaryButton}
+          onPress={handleCalendarSettingsPress}
+          testID="open-calendar-settings"
+        >
+          <Text style={styles.secondaryButtonText}>Calendar Integration</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.card}>
@@ -158,6 +182,19 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     ...typography.subheading,
     color: palette.surface,
+  },
+  secondaryButton: {
+    marginTop: 8,
+    backgroundColor: palette.background,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  secondaryButtonText: {
+    ...typography.subheading,
+    color: palette.textPrimary,
   },
   loadingContainer: {
     marginTop: 8,

@@ -250,3 +250,42 @@ export const fetchCorrelations = async (): Promise<CorrelationsResponse> => {
     };
   }
 };
+
+// =============================================================================
+// CALENDAR API
+// =============================================================================
+
+import type {
+  BusyBlock,
+  CalendarProvider,
+  CalendarSyncResponse,
+  CalendarIntegrationStatus,
+  MeetingLoadMetrics,
+  RecentMetricsResponse,
+} from './calendar/types';
+
+export const syncCalendar = (payload: {
+  provider: CalendarProvider;
+  busyBlocks?: BusyBlock[];
+  timezone: string;
+}) => request<CalendarSyncResponse>('/api/calendar/sync', 'POST', payload);
+
+export const fetchTodayCalendarMetrics = () =>
+  request<{
+    success: boolean;
+    metrics: MeetingLoadMetrics | null;
+    error: string | null;
+  }>('/api/calendar/today', 'GET');
+
+export const fetchCalendarStatus = () =>
+  request<CalendarIntegrationStatus>('/api/calendar/status', 'GET');
+
+export const disconnectCalendar = (provider?: CalendarProvider) => {
+  const url = provider
+    ? `/api/calendar/disconnect?provider=${provider}`
+    : '/api/calendar/disconnect';
+  return request<{ success: boolean; error: string | null }>(url, 'DELETE');
+};
+
+export const fetchRecentCalendarMetrics = (days: number = 14) =>
+  request<RecentMetricsResponse>(`/api/calendar/recent?days=${days}`, 'GET');

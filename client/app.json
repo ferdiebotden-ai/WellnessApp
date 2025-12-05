@@ -20,6 +20,7 @@
       "infoPlist": {
         "NSHealthShareUsageDescription": "Apex OS analyzes your HRV, sleep, and activity data to personalize evidence-based recovery protocols.",
         "NSHealthUpdateUsageDescription": "Apex OS records completed protocols and activity to Apple Health.",
+        "NSCalendarsUsageDescription": "Apex OS detects meeting load to optimize recovery protocols on busy days. Only meeting times are analyzed—event details are never stored.",
         "UIBackgroundModes": [
           "processing"
         ]
@@ -34,7 +35,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F1218"
       },
-      "package": "com.wellnessos.app"
+      "package": "com.wellnessos.app",
+      "permissions": [
+        "android.permission.READ_CALENDAR"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -43,6 +47,7 @@
     "scheme": "wellnessos",
     "plugins": [
       "expo-secure-store",
+      "expo-calendar",
       [
         "expo-build-properties",
         {

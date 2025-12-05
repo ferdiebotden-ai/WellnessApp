@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 43 (next) |
-| **Progress** | 36% of Phase 3 (4/11 sessions) |
+| **Session** | 44 (next) |
+| **Progress** | 45% of Phase 3 (5/11 sessions) |
 | **Branch** | main |
 
 ---
@@ -51,6 +51,65 @@
 
 ## Last Session
 
+**Date:** December 5, 2025 (Session 43)
+**Focus:** Phase 3 Session 5 — Calendar Integration
+
+**Accomplished:**
+- Implemented full-stack calendar integration with privacy-first design
+- Created database migration for calendar_integrations and daily_calendar_metrics tables
+- Created server-side CalendarService with meeting load calculation algorithm
+- Integrated heavy_calendar trigger into MVD detector (≥4h meetings = full MVD)
+- Created client-side CalendarService using expo-calendar for device access
+- Created useCalendar hook for React component integration
+- Built CalendarSettingsScreen with metrics display, sync controls, and MVD warning
+- Added 50 comprehensive unit tests (28 CalendarService + 22 useCalendar)
+- Privacy-first: Only busy blocks (start/end times) are processed, never event details
+
+**Design Decisions:**
+- **Hybrid Provider Support:** Device calendar (expo-calendar) + Google Calendar (OAuth) - user selectable
+- **Privacy-First:** FreeBusy approach - only meeting times analyzed, no event titles/descriptions stored
+- **Meeting Load Thresholds:** Light (<2h), Moderate (2-4h), Heavy (4-6h), Overload (≥6h)
+- **Back-to-Back Detection:** Meetings with <15 min gap counted as back-to-back
+- **MVD Integration:** Heavy meeting days (≥4h) trigger Minimum Viable Day mode
+
+**Files Created:**
+```
+# Server-side
+functions/src/types/calendar.types.ts
+functions/src/services/calendar/CalendarRepository.ts
+functions/src/services/calendar/CalendarService.ts
+functions/src/services/calendar/index.ts
+functions/src/calendarSync.ts
+supabase/migrations/20251205000000_calendar_integration.sql
+
+# Client-side
+client/src/services/calendar/types.ts
+client/src/services/calendar/CalendarService.ts
+client/src/services/calendar/index.ts
+client/src/hooks/useCalendar.ts
+client/src/screens/settings/CalendarSettingsScreen.tsx
+
+# Tests
+client/src/services/calendar/CalendarService.test.ts (28 tests)
+client/src/hooks/useCalendar.test.ts (22 tests)
+```
+
+**Files Modified:**
+```
+functions/src/api.ts (added 5 calendar API routes)
+functions/src/mvd/types.ts (added heavy_calendar trigger)
+functions/src/mvd/mvdDetector.ts (added checkHeavyCalendarTrigger)
+functions/src/mvd/mvdDataFetcher.ts (added getMeetingHoursToday)
+client/src/services/api.ts (added calendar API functions)
+client/src/navigation/ProfileStack.tsx (added CalendarSettings + WearableSettings routes)
+client/src/screens/ProfileScreen.tsx (added Data Integrations card)
+client/app.json (added calendar permissions)
+```
+
+---
+
+## Previous Session
+
 **Date:** December 5, 2025 (Session 42)
 **Focus:** Phase 3 Session 4 — Wake Detection System
 
@@ -66,76 +125,28 @@
 - Created useWakeDetection.ts hook orchestrating detection based on user config
 - Integrated wake detection with HomeScreen.tsx
 
-**UX Decision:**
-- Wearable users: Auto-trigger Morning Anchor (high confidence from HealthKit)
-- Lite Mode users: Show confirmation overlay ("Good morning! Ready?" with Let's Go/Later)
-- Phone unlock confirmation boosts confidence from 0.60 → 0.85
-
-**Key Features:**
-- Nap detection (sleep < 3 hours after noon = don't trigger Morning Anchor)
-- Edge case handling: too early (<4am), too late (>2pm), already triggered today
-- Snooze (10 minutes) and skip-for-today options
-- Timezone-aware detection
-
-**Files Created:**
-```
-functions/src/services/wake/WakeDetector.ts
-functions/src/services/wake/WakeEventRepository.ts
-functions/src/services/wake/MorningAnchorService.ts
-functions/src/services/wake/index.ts
-functions/src/wakeEvents.ts
-functions/tests/services/wake/WakeDetector.test.ts (26 tests)
-client/src/services/wake/HealthKitWakeDetector.ts
-client/src/services/wake/PhoneUnlockDetector.ts
-client/src/services/wake/WakeEventService.ts
-client/src/services/wake/index.ts
-client/src/components/WakeConfirmationOverlay.tsx
-client/src/hooks/useWakeDetection.ts
-```
-
-**Files Modified:**
-```
-functions/src/api.ts (added wake event routes)
-client/src/screens/HomeScreen.tsx (integrated wake detection)
-```
-
----
-
-## Previous Session
-
-**Date:** December 4, 2025 (Session 41)
-**Focus:** Fix Playwright Test Issues & Console Warnings
-
-**Accomplished:**
-- Created platform-aware shadow utility (`client/src/utils/shadows.ts`)
-- Fixed deprecated shadow* props in TopNavigationBar, GoalCard, ModuleCard
-- Fixed pointerEvents prop warning in NudgeCard
-- Fixed ProfileScreen to use graceful fallback instead of showing error
-- Verified all 15 Playwright tests still passing
-- Verified console warnings removed on Expo web
-
-**Commit:** `b369de9` — fix: resolve web console warnings and improve ProfileScreen error handling
+**Commit:** `d0597f4` — feat(phase3): implement Wake Detection System with Morning Anchor
 
 ---
 
 ## Next Session Priority
 
-### Phase 3 Session 5: Calendar Integration
+### Phase 3 Session 6: Real-time Sync (Firestore)
 
-**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 5)
+**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 6)
 
 **Priority Tasks:**
-1. Integrate with device calendar (Expo Calendar API)
-2. Detect meetings, events, and time blocks
-3. Use calendar data to adjust nudge timing
-4. Avoid nudging during meetings/focused work
-5. Surface calendar context in nudge reasoning
+1. Set up Firestore real-time listeners for nudges
+2. Implement optimistic UI updates
+3. Sync nudge state across devices
+4. Handle offline/online transitions
+5. Implement conflict resolution for multi-device scenarios
 
 **Key Considerations:**
-- Request calendar permissions gracefully
-- Parse event titles for context (meeting, focus time, etc.)
-- Handle recurring events and all-day events
-- Timezone handling for travel scenarios
+- Use Firebase RTDB for immediate UI updates
+- Minimize Firestore reads for cost efficiency
+- Handle background app state properly
+- Ensure smooth user experience during sync
 
 ---
 
@@ -177,7 +188,7 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 ## Test Status
 
 ```
-Client:    45/64 passing (Jest)
+Client:    45/64 passing (Jest) + 50 new calendar tests
 Functions: 409 passing (Vitest) — includes 84 recoveryScore + 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine + 26 wakeDetector
 E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded coverage
 ```
@@ -206,7 +217,7 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 
 ## Active Blockers
 
-None — Wake Detection system complete.
+None — Calendar Integration complete.
 
 ---
 
@@ -218,15 +229,15 @@ None — Wake Detection system complete.
 | 2 | HealthKit Integration (iOS) | ✅ Complete (expo-healthkit-observer module + UI) |
 | 3 | Recovery Score Engine | ✅ Complete (weighted algorithm, 84 tests, Dashboard UI) |
 | 4 | Wake Detection | ✅ Complete (26 tests, full server+client pipeline) |
-| 5 | Calendar Integration | 🔜 Next |
-| 6 | Real-time Sync (Firestore) | 🔲 Pending |
+| 5 | Calendar Integration | ✅ Complete (50 tests, full-stack, privacy-first) |
+| 6 | Real-time Sync (Firestore) | 🔜 Next |
 | 7 | Reasoning UX (4-panel) | 🔲 Pending |
 | 8 | Lite Mode (no-wearable fallback) | 🔲 Pending |
 | 9 | Health Connect (Android) | 🔲 Pending |
 | 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
 | 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 4/11 sessions complete (36%)**
+**Phase 3 Status: 5/11 sessions complete (45%)**
 
 ---
 
@@ -249,4 +260,4 @@ None — Wake Detection system complete.
 
 ---
 
-*Last Updated: December 5, 2025 (Session 42 - Wake Detection System complete)*
+*Last Updated: December 5, 2025 (Session 43 - Calendar Integration complete)*
