@@ -168,13 +168,21 @@ export const NudgeCard: React.FC<Props> = ({
                 style={styles.hiddenMeasure}
                 onLayout={handleContentLayout}
               >
-                <ReasoningExpansion data={task.whyExpansion!} />
+                <ReasoningExpansion
+                  data={task.whyExpansion!}
+                  edgeCases={task.edgeCases}
+                />
               </View>
             )}
 
             {/* Animated expansion */}
             <Animated.View style={expandStyle}>
-              {isExpanded && <ReasoningExpansion data={task.whyExpansion!} />}
+              {isExpanded && (
+                <ReasoningExpansion
+                  data={task.whyExpansion!}
+                  edgeCases={task.edgeCases}
+                />
+              )}
             </Animated.View>
           </>
         )}

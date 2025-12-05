@@ -27,6 +27,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import type { EdgeCases } from '../types/edgeCases';
+import { EdgeCaseBadgeRow } from './EdgeCaseBadgeRow';
 
 // =============================================================================
 // TYPES
@@ -50,6 +52,8 @@ export interface RecoveryScoreData {
   trendDelta?: number;
   components: RecoveryComponent[];
   reasoning?: string;
+  /** Edge case detection results (Session 46) */
+  edgeCases?: EdgeCases;
 }
 
 export interface BaselineStatus {
@@ -304,6 +308,15 @@ export const RecoveryScoreCard: React.FC<Props> = ({
         <View style={styles.headerLeft}>
           <Text style={styles.label}>RECOVERY</Text>
           <ZoneBadge zone={data.zone} />
+          {/* Edge case badges (Session 46) */}
+          {data.edgeCases && (
+            <EdgeCaseBadgeRow
+              edgeCases={data.edgeCases}
+              size="default"
+              maxBadges={3}
+              testID="recovery-edge-case-badges"
+            />
+          )}
         </View>
         <View style={styles.headerRight}>
           <Text style={[styles.score, { color: zoneColor }]}>{data.score}</Text>

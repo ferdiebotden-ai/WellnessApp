@@ -1,3 +1,6 @@
+import type { EdgeCases } from './edgeCases';
+import type { ConfidenceFactors } from './confidence';
+
 export type TaskSource = 'schedule' | 'nudge';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'dismissed' | 'snoozed';
@@ -39,6 +42,8 @@ export interface WhyExpansion {
     level: ConfidenceLevel;
     /** Human-readable explanation */
     explanation: string;
+    /** Individual factor scores for breakdown visualization (Session 46) */
+    factors?: ConfidenceFactors;
   };
 }
 
@@ -55,6 +60,8 @@ export interface DashboardTask {
   whyExpansion?: WhyExpansion;
   /** Flag for TaskList to show AI thinking animation */
   isGenerating?: boolean;
+  /** Edge case context for this nudge (Session 46) */
+  edgeCases?: EdgeCases;
 }
 
 export interface ModuleEnrollment {

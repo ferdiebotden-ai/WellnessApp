@@ -2,11 +2,16 @@ import React from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import type { WhyExpansion, EvidenceLevel, ConfidenceLevel } from '../types/dashboard';
+import type { EdgeCases } from '../types/edgeCases';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { ConfidenceBreakdown } from './ConfidenceBreakdown';
+import { EdgeCaseBadgeRow } from './EdgeCaseBadgeRow';
 
 interface Props {
   data: WhyExpansion;
+  /** Optional edge cases for contextual badges in Your Data panel */
+  edgeCases?: EdgeCases;
 }
 
 /**
@@ -38,7 +43,7 @@ const getConfidenceColor = (level: ConfidenceLevel): string => {
  * 4-panel reasoning expansion for NudgeCard
  * Displays: Mechanism, Evidence, Your Data, Confidence
  */
-export const ReasoningExpansion: React.FC<Props> = ({ data }) => {
+export const ReasoningExpansion: React.FC<Props> = ({ data, edgeCases }) => {
   const { mechanism, evidence, your_data, confidence } = data;
   const evidenceProgress = getEvidenceProgress(evidence.strength);
   const confidenceColor = getConfidenceColor(confidence.level);
@@ -100,6 +105,17 @@ export const ReasoningExpansion: React.FC<Props> = ({ data }) => {
       >
         <Text style={styles.sectionHeader}>YOUR DATA</Text>
         <Text style={styles.sectionContent}>{your_data}</Text>
+        {/* Edge case badges when relevant (Session 46) */}
+        {edgeCases && (
+          <View style={styles.edgeCaseBadgesContainer}>
+            <EdgeCaseBadgeRow
+              edgeCases={edgeCases}
+              size="small"
+              maxBadges={2}
+              testID="reasoning-edge-case-badges"
+            />
+          </View>
+        )}
       </Animated.View>
 
       {/* Panel 4: CONFIDENCE */}
@@ -107,17 +123,32 @@ export const ReasoningExpansion: React.FC<Props> = ({ data }) => {
         entering={FadeIn.duration(150).delay(300)}
         style={[styles.panel, styles.lastPanel]}
       >
-        <Text style={styles.sectionHeader}>CONFIDENCE</Text>
-        <View style={styles.confidenceRow}>
-          <View
-            style={[styles.confidenceIndicator, { backgroundColor: confidenceColor }]}
+        {/* Use ConfidenceBreakdown when factors available (Session 46) */}
+        {confidence.factors ? (
+          <ConfidenceBreakdown
+            factors={confidence.factors}
+            level={confidence.level}
+            compact
+            showHeader
+            staggerDelay={40}
+            testID="reasoning-confidence-breakdown"
           />
-          <Text style={[styles.confidenceLevel, { color: confidenceColor }]}>
-            {confidence.level}
-          </Text>
-          <Text style={styles.confidenceSeparator}>—</Text>
-          <Text style={styles.confidenceExplanation}>{confidence.explanation}</Text>
-        </View>
+        ) : (
+          // Fallback to simple display when factors not available
+          <>
+            <Text style={styles.sectionHeader}>CONFIDENCE</Text>
+            <View style={styles.confidenceRow}>
+              <View
+                style={[styles.confidenceIndicator, { backgroundColor: confidenceColor }]}
+              />
+              <Text style={[styles.confidenceLevel, { color: confidenceColor }]}>
+                {confidence.level}
+              </Text>
+              <Text style={styles.confidenceSeparator}>—</Text>
+              <Text style={styles.confidenceExplanation}>{confidence.explanation}</Text>
+            </View>
+          </>
+        )}
       </Animated.View>
     </View>
   );
@@ -150,6 +181,9 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: palette.textSecondary,
     lineHeight: 20,
+  },
+  edgeCaseBadgesContainer: {
+    marginTop: 8,
   },
   evidenceRow: {
     flexDirection: 'row',
