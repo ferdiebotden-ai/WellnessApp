@@ -51,68 +51,54 @@
 
 ## Last Session
 
-**Date:** December 4, 2025 (Session 40)
-**Focus:** Phase 3 Session 3: Recovery Score Engine
+**Date:** December 5, 2025 (Session 40 Part 2)
+**Focus:** Playwright MCP Autonomous UI/UX Testing
 
 **Accomplished:**
-- Created RecoveryScoreService with weighted algorithm:
-  - HRV (40%), RHR (25%), Sleep Quality (20%), Sleep Duration (10%), Respiratory Rate (5%)
-  - Temperature penalty applied when deviation > 0.3°C
-- Created BaselineService for 14-day rolling baselines with confidence levels
-- Implemented Z-score normalization with log-transformed HRV values
-- Weight redistribution when Oura-only metrics (respiratory rate, temp) unavailable
-- Edge case detection (alcohol, illness, travel, menstrual cycle)
-- 84 comprehensive unit tests covering all scenarios
-- Integrated recovery calculation into wearablesSync.ts
-- Created RecoveryScoreCard component with zone-colored display and expandable breakdown
-- Created useRecoveryScore hook for API integration
-- Added data source preference setting (Latest/Apple Health/Oura/WHOOP)
-- Dashboard integration in HomeScreen
+- Executed comprehensive UI/UX testing via Playwright MCP
+- Created test user `e2e-test@apexos.dev` through app SignUp flow
+- Completed full onboarding flow (AICoachIntro → GoalSelection → WearableConnection)
+- Tested all 9 major screens with visual analysis and interaction testing
+- Captured 10 screenshots documenting each screen state
+- Audited all console errors across authenticated flow
+- Generated comprehensive testing report
 
-**Key Technical Decisions:**
-- Separate baselines for SDNN (Apple) vs RMSSD (Oura) HRV - cannot compare directly
-- Zone mapping: Red (0-33), Yellow (34-66), Green (67-100)
-- Confidence levels: low (<7 days), medium (7-14), high (14+)
-- Weight redistribution via MutableWeights type to work with const weights
-- User-configurable data source preference stored in AsyncStorage
-
-**Commit:**
-- `531e9da` — feat(phase3): implement Recovery Score Engine with UI
+**Key Findings:**
+- ✅ All auth screens working (SignIn, SignUp, ForgotPassword)
+- ✅ Password strength indicator functional
+- ✅ Onboarding flow complete and working
+- ✅ All 4 main tabs navigable (Home, Protocols, Insights, Profile)
+- ⚠️ Profile screen shows "Failed to load preferences" error (visible to users)
+- ⚠️ Emoji icons not rendering in onboarding (minor, cosmetic)
+- ⚠️ API errors due to Firebase UID vs PostgreSQL UUID mismatch
 
 **Files Created:**
 ```
-functions/src/services/recoveryScore.ts — Core recovery calculation algorithm
-functions/src/services/baselineService.ts — 14-day rolling baseline management
-functions/src/services/index.ts — Barrel export for services
-functions/tests/recoveryScore.test.ts — 84 unit tests
-client/src/components/RecoveryScoreCard.tsx — Zone-colored score display
-client/src/hooks/useRecoveryScore.ts — API integration hook
-client/src/hooks/useDataSourcePreference.ts — Data source preference
+UI_UX_TESTING_REPORT.md — Full testing report with all findings
+.playwright-mcp/*.png — 10 screenshots of tested screens
 ```
 
-**Files Modified:**
-```
-functions/src/wearablesSync.ts — Added calculateAndStoreRecovery integration
-client/src/screens/HomeScreen.tsx — RecoveryScoreCard integration
-client/src/screens/settings/WearableSettingsScreen.tsx — Data source preference UI
-```
+**Test User Created:**
+- Email: `e2e-test@apexos.dev`
+- Password: `TestPassword123!`
+- Status: Onboarding complete, can access all authenticated screens
 
 ---
 
 ## Previous Session
 
-**Date:** December 4, 2025 (Session 39)
-**Focus:** Phase 3 Session 2: HealthKit Integration + Playwright MCP Setup
+**Date:** December 4, 2025 (Session 40)
+**Focus:** Phase 3 Session 3: Recovery Score Engine
 
 **Accomplished:**
-- Created native Swift HealthKit module using Expo Modules API (`expo-healthkit-observer`)
-- Implemented HealthKitManager.swift with background delivery observers
-- Created useHealthKit React hook and WearableSettingsScreen
-- Added Playwright MCP for autonomous UI testing
+- Created RecoveryScoreService with weighted algorithm (HRV 40%, RHR 25%, Sleep Quality 20%, etc.)
+- Created BaselineService for 14-day rolling baselines with confidence levels
+- 84 comprehensive unit tests covering all scenarios
+- RecoveryScoreCard component with zone-colored display
+- Dashboard integration in HomeScreen
 
-**Commits:**
-- `e2341cb` — feat(phase3): implement HealthKit integration with native Swift module
-- `bbcf279` — docs(session39): add Playwright MCP, mark HealthKit complete
+**Commit:**
+- `531e9da` — feat(phase3): implement Recovery Score Engine with UI
 
 ---
 
@@ -172,6 +158,7 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 | `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` | Phase 3 implementation guide |
 | `Master_Protocol_Library.md` | Protocol evidence library |
 | `CLAUDE.md` | Agent operating instructions |
+| `UI_UX_TESTING_REPORT.md` | Playwright MCP testing findings (Session 40) |
 
 ---
 
@@ -207,7 +194,12 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 
 ## Active Blockers
 
-None currently.
+### UI Bug: Profile Screen Error (From Playwright Testing)
+- **Issue:** "Failed to load preferences" error visible to users on Profile tab
+- **Cause:** Firebase UID format (`cFHEIVIRCsT9TnyGD7zDvehUeuh2`) not valid PostgreSQL UUID
+- **Priority:** Medium — users see error state
+- **Fix Location:** `client/src/screens/ProfileScreen.tsx` — hide error or show graceful fallback
+- **See:** `UI_UX_TESTING_REPORT.md` for full details
 
 ---
 
@@ -250,4 +242,4 @@ None currently.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 40 - Recovery Score Engine Complete)*
+*Last Updated: December 5, 2025 (Session 40 Part 2 - Playwright MCP UI/UX Testing)*
