@@ -75,6 +75,28 @@ export const fetchCoreModules = async () => {
 };
 
 /**
+ * Syncs the current Firebase user with Supabase.
+ * Creates a Supabase user record if one doesn't exist, or returns the existing one.
+ *
+ * This bridges Firebase Auth (authentication) with Supabase (data storage).
+ * The returned user_id is the Supabase UUID, not the Firebase UID.
+ *
+ * Call this after signup/login to ensure the user exists in the database.
+ * This endpoint is idempotent - safe to call multiple times.
+ *
+ * @returns Object containing the Supabase user_id (UUID) and whether a new user was created
+ */
+export const syncUser = async (): Promise<{ user_id: string; created: boolean }> => {
+  try {
+    return await request<{ user_id: string; created: boolean }>('/api/users/sync', 'POST');
+  } catch (error) {
+    console.warn('[syncUser] Failed to sync user with backend:', error);
+    // Re-throw so caller knows sync failed - they may want to retry
+    throw error;
+  }
+};
+
+/**
  * Completes onboarding with goal and optional wearable selection.
  * Accepts the new conversational onboarding payload with primary_goal and wearable_source.
  */

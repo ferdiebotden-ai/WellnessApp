@@ -34,12 +34,15 @@ export interface OnboardingCompletePayload {
   primary_module_id?: string;
 }
 
-/** Goal → Module mapping for enrollment */
+/** Goal → Module mapping for enrollment
+ * Maps user goals from onboarding to actual module IDs in the database.
+ * Module IDs must match public.modules table: mod_sleep, mod_morning_routine, mod_focus_productivity
+ */
 export const GOAL_TO_MODULE_MAP: Record<PrimaryGoal, string> = {
-  better_sleep: 'sleep_foundations',
-  more_energy: 'metabolic_reset',
-  sharper_focus: 'metabolic_reset',
-  faster_recovery: 'stress_resilience',
+  better_sleep: 'mod_sleep',
+  more_energy: 'mod_morning_routine',
+  sharper_focus: 'mod_focus_productivity',
+  faster_recovery: 'mod_sleep', // Recovery starts with sleep optimization
 };
 
 /** Available goals for onboarding */
@@ -49,28 +52,28 @@ export const ONBOARDING_GOALS: OnboardingGoal[] = [
     icon: '🌙',
     label: 'Better Sleep',
     description: 'Optimize sleep quality, duration, and consistency',
-    relatedModule: 'sleep_foundations',
+    relatedModule: 'mod_sleep',
   },
   {
     id: 'more_energy',
     icon: '⚡',
     label: 'More Energy',
     description: 'Boost metabolic efficiency and sustained focus',
-    relatedModule: 'metabolic_reset',
+    relatedModule: 'mod_morning_routine',
   },
   {
     id: 'sharper_focus',
     icon: '🎯',
     label: 'Sharper Focus',
     description: 'Enhance cognitive performance and mental clarity',
-    relatedModule: 'metabolic_reset',
+    relatedModule: 'mod_focus_productivity',
   },
   {
     id: 'faster_recovery',
     icon: '💪',
     label: 'Faster Recovery',
     description: 'Accelerate adaptation and reduce inflammation',
-    relatedModule: 'stress_resilience',
+    relatedModule: 'mod_sleep',
   },
 ];
 

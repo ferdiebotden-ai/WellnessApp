@@ -35,9 +35,32 @@ export const onboardingCompleteHandler = async (req: Request, res: Response) => 
     return;
   }
 
-  const userId = decoded.uid;
+  const firebaseUid = decoded.uid;
   const primaryModuleId = body.primary_module_id.trim();
   const supabase = getSupabaseClient();
+
+  // Look up user by firebase_uid to get their Supabase UUID
+  const { data: userRecord, error: lookupError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('firebase_uid', firebaseUid)
+    .maybeSingle();
+
+  if (lookupError) {
+    console.error('[onboardingComplete] User lookup error:', lookupError);
+    res.status(500).json({ error: 'Failed to lookup user' });
+    return;
+  }
+
+  if (!userRecord) {
+    // User doesn't exist in Supabase - they need to sync first
+    res.status(404).json({
+      error: 'User not found in database. Please call /api/users/sync first.',
+    });
+    return;
+  }
+
+  const supabaseUserId = userRecord.id; // This is the UUID
 
   const now = new Date();
   const trialDays = Number(process.env.DEFAULT_TRIAL_DAYS || DEFAULT_TRIAL_DAYS);
@@ -50,15 +73,16 @@ export const onboardingCompleteHandler = async (req: Request, res: Response) => 
       trial_start_date: now.toISOString(),
       trial_end_date: trialEnd.toISOString(),
     })
-    .eq('id', userId);
+    .eq('id', supabaseUserId); // Use UUID, not Firebase UID
 
   if (userError) {
+    console.error('[onboardingComplete] User update error:', userError);
     res.status(500).json({ error: 'Failed to update user onboarding status' });
     return;
   }
 
   const enrollmentPayload = {
-    user_id: userId,
+    user_id: supabaseUserId, // Use UUID for foreign key relationship
     module_id: primaryModuleId,
     is_primary: true,
     enrolled_at: now.toISOString(),
@@ -74,15 +98,21 @@ export const onboardingCompleteHandler = async (req: Request, res: Response) => 
   }
 
   try {
-    await deliverFirstWinNudge(userId, primaryModuleId);
+    // Pass both Firebase UID (for Firestore paths) and Supabase UUID (for DB queries)
+    await deliverFirstWinNudge(firebaseUid, supabaseUserId, primaryModuleId);
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('First win nudge delivery failed', { user_id: userId, module_id: primaryModuleId, error });
+    console.error('First win nudge delivery failed', {
+      firebase_uid: firebaseUid,
+      supabase_user_id: supabaseUserId,
+      module_id: primaryModuleId,
+      error,
+    });
   }
 
   try {
     await publishOnboardingCompleted({
-      user_id: userId,
+      user_id: supabaseUserId, // Use Supabase UUID for Pub/Sub events
       primary_module_id: primaryModuleId,
     });
   } catch (error) {

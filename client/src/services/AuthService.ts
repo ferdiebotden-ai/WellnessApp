@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { firebaseAuth, getFirebaseDb, isUsingMemoryPersistenceMode } from './firebase';
+import { syncUser } from './api';
 import type { UserProfile } from '../types/auth';
 
 const USERS_COLLECTION = 'users';
@@ -49,6 +50,16 @@ export const signUpWithEmail = async (
       }
     }
 
+    // Sync user to Supabase (creates record if not exists)
+    // This bridges Firebase Auth with Supabase database
+    try {
+      const syncResult = await syncUser();
+      console.log(`✅ User synced to Supabase: ${syncResult.created ? 'created' : 'existing'}`);
+    } catch (syncError) {
+      // Non-critical - will retry when onboarding completes
+      console.warn('⚠️ Failed to sync user to Supabase on signup (will retry on onboarding):', syncError);
+    }
+
     return user;
   } catch (error) {
     const firebaseError = error as { code?: string; message?: string };
@@ -71,6 +82,16 @@ export const signInWithEmail = async (
       email.trim(),
       password
     );
+
+    // Sync user to Supabase (creates record if not exists)
+    // This ensures existing users get their Supabase record created
+    try {
+      const syncResult = await syncUser();
+      console.log(`✅ User synced to Supabase on login: ${syncResult.created ? 'created' : 'existing'}`);
+    } catch (syncError) {
+      // Non-critical - will retry on next API call
+      console.warn('⚠️ Failed to sync user to Supabase on login:', syncError);
+    }
 
     return userCredential.user;
   } catch (error) {

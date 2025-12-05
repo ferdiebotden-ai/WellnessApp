@@ -96,11 +96,12 @@ describe('deliverFirstWinNudge', () => {
     mockGetFirestore.mockReturnValue({ collection: collectionMock });
 
     const now = new Date('2024-07-10T16:05:00.000Z');
-    const result = await deliverFirstWinNudge('user-1', 'focus_foundations', { now });
+    // New signature: firebaseUid, supabaseUserId, moduleId, options
+    const result = await deliverFirstWinNudge('firebase-user-1', 'supabase-user-1', 'focus_foundations', { now });
 
     expect(result).toBe(true);
     expect(collectionMock).toHaveBeenCalledWith('live_nudges');
-    expect(userDocMock).toHaveBeenCalledWith('user-1');
+    expect(userDocMock).toHaveBeenCalledWith('firebase-user-1'); // Firestore uses Firebase UID
     expect(entriesCollectionMock).toHaveBeenCalledWith('entries');
 
     const payload = setMock.mock.calls[0][0];
@@ -191,7 +192,8 @@ describe('deliverFirstWinNudge', () => {
     mockGetFirestore.mockReturnValue({ collection: collectionMock });
 
     const now = new Date('2024-07-10T11:45:00.000Z');
-    const result = await deliverFirstWinNudge('user-99', 'sleep_reset', { now });
+    // New signature: firebaseUid, supabaseUserId, moduleId, options
+    const result = await deliverFirstWinNudge('firebase-user-99', 'supabase-user-99', 'sleep_reset', { now });
 
     expect(result).toBe(true);
     const payload = setMock.mock.calls[0][0];
@@ -240,7 +242,8 @@ describe('deliverFirstWinNudge', () => {
     const collectionMock = jest.fn(() => ({ doc: userDocMock }));
     mockGetFirestore.mockReturnValue({ collection: collectionMock });
 
-    const result = await deliverFirstWinNudge('user-empty', 'unknown');
+    // New signature: firebaseUid, supabaseUserId, moduleId
+    const result = await deliverFirstWinNudge('firebase-user-empty', 'supabase-user-empty', 'unknown');
 
     expect(result).toBe(false);
     expect(setMock).not.toHaveBeenCalled();

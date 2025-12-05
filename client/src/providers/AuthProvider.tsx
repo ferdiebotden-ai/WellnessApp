@@ -16,6 +16,7 @@ import {
   getUserProfile,
   updateOnboardingStatus,
 } from '../services/AuthService';
+import { syncUser } from '../services/api';
 import type {
   AuthContextValue,
   AuthState,
@@ -104,6 +105,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          // Ensure user has a Supabase record (bridges Firebase Auth with Supabase DB)
+          // This handles both fresh logins and session restores
+          try {
+            const syncResult = await syncUser();
+            console.log(`✅ User synced to Supabase: ${syncResult.created ? 'created' : 'existing'}`);
+          } catch (syncError) {
+            // Non-critical - backend endpoints may still work if user exists
+            console.warn('⚠️ Failed to sync user to Supabase on session restore:', syncError);
+          }
+
           await refreshUserProfile(firebaseUser);
           setState('authenticated');
         } catch (profileError) {

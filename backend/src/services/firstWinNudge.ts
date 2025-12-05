@@ -312,13 +312,13 @@ const fetchStarterCandidates = async (moduleId: string): Promise<{
   const supabase = getSupabaseClient();
 
   const modulePromise = supabase
-    .from<ModuleRow>('modules')
+    .from('modules')
     .select('id, name, starter_protocols')
     .eq('id', moduleId)
     .maybeSingle();
 
   const mappingPromise = supabase
-    .from<ModuleProtocolMapRow>('module_protocol_map')
+    .from('module_protocol_map')
     .select('protocol_id, module_id, is_starter_protocol, priority, default_offset_minutes')
     .eq('module_id', moduleId)
     .eq('is_starter_protocol', true);
@@ -338,7 +338,7 @@ const fetchStarterCandidates = async (moduleId: string): Promise<{
   }
 
   const { data: protocols } = await supabase
-    .from<ProtocolRow>('protocols')
+    .from('protocols')
     .select('id, name, summary, default_time_of_day, timing_constraints, priority, duration_minutes, primary_citation')
     .in('id', candidateIds);
 
@@ -359,20 +359,29 @@ const fetchStarterCandidates = async (moduleId: string): Promise<{
   return { moduleName, candidates };
 };
 
-const fetchUserTimezone = async (userId: string): Promise<string> => {
+const fetchUserTimezone = async (supabaseUserId: string): Promise<string> => {
   const supabase = getSupabaseClient();
   const { data } = await supabase
-    .from<UserRow>('users')
+    .from('users')
     .select('preferences')
-    .eq('id', userId)
+    .eq('id', supabaseUserId) // Use Supabase UUID for database queries
     .maybeSingle();
 
   const timezone = data?.preferences?.timezone;
   return timezone && timezone.trim().length > 0 ? timezone : DEFAULT_TIMEZONE;
 };
 
+/**
+ * Delivers a first-win nudge to a user after onboarding completion.
+ *
+ * @param firebaseUid - The Firebase Auth UID (for Firestore document paths)
+ * @param supabaseUserId - The Supabase UUID (for database queries)
+ * @param moduleId - The enrolled module ID
+ * @param options - Optional configuration
+ */
 export const deliverFirstWinNudge = async (
-  userId: string,
+  firebaseUid: string,
+  supabaseUserId: string,
   moduleId: string,
   options: { now?: Date } = {},
 ): Promise<boolean> => {
@@ -381,7 +390,7 @@ export const deliverFirstWinNudge = async (
   try {
     const [{ moduleName, candidates }, timezone] = await Promise.all([
       fetchStarterCandidates(moduleId),
-      fetchUserTimezone(userId),
+      fetchUserTimezone(supabaseUserId), // Use Supabase UUID for user data lookup
     ]);
 
     if (candidates.length === 0) {
@@ -407,13 +416,19 @@ export const deliverFirstWinNudge = async (
 
     const { timestamp, document } = buildNudgeDocument(best, context);
     const firestore = getFirestore();
-    const docRef = firestore.collection('live_nudges').doc(userId).collection('entries').doc(timestamp);
+    // Use Firebase UID for Firestore document path (matches client-side reads)
+    const docRef = firestore.collection('live_nudges').doc(firebaseUid).collection('entries').doc(timestamp);
 
     await docRef.set(document, { merge: true });
     return true;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('Failed to deliver first win nudge', { user_id: userId, module_id: moduleId, error });
+    console.error('Failed to deliver first win nudge', {
+      firebase_uid: firebaseUid,
+      supabase_user_id: supabaseUserId,
+      module_id: moduleId,
+      error,
+    });
     return false;
   }
 };
