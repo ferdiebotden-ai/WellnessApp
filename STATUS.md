@@ -9,9 +9,10 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 47 (next) |
+| **Session** | 48 (next) |
 | **Progress** | 64% of Phase 3 (7/11 sessions) |
 | **Branch** | main |
+| **Blocker** | ⚠️ `is_primary` column missing — see Active Blockers |
 
 ---
 
@@ -51,52 +52,54 @@
 
 ## Last Session
 
-**Date:** December 5, 2025 (Session 46)
-**Focus:** Phase 3 Session 7 — Edge Case Badges + Confidence Breakdown UI
+**Date:** December 5, 2025 (Session 47)
+**Focus:** Firebase→Supabase User Sync Fix (Critical Bug)
+
+**Problem Discovered:**
+App showing "No active modules available" after onboarding. Root cause: Firebase UID vs Supabase UUID mismatch.
 
 **Accomplished:**
-- Implemented edge case badges for health conditions (alcohol, illness, cycle)
-  - `EdgeCaseBadge.tsx` — Premium badge component following ZoneBadge pattern
-  - `EdgeCaseBadgeRow.tsx` — Container with staggered animation, priority sorting
-  - Types & helpers for edge case detection display
-- Implemented confidence factor breakdown visualization
-  - `ConfidenceFactorBar.tsx` — Animated progress bar for single factor
-  - `ConfidenceBreakdown.tsx` — 5-factor visualization with overall score
-  - Types & helpers for confidence scoring display
-- Integrated badges into both RecoveryScoreCard and NudgeCard Why panel
-- Updated ReasoningExpansion with ConfidenceBreakdown when factors available
-- Design: Bloomberg Terminal meets luxury health tech aesthetic
+- ✅ Created `/api/users/sync` endpoint — bridges Firebase Auth → Supabase users table
+- ✅ Updated `onboardingComplete.ts` — looks up user by `firebase_uid`, uses UUID for FKs
+- ✅ Updated `firstWinNudge.ts` — accepts both Firebase UID and Supabase UUID
+- ✅ Added `syncUser()` in `api.ts` — client-side sync function
+- ✅ Added sync call in `AuthProvider.tsx` — syncs on auth state change
+- ✅ Added CORS middleware — allows localhost:8081/19006/3000
+- ✅ Fixed module ID mappings — changed `sleep_foundations` → `mod_sleep`
+- ✅ Deployed backend to Cloud Run
+- ✅ Committed and pushed all changes (commit `b0884f6`)
 
-**Files Created (8 new):**
-- `client/src/types/edgeCases.ts`
-- `client/src/types/confidence.ts`
-- `client/src/utils/edgeCaseHelpers.ts`
-- `client/src/utils/confidenceHelpers.ts`
-- `client/src/components/EdgeCaseBadge.tsx`
-- `client/src/components/EdgeCaseBadgeRow.tsx`
-- `client/src/components/ConfidenceFactorBar.tsx`
-- `client/src/components/ConfidenceBreakdown.tsx`
+**Files Created (2 new):**
+- `backend/src/routes/userSync.ts` — User sync endpoint
+- `backend/src/server.ts` — Express server entry point
 
-**Files Modified (4):**
-- `client/src/types/dashboard.ts` — Added EdgeCases to DashboardTask, factors to confidence
-- `client/src/components/RecoveryScoreCard.tsx` — EdgeCaseBadgeRow integration
-- `client/src/components/ReasoningExpansion.tsx` — ConfidenceBreakdown + edge case badges
-- `client/src/components/NudgeCard.tsx` — Pass edgeCases to ReasoningExpansion
+**Files Modified (10):**
+- `backend/src/index.ts` — Added CORS, userSync route
+- `backend/src/routes/onboardingComplete.ts` — Firebase UID lookup, UUID for FK
+- `backend/src/services/firstWinNudge.ts` — Dual ID format support
+- `backend/src/services/firstWinNudge.test.ts` — Updated tests
+- `backend/package.json` — Added cors dependency
+- `client/src/providers/AuthProvider.tsx` — Added syncUser on auth change
+- `client/src/services/api.ts` — Added syncUser function
+- `client/src/services/AuthService.ts` — Minor sync integration
+- `client/src/types/onboarding.ts` — Fixed module ID mappings
+
+**Blocker Found:** `module_enrollment` table missing `is_primary` column (see Active Blockers)
 
 ---
 
 ## Previous Session
 
-**Date:** December 5, 2025 (Session 45)
-**Focus:** Phase 3 Session 6 — Real-time Sync Implementation
+**Date:** December 5, 2025 (Session 46)
+**Focus:** Phase 3 Session 7 — Edge Case Badges + Confidence Breakdown UI
 
 **Accomplished:**
-- Implemented full nudge interaction sync system (swipe gestures, offline queue)
-- Implemented metrics sync to Firestore
-- Integrated everything into HomeScreen
-- Added palette colors: successMuted, errorMuted
+- Implemented edge case badges for health conditions (alcohol, illness, cycle)
+- Implemented confidence factor breakdown visualization
+- Integrated badges into RecoveryScoreCard and NudgeCard Why panel
+- Design: Bloomberg Terminal meets luxury health tech aesthetic
 
-**Files:** 8 new + 6 modified
+**Files:** 8 new + 4 modified
 
 ---
 
@@ -191,7 +194,132 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 
 ## Active Blockers
 
-None — Calendar Integration complete.
+### ⚠️ CRITICAL: `module_enrollment` Table Missing `is_primary` Column
+
+**Problem:**
+The `/api/onboarding/complete` endpoint returns 500 error because code tries to insert `is_primary: true` but the column doesn't exist.
+
+**Location:** `backend/src/routes/onboardingComplete.ts:84-89`
+```typescript
+const enrollmentPayload = {
+  user_id: supabaseUserId,
+  module_id: primaryModuleId,
+  is_primary: true,  // <-- THIS COLUMN DOESN'T EXIST IN DATABASE
+  enrolled_at: now.toISOString(),
+};
+```
+
+**Current Table Schema:** (from `supabase/migrations/20250529000001_create_module_enrollment.sql`)
+```sql
+create table public.module_enrollment (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references public.users (id) on delete cascade,
+    module_id text not null references public.modules (id) on delete cascade,
+    last_active_date date,
+    enrolled_at timestamptz not null default timezone('utc', now()),
+    created_at timestamptz not null default timezone('utc', now()),
+    updated_at timestamptz not null default timezone('utc', now()),
+    unique (user_id, module_id)
+);
+```
+
+---
+
+## Execution Plan for Next Session
+
+**Priority:** Fix the `is_primary` column blocker, then test end-to-end.
+
+### Step 1: Add Migration (5 minutes)
+
+Create migration file:
+```bash
+touch supabase/migrations/20251205200000_add_is_primary_to_enrollment.sql
+```
+
+Content:
+```sql
+-- Add is_primary column to module_enrollment
+-- Allows tracking which module is the user's primary focus module
+
+ALTER TABLE public.module_enrollment
+ADD COLUMN IF NOT EXISTS is_primary boolean NOT NULL DEFAULT false;
+
+-- Create index for efficient lookup of primary module
+CREATE INDEX IF NOT EXISTS idx_module_enrollment_is_primary
+ON public.module_enrollment (user_id, is_primary)
+WHERE is_primary = true;
+
+COMMENT ON COLUMN public.module_enrollment.is_primary IS
+'Whether this is the users primary focus module selected during onboarding';
+```
+
+### Step 2: Apply Migration (2 minutes)
+
+```bash
+supabase db push
+```
+
+### Step 3: Add Better Error Logging (3 minutes)
+
+Update `backend/src/routes/onboardingComplete.ts:95-98`:
+```typescript
+if (enrollmentError) {
+  console.error('[onboardingComplete] Enrollment error:', enrollmentError);  // ADD THIS
+  res.status(500).json({ error: 'Failed to enroll user in module' });
+  return;
+}
+```
+
+### Step 4: Deploy Backend (5 minutes)
+
+```bash
+cd backend && npm run build && gcloud run deploy api --source . --region us-central1 --project wellness-os-app
+```
+
+### Step 5: Test End-to-End (10 minutes)
+
+1. Start Expo: `cd client && npx expo start --web`
+2. Create fresh test user (e.g., `test-e2e-final@example.com`)
+3. Complete onboarding selecting "Better Sleep"
+4. Verify:
+   - Console shows `✅ User synced to Supabase: created`
+   - No 500 error on `/api/onboarding/complete`
+   - User lands on HomeScreen (not onboarding)
+   - Check Supabase: `module_enrollment` row exists with `is_primary = true`
+
+### Step 6: Commit & Update STATUS.md
+
+```bash
+git add -A
+git commit -m "fix(db): add is_primary column to module_enrollment"
+git push origin main
+```
+
+**Estimated Time:** ~25 minutes total
+
+---
+
+### Alternative Fix (If Migration Is Problematic)
+
+Remove `is_primary` from the insert payload instead of adding column:
+
+Edit `backend/src/routes/onboardingComplete.ts:84-89`:
+```typescript
+const enrollmentPayload = {
+  user_id: supabaseUserId,
+  module_id: primaryModuleId,
+  // is_primary: true,  // REMOVE THIS LINE
+  enrolled_at: now.toISOString(),
+};
+```
+
+**Trade-off:** Loses ability to track primary module, but unblocks immediately.
+
+---
+
+### No Deep Research Needed
+
+This is a straightforward schema mismatch, not an architectural issue. The column simply doesn't exist. The fix is deterministic.
 
 ---
 
@@ -234,4 +362,4 @@ None — Calendar Integration complete.
 
 ---
 
-*Last Updated: December 5, 2025 (Session 46 - Edge Case Badges + Confidence Breakdown complete)*
+*Last Updated: December 5, 2025 (Session 47 - Firebase→Supabase sync complete, is_primary column blocker documented)*
