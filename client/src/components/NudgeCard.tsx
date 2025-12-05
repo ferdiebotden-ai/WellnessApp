@@ -135,7 +135,6 @@ export const NudgeCard: React.FC<Props> = ({ task, onOutsideTap }) => {
               <View
                 style={styles.hiddenMeasure}
                 onLayout={handleContentLayout}
-                pointerEvents="none"
               >
                 <ReasoningExpansion data={task.whyExpansion!} />
               </View>
@@ -214,5 +213,6 @@ const styles = StyleSheet.create({
     opacity: 0,
     left: 0,
     right: 0,
+    pointerEvents: 'none',
   },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -43,7 +43,8 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal, selected, onSelect }) 
       [0, 1],
       [palette.border, palette.primary]
     ),
-    shadowOpacity: borderProgress.value * 0.4,
+    // Only apply animated shadow on native platforms (web uses boxShadow)
+    ...(Platform.OS !== 'web' && { shadowOpacity: borderProgress.value * 0.4 }),
   }));
 
   return (
@@ -80,13 +81,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: palette.border,
     marginBottom: 12,
-    // Shadow for iOS
-    shadowColor: palette.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    shadowOpacity: 0,
-    // Elevation for Android
-    elevation: 0,
+    // Native-only shadow props (animated via shadowOpacity)
+    ...Platform.select({
+      ios: {
+        shadowColor: palette.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 12,
+        shadowOpacity: 0,
+      },
+      android: { elevation: 0 },
+      default: {}, // Web: no shadow props needed
+    }),
   },
   icon: {
     fontSize: 40,

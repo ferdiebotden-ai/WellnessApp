@@ -23,8 +23,9 @@ export const ProfileScreen: React.FC = () => {
         const currentValue = response.user.preferences?.social_anonymous ?? true;
         setSocialAnonymous(currentValue);
       } catch (error) {
-        console.error('Failed to load user preferences', error);
-        setPreferencesError('Failed to load preferences');
+        // Graceful degradation: use default value (true = anonymous) on load failure
+        // Don't show error to user - toggle will work with default value
+        console.error('Failed to load user preferences, using default', error);
       } finally {
         setIsLoadingPreferences(false);
       }

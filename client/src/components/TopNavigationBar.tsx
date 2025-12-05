@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { createShadow } from '../utils/shadows';
 
 interface Props {
   title: string;
@@ -70,11 +71,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 999,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...createShadow('md'),
   },
   aiCoachText: {
     ...typography.subheading,

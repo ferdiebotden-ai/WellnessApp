@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ModuleSummary } from '../types/module';
+import { createShadow } from '../utils/shadows';
 
 interface ModuleCardProps {
   module: ModuleSummary;
@@ -37,9 +38,7 @@ const styles = StyleSheet.create({
   },
   cardSelected: {
     borderColor: '#2563eb',
-    shadowColor: '#2563eb',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    ...createShadow('md', '#2563eb'),
   },
   title: {
     fontSize: 18,
