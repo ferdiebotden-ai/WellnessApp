@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { firebaseAuth, firebaseDb, isUsingMemoryPersistenceMode } from '../services/firebase';
+import { firebaseAuth, getFirebaseDb, isUsingMemoryPersistenceMode } from '../services/firebase';
 import {
   signInWithEmail,
   signUpWithEmail,
@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Try to persist to Firestore if available (non-blocking)
     if (!isUsingMemoryPersistenceMode()) {
       try {
-        await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
+        await setDoc(doc(getFirebaseDb(), 'users', firebaseUser.uid), {
           email: newProfile.email,
           onboarding_completed: newProfile.onboarding_completed,
           created_at: newProfile.created_at,

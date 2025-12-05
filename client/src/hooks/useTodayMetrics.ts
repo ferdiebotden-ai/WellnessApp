@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { doc, onSnapshot, type FirestoreError } from 'firebase/firestore';
-import { firebaseDb, isUsingMemoryPersistenceMode } from '../services/firebase';
+import { getFirebaseDb, isUsingMemoryPersistenceMode } from '../services/firebase';
 
 /**
  * Recovery zone classification.
@@ -129,7 +129,7 @@ export function useTodayMetrics(userId?: string | null): UseTodayMetricsReturn {
     setError(undefined);
 
     // Subscribe to todayMetrics/{userId} document
-    const docRef = doc(firebaseDb, 'todayMetrics', userId);
+    const docRef = doc(getFirebaseDb(), 'todayMetrics', userId);
 
     const unsubscribe = onSnapshot(
       docRef,

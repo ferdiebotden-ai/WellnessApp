@@ -6,7 +6,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { firebaseAuth, firebaseDb, isUsingMemoryPersistenceMode } from './firebase';
+import { firebaseAuth, getFirebaseDb, isUsingMemoryPersistenceMode } from './firebase';
 import type { UserProfile } from '../types/auth';
 
 const USERS_COLLECTION = 'users';
@@ -39,7 +39,7 @@ export const signUpWithEmail = async (
     // Only attempt Firestore write if available
     if (!isUsingMemoryPersistenceMode()) {
       try {
-        await setDoc(doc(firebaseDb, USERS_COLLECTION, user.uid), userProfile);
+        await setDoc(doc(getFirebaseDb(), USERS_COLLECTION, user.uid), userProfile);
       } catch (firestoreError) {
         // Firestore unavailable - continue without error, profile exists in memory
         if (!hasLoggedFirestoreWarning) {
@@ -145,7 +145,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   }
 
   try {
-    const userDoc = await getDoc(doc(firebaseDb, USERS_COLLECTION, userId));
+    const userDoc = await getDoc(doc(getFirebaseDb(), USERS_COLLECTION, userId));
 
     if (!userDoc.exists()) {
       return null;
@@ -185,7 +185,7 @@ export const updateOnboardingStatus = async (
 
   try {
     await setDoc(
-      doc(firebaseDb, USERS_COLLECTION, userId),
+      doc(getFirebaseDb(), USERS_COLLECTION, userId),
       {
         onboarding_completed: completed,
       },

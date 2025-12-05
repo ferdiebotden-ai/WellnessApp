@@ -9,7 +9,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, Timestamp, updateDoc } from 'firebase/firestore';
-import { firebaseDb, isUsingMemoryPersistenceMode } from './firebase';
+import { getFirebaseDb, isUsingMemoryPersistenceMode } from './firebase';
 import type { DashboardTask } from '../types/dashboard';
 import {
   ACTION_TO_STATUS,
@@ -123,7 +123,7 @@ async function getRemoteStatus(
   documentId: string
 ): Promise<{ status: NudgeStatus; updatedAt: Date } | null> {
   try {
-    const docRef = doc(firebaseDb, collectionPath, documentId);
+    const docRef = doc(getFirebaseDb(), collectionPath, documentId);
     const snapshot = await getDoc(docRef);
 
     if (!snapshot.exists()) {
@@ -234,7 +234,7 @@ export async function updateNudgeStatus(
     }
 
     // Perform Firestore update
-    const docRef = doc(firebaseDb, task.collectionPath, task.documentId);
+    const docRef = doc(getFirebaseDb(), task.collectionPath, task.documentId);
     await updateDoc(docRef, update as unknown as Record<string, unknown>);
 
     console.log(

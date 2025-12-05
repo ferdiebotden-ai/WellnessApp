@@ -7,7 +7,7 @@ import {
   query,
   type FirestoreError,
 } from 'firebase/firestore';
-import { firebaseDb, isUsingMemoryPersistenceMode } from '../services/firebase';
+import { getFirebaseDb, isUsingMemoryPersistenceMode } from '../services/firebase';
 import type { DashboardTask, TaskSource, TaskStatus } from '../types/dashboard';
 
 interface TaskDocument {
@@ -78,7 +78,7 @@ export const useTaskFeed = (userId?: string | null): UseTaskFeedResult => {
 
     const attachListener = (segments: string[], source: TaskSource) => {
       try {
-        const ref = collection(firebaseDb, ...segments);
+        const ref = collection(getFirebaseDb(), ...segments);
         const scheduleQuery = query(ref, orderBy('scheduled_for', 'asc'));
         const collectionKey = segments.join('/');
         const unsubscribe = onSnapshot(

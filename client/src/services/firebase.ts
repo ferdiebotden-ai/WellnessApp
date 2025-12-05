@@ -226,6 +226,17 @@ let _lazyAuth: Auth | null = null;
 let _lazyDb: Firestore | null = null;
 
 /**
+ * Gets the Firestore instance directly (not via Proxy).
+ * Use this when passing to Firebase SDK functions like doc() or collection().
+ */
+export const getFirebaseDb = (): Firestore => {
+  if (!_lazyDb) {
+    _lazyDb = initializeOfflineFirestore(getFirebaseApp());
+  }
+  return _lazyDb;
+};
+
+/**
  * Lazily initialized Firebase Auth instance.
  * Firebase is only initialized when you first access a property on this object.
  */

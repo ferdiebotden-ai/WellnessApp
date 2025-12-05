@@ -1,5 +1,5 @@
 import { addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { firebaseAuth, firebaseDb } from './firebase';
+import { firebaseAuth, getFirebaseDb } from './firebase';
 import analytics from './AnalyticsService';
 
 export interface ProtocolLogPayload {
@@ -31,7 +31,7 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
     throw new Error('protocolId and moduleId are required');
   }
 
-  const queueRef = collection(firebaseDb, LOG_COLLECTION, currentUser.uid, 'entries');
+  const queueRef = collection(getFirebaseDb(), LOG_COLLECTION, currentUser.uid, 'entries');
   const normalizedMetadata = metadata && typeof metadata === 'object' ? metadata : {};
 
   const target = typeof progressTarget === 'number' && Number.isFinite(progressTarget) && progressTarget > 0
