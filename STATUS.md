@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 46 (next) |
-| **Progress** | 55% of Phase 3 (6/11 sessions) |
+| **Session** | 47 (next) |
+| **Progress** | 64% of Phase 3 (7/11 sessions) |
 | **Branch** | main |
 
 ---
@@ -51,86 +51,76 @@
 
 ## Last Session
 
-**Date:** December 5, 2025 (Session 45)
-**Focus:** Phase 3 Session 6 — Real-time Sync Implementation
+**Date:** December 5, 2025 (Session 46)
+**Focus:** Phase 3 Session 7 — Edge Case Badges + Confidence Breakdown UI
 
 **Accomplished:**
-- Implemented full nudge interaction sync system (Part A)
-  - `nudgeActions.ts` — Types for nudge status, actions, offline queue
-  - `NudgeActionsService.ts` — Firestore updates with offline queue support
-  - `useNetworkState.ts` — Cross-platform network detection hook
-  - `useNudgeActions.ts` — React hook with optimistic updates
-  - `SwipeableNudge.tsx` — Swipe gestures (right=complete, left=dismiss)
-  - Updated `NudgeCard.tsx` with action buttons (checkmark/X)
-  - Updated `TaskList.tsx` with swipeable wrapper
-- Implemented metrics sync to Firestore (Part B)
-  - `todayMetrics.types.ts` — Firestore document structure
-  - `FirestoreSync.ts` — Server-side sync service
-  - Updated `wearablesSync.ts` to call Firestore sync after recovery calculation
-  - `useTodayMetrics.ts` — Real-time Firestore listener hook
-- Integrated everything into `HomeScreen.tsx`
-- Added palette colors: `successMuted`, `errorMuted`
-- All new files type-check successfully
+- Implemented edge case badges for health conditions (alcohol, illness, cycle)
+  - `EdgeCaseBadge.tsx` — Premium badge component following ZoneBadge pattern
+  - `EdgeCaseBadgeRow.tsx` — Container with staggered animation, priority sorting
+  - Types & helpers for edge case detection display
+- Implemented confidence factor breakdown visualization
+  - `ConfidenceFactorBar.tsx` — Animated progress bar for single factor
+  - `ConfidenceBreakdown.tsx` — 5-factor visualization with overall score
+  - Types & helpers for confidence scoring display
+- Integrated badges into both RecoveryScoreCard and NudgeCard Why panel
+- Updated ReasoningExpansion with ConfidenceBreakdown when factors available
+- Design: Bloomberg Terminal meets luxury health tech aesthetic
 
 **Files Created (8 new):**
-- `client/src/types/nudgeActions.ts`
-- `client/src/services/NudgeActionsService.ts`
-- `client/src/hooks/useNetworkState.ts`
-- `client/src/hooks/useNudgeActions.ts`
-- `client/src/hooks/useTodayMetrics.ts`
-- `client/src/components/SwipeableNudge.tsx`
-- `functions/src/types/todayMetrics.types.ts`
-- `functions/src/services/FirestoreSync.ts`
+- `client/src/types/edgeCases.ts`
+- `client/src/types/confidence.ts`
+- `client/src/utils/edgeCaseHelpers.ts`
+- `client/src/utils/confidenceHelpers.ts`
+- `client/src/components/EdgeCaseBadge.tsx`
+- `client/src/components/EdgeCaseBadgeRow.tsx`
+- `client/src/components/ConfidenceFactorBar.tsx`
+- `client/src/components/ConfidenceBreakdown.tsx`
 
-**Files Modified (6):**
-- `client/src/types/dashboard.ts` — Added dismissed/snoozed status
-- `client/src/components/NudgeCard.tsx` — Action buttons
-- `client/src/components/TaskList.tsx` — Swipeable wrapper
-- `client/src/screens/HomeScreen.tsx` — Hook integration
-- `client/src/theme/palette.ts` — Muted colors
-- `functions/src/wearablesSync.ts` — Firestore sync call
+**Files Modified (4):**
+- `client/src/types/dashboard.ts` — Added EdgeCases to DashboardTask, factors to confidence
+- `client/src/components/RecoveryScoreCard.tsx` — EdgeCaseBadgeRow integration
+- `client/src/components/ReasoningExpansion.tsx` — ConfidenceBreakdown + edge case badges
+- `client/src/components/NudgeCard.tsx` — Pass edgeCases to ReasoningExpansion
 
 ---
 
 ## Previous Session
 
-**Date:** December 5, 2025 (Session 44)
-**Focus:** Phase 3 Session 6 Planning — Real-time Sync
+**Date:** December 5, 2025 (Session 45)
+**Focus:** Phase 3 Session 6 — Real-time Sync Implementation
 
 **Accomplished:**
-- Explored Firebase/Firestore architecture and nudge system architecture
-- Identified two scopes: Nudge Interaction Sync + Metrics Sync to Firestore
-- Researched UX patterns for task completion (swipe vs buttons)
-- Created comprehensive implementation plan (13 files, ~1,000 lines)
-- Documented architecture, data structures, file-by-file breakdown
+- Implemented full nudge interaction sync system (swipe gestures, offline queue)
+- Implemented metrics sync to Firestore
+- Integrated everything into HomeScreen
+- Added palette colors: successMuted, errorMuted
 
-**Plan file:** `~/.claude/plans/snoopy-churning-lagoon.md`
+**Files:** 8 new + 6 modified
 
 ---
 
 ## Next Session Priority
 
-### Phase 3 Session 7: Reasoning UX (4-panel)
+### Phase 3 Session 8: Lite Mode (No-Wearable Fallback)
 
-**Focus:** Enhanced reasoning transparency in the nudge "Why?" panel.
+**Focus:** Enable app functionality for users without wearables.
 
 **Scope:**
-- Full 4-panel expansion UI: Mechanism, Evidence, Your Data, Confidence
-- Animated accordion transitions between panels
-- Deep linking to protocol sources (DOI links)
-- Component-level breakdown visualization
-- Edge case badges (alcohol detected, illness risk, travel)
+- Manual wellness inputs (sleep quality, energy level, mood)
+- Simplified recovery score without biometric data
+- Protocol recommendations based on user reports
+- Fallback UI when no wearable connected
 
 **Key Files to Review:**
-- `client/src/components/ReasoningExpansion.tsx` — Current expansion component
-- `client/src/components/NudgeCard.tsx` — Where expansion is rendered
-- `functions/src/services/whyEngine.ts` — Why engine that generates expansion data
+- `client/src/screens/HomeScreen.tsx` — Dashboard with wearable data
+- `functions/src/services/recoveryScore.ts` — Needs manual input support
+- `client/src/hooks/useRecoveryScore.ts` — Data source handling
 
 **Expected Output:**
-- Enhanced `ReasoningExpansion.tsx` with 4 distinct panels
-- New `RecoveryComponentBreakdown.tsx` for visual component display
-- Edge case badge component for special conditions
-- Tests for new components
+- Manual input components for wellness tracking
+- Modified recovery calculation for manual-only mode
+- Graceful degradation when wearable unavailable
 
 ---
 
@@ -215,13 +205,13 @@ None — Calendar Integration complete.
 | 4 | Wake Detection | ✅ Complete (26 tests, full server+client pipeline) |
 | 5 | Calendar Integration | ✅ Complete (50 tests, full-stack, privacy-first) |
 | 6 | Real-time Sync (Firestore) | ✅ Complete (14 files, swipe gestures, offline queue) |
-| 7 | Reasoning UX (4-panel) | 🔜 Next |
-| 8 | Lite Mode (no-wearable fallback) | 🔲 Pending |
+| 7 | Reasoning UX (Edge Case Badges + Confidence) | ✅ Complete (12 files, badges, 5-factor breakdown) |
+| 8 | Lite Mode (no-wearable fallback) | 🔜 Next |
 | 9 | Health Connect (Android) | 🔲 Pending |
 | 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
 | 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 6/11 sessions complete (55%)**
+**Phase 3 Status: 7/11 sessions complete (64%)**
 
 ---
 
@@ -244,4 +234,4 @@ None — Calendar Integration complete.
 
 ---
 
-*Last Updated: December 5, 2025 (Session 45 - Real-time Sync complete)*
+*Last Updated: December 5, 2025 (Session 46 - Edge Case Badges + Confidence Breakdown complete)*
