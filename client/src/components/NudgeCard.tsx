@@ -1,11 +1,17 @@
 import React, { useCallback, useState } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   interpolate,
-  runOnJS,
 } from 'react-native-reanimated';
 import type { DashboardTask } from '../types/dashboard';
 import { palette } from '../theme/palette';
@@ -15,13 +21,29 @@ import { ReasoningExpansion } from './ReasoningExpansion';
 interface Props {
   task: DashboardTask;
   onOutsideTap?: () => void;
+  /** Callback when complete button is pressed */
+  onComplete?: () => void;
+  /** Callback when dismiss button is pressed */
+  onDismiss?: () => void;
+  /** Whether the nudge is currently being updated */
+  isUpdating?: boolean;
+  /** Whether to show action buttons (default: true for pending nudges) */
+  showActions?: boolean;
 }
 
 /**
  * NudgeCard with expandable "Why?" reasoning panel
  * Displays nudge with 4-panel expansion: Mechanism, Evidence, Your Data, Confidence
+ * Now includes action buttons for complete/dismiss (Phase 3 Session 6)
  */
-export const NudgeCard: React.FC<Props> = ({ task, onOutsideTap }) => {
+export const NudgeCard: React.FC<Props> = ({
+  task,
+  onOutsideTap,
+  onComplete,
+  onDismiss,
+  isUpdating = false,
+  showActions,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const animatedHeight = useSharedValue(0);
@@ -31,6 +53,16 @@ export const NudgeCard: React.FC<Props> = ({ task, onOutsideTap }) => {
     : 'Anytime';
 
   const hasWhyExpansion = !!task.whyExpansion;
+
+  // Determine if actions should be shown
+  // Default: show for pending nudges only
+  const shouldShowActions =
+    showActions !== undefined
+      ? showActions
+      : task.status === 'pending' && (onComplete || onDismiss);
+
+  // Check if task is in a terminal state
+  const isTerminalState = task.status === 'completed' || task.status === 'dismissed';
 
   const handleContentLayout = useCallback((event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout;
@@ -146,6 +178,53 @@ export const NudgeCard: React.FC<Props> = ({ task, onOutsideTap }) => {
             </Animated.View>
           </>
         )}
+
+        {/* Action footer with complete/dismiss buttons */}
+        {shouldShowActions && !isTerminalState && (
+          <View style={styles.actionFooter}>
+            {isUpdating ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={palette.primary} />
+                <Text style={styles.loadingText}>Updating...</Text>
+              </View>
+            ) : (
+              <>
+                {onDismiss && (
+                  <Pressable
+                    onPress={onDismiss}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      styles.dismissButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Dismiss nudge"
+                    hitSlop={4}
+                    testID="nudge-dismiss-button"
+                  >
+                    <Text style={styles.dismissIcon}>✕</Text>
+                  </Pressable>
+                )}
+                {onComplete && (
+                  <Pressable
+                    onPress={onComplete}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      styles.completeButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Mark as complete"
+                    hitSlop={4}
+                    testID="nudge-complete-button"
+                  >
+                    <Text style={styles.completeIcon}>✓</Text>
+                  </Pressable>
+                )}
+              </>
+            )}
+          </View>
+        )}
       </View>
     </Pressable>
   );
@@ -214,5 +293,52 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     pointerEvents: 'none',
+  },
+  // Action footer styles (Phase 3 Session 6)
+  actionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+    gap: 12,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  loadingText: {
+    ...typography.caption,
+    color: palette.textMuted,
+  },
+  actionButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dismissButton: {
+    backgroundColor: palette.errorMuted,
+  },
+  completeButton: {
+    backgroundColor: palette.successMuted,
+  },
+  buttonPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
+  },
+  dismissIcon: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: palette.error,
+  },
+  completeIcon: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: palette.success,
   },
 });

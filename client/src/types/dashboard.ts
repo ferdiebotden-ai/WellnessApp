@@ -1,6 +1,6 @@
 export type TaskSource = 'schedule' | 'nudge';
 
-export type TaskStatus = 'pending' | 'in_progress' | 'completed';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'dismissed' | 'snoozed';
 
 /**
  * Evidence strength level from protocol library

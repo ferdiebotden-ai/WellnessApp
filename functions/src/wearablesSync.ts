@@ -11,6 +11,7 @@ import {
   type RecoveryInput,
 } from './services/recoveryScore';
 import { getUserBaseline, updateUserBaseline } from './services/baselineService';
+import { syncTodayMetrics } from './services/FirestoreSync';
 
 type WearableSource = 'apple_health' | 'google_fit';
 type WearableMetricType = 'sleep' | 'hrv' | 'rhr' | 'steps' | 'activeCalories';
@@ -613,6 +614,15 @@ async function calculateAndStoreRecovery(
     }
 
     console.log(`[RecoveryEngine] Calculated recovery score: ${result.score} (${result.zone}) for ${date}`);
+
+    // Step 7: Sync to Firestore for real-time dashboard updates (Phase 3 Session 6)
+    await syncTodayMetrics(
+      userId,
+      date,
+      dailyMetrics as DailyMetricsRow,
+      result,
+      baseline
+    );
   } catch (error) {
     // Non-blocking: recovery calculation failure shouldn't break the sync
     console.error('[RecoveryEngine] Recovery calculation failed:', (error as Error).message);

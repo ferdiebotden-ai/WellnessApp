@@ -16,3 +16,6 @@ export * from './recovery.types';
 
 // Wake detection types
 export * from './wake.types';
+
+// Today metrics types (Session 45)
+export * from './todayMetrics.types';

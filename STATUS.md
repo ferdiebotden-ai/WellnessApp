@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 45 (next) |
-| **Progress** | 45% of Phase 3 (5/11 sessions) |
+| **Session** | 46 (next) |
+| **Progress** | 55% of Phase 3 (6/11 sessions) |
 | **Branch** | main |
 
 ---
@@ -51,6 +51,49 @@
 
 ## Last Session
 
+**Date:** December 5, 2025 (Session 45)
+**Focus:** Phase 3 Session 6 — Real-time Sync Implementation
+
+**Accomplished:**
+- Implemented full nudge interaction sync system (Part A)
+  - `nudgeActions.ts` — Types for nudge status, actions, offline queue
+  - `NudgeActionsService.ts` — Firestore updates with offline queue support
+  - `useNetworkState.ts` — Cross-platform network detection hook
+  - `useNudgeActions.ts` — React hook with optimistic updates
+  - `SwipeableNudge.tsx` — Swipe gestures (right=complete, left=dismiss)
+  - Updated `NudgeCard.tsx` with action buttons (checkmark/X)
+  - Updated `TaskList.tsx` with swipeable wrapper
+- Implemented metrics sync to Firestore (Part B)
+  - `todayMetrics.types.ts` — Firestore document structure
+  - `FirestoreSync.ts` — Server-side sync service
+  - Updated `wearablesSync.ts` to call Firestore sync after recovery calculation
+  - `useTodayMetrics.ts` — Real-time Firestore listener hook
+- Integrated everything into `HomeScreen.tsx`
+- Added palette colors: `successMuted`, `errorMuted`
+- All new files type-check successfully
+
+**Files Created (8 new):**
+- `client/src/types/nudgeActions.ts`
+- `client/src/services/NudgeActionsService.ts`
+- `client/src/hooks/useNetworkState.ts`
+- `client/src/hooks/useNudgeActions.ts`
+- `client/src/hooks/useTodayMetrics.ts`
+- `client/src/components/SwipeableNudge.tsx`
+- `functions/src/types/todayMetrics.types.ts`
+- `functions/src/services/FirestoreSync.ts`
+
+**Files Modified (6):**
+- `client/src/types/dashboard.ts` — Added dismissed/snoozed status
+- `client/src/components/NudgeCard.tsx` — Action buttons
+- `client/src/components/TaskList.tsx` — Swipeable wrapper
+- `client/src/screens/HomeScreen.tsx` — Hook integration
+- `client/src/theme/palette.ts` — Muted colors
+- `functions/src/wearablesSync.ts` — Firestore sync call
+
+---
+
+## Previous Session
+
 **Date:** December 5, 2025 (Session 44)
 **Focus:** Phase 3 Session 6 Planning — Real-time Sync
 
@@ -60,31 +103,8 @@
 - Researched UX patterns for task completion (swipe vs buttons)
 - Created comprehensive implementation plan (13 files, ~1,000 lines)
 - Documented architecture, data structures, file-by-file breakdown
-- **Plan file saved:** `~/.claude/plans/snoopy-churning-lagoon.md`
 
-**Key Decisions:**
-- **UX:** Hybrid approach — swipe gestures + visible button fallbacks
-- **Offline:** AsyncStorage queue with auto-sync on reconnect
-- **Conflict Resolution:** Timestamp-based (last write wins)
-- **Metrics:** Real-time `todayMetrics/{userId}` document in Firestore
-
-**Ready for Implementation:** Fresh Opus 4.5 agent should execute plan file.
-
----
-
-## Previous Session
-
-**Date:** December 5, 2025 (Session 43)
-**Focus:** Phase 3 Session 5 — Calendar Integration
-
-**Accomplished:**
-- Implemented full-stack calendar integration with privacy-first design
-- Created CalendarService, CalendarRepository, CalendarSettingsScreen
-- Added 50 comprehensive unit tests (28 CalendarService + 22 useCalendar)
-- Privacy-first: Only busy blocks processed, never event details
-- MVD Integration: Heavy meeting days (≥4h) trigger Minimum Viable Day
-
-**Commit:** `d1916ec` — feat(phase3): implement Calendar Integration with privacy-first design
+**Plan file:** `~/.claude/plans/snoopy-churning-lagoon.md`
 
 ---
 
@@ -105,45 +125,27 @@
 
 ## Next Session Priority
 
-### Phase 3 Session 6: Real-time Sync (Full Scope)
+### Phase 3 Session 7: Reasoning UX (4-panel)
 
-**Plan File:** `~/.claude/plans/snoopy-churning-lagoon.md` (DETAILED IMPLEMENTATION PLAN)
+**Focus:** Enhanced reasoning transparency in the nudge "Why?" panel.
 
-**Scope (Both Parts):**
+**Scope:**
+- Full 4-panel expansion UI: Mechanism, Evidence, Your Data, Confidence
+- Animated accordion transitions between panels
+- Deep linking to protocol sources (DOI links)
+- Component-level breakdown visualization
+- Edge case badges (alcohol detected, illness risk, travel)
 
-**Part A: Nudge Interaction Sync**
-- Swipe gestures (right=complete, left=dismiss) + visible button fallbacks
-- `NudgeActionsService.ts` with optimistic UI updates
-- Offline queue using AsyncStorage, auto-sync on reconnect
-- Conflict resolution: timestamp-based (last write wins)
+**Key Files to Review:**
+- `client/src/components/ReasoningExpansion.tsx` — Current expansion component
+- `client/src/components/NudgeCard.tsx` — Where expansion is rendered
+- `functions/src/services/whyEngine.ts` — Why engine that generates expansion data
 
-**Part B: Metrics Sync to Firestore**
-- `todayMetrics/{userId}` document in Firestore
-- `FirestoreSync.ts` service in Cloud Functions
-- Real-time recovery score updates on dashboard (no polling)
-- Synced after HealthKit background delivery
-
-**Files to Create (8 new):**
-- `client/src/types/nudgeActions.ts`
-- `client/src/services/NudgeActionsService.ts`
-- `client/src/hooks/useNetworkState.ts`
-- `client/src/hooks/useNudgeActions.ts`
-- `client/src/components/SwipeableNudge.tsx`
-- `functions/src/types/todayMetrics.types.ts`
-- `functions/src/services/FirestoreSync.ts`
-- `client/src/hooks/useTodayMetrics.ts`
-
-**Files to Modify (5):**
-- `client/src/components/NudgeCard.tsx` (add action buttons)
-- `client/src/components/TaskList.tsx` (wire swipe + handlers)
-- `client/src/screens/HomeScreen.tsx` (integrate hooks)
-- `functions/src/wearablesSync.ts` (add Firestore sync)
-
-**Critical Files to Read First:**
-1. `client/src/hooks/useTaskFeed.ts` — Firestore listener pattern
-2. `client/src/services/firebase.ts` — Lazy init, memory fallback
-3. `client/src/components/NudgeCard.tsx` — Current card structure
-4. `functions/src/onNudgeFeedback.ts` — Trigger confirms document path
+**Expected Output:**
+- Enhanced `ReasoningExpansion.tsx` with 4 distinct panels
+- New `RecoveryComponentBreakdown.tsx` for visual component display
+- Edge case badge component for special conditions
+- Tests for new components
 
 ---
 
@@ -227,14 +229,14 @@ None — Calendar Integration complete.
 | 3 | Recovery Score Engine | ✅ Complete (weighted algorithm, 84 tests, Dashboard UI) |
 | 4 | Wake Detection | ✅ Complete (26 tests, full server+client pipeline) |
 | 5 | Calendar Integration | ✅ Complete (50 tests, full-stack, privacy-first) |
-| 6 | Real-time Sync (Firestore) | 🔜 Next |
-| 7 | Reasoning UX (4-panel) | 🔲 Pending |
+| 6 | Real-time Sync (Firestore) | ✅ Complete (14 files, swipe gestures, offline queue) |
+| 7 | Reasoning UX (4-panel) | 🔜 Next |
 | 8 | Lite Mode (no-wearable fallback) | 🔲 Pending |
 | 9 | Health Connect (Android) | 🔲 Pending |
 | 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
 | 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 5/11 sessions complete (45%)**
+**Phase 3 Status: 6/11 sessions complete (55%)**
 
 ---
 
@@ -257,4 +259,4 @@ None — Calendar Integration complete.
 
 ---
 
-*Last Updated: December 5, 2025 (Session 43 - Calendar Integration complete)*
+*Last Updated: December 5, 2025 (Session 45 - Real-time Sync complete)*

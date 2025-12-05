@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HealthMetricCard } from '../components/HealthMetricCard';
@@ -11,7 +11,9 @@ import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
 import { useRecoveryScore } from '../hooks/useRecoveryScore';
 import { useWakeDetection } from '../hooks/useWakeDetection';
-import type { HealthMetric, ModuleEnrollment } from '../types/dashboard';
+import { useNudgeActions } from '../hooks/useNudgeActions';
+import { useTodayMetrics } from '../hooks/useTodayMetrics';
+import type { DashboardTask, HealthMetric, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
 import { LockedModuleCard } from '../components/LockedModuleCard';
 import type { HomeStackParamList } from '../navigation/HomeStack';
@@ -57,6 +59,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { requestProModuleAccess } = useMonetization();
   const { isModuleEnabled } = useFeatureFlags();
 
+  // Real-time metrics from Firestore (Phase 3 Session 6)
+  const { metrics: todayMetrics } = useTodayMetrics(userId);
+
+  // Track tasks currently being updated
+  const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set());
+
+  // Nudge actions with optimistic updates (Phase 3 Session 6)
+  const { complete, dismiss, pendingActions, isSyncing } = useNudgeActions({
+    userId,
+    onActionComplete: (task, action) => {
+      console.log(`[HomeScreen] ${action} completed for: ${task.title}`);
+      setUpdatingTasks((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+    },
+    onActionError: (task, error) => {
+      console.error(`[HomeScreen] Action failed for ${task.title}:`, error);
+      setUpdatingTasks((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+      Alert.alert('Action Failed', error);
+    },
+    onQueuedOffline: (count) => {
+      console.log(`[HomeScreen] ${count} actions queued offline`);
+    },
+  });
+
   // Wake detection for Morning Anchor (Phase 3)
   const {
     showConfirmation: showWakeConfirmation,
@@ -64,6 +97,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     handleLater: handleWakeLater,
     handleDismiss: handleWakeDismiss,
   } = useWakeDetection();
+
+  // Handle task completion
+  const handleTaskComplete = useCallback(
+    async (task: DashboardTask) => {
+      setUpdatingTasks((prev) => new Set(prev).add(task.id));
+      await complete(task);
+    },
+    [complete]
+  );
+
+  // Handle task dismissal
+  const handleTaskDismiss = useCallback(
+    async (task: DashboardTask) => {
+      setUpdatingTasks((prev) => new Set(prev).add(task.id));
+      await dismiss(task);
+    },
+    [dismiss]
+  );
 
   const handleModulePress = useCallback(
     (module: ModuleEnrollment) => {
@@ -195,7 +246,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         <View style={[styles.section, styles.taskSection]}>
           <Text style={styles.sectionTitle}>Today's Plan</Text>
-          <TaskList loading={loadingTasks} tasks={tasks} emptyMessage="Your schedule is clear." />
+          <TaskList
+            loading={loadingTasks}
+            tasks={tasks}
+            emptyMessage="Your schedule is clear."
+            onComplete={handleTaskComplete}
+            onDismiss={handleTaskDismiss}
+            updatingTasks={updatingTasks}
+          />
+          {pendingActions > 0 && (
+            <Text style={styles.syncStatus}>
+              {isSyncing ? 'Syncing...' : `${pendingActions} action${pendingActions > 1 ? 's' : ''} pending`}
+            </Text>
+          )}
         </View>
       </ScrollView>
 
@@ -250,5 +313,11 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 24,
+  },
+  syncStatus: {
+    ...typography.caption,
+    color: palette.textMuted,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });

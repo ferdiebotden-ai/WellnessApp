@@ -10,7 +10,9 @@ export const palette = {
   textMuted: '#6C7688',
   border: '#2C3240',
   success: '#4CE1A5',
+  successMuted: '#1A3D30',
   error: '#FF5A5F',
+  errorMuted: '#3D2020',
   white: '#FFFFFF',
 };
 
