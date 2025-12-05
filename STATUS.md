@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 42 (next) |
-| **Progress** | 27% of Phase 3 (3/11 sessions) |
+| **Session** | 43 (next) |
+| **Progress** | 36% of Phase 3 (4/11 sessions) |
 | **Branch** | main |
 
 ---
@@ -51,6 +51,58 @@
 
 ## Last Session
 
+**Date:** December 5, 2025 (Session 42)
+**Focus:** Phase 3 Session 4 — Wake Detection System
+
+**Accomplished:**
+- Implemented complete Wake Detection pipeline (server + client)
+- Created WakeDetector.ts with confidence scoring for HealthKit, phone unlock, and manual sources
+- Created WakeEventRepository.ts for database CRUD on wake_events table
+- Created MorningAnchorService.ts to trigger morning nudge generation with skip conditions
+- Added API routes: POST /api/wake-events, GET /api/wake-events/today
+- Wrote 26 comprehensive unit tests (all passing)
+- Created client-side HealthKitWakeDetector, PhoneUnlockDetector, WakeEventService
+- Created WakeConfirmationOverlay.tsx (animated modal for Lite Mode users)
+- Created useWakeDetection.ts hook orchestrating detection based on user config
+- Integrated wake detection with HomeScreen.tsx
+
+**UX Decision:**
+- Wearable users: Auto-trigger Morning Anchor (high confidence from HealthKit)
+- Lite Mode users: Show confirmation overlay ("Good morning! Ready?" with Let's Go/Later)
+- Phone unlock confirmation boosts confidence from 0.60 → 0.85
+
+**Key Features:**
+- Nap detection (sleep < 3 hours after noon = don't trigger Morning Anchor)
+- Edge case handling: too early (<4am), too late (>2pm), already triggered today
+- Snooze (10 minutes) and skip-for-today options
+- Timezone-aware detection
+
+**Files Created:**
+```
+functions/src/services/wake/WakeDetector.ts
+functions/src/services/wake/WakeEventRepository.ts
+functions/src/services/wake/MorningAnchorService.ts
+functions/src/services/wake/index.ts
+functions/src/wakeEvents.ts
+functions/tests/services/wake/WakeDetector.test.ts (26 tests)
+client/src/services/wake/HealthKitWakeDetector.ts
+client/src/services/wake/PhoneUnlockDetector.ts
+client/src/services/wake/WakeEventService.ts
+client/src/services/wake/index.ts
+client/src/components/WakeConfirmationOverlay.tsx
+client/src/hooks/useWakeDetection.ts
+```
+
+**Files Modified:**
+```
+functions/src/api.ts (added wake event routes)
+client/src/screens/HomeScreen.tsx (integrated wake detection)
+```
+
+---
+
+## Previous Session
+
 **Date:** December 4, 2025 (Session 41)
 **Focus:** Fix Playwright Test Issues & Console Warnings
 
@@ -62,66 +114,28 @@
 - Verified all 15 Playwright tests still passing
 - Verified console warnings removed on Expo web
 
-**Key Changes:**
-- ✅ No more `shadow*` deprecation warnings on web
-- ✅ No more `pointerEvents` deprecation warnings on web
-- ✅ Profile tab no longer shows "Failed to load preferences" error
-- ✅ Toggle works with sensible default (anonymous = true)
-
 **Commit:** `b369de9` — fix: resolve web console warnings and improve ProfileScreen error handling
-
-**Files Modified:**
-```
-client/src/utils/shadows.ts (NEW)
-client/src/components/TopNavigationBar.tsx
-client/src/components/GoalCard.tsx
-client/src/components/ModuleCard.tsx
-client/src/components/NudgeCard.tsx
-client/src/screens/ProfileScreen.tsx
-```
-
----
-
-## Previous Session
-
-**Date:** December 5, 2025 (Session 40 Part 2)
-**Focus:** Playwright MCP Autonomous UI/UX Testing
-
-**Accomplished:**
-- Executed comprehensive UI/UX testing via Playwright MCP
-- Created test user `e2e-test@apexos.dev` through app SignUp flow
-- Tested all 9 major screens with visual analysis and interaction testing
-- Generated UI_UX_TESTING_REPORT.md with findings
-
-**Test User:** `e2e-test@apexos.dev` / `TestPassword123!`
-
-**Commit:**
-- `531e9da` — feat(phase3): implement Recovery Score Engine with UI
 
 ---
 
 ## Next Session Priority
 
-### Phase 3 Session 4: Wake Detection
+### Phase 3 Session 5: Calendar Integration
 
-**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 4)
+**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 5)
 
 **Priority Tasks:**
-1. Detect morning wake using sleep end time from HealthKit/Oura
-2. Trigger morning nudge generation when wake detected
-3. Handle timezone considerations for wake detection
-4. Create wake detection API endpoint
-5. Connect to nudge engine for Morning Stack generation
+1. Integrate with device calendar (Expo Calendar API)
+2. Detect meetings, events, and time blocks
+3. Use calendar data to adjust nudge timing
+4. Avoid nudging during meetings/focused work
+5. Surface calendar context in nudge reasoning
 
 **Key Considerations:**
-- Use sleep analysis end time as primary wake signal
-- Fallback to first activity if no sleep data
-- Handle cases where user wakes but doesn't sync immediately
-
-### Prerequisites Before Testing HealthKit
-- Build iOS development client: `npx expo prebuild --platform ios`
-- Run on physical iOS device (HealthKit not available in simulator)
-- Test on device with Apple Watch paired for real HRV data
+- Request calendar permissions gracefully
+- Parse event titles for context (meeting, focus time, etc.)
+- Handle recurring events and all-day events
+- Timezone handling for travel scenarios
 
 ---
 
@@ -164,7 +178,7 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 
 ```
 Client:    45/64 passing (Jest)
-Functions: 383 passing (Vitest) — includes 84 recoveryScore + 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine
+Functions: 409 passing (Vitest) — includes 84 recoveryScore + 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine + 26 wakeDetector
 E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded coverage
 ```
 
@@ -192,7 +206,7 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 
 ## Active Blockers
 
-None — Profile screen error fixed in Session 41.
+None — Wake Detection system complete.
 
 ---
 
@@ -203,8 +217,8 @@ None — Profile screen error fixed in Session 41.
 | 1 | Database Migrations + Types | ✅ Complete (5 tables, 3 type files) |
 | 2 | HealthKit Integration (iOS) | ✅ Complete (expo-healthkit-observer module + UI) |
 | 3 | Recovery Score Engine | ✅ Complete (weighted algorithm, 84 tests, Dashboard UI) |
-| 4 | Wake Detection | 🔜 Next |
-| 5 | Calendar Integration | 🔲 Pending |
+| 4 | Wake Detection | ✅ Complete (26 tests, full server+client pipeline) |
+| 5 | Calendar Integration | 🔜 Next |
 | 6 | Real-time Sync (Firestore) | 🔲 Pending |
 | 7 | Reasoning UX (4-panel) | 🔲 Pending |
 | 8 | Lite Mode (no-wearable fallback) | 🔲 Pending |
@@ -212,7 +226,7 @@ None — Profile screen error fixed in Session 41.
 | 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
 | 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 3/11 sessions complete (27%)**
+**Phase 3 Status: 4/11 sessions complete (36%)**
 
 ---
 
@@ -235,4 +249,4 @@ None — Profile screen error fixed in Session 41.
 
 ---
 
-*Last Updated: December 4, 2025 (Session 41 - Playwright fixes & console warning cleanup)*
+*Last Updated: December 5, 2025 (Session 42 - Wake Detection System complete)*

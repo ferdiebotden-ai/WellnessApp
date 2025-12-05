@@ -18,6 +18,7 @@ import {
   deactivateMVDManually,
   triggerMVDDetection,
 } from './mvd/mvdApi';
+import { createWakeEvent, getTodayWakeEvent } from './wakeEvents';
 
 const app = express();
 
@@ -58,6 +59,10 @@ app.post('/api/mvd/activate', activateMVDManually);
 app.get('/api/mvd/status', getMVDStatus);
 app.post('/api/mvd/deactivate', deactivateMVDManually);
 app.post('/api/mvd/detect', triggerMVDDetection);
+
+// Wake detection routes (Phase 3 Session 4)
+app.post('/api/wake-events', createWakeEvent);
+app.get('/api/wake-events/today', getTodayWakeEvent);
 
 // Webhooks
 app.post('/api/webhooks/revenuecat', handleRevenueCatWebhook);

@@ -5,10 +5,12 @@ import { HealthMetricCard } from '../components/HealthMetricCard';
 import { ModuleEnrollmentCard } from '../components/ModuleEnrollmentCard';
 import { TaskList } from '../components/TaskList';
 import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
+import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
 import { useRecoveryScore } from '../hooks/useRecoveryScore';
+import { useWakeDetection } from '../hooks/useWakeDetection';
 import type { HealthMetric, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
 import { LockedModuleCard } from '../components/LockedModuleCard';
@@ -54,6 +56,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { data: recoveryData, baselineStatus, loading: loadingRecovery } = useRecoveryScore(userId ?? undefined);
   const { requestProModuleAccess } = useMonetization();
   const { isModuleEnabled } = useFeatureFlags();
+
+  // Wake detection for Morning Anchor (Phase 3)
+  const {
+    showConfirmation: showWakeConfirmation,
+    handleConfirm: handleWakeConfirm,
+    handleLater: handleWakeLater,
+    handleDismiss: handleWakeDismiss,
+  } = useWakeDetection();
 
   const handleModulePress = useCallback(
     (module: ModuleEnrollment) => {
@@ -188,6 +198,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <TaskList loading={loadingTasks} tasks={tasks} emptyMessage="Your schedule is clear." />
         </View>
       </ScrollView>
+
+      {/* Wake Confirmation Overlay (Lite Mode only) */}
+      <WakeConfirmationOverlay
+        visible={showWakeConfirmation}
+        onConfirm={handleWakeConfirm}
+        onLater={handleWakeLater}
+        onDismiss={handleWakeDismiss}
+      />
     </View>
   );
 };
