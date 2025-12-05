@@ -93,6 +93,7 @@ export const onboardingCompleteHandler = async (req: Request, res: Response) => 
     .insert([enrollmentPayload]);
 
   if (enrollmentError) {
+    console.error('[onboardingComplete] Enrollment error:', JSON.stringify(enrollmentError));
     res.status(500).json({ error: 'Failed to enroll user in module' });
     return;
   }
