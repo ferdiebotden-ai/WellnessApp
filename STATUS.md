@@ -9,7 +9,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 44 (next) |
+| **Session** | 45 (next) |
 | **Progress** | 45% of Phase 3 (5/11 sessions) |
 | **Branch** | main |
 
@@ -51,78 +51,52 @@
 
 ## Last Session
 
-**Date:** December 5, 2025 (Session 43)
-**Focus:** Phase 3 Session 5 — Calendar Integration
+**Date:** December 5, 2025 (Session 44)
+**Focus:** Phase 3 Session 6 Planning — Real-time Sync
 
 **Accomplished:**
-- Implemented full-stack calendar integration with privacy-first design
-- Created database migration for calendar_integrations and daily_calendar_metrics tables
-- Created server-side CalendarService with meeting load calculation algorithm
-- Integrated heavy_calendar trigger into MVD detector (≥4h meetings = full MVD)
-- Created client-side CalendarService using expo-calendar for device access
-- Created useCalendar hook for React component integration
-- Built CalendarSettingsScreen with metrics display, sync controls, and MVD warning
-- Added 50 comprehensive unit tests (28 CalendarService + 22 useCalendar)
-- Privacy-first: Only busy blocks (start/end times) are processed, never event details
+- Explored Firebase/Firestore architecture and nudge system architecture
+- Identified two scopes: Nudge Interaction Sync + Metrics Sync to Firestore
+- Researched UX patterns for task completion (swipe vs buttons)
+- Created comprehensive implementation plan (13 files, ~1,000 lines)
+- Documented architecture, data structures, file-by-file breakdown
+- **Plan file saved:** `~/.claude/plans/snoopy-churning-lagoon.md`
 
-**Design Decisions:**
-- **Hybrid Provider Support:** Device calendar (expo-calendar) + Google Calendar (OAuth) - user selectable
-- **Privacy-First:** FreeBusy approach - only meeting times analyzed, no event titles/descriptions stored
-- **Meeting Load Thresholds:** Light (<2h), Moderate (2-4h), Heavy (4-6h), Overload (≥6h)
-- **Back-to-Back Detection:** Meetings with <15 min gap counted as back-to-back
-- **MVD Integration:** Heavy meeting days (≥4h) trigger Minimum Viable Day mode
+**Key Decisions:**
+- **UX:** Hybrid approach — swipe gestures + visible button fallbacks
+- **Offline:** AsyncStorage queue with auto-sync on reconnect
+- **Conflict Resolution:** Timestamp-based (last write wins)
+- **Metrics:** Real-time `todayMetrics/{userId}` document in Firestore
 
-**Files Created:**
-```
-# Server-side
-functions/src/types/calendar.types.ts
-functions/src/services/calendar/CalendarRepository.ts
-functions/src/services/calendar/CalendarService.ts
-functions/src/services/calendar/index.ts
-functions/src/calendarSync.ts
-supabase/migrations/20251205000000_calendar_integration.sql
-
-# Client-side
-client/src/services/calendar/types.ts
-client/src/services/calendar/CalendarService.ts
-client/src/services/calendar/index.ts
-client/src/hooks/useCalendar.ts
-client/src/screens/settings/CalendarSettingsScreen.tsx
-
-# Tests
-client/src/services/calendar/CalendarService.test.ts (28 tests)
-client/src/hooks/useCalendar.test.ts (22 tests)
-```
-
-**Files Modified:**
-```
-functions/src/api.ts (added 5 calendar API routes)
-functions/src/mvd/types.ts (added heavy_calendar trigger)
-functions/src/mvd/mvdDetector.ts (added checkHeavyCalendarTrigger)
-functions/src/mvd/mvdDataFetcher.ts (added getMeetingHoursToday)
-client/src/services/api.ts (added calendar API functions)
-client/src/navigation/ProfileStack.tsx (added CalendarSettings + WearableSettings routes)
-client/src/screens/ProfileScreen.tsx (added Data Integrations card)
-client/app.json (added calendar permissions)
-```
+**Ready for Implementation:** Fresh Opus 4.5 agent should execute plan file.
 
 ---
 
 ## Previous Session
 
-**Date:** December 5, 2025 (Session 42)
+**Date:** December 5, 2025 (Session 43)
+**Focus:** Phase 3 Session 5 — Calendar Integration
+
+**Accomplished:**
+- Implemented full-stack calendar integration with privacy-first design
+- Created CalendarService, CalendarRepository, CalendarSettingsScreen
+- Added 50 comprehensive unit tests (28 CalendarService + 22 useCalendar)
+- Privacy-first: Only busy blocks processed, never event details
+- MVD Integration: Heavy meeting days (≥4h) trigger Minimum Viable Day
+
+**Commit:** `d1916ec` — feat(phase3): implement Calendar Integration with privacy-first design
+
+---
+
+## Session 42
+
+**Date:** December 5, 2025
 **Focus:** Phase 3 Session 4 — Wake Detection System
 
 **Accomplished:**
-- Implemented complete Wake Detection pipeline (server + client)
-- Created WakeDetector.ts with confidence scoring for HealthKit, phone unlock, and manual sources
-- Created WakeEventRepository.ts for database CRUD on wake_events table
-- Created MorningAnchorService.ts to trigger morning nudge generation with skip conditions
-- Added API routes: POST /api/wake-events, GET /api/wake-events/today
-- Wrote 26 comprehensive unit tests (all passing)
-- Created client-side HealthKitWakeDetector, PhoneUnlockDetector, WakeEventService
-- Created WakeConfirmationOverlay.tsx (animated modal for Lite Mode users)
-- Created useWakeDetection.ts hook orchestrating detection based on user config
+- Implemented Wake Detection pipeline (server + client)
+- Created WakeDetector.ts, WakeEventRepository.ts, MorningAnchorService.ts
+- Added 26 comprehensive unit tests (all passing)
 - Integrated wake detection with HomeScreen.tsx
 
 **Commit:** `d0597f4` — feat(phase3): implement Wake Detection System with Morning Anchor
@@ -131,22 +105,45 @@ client/app.json (added calendar permissions)
 
 ## Next Session Priority
 
-### Phase 3 Session 6: Real-time Sync (Firestore)
+### Phase 3 Session 6: Real-time Sync (Full Scope)
 
-**Reference:** `PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md` (Component 6)
+**Plan File:** `~/.claude/plans/snoopy-churning-lagoon.md` (DETAILED IMPLEMENTATION PLAN)
 
-**Priority Tasks:**
-1. Set up Firestore real-time listeners for nudges
-2. Implement optimistic UI updates
-3. Sync nudge state across devices
-4. Handle offline/online transitions
-5. Implement conflict resolution for multi-device scenarios
+**Scope (Both Parts):**
 
-**Key Considerations:**
-- Use Firebase RTDB for immediate UI updates
-- Minimize Firestore reads for cost efficiency
-- Handle background app state properly
-- Ensure smooth user experience during sync
+**Part A: Nudge Interaction Sync**
+- Swipe gestures (right=complete, left=dismiss) + visible button fallbacks
+- `NudgeActionsService.ts` with optimistic UI updates
+- Offline queue using AsyncStorage, auto-sync on reconnect
+- Conflict resolution: timestamp-based (last write wins)
+
+**Part B: Metrics Sync to Firestore**
+- `todayMetrics/{userId}` document in Firestore
+- `FirestoreSync.ts` service in Cloud Functions
+- Real-time recovery score updates on dashboard (no polling)
+- Synced after HealthKit background delivery
+
+**Files to Create (8 new):**
+- `client/src/types/nudgeActions.ts`
+- `client/src/services/NudgeActionsService.ts`
+- `client/src/hooks/useNetworkState.ts`
+- `client/src/hooks/useNudgeActions.ts`
+- `client/src/components/SwipeableNudge.tsx`
+- `functions/src/types/todayMetrics.types.ts`
+- `functions/src/services/FirestoreSync.ts`
+- `client/src/hooks/useTodayMetrics.ts`
+
+**Files to Modify (5):**
+- `client/src/components/NudgeCard.tsx` (add action buttons)
+- `client/src/components/TaskList.tsx` (wire swipe + handlers)
+- `client/src/screens/HomeScreen.tsx` (integrate hooks)
+- `functions/src/wearablesSync.ts` (add Firestore sync)
+
+**Critical Files to Read First:**
+1. `client/src/hooks/useTaskFeed.ts` — Firestore listener pattern
+2. `client/src/services/firebase.ts` — Lazy init, memory fallback
+3. `client/src/components/NudgeCard.tsx` — Current card structure
+4. `functions/src/onNudgeFeedback.ts` — Trigger confirms document path
 
 ---
 
