@@ -73,7 +73,7 @@ export const embedProtocols = async (): Promise<void> => {
   const pineconeIndex = getPineconeIndex();
 
   const { data, error } = await supabase
-    .from<ProtocolRecord>('protocols')
+    .from('protocols')
     .select(
       'id, name, description, category, tier_required, benefits, constraints, citations, is_active',
     );

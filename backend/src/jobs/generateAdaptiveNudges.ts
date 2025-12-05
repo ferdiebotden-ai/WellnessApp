@@ -287,7 +287,7 @@ const queryWearableData = async (userId: string) => {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
-    .from<WearableRecord>('wearable_data_archive')
+    .from('wearable_data_archive')
     .select('hrv_score, sleep_hours, readiness_score, recorded_at')
     .eq('user_id', userId)
     .order('recorded_at', { ascending: false })
@@ -304,7 +304,7 @@ const queryProtocolLogs = async (userId: string, since: string) => {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
-    .from<ProtocolLogRecord>('protocol_logs')
+    .from('protocol_logs')
     .select('protocol_id, status, performed_at')
     .eq('user_id', userId)
     .gte('performed_at', since)
@@ -320,7 +320,7 @@ const queryProtocolLogs = async (userId: string, since: string) => {
 const queryUsers = async () => {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
-    .from<UserRecord>('users')
+    .from('users')
     .select('id, tier, preferences, primary_module_id, onboarding_complete')
     .eq('onboarding_complete', true);
 
@@ -514,7 +514,7 @@ export const generateAdaptiveNudges = async (
         score: match.score ?? null,
         metadata: match.metadata ?? null,
       })),
-      response_payload: finalNudge,
+      response_payload: finalNudge as unknown as JsonValue,
       fallback_reason: fallbackReason,
       status: fallbackReason ? 'fallback' : 'success',
       error_message: errorMessage,

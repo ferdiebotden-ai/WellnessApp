@@ -157,7 +157,7 @@ const buildScheduleForUser = async (
   };
 
   const enrollmentsResponse = await supabase
-    .from<ModuleEnrollmentRecord>('module_enrollment')
+    .from('module_enrollment')
     .select('module_id')
     .eq('user_id', user.id);
 
@@ -169,7 +169,7 @@ const buildScheduleForUser = async (
   const moduleIds = enrollmentsResponse.data.map((enrollment) => enrollment.module_id);
 
   const moduleProtocolResponse = await supabase
-    .from<ModuleProtocolMapRecord>('module_protocol_map')
+    .from('module_protocol_map')
     .select('module_id, protocol_id, tier, priority, default_offset_minutes')
     .in('module_id', moduleIds);
 
@@ -193,7 +193,7 @@ const buildScheduleForUser = async (
   const protocolIds = Array.from(new Set(filteredMappings.map((mapping) => mapping.protocol_id)));
 
   const protocolsResponse = await supabase
-    .from<ProtocolRecord>('protocols')
+    .from('protocols')
     .select('id, duration_minutes, category, default_time_of_day, timing_constraints, priority')
     .in('id', protocolIds);
 
@@ -252,7 +252,7 @@ export const generateDailySchedules = async (
   const baseDate = startOfDay(baseTimestamp);
 
   const usersResponse = await supabase
-    .from<UserRecord>('users')
+    .from('users')
     .select('id, tier, preferences')
     .eq('onboarding_complete', true);
 

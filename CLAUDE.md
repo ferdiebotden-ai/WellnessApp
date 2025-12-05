@@ -261,6 +261,59 @@ Claude Code connects to external services via MCP (Model Context Protocol) serve
 |--------|---------|--------|
 | `github` | PR/issue management, repo sync | Configured |
 | `ide` | VS Code diagnostics, Jupyter kernel | Built-in |
+| `playwright` | Autonomous browser automation | Configured |
+| `chrome-devtools` | Collaborative browser debugging | Configured |
+
+### Chrome DevTools MCP (Collaborative Debugging)
+
+Enables **collaborative debugging** where you control the browser while Claude observes console logs, network requests, screenshots, and DOM state.
+
+**How It Works:**
+1. You launch Chrome with remote debugging enabled
+2. Claude connects via MCP and can see everything in DevTools
+3. You navigate the app, Claude analyzes issues in real-time
+
+**Step 1: Start Chrome with Remote Debugging**
+```bash
+# Linux/WSL
+google-chrome --remote-debugging-port=9222 http://localhost:8081
+
+# Windows
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug" http://localhost:8081
+
+# macOS
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 http://localhost:8081
+```
+
+**Step 2: Start Expo Web Server**
+```bash
+cd /home/ferdi/projects/WellnessApp/client && npx expo start --web
+```
+
+**Step 3: Ask Claude to Debug**
+Once Chrome is running with debugging enabled, Claude can:
+- `list_console_messages` — View all console logs, errors, warnings
+- `take_screenshot` — Capture current screen state
+- `list_network_requests` — See all API calls and responses
+- `get_network_request` — Inspect specific request/response details
+- `take_snapshot` — Get accessibility tree (DOM structure)
+- `evaluate_script` — Run JavaScript in the page context
+
+**Example Prompts:**
+- "Check the console for any errors"
+- "Take a screenshot and analyze the current UI"
+- "Show me all network requests made in the last minute"
+- "What's causing the API error I'm seeing?"
+
+**Configuration (Already Applied):**
+```json
+{
+  "chrome-devtools": {
+    "command": "npx",
+    "args": ["chrome-devtools-mcp@latest", "--browserUrl", "http://127.0.0.1:9222"]
+  }
+}
+```
 
 ### Auto-Sync Workflow (After Each Task)
 
