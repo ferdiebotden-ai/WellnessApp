@@ -16,6 +16,7 @@ import type {
   BaselineStatus,
   RecoveryComponent,
 } from '../components/RecoveryScoreCard';
+import type { CheckInResult, QualityRating, SleepHoursOption, CheckInRecommendation } from '../types/checkIn';
 
 // API base URL
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.example.com';
@@ -49,10 +50,31 @@ interface BaselineStatusResponse {
   message: string;
 }
 
+interface CheckInApiResponse {
+  score: number;
+  confidence: number;
+  zone: 'red' | 'yellow' | 'green';
+  components: {
+    sleepQuality: { rating: number; label: string; score: number; weight: number };
+    sleepDuration: { hours: number; option: string; score: number; vsTarget: string; weight: number };
+    energyLevel: { rating: number; label: string; score: number; weight: number };
+  };
+  reasoning: string;
+  recommendations: Array<{
+    type: string;
+    headline: string;
+    body: string;
+    protocols: string[];
+  }>;
+  isLiteMode: true;
+  skipped: boolean;
+}
+
 interface RecoveryApiResponse {
-  recovery: RecoveryScoreResponse | null;
+  recovery: RecoveryScoreResponse | CheckInApiResponse | null;
   baseline: BaselineStatusResponse;
   yesterdayScore?: number | null;
+  isLiteMode?: boolean;
 }
 
 // =============================================================================
@@ -110,7 +132,8 @@ function calculateTrend(
 }
 
 /**
- * Transform API response to component-friendly format.
+ * Transform wearable API response to component-friendly format.
+ * Only called for non-Lite Mode responses (wearable data).
  */
 function transformRecoveryData(
   response: RecoveryApiResponse
@@ -126,54 +149,57 @@ function transformRecoveryData(
     return { data: null, baselineStatus };
   }
 
-  const { trend, delta } = calculateTrend(response.recovery.score, response.yesterdayScore);
+  // Type assertion: We only call this for non-Lite Mode, so recovery is RecoveryScoreResponse
+  const wearableData = response.recovery as RecoveryScoreResponse;
+
+  const { trend, delta } = calculateTrend(wearableData.score, response.yesterdayScore);
 
   // Transform components to display format
   const components: RecoveryComponent[] = [
     {
       label: 'HRV',
-      score: response.recovery.components.hrv.score,
-      detail: response.recovery.components.hrv.vsBaseline,
-      weight: response.recovery.components.hrv.weight,
+      score: wearableData.components.hrv.score,
+      detail: wearableData.components.hrv.vsBaseline,
+      weight: wearableData.components.hrv.weight,
     },
     {
       label: 'Resting Heart Rate',
-      score: response.recovery.components.rhr.score,
-      detail: response.recovery.components.rhr.vsBaseline,
-      weight: response.recovery.components.rhr.weight,
+      score: wearableData.components.rhr.score,
+      detail: wearableData.components.rhr.vsBaseline,
+      weight: wearableData.components.rhr.weight,
     },
     {
       label: 'Sleep Quality',
-      score: response.recovery.components.sleepQuality.score,
-      detail: formatSleepQualityDetail(response.recovery.components.sleepQuality),
-      weight: response.recovery.components.sleepQuality.weight,
+      score: wearableData.components.sleepQuality.score,
+      detail: formatSleepQualityDetail(wearableData.components.sleepQuality),
+      weight: wearableData.components.sleepQuality.weight,
     },
     {
       label: 'Sleep Duration',
-      score: response.recovery.components.sleepDuration.score,
-      detail: response.recovery.components.sleepDuration.vsTarget,
-      weight: response.recovery.components.sleepDuration.weight,
+      score: wearableData.components.sleepDuration.score,
+      detail: wearableData.components.sleepDuration.vsTarget,
+      weight: wearableData.components.sleepDuration.weight,
     },
   ];
 
   // Only add respiratory rate if available
-  if (response.recovery.components.respiratoryRate.raw !== null) {
+  if (wearableData.components.respiratoryRate.raw !== null) {
     components.push({
       label: 'Respiratory Rate',
-      score: response.recovery.components.respiratoryRate.score,
-      detail: response.recovery.components.respiratoryRate.vsBaseline,
-      weight: response.recovery.components.respiratoryRate.weight,
+      score: wearableData.components.respiratoryRate.score,
+      detail: wearableData.components.respiratoryRate.vsBaseline,
+      weight: wearableData.components.respiratoryRate.weight,
     });
   }
 
   const data: RecoveryScoreData = {
-    score: response.recovery.score,
-    zone: response.recovery.zone,
-    confidence: response.recovery.confidence,
+    score: wearableData.score,
+    zone: wearableData.zone,
+    confidence: wearableData.confidence,
     trend,
     trendDelta: delta,
     components,
-    reasoning: response.recovery.reasoning,
+    reasoning: wearableData.reasoning,
   };
 
   return { data, baselineStatus };
@@ -202,6 +228,47 @@ function formatSleepQualityDetail(sleepQuality: {
   return parts.length > 0 ? parts.join(', ') : 'No data';
 }
 
+/**
+ * Transform CheckInApiResponse to CheckInResult.
+ */
+function transformCheckInData(apiResponse: CheckInApiResponse): CheckInResult {
+  return {
+    score: apiResponse.score,
+    confidence: apiResponse.confidence,
+    zone: apiResponse.zone,
+    components: {
+      sleepQuality: {
+        rating: apiResponse.components.sleepQuality.rating as QualityRating,
+        label: apiResponse.components.sleepQuality.label,
+        score: apiResponse.components.sleepQuality.score,
+        weight: apiResponse.components.sleepQuality.weight,
+      },
+      sleepDuration: {
+        hours: apiResponse.components.sleepDuration.hours,
+        option: apiResponse.components.sleepDuration.option as SleepHoursOption,
+        score: apiResponse.components.sleepDuration.score,
+        vsTarget: apiResponse.components.sleepDuration.vsTarget,
+        weight: apiResponse.components.sleepDuration.weight,
+      },
+      energyLevel: {
+        rating: apiResponse.components.energyLevel.rating as QualityRating,
+        label: apiResponse.components.energyLevel.label,
+        score: apiResponse.components.energyLevel.score,
+        weight: apiResponse.components.energyLevel.weight,
+      },
+    },
+    reasoning: apiResponse.reasoning,
+    skipped: apiResponse.skipped,
+    isLiteMode: true,
+    recommendations: apiResponse.recommendations.map((rec) => ({
+      type: rec.type as CheckInRecommendation['type'],
+      headline: rec.headline,
+      body: rec.body,
+      protocols: rec.protocols,
+    })),
+  };
+}
+
 // =============================================================================
 // HOOK
 // =============================================================================
@@ -212,6 +279,10 @@ export interface UseRecoveryScoreResult {
   loading: boolean;
   error: Error | null;
   refresh: () => Promise<void>;
+  /** True if user is in Lite Mode (manual check-in, no wearable) */
+  isLiteMode: boolean;
+  /** Transformed check-in data for Lite Mode users */
+  checkInData: CheckInResult | null;
 }
 
 /**
@@ -230,6 +301,8 @@ export function useRecoveryScore(userId?: string): UseRecoveryScoreResult {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isLiteMode, setIsLiteMode] = useState(false);
+  const [checkInData, setCheckInData] = useState<CheckInResult | null>(null);
 
   const fetchRecoveryScore = useCallback(async () => {
     try {
@@ -244,10 +317,28 @@ export function useRecoveryScore(userId?: string): UseRecoveryScoreResult {
         `/api/recovery?date=${today}`
       );
 
-      const { data: recoveryData, baselineStatus: status } = transformRecoveryData(response);
+      // Check if this is Lite Mode response
+      const liteMode = response.isLiteMode === true;
+      setIsLiteMode(liteMode);
 
-      setData(recoveryData);
-      setBaselineStatus(status);
+      if (liteMode && response.recovery && 'isLiteMode' in response.recovery) {
+        // Lite Mode: Transform and store check-in data
+        const transformed = transformCheckInData(response.recovery as CheckInApiResponse);
+        setCheckInData(transformed);
+        setData(null); // No wearable recovery data
+        setBaselineStatus({
+          ready: true,
+          daysCollected: 0,
+          daysRequired: 0,
+          message: response.baseline.message,
+        });
+      } else {
+        // Wearable Mode: Transform recovery data
+        setCheckInData(null);
+        const { data: recoveryData, baselineStatus: status } = transformRecoveryData(response);
+        setData(recoveryData);
+        setBaselineStatus(status);
+      }
     } catch (err) {
       console.error('[useRecoveryScore] Failed to fetch:', err);
       setError(err instanceof Error ? err : new Error('Unknown error'));
@@ -275,6 +366,8 @@ export function useRecoveryScore(userId?: string): UseRecoveryScoreResult {
     loading,
     error,
     refresh: fetchRecoveryScore,
+    isLiteMode,
+    checkInData,
   };
 }
 

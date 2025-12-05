@@ -9,10 +9,10 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 49 (next) |
-| **Progress** | 64% of Phase 3 (7/11 sessions) |
+| **Session** | 50 (next) |
+| **Progress** | 73% of Phase 3 (8/11 sessions) |
 | **Branch** | main |
-| **Blocker** | ✅ None — `is_primary` blocker resolved (Session 48) |
+| **Blocker** | ✅ None |
 
 ---
 
@@ -52,6 +52,52 @@
 
 ## Last Session
 
+**Date:** December 5, 2025 (Session 49)
+**Focus:** Lite Mode (No-Wearable Fallback)
+
+**Problem:**
+Users without wearables couldn't use the app meaningfully. The `/api/recovery` endpoint didn't exist, blocking both wearable and lite mode users.
+
+**Accomplished:**
+- ✅ Created Check-in Score algorithm (3-component weighted score)
+- ✅ Implemented GET `/api/recovery` endpoint (handles both wearable and Lite Mode)
+- ✅ Implemented POST/GET `/api/manual-check-in` endpoints
+- ✅ Built wake-triggered check-in UX (3-question flow in WakeConfirmationOverlay)
+- ✅ Created LiteModeScoreCard component with zone badges and expandable reasoning
+- ✅ Updated HomeScreen with conditional rendering (RecoveryScoreCard vs LiteModeScoreCard)
+- ✅ Updated useRecoveryScore hook to return `isLiteMode` and `checkInData`
+- ✅ Deployed backend to Cloud Run (revision `api-00146-tk4`)
+- ✅ Wrote 55 unit tests for checkInScore.ts (all passing)
+
+**Architecture Decisions:**
+- "Check-in Score" branding (distinct from wearable "Recovery Score")
+- Max confidence: 0.60 for manual inputs (vs 0.90 for wearables)
+- 3 inputs only: Sleep Quality (1-5), Sleep Hours (categorical), Energy Level (1-5)
+- Formula: Score = (SleepQuality × 0.40) + (SleepDuration × 0.35) + (Energy × 0.25)
+- Wake-triggered UX — check-in surfaces at natural wake moment
+
+**Files Created (7):**
+- `functions/src/types/checkIn.types.ts` — Server-side type definitions
+- `functions/src/services/checkInScore.ts` — Score calculation algorithm
+- `functions/src/recovery.ts` — GET /api/recovery endpoint
+- `functions/src/manualCheckIn.ts` — POST/GET manual check-in endpoints
+- `functions/tests/checkInScore.test.ts` — 55 unit tests
+- `client/src/types/checkIn.ts` — Client-side type definitions
+- `client/src/components/LiteModeScoreCard.tsx` — Score card UI for Lite Mode
+- `client/src/components/CheckInQuestionnaire.tsx` — 3-question check-in flow
+
+**Files Modified (4):**
+- `functions/src/api.ts` — Added recovery and check-in routes
+- `client/src/hooks/useRecoveryScore.ts` — Added Lite Mode detection and data handling
+- `client/src/screens/HomeScreen.tsx` — Conditional rendering for score cards
+- `client/src/components/WakeConfirmationOverlay.tsx` — Integrated questionnaire flow
+
+**Result:** Lite Mode fully operational. Users without wearables can complete a morning check-in and receive personalized guidance.
+
+---
+
+## Previous Session
+
 **Date:** December 5, 2025 (Session 48)
 **Focus:** Fix `is_primary` Column Blocker
 
@@ -59,59 +105,35 @@
 Onboarding endpoint returned 500 error because `is_primary: true` was being inserted but column didn't exist in `module_enrollment` table.
 
 **Accomplished:**
-- ✅ Created migration `20251205200000_add_is_primary_to_enrollment.sql`
-- ✅ Applied migration to Supabase with `supabase db push`
-- ✅ Added error logging to `onboardingComplete.ts`
-- ✅ Deployed backend to Cloud Run (revision `api-00143-q2w`)
-- ✅ Committed and pushed (commit `c6ce87e`)
+- Created migration `20251205200000_add_is_primary_to_enrollment.sql`
+- Applied migration to Supabase with `supabase db push`
+- Deployed backend to Cloud Run (revision `api-00143-q2w`)
 
-**Files Created (1):**
-- `supabase/migrations/20251205200000_add_is_primary_to_enrollment.sql`
-
-**Files Modified (1):**
-- `backend/src/routes/onboardingComplete.ts` — Added enrollment error logging
-
-**Result:** Blocker resolved. Onboarding should now complete successfully.
-
----
-
-## Previous Session
-
-**Date:** December 5, 2025 (Session 47)
-**Focus:** Firebase→Supabase User Sync Fix (Critical Bug)
-
-**Accomplished:**
-- Created `/api/users/sync` endpoint
-- Updated `onboardingComplete.ts` for Firebase UID lookup
-- Added CORS middleware
-- Fixed module ID mappings
-- Deployed to Cloud Run (commit `b0884f6`)
-
-**Blocker Found:** `is_primary` column missing → resolved in Session 48
+**Result:** Blocker resolved. Onboarding completes successfully.
 
 ---
 
 ## Next Session Priority
 
-### Phase 3 Session 8: Lite Mode (No-Wearable Fallback)
+### Phase 3 Session 9: Health Connect (Android)
 
-**Focus:** Enable app functionality for users without wearables.
+**Focus:** Enable Android health data integration via Health Connect.
 
 **Scope:**
-- Manual wellness inputs (sleep quality, energy level, mood)
-- Simplified recovery score without biometric data
-- Protocol recommendations based on user reports
-- Fallback UI when no wearable connected
+- Research Health Connect APIs (permissions, data types, background sync)
+- Implement health data sync module for Android
+- Map Health Connect data types to our daily_metrics schema
+- Test data flow from Android wearables (Samsung, Fitbit, Garmin)
 
 **Key Files to Review:**
-- `client/src/screens/HomeScreen.tsx` — Dashboard with wearable data
-- `functions/src/services/recoveryScore.ts` — Needs manual input support
-- `client/src/hooks/useRecoveryScore.ts` — Data source handling
+- `client/src/modules/expo-healthkit-observer/` — Reference iOS implementation
+- `functions/src/wearablesSync.ts` — Backend data processing
+- `PRD Documents/Perplexity Research Papers/` — May need fresh research
 
 **Expected Output:**
-- Manual input components for wellness tracking
-- Modified recovery calculation for manual-only mode
-- Graceful degradation when wearable unavailable
+- Health Connect integration module for Android
+- Parity with iOS HealthKit functionality
+- Cross-platform daily metrics sync
 
 ---
 
@@ -154,7 +176,7 @@ cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
 
 ```
 Client:    45/64 passing (Jest) + 50 new calendar tests
-Functions: 409 passing (Vitest) — includes 84 recoveryScore + 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine + 26 wakeDetector
+Functions: 464 passing (Vitest) — includes 84 recoveryScore + 55 checkInScore + 52 suppression + 93 safety + 51 synthesis + 10 narrative + 50 MVD + 36 whyEngine + 26 wakeDetector
 E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded coverage
 ```
 
@@ -184,39 +206,6 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 
 ✅ **No active blockers.**
 
-The `is_primary` column issue was resolved in Session 48 via migration `20251205200000_add_is_primary_to_enrollment.sql`.
-
----
-
-## Next Session Execution Plan
-
-**Session 49 Priority:** Phase 3 Session 8 — Lite Mode (No-Wearable Fallback)
-
-### Prerequisite: Manual E2E Test
-Before starting Lite Mode, verify the onboarding fix:
-1. Start Expo: `cd client && npx expo start --web`
-2. Create fresh test user
-3. Complete onboarding → verify no 500 error
-4. Confirm landing on HomeScreen
-
-### Lite Mode Scope
-Enable app functionality for users without wearables:
-- Manual wellness inputs (sleep quality, energy level, mood)
-- Simplified recovery score without biometric data
-- Protocol recommendations based on user reports
-- Fallback UI when no wearable connected
-
-### Key Files to Review
-- `client/src/screens/HomeScreen.tsx` — Dashboard with wearable data
-- `functions/src/services/recoveryScore.ts` — Needs manual input support
-- `client/src/hooks/useRecoveryScore.ts` — Data source handling
-
-### Expected Deliverables
-- `ManualWellnessInput.tsx` — Input form component
-- `LiteModeRecoveryCard.tsx` — Simplified score display
-- Modified recovery calculation for manual-only mode
-- Graceful degradation when wearable unavailable
-
 ---
 
 ## Phase 3 Progress
@@ -230,12 +219,12 @@ Enable app functionality for users without wearables:
 | 5 | Calendar Integration | ✅ Complete (50 tests, full-stack, privacy-first) |
 | 6 | Real-time Sync (Firestore) | ✅ Complete (14 files, swipe gestures, offline queue) |
 | 7 | Reasoning UX (Edge Case Badges + Confidence) | ✅ Complete (12 files, badges, 5-factor breakdown) |
-| 8 | Lite Mode (no-wearable fallback) | 🔜 Next |
-| 9 | Health Connect (Android) | 🔲 Pending |
+| 8 | Lite Mode (no-wearable fallback) | ✅ Complete (Session 49) — Check-in Score, 55 tests |
+| 9 | Health Connect (Android) | 🔜 Next |
 | 10 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — See OURA_INTEGRATION_REFERENCE.md |
 | 11 | Integration Testing | 🔲 Pending |
 
-**Phase 3 Status: 7/11 sessions complete (64%)**
+**Phase 3 Status: 8/11 sessions complete (73%)**
 
 ---
 
@@ -258,4 +247,4 @@ Enable app functionality for users without wearables:
 
 ---
 
-*Last Updated: December 5, 2025 (Session 48 - is_primary column blocker resolved)*
+*Last Updated: December 5, 2025 (Session 49 - Lite Mode complete)*

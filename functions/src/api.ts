@@ -26,6 +26,8 @@ import {
   disconnectCalendar,
   getRecentCalendarMetrics,
 } from './calendarSync';
+import { getRecoveryScore } from './recovery';
+import { submitManualCheckIn, getTodayCheckIn } from './manualCheckIn';
 
 const app = express();
 
@@ -77,6 +79,13 @@ app.get('/api/calendar/today', getTodayCalendarMetrics);
 app.get('/api/calendar/status', getCalendarStatus);
 app.delete('/api/calendar/disconnect', disconnectCalendar);
 app.get('/api/calendar/recent', getRecentCalendarMetrics);
+
+// Recovery score routes (Phase 3 Session 8)
+app.get('/api/recovery', getRecoveryScore);
+
+// Manual check-in routes for Lite Mode (Phase 3 Session 8)
+app.post('/api/manual-check-in', submitManualCheckIn);
+app.get('/api/manual-check-in/today', getTodayCheckIn);
 
 // Webhooks
 app.post('/api/webhooks/revenuecat', handleRevenueCatWebhook);
