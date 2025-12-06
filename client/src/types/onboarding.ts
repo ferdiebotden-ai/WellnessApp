@@ -7,7 +7,7 @@
 export type PrimaryGoal = 'better_sleep' | 'more_energy' | 'sharper_focus' | 'faster_recovery';
 
 /** Wearable device options for tracking */
-export type WearableSource = 'oura' | 'whoop' | 'apple_health' | 'google_fit' | 'garmin';
+export type WearableSource = 'oura' | 'whoop' | 'apple_health' | 'health_connect' | 'garmin';
 
 /** Goal card data for onboarding selection */
 export interface OnboardingGoal {
@@ -24,6 +24,8 @@ export interface OnboardingWearable {
   id: WearableSource;
   name: string;
   icon: string;
+  /** Platforms this wearable option is shown on */
+  platforms: ('ios' | 'android' | 'web')[];
 }
 
 /** Onboarding completion payload */
@@ -79,9 +81,9 @@ export const ONBOARDING_GOALS: OnboardingGoal[] = [
 
 /** Available wearables for onboarding */
 export const ONBOARDING_WEARABLES: OnboardingWearable[] = [
-  { id: 'oura', name: 'Oura Ring', icon: '⭕' },
-  { id: 'whoop', name: 'WHOOP', icon: '📊' },
-  { id: 'apple_health', name: 'Apple Watch', icon: '⌚' },
-  { id: 'google_fit', name: 'Google Fit', icon: '📱' },
-  { id: 'garmin', name: 'Garmin', icon: '🏃' },
+  { id: 'oura', name: 'Oura Ring', icon: '⭕', platforms: ['ios', 'android'] },
+  { id: 'whoop', name: 'WHOOP', icon: '📊', platforms: ['ios', 'android'] },
+  { id: 'apple_health', name: 'Apple Watch', icon: '⌚', platforms: ['ios'] },
+  { id: 'health_connect', name: 'Health Connect', icon: '📱', platforms: ['android'] },
+  { id: 'garmin', name: 'Garmin', icon: '🏃', platforms: ['ios', 'android'] },
 ];

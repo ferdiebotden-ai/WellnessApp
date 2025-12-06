@@ -1,7 +1,8 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -38,6 +39,12 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
   const [selectedWearable, setSelectedWearable] = useState<WearableSource | null>(null);
   const updateOnboarding = useUpdateOnboarding();
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Filter wearables based on current platform
+  const platformWearables = useMemo(() => {
+    const currentPlatform = Platform.OS as 'ios' | 'android' | 'web';
+    return ONBOARDING_WEARABLES.filter((w) => w.platforms.includes(currentPlatform));
+  }, []);
 
   const completeOnboardingFlow = useCallback(
     async (wearableSource: WearableSource | null) => {
@@ -130,7 +137,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
         </Animated.View>
 
         <View style={styles.wearablesGrid}>
-          {ONBOARDING_WEARABLES.map((wearable, index) => (
+          {platformWearables.map((wearable, index) => (
             <Animated.View
               key={wearable.id}
               entering={FadeInDown.duration(400).delay(200 + index * 80)}

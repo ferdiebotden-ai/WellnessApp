@@ -7,6 +7,10 @@ exports.computeHrvImprovement = computeHrvImprovement;
 const http_1 = require("./utils/http");
 const firebaseAdmin_1 = require("./firebaseAdmin");
 const supabaseClient_1 = require("./supabaseClient");
+const recovery_types_1 = require("./types/recovery.types");
+const recoveryScore_1 = require("./services/recoveryScore");
+const baselineService_1 = require("./services/baselineService");
+const FirestoreSync_1 = require("./services/FirestoreSync");
 const HRV_SDNN_TO_RMSSD_FACTOR = 0.85;
 const RMSSD_MIN = 20;
 const RMSSD_MAX = 120;
@@ -160,6 +164,193 @@ async function insertArchiveRow(client, row) {
     }
 }
 /**
+ * Map sleep stage string to category.
+ */
+function getSleepCategory(stage) {
+    if (!stage)
+        return null;
+    const normalized = stage.toLowerCase();
+    if (normalized.includes('deep'))
+        return 'deep';
+    if (normalized.includes('rem'))
+        return 'rem';
+    if (normalized.includes('awake'))
+        return 'awake';
+    if (normalized.includes('core') || normalized.includes('light') || normalized.includes('asleep'))
+        return 'light';
+    return null;
+}
+/**
+ * Normalize wearable readings into DailyMetricsNormalized format for Phase 3 daily_metrics table.
+ *
+ * Key implementation notes:
+ * - Apple HealthKit provides HRV as SDNN (24h aggregate), NOT RMSSD
+ * - Do NOT convert SDNN to RMSSD - they measure different things
+ * - Store hrvMethod to track the measurement method
+ */
+function normalizeToDailyMetrics(metrics, source) {
+    const sleepReadings = [];
+    const hrvValues = [];
+    const rhrValues = [];
+    const stepsValues = [];
+    const activeCaloriesValues = [];
+    let hrvMethod = null;
+    for (const reading of metrics) {
+        const numericValue = typeof reading.value === 'number' ? reading.value : Number(reading.value);
+        if (!Number.isFinite(numericValue))
+            continue;
+        switch (reading.metric) {
+            case 'sleep':
+                sleepReadings.push(reading);
+                break;
+            case 'hrv':
+                hrvValues.push(numericValue);
+                // Track HRV method: Apple uses SDNN, Health Connect may use RMSSD
+                if (!hrvMethod) {
+                    hrvMethod = reading.hrvMethod ?? (source === 'apple_health' ? 'sdnn' : 'rmssd');
+                }
+                break;
+            case 'rhr':
+                rhrValues.push(numericValue);
+                break;
+            case 'steps':
+                stepsValues.push(numericValue);
+                break;
+            case 'activeCalories':
+                activeCaloriesValues.push(numericValue);
+                break;
+        }
+    }
+    // Aggregate sleep data
+    let sleepDurationHours = null;
+    let bedtimeStart = null;
+    let bedtimeEnd = null;
+    let deepMinutes = 0;
+    let lightMinutes = 0;
+    let remMinutes = 0;
+    let awakeMinutes = 0;
+    let totalSleepMinutes = 0;
+    if (sleepReadings.length > 0) {
+        // Sort by start date to find bedtime boundaries
+        const sorted = sleepReadings
+            .filter((r) => r.startDate && r.endDate)
+            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+        if (sorted.length > 0) {
+            bedtimeStart = sorted[0].startDate;
+            bedtimeEnd = sorted[sorted.length - 1].endDate;
+        }
+        for (const reading of sleepReadings) {
+            const minutes = typeof reading.value === 'number' ? reading.value : Number(reading.value);
+            if (!Number.isFinite(minutes))
+                continue;
+            const category = getSleepCategory(reading.sleepStage);
+            totalSleepMinutes += minutes;
+            switch (category) {
+                case 'deep':
+                    deepMinutes += minutes;
+                    break;
+                case 'light':
+                    lightMinutes += minutes;
+                    break;
+                case 'rem':
+                    remMinutes += minutes;
+                    break;
+                case 'awake':
+                    awakeMinutes += minutes;
+                    break;
+            }
+        }
+        sleepDurationHours = totalSleepMinutes > 0
+            ? Number.parseFloat((totalSleepMinutes / 60).toFixed(2))
+            : null;
+    }
+    // Calculate sleep stage percentages
+    const actualSleepMinutes = deepMinutes + lightMinutes + remMinutes;
+    const remPercentage = actualSleepMinutes > 0
+        ? Math.round((remMinutes / actualSleepMinutes) * 100)
+        : null;
+    const deepPercentage = actualSleepMinutes > 0
+        ? Math.round((deepMinutes / actualSleepMinutes) * 100)
+        : null;
+    const lightPercentage = actualSleepMinutes > 0
+        ? Math.round((lightMinutes / actualSleepMinutes) * 100)
+        : null;
+    const awakePercentage = totalSleepMinutes > 0
+        ? Math.round((awakeMinutes / totalSleepMinutes) * 100)
+        : null;
+    // Sleep efficiency: actual sleep / time in bed
+    const sleepEfficiency = totalSleepMinutes > 0 && actualSleepMinutes > 0
+        ? Math.round((actualSleepMinutes / totalSleepMinutes) * 100)
+        : null;
+    // Average HRV (stored as-is, no conversion)
+    const hrvAvg = hrvValues.length > 0
+        ? Number.parseFloat((hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length).toFixed(2))
+        : null;
+    // Average RHR
+    const rhrAvg = rhrValues.length > 0
+        ? Number.parseFloat((rhrValues.reduce((a, b) => a + b, 0) / rhrValues.length).toFixed(1))
+        : null;
+    // Total steps
+    const steps = stepsValues.length > 0
+        ? Math.round(stepsValues.reduce((a, b) => a + b, 0))
+        : null;
+    // Total active calories
+    const activeCalories = activeCaloriesValues.length > 0
+        ? Math.round(activeCaloriesValues.reduce((a, b) => a + b, 0))
+        : null;
+    return {
+        sleepDurationHours,
+        sleepEfficiency,
+        bedtimeStart,
+        bedtimeEnd,
+        remPercentage,
+        deepPercentage,
+        lightPercentage,
+        awakePercentage,
+        hrvAvg,
+        hrvMethod,
+        rhrAvg,
+        steps,
+        activeCalories,
+    };
+}
+/**
+ * Upsert daily metrics into the daily_metrics table (Phase 3 canonical format).
+ * Uses user_id + date as unique key.
+ */
+async function upsertDailyMetrics(client, userId, date, source, normalized, rawPayload) {
+    const row = {
+        user_id: userId,
+        date,
+        sleep_duration_hours: normalized.sleepDurationHours,
+        sleep_efficiency: normalized.sleepEfficiency,
+        bedtime_start: normalized.bedtimeStart,
+        bedtime_end: normalized.bedtimeEnd,
+        rem_percentage: normalized.remPercentage,
+        deep_percentage: normalized.deepPercentage,
+        light_percentage: normalized.lightPercentage,
+        awake_percentage: normalized.awakePercentage,
+        hrv_avg: normalized.hrvAvg,
+        hrv_method: normalized.hrvMethod,
+        rhr_avg: normalized.rhrAvg,
+        steps: normalized.steps,
+        active_calories: normalized.activeCalories,
+        wearable_source: source === 'apple_health' ? 'apple_health' : 'health_connect',
+        raw_payload: rawPayload,
+        synced_at: new Date().toISOString(),
+    };
+    const { error } = await client
+        .from('daily_metrics')
+        .upsert(row, {
+        onConflict: 'user_id,date',
+        ignoreDuplicates: false,
+    });
+    if (error) {
+        console.error('[WearablesSync] Failed to upsert daily_metrics:', error.message);
+        // Don't throw - daily_metrics is supplementary, archive is primary
+    }
+}
+/**
  * Calculates a 7-day moving average of recorded sleep hours.
  * Entries lacking sleep data are ignored.
  */
@@ -194,6 +385,73 @@ function computeHrvImprovement(rows) {
     }
     const improvement = ((recent - baseline) / baseline) * 100;
     return Number.parseFloat(improvement.toFixed(2));
+}
+/**
+ * Calculate and store recovery score after daily metrics upsert.
+ * Updates user baseline and calculates recovery if baseline requirements are met.
+ */
+async function calculateAndStoreRecovery(client, userId, date) {
+    try {
+        // Step 1: Update user's baseline with the new data
+        const baseline = await (0, baselineService_1.updateUserBaseline)(client, userId);
+        // Step 2: Check if we should calculate recovery
+        if (!(0, recoveryScore_1.shouldCalculateRecovery)(baseline)) {
+            console.log('[RecoveryEngine] Baseline not ready, skipping recovery calculation');
+            return;
+        }
+        // Step 3: Get today's daily metrics
+        const { data: dailyMetrics, error: metricsError } = await client
+            .from('daily_metrics')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('date', date)
+            .single();
+        if (metricsError || !dailyMetrics) {
+            console.error('[RecoveryEngine] Failed to fetch daily metrics:', metricsError?.message);
+            return;
+        }
+        // Step 4: Calculate recovery score
+        const input = {
+            dailyMetrics: dailyMetrics,
+            userBaseline: baseline,
+        };
+        const result = (0, recoveryScore_1.calculateRecoveryScore)(input);
+        // Step 5: Upsert recovery score to recovery_scores table
+        const recoveryRow = (0, recovery_types_1.toRecoveryScoreRow)(userId, date, result);
+        const { error: recoveryError } = await client
+            .from('recovery_scores')
+            .upsert({
+            ...recoveryRow,
+            created_at: new Date().toISOString(),
+        }, {
+            onConflict: 'user_id,date',
+            ignoreDuplicates: false,
+        });
+        if (recoveryError) {
+            console.error('[RecoveryEngine] Failed to upsert recovery score:', recoveryError.message);
+            return;
+        }
+        // Step 6: Also update daily_metrics with the recovery score
+        const { error: updateError } = await client
+            .from('daily_metrics')
+            .update({
+            recovery_score: result.score,
+            recovery_confidence: result.confidence,
+            updated_at: new Date().toISOString(),
+        })
+            .eq('user_id', userId)
+            .eq('date', date);
+        if (updateError) {
+            console.error('[RecoveryEngine] Failed to update daily_metrics with recovery:', updateError.message);
+        }
+        console.log(`[RecoveryEngine] Calculated recovery score: ${result.score} (${result.zone}) for ${date}`);
+        // Step 7: Sync to Firestore for real-time dashboard updates (Phase 3 Session 6)
+        await (0, FirestoreSync_1.syncTodayMetrics)(userId, date, dailyMetrics, result, baseline);
+    }
+    catch (error) {
+        // Non-blocking: recovery calculation failure shouldn't break the sync
+        console.error('[RecoveryEngine] Recovery calculation failed:', error.message);
+    }
 }
 async function updateUserHealthMetrics(client, supabaseUserId) {
     const { data: history, error: historyError } = await client
@@ -278,6 +536,12 @@ async function syncWearableData(req, res) {
             raw_payload: metrics,
         };
         await insertArchiveRow(supabase, archiveRow);
+        // Phase 3: Dual-write to daily_metrics table for Recovery Engine
+        const dateStr = capturedAt.split('T')[0]; // Extract YYYY-MM-DD from ISO timestamp
+        const dailyNormalized = normalizeToDailyMetrics(metrics, source);
+        await upsertDailyMetrics(supabase, supabaseUserId, dateStr, source, dailyNormalized, metrics);
+        // Phase 3: Update baseline and calculate recovery score
+        await calculateAndStoreRecovery(supabase, supabaseUserId, dateStr);
         await updateUserHealthMetrics(supabase, supabaseUserId);
         res.status(200).json({ success: true });
     }

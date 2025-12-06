@@ -37,7 +37,13 @@
       },
       "package": "com.wellnessos.app",
       "permissions": [
-        "android.permission.READ_CALENDAR"
+        "android.permission.READ_CALENDAR",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_HEART_RATE_VARIABILITY",
+        "android.permission.health.READ_RESTING_HEART_RATE",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED"
       ]
     },
     "web": {
@@ -53,9 +59,15 @@
         {
           "ios": {
             "deploymentTarget": "15.1"
+          },
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      "./plugins/healthConnectPlugin.js"
     ],
     "extra": {
       "eas": {

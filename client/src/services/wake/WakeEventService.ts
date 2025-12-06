@@ -17,7 +17,7 @@ import { getAuth } from 'firebase/auth';
 /**
  * Wake event source types.
  */
-export type WakeSource = 'healthkit' | 'phone_unlock' | 'manual';
+export type WakeSource = 'healthkit' | 'health_connect' | 'phone_unlock' | 'manual';
 
 /**
  * Input for sending a wake event.
@@ -177,11 +177,22 @@ export class WakeEventService {
   }
 
   /**
-   * Send wake event from HealthKit detection.
+   * Send wake event from HealthKit detection (iOS).
    */
   async sendHealthKitWake(wakeTime: Date, sleepStartTime?: Date): Promise<WakeEventResponse> {
     return this.sendWakeEvent({
       source: 'healthkit',
+      wakeTime,
+      sleepStartTime,
+    });
+  }
+
+  /**
+   * Send wake event from Health Connect detection (Android).
+   */
+  async sendHealthConnectWake(wakeTime: Date, sleepStartTime?: Date): Promise<WakeEventResponse> {
+    return this.sendWakeEvent({
+      source: 'health_connect',
       wakeTime,
       sleepStartTime,
     });

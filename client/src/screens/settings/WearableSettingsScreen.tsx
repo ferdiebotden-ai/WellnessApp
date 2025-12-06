@@ -23,7 +23,10 @@ import {
 } from 'react-native';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
-import { useHealthKit } from '../../hooks/useHealthKit';
+import {
+  useWearableHealth,
+  getProviderName,
+} from '../../hooks/useWearableHealth';
 import {
   useDataSourcePreference,
   DATA_SOURCE_LABELS,
@@ -79,6 +82,7 @@ const StatusBadge: React.FC<{ status: 'connected' | 'disconnected' | 'unavailabl
 
 export const WearableSettingsScreen: React.FC = () => {
   const {
+    platform,
     isAvailable,
     status,
     isLoading,
@@ -90,7 +94,9 @@ export const WearableSettingsScreen: React.FC = () => {
     isSyncing,
     lastSyncAt,
     error,
-  } = useHealthKit();
+  } = useWearableHealth();
+
+  const providerName = getProviderName();
 
   const {
     preference: dataSourcePreference,
@@ -111,40 +117,51 @@ export const WearableSettingsScreen: React.FC = () => {
     try {
       const granted = await requestPermission();
       if (granted) {
-        await enableBackgroundDelivery();
-        Alert.alert('Connected', 'HealthKit is now connected and syncing in the background.');
+        // Only enable background delivery on iOS (Health Connect is foreground-only for MVP)
+        if (platform === 'ios' && enableBackgroundDelivery) {
+          await enableBackgroundDelivery();
+          Alert.alert('Connected', `${providerName} is now connected and syncing in the background.`);
+        } else {
+          Alert.alert('Connected', `${providerName} is now connected. Open the app to sync your latest data.`);
+        }
       } else {
+        const settingsPath = platform === 'ios'
+          ? 'Settings > Privacy > Health > Apex OS'
+          : 'Settings > Apps > Apex OS > Permissions';
         Alert.alert(
           'Permission Denied',
-          'Please enable HealthKit access in Settings > Privacy > Health > Apex OS'
+          `Please enable ${providerName} access in ${settingsPath}`
         );
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to connect to HealthKit');
+      Alert.alert('Error', `Failed to connect to ${providerName}`);
     } finally {
       setIsConnecting(false);
     }
-  }, [requestPermission, enableBackgroundDelivery]);
+  }, [requestPermission, enableBackgroundDelivery, platform, providerName]);
 
   const handleDisconnect = useCallback(async () => {
-    Alert.alert('Disconnect HealthKit', 'Are you sure you want to disable HealthKit sync?', [
+    Alert.alert(`Disconnect ${providerName}`, `Are you sure you want to disable ${providerName} sync?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Disconnect',
         style: 'destructive',
         onPress: async () => {
-          await disableBackgroundDelivery();
+          if (platform === 'ios' && disableBackgroundDelivery) {
+            await disableBackgroundDelivery();
+          }
+          // For Android, we just clear the permission state (handled by the hook)
         },
       },
     ]);
-  }, [disableBackgroundDelivery]);
+  }, [disableBackgroundDelivery, platform, providerName]);
 
   const handleBackgroundToggle = useCallback(
     async (enabled: boolean) => {
       if (enabled) {
-        await enableBackgroundDelivery();
+        await enableBackgroundDelivery?.();
       } else {
-        await disableBackgroundDelivery();
+        await disableBackgroundDelivery?.();
       }
     },
     [enableBackgroundDelivery, disableBackgroundDelivery]
@@ -183,32 +200,45 @@ export const WearableSettingsScreen: React.FC = () => {
     );
   }
 
-  if (Platform.OS !== 'ios') {
-    return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Android Health Connect</Text>
-          <Text style={styles.cardSubtitle}>
-            Health Connect integration is coming soon. For now, health data is synced through the
-            existing wearable integration.
-          </Text>
-        </View>
-      </ScrollView>
-    );
-  }
+  // Platform-specific descriptions
+  const providerDescription = platform === 'ios'
+    ? 'Sync sleep, HRV, heart rate, and activity data from your Apple Watch and iPhone.'
+    : 'Sync sleep, HRV, heart rate, and activity data from Samsung Health, Fitbit, Garmin, and other Health Connect sources.';
+
+  const hrvMethodDescription = platform === 'ios'
+    ? 'Apple Health provides HRV as SDNN (24-hour aggregate), which measures overall autonomic balance. This is different from RMSSD used by some wearables like Oura.'
+    : 'Health Connect provides HRV as RMSSD, which measures beat-to-beat variability and is ideal for recovery tracking.';
+
+  const dataTypes = platform === 'ios'
+    ? [
+        'Sleep Analysis',
+        'Heart Rate Variability (SDNN)',
+        'Resting Heart Rate',
+        'Step Count',
+        'Active Energy Burned',
+      ]
+    : [
+        'Sleep Sessions',
+        'Heart Rate Variability (RMSSD)',
+        'Resting Heart Rate',
+        'Step Count',
+        'Active Calories Burned',
+      ];
+
+  const unavailableMessage = platform === 'ios'
+    ? 'HealthKit is not available on this device. A physical iPhone is required for health data integration.'
+    : 'Health Connect is not available on this device. Please install Health Connect from the Play Store.';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Apple Health Card */}
+      {/* Health Provider Card */}
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleRow}>
-            <Text style={styles.cardTitle}>Apple Health</Text>
+            <Text style={styles.cardTitle}>{providerName}</Text>
             <StatusBadge status={connectionStatus} />
           </View>
-          <Text style={styles.cardSubtitle}>
-            Sync sleep, HRV, heart rate, and activity data from your Apple Watch and iPhone.
-          </Text>
+          <Text style={styles.cardSubtitle}>{providerDescription}</Text>
         </View>
 
         {connectionStatus === 'connected' ? (
@@ -219,29 +249,28 @@ export const WearableSettingsScreen: React.FC = () => {
               <Text style={styles.rowValue}>{formatTimestamp(lastSyncAt)}</Text>
             </View>
 
-            {/* Background Delivery Toggle */}
-            <View style={styles.row}>
-              <View style={styles.rowTextContainer}>
-                <Text style={styles.rowLabel}>Background Sync</Text>
-                <Text style={styles.rowHint}>
-                  Automatically sync new health data even when the app is closed.
-                </Text>
+            {/* Background Delivery Toggle - iOS only */}
+            {platform === 'ios' && (
+              <View style={styles.row}>
+                <View style={styles.rowTextContainer}>
+                  <Text style={styles.rowLabel}>Background Sync</Text>
+                  <Text style={styles.rowHint}>
+                    Automatically sync new health data even when the app is closed.
+                  </Text>
+                </View>
+                <Switch
+                  value={isBackgroundEnabled}
+                  onValueChange={handleBackgroundToggle}
+                  trackColor={{ false: palette.textMuted, true: palette.primary }}
+                  thumbColor={palette.white}
+                />
               </View>
-              <Switch
-                value={isBackgroundEnabled}
-                onValueChange={handleBackgroundToggle}
-                trackColor={{ false: palette.textMuted, true: palette.primary }}
-                thumbColor={palette.white}
-              />
-            </View>
+            )}
 
             {/* HRV Method Note */}
             <View style={styles.infoBox}>
               <Text style={styles.infoTitle}>About HRV Data</Text>
-              <Text style={styles.infoText}>
-                Apple Health provides HRV as SDNN (24-hour aggregate), which measures overall
-                autonomic balance. This is different from RMSSD used by some wearables like Oura.
-              </Text>
+              <Text style={styles.infoText}>{hrvMethodDescription}</Text>
             </View>
 
             {/* Action Buttons */}
@@ -275,15 +304,12 @@ export const WearableSettingsScreen: React.FC = () => {
             {isConnecting ? (
               <ActivityIndicator size="small" color={palette.white} />
             ) : (
-              <Text style={styles.buttonPrimaryText}>Connect Apple Health</Text>
+              <Text style={styles.buttonPrimaryText}>Connect {providerName}</Text>
             )}
           </TouchableOpacity>
         ) : (
           <View style={styles.unavailableBox}>
-            <Text style={styles.unavailableText}>
-              HealthKit is not available on this device. A physical iPhone is required for health
-              data integration.
-            </Text>
+            <Text style={styles.unavailableText}>{unavailableMessage}</Text>
           </View>
         )}
 
@@ -299,11 +325,9 @@ export const WearableSettingsScreen: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Data Being Synced</Text>
           <View style={styles.dataTypeList}>
-            <DataTypeItem label="Sleep Analysis" />
-            <DataTypeItem label="Heart Rate Variability (SDNN)" />
-            <DataTypeItem label="Resting Heart Rate" />
-            <DataTypeItem label="Step Count" />
-            <DataTypeItem label="Active Energy Burned" />
+            {dataTypes.map((type) => (
+              <DataTypeItem key={type} label={type} />
+            ))}
           </View>
         </View>
       )}

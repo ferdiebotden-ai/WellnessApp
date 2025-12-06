@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
+import type { HrvMethod } from './types/wearable.types';
 type WearableSource = 'apple_health' | 'google_fit';
-type WearableMetricType = 'sleep' | 'hrv' | 'rhr' | 'steps';
+type WearableMetricType = 'sleep' | 'hrv' | 'rhr' | 'steps' | 'activeCalories';
 interface WearableMetricReading {
     metric: WearableMetricType;
     value: unknown;
@@ -9,6 +10,10 @@ interface WearableMetricReading {
     endDate?: string;
     source?: WearableSource;
     metadata?: Record<string, unknown> | null;
+    /** HRV method: Apple uses SDNN, Health Connect may provide RMSSD */
+    hrvMethod?: HrvMethod;
+    /** Sleep stage for sleep readings */
+    sleepStage?: string;
 }
 interface NormalizedWearableMetrics {
     rmssd: number | null;

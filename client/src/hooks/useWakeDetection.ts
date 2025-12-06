@@ -40,6 +40,7 @@ import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getHealthKitWakeDetector,
+  getHealthConnectWakeDetector,
   getPhoneUnlockDetector,
   getWakeEventService,
 } from '../services/wake';
@@ -93,23 +94,31 @@ export function useWakeDetection(): UseWakeDetectionReturn {
   const phoneUnlockDetectorRef = useRef<ReturnType<typeof getPhoneUnlockDetector> | null>(null);
 
   /**
-   * Check if HealthKit is available and authorized.
+   * Check if health data is available (HealthKit on iOS, Health Connect on Android).
    * If not, we're in Lite Mode.
    */
   const checkLiteMode = useCallback(async (): Promise<boolean> => {
-    if (Platform.OS !== 'ios') {
-      // Android doesn't have HealthKit, but might have Health Connect
-      // For now, treat non-iOS as Lite Mode
-      return true;
+    if (Platform.OS === 'ios') {
+      try {
+        const healthKitDetector = getHealthKitWakeDetector();
+        return !healthKitDetector.isAvailable();
+      } catch {
+        // If we can't check, assume Lite Mode
+        return true;
+      }
+    } else if (Platform.OS === 'android') {
+      try {
+        const healthConnectDetector = getHealthConnectWakeDetector();
+        const available = await healthConnectDetector.isAvailable();
+        return !available;
+      } catch {
+        // If we can't check, assume Lite Mode
+        return true;
+      }
     }
 
-    try {
-      const healthKitDetector = getHealthKitWakeDetector();
-      return !healthKitDetector.isAvailable();
-    } catch {
-      // If we can't check, assume Lite Mode
-      return true;
-    }
+    // Non-mobile platforms are always Lite Mode
+    return true;
   }, []);
 
   /**
@@ -150,23 +159,42 @@ export function useWakeDetection(): UseWakeDetectionReturn {
   }, []);
 
   /**
-   * Try to detect wake from HealthKit (wearable mode).
+   * Try to detect wake from wearable data (HealthKit on iOS, Health Connect on Android).
    */
-  const detectFromHealthKit = useCallback(async (): Promise<void> => {
+  const detectFromWearable = useCallback(async (): Promise<void> => {
     try {
-      const healthKitDetector = getHealthKitWakeDetector();
-      const result = await healthKitDetector.detectWake();
+      let result: { detected: boolean; wakeTime: Date | null; sleepStartTime: Date | null };
+      let source: 'apple_health' | 'health_connect';
+
+      if (Platform.OS === 'ios') {
+        const healthKitDetector = getHealthKitWakeDetector();
+        const hkResult = await healthKitDetector.detectWake();
+        result = hkResult;
+        source = 'apple_health';
+      } else if (Platform.OS === 'android') {
+        const healthConnectDetector = getHealthConnectWakeDetector();
+        const hcResult = await healthConnectDetector.detectWake();
+        result = hcResult;
+        source = 'health_connect';
+      } else {
+        return; // No wearable support on other platforms
+      }
 
       if (result.detected && result.wakeTime) {
         // Auto-send wake event to backend (no confirmation needed)
         const wakeService = getWakeEventService();
-        const response = await wakeService.sendHealthKitWake(
-          result.wakeTime,
-          result.sleepStartTime ?? undefined
-        );
+        const response = source === 'apple_health'
+          ? await wakeService.sendHealthKitWake(
+              result.wakeTime,
+              result.sleepStartTime ?? undefined
+            )
+          : await wakeService.sendHealthConnectWake(
+              result.wakeTime,
+              result.sleepStartTime ?? undefined
+            );
 
         if (response.success) {
-          console.log('[WakeDetection] HealthKit wake sent:', response);
+          console.log(`[WakeDetection] ${source} wake sent:`, response);
           setDetectedWakeTime(result.wakeTime);
         } else {
           setError(response.error || 'Failed to send wake event');
@@ -174,7 +202,8 @@ export function useWakeDetection(): UseWakeDetectionReturn {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(`HealthKit wake detection error: ${message}`);
+      const platform = Platform.OS === 'ios' ? 'HealthKit' : 'Health Connect';
+      setError(`${platform} wake detection error: ${message}`);
     }
   }, []);
 
@@ -283,9 +312,9 @@ export function useWakeDetection(): UseWakeDetectionReturn {
       const detector = getPhoneUnlockDetector();
       detector.forceTrigger();
     } else {
-      await detectFromHealthKit();
+      await detectFromWearable();
     }
-  }, [isLiteMode, detectFromHealthKit]);
+  }, [isLiteMode, detectFromWearable]);
 
   /**
    * Initialize wake detection.
@@ -308,7 +337,7 @@ export function useWakeDetection(): UseWakeDetectionReturn {
       } else {
         // Wearable Mode: Check for wake on app active
         if (AppState.currentState === 'active') {
-          await detectFromHealthKit();
+          await detectFromWearable();
         }
         setIsActive(true);
       }
@@ -321,7 +350,7 @@ export function useWakeDetection(): UseWakeDetectionReturn {
         phoneUnlockDetectorRef.current.stop();
       }
     };
-  }, [checkLiteMode, handlePhoneUnlock, detectFromHealthKit]);
+  }, [checkLiteMode, handlePhoneUnlock, detectFromWearable]);
 
   /**
    * Re-check for wake when app becomes active (wearable mode).
@@ -331,14 +360,14 @@ export function useWakeDetection(): UseWakeDetectionReturn {
 
     const subscription = AppState.addEventListener('change', async (nextState) => {
       if (nextState === 'active') {
-        await detectFromHealthKit();
+        await detectFromWearable();
       }
     });
 
     return () => {
       subscription.remove();
     };
-  }, [isLiteMode, detectFromHealthKit]);
+  }, [isLiteMode, detectFromWearable]);
 
   /**
    * Handle snooze expiration.

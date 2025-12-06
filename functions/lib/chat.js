@@ -8,6 +8,7 @@ const supabaseClient_1 = require("./supabaseClient");
 const config_1 = require("./config");
 const protocolSearch_1 = require("./protocolSearch");
 const vertexAI_1 = require("./vertexAI");
+const safety_1 = require("./safety");
 const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis. **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
 const MEDICAL_DISCLAIMER = "\n\n⚠️ **Important**: This is educational information, not medical advice. Consult your healthcare provider.";
 const postChat = async (req, res) => {
@@ -25,16 +26,41 @@ const postChat = async (req, res) => {
         const config = (0, config_1.getConfig)();
         const firestore = (0, firestore_1.getFirestore)((0, firebaseAdmin_1.getFirebaseApp)());
         const supabase = (0, supabaseClient_1.getServiceClient)();
-        // 1. Safety Check (Simple Keyword)
-        const lowerMsg = message.toLowerCase();
-        const crisisKeywords = ['suicide', 'kill myself', 'end my life', 'hurt myself'];
-        if (crisisKeywords.some(k => lowerMsg.includes(k))) {
+        // 1. Safety Check (Enhanced Crisis Detection)
+        const crisisResult = (0, safety_1.detectCrisis)(message);
+        if (crisisResult.detected) {
+            // Get user ID for audit logging
+            const { data: profile } = await supabase
+                .from('users')
+                .select('id')
+                .eq('firebase_uid', uid)
+                .single();
+            // Log crisis detection to audit trail
+            if (profile?.id) {
+                await supabase.from('ai_audit_log').insert({
+                    user_id: profile.id,
+                    decision_type: 'crisis_assessment',
+                    model_used: 'safety_module_v1',
+                    prompt: '', // Don't store crisis messages for privacy
+                    response: (0, safety_1.generateCrisisResponse)(crisisResult),
+                    reasoning: `Severity: ${crisisResult.severity}, Keywords: ${crisisResult.matchedKeywords.join(', ')}`,
+                    citations: [],
+                    metadata: {
+                        severity: crisisResult.severity,
+                        keywords_detected: crisisResult.matchedKeywords,
+                        resources_shown: crisisResult.resources.map((r) => r.name),
+                    },
+                });
+            }
             res.status(200).json({
-                response: "I'm concerned about what you're sharing. Please reach out to the 988 Suicide & Crisis Lifeline immediately by calling or texting 988. They are available 24/7.",
-                safety_flag: 'crisis_detected'
+                response: (0, safety_1.generateCrisisResponse)(crisisResult),
+                safety_flag: 'crisis_detected',
+                severity: crisisResult.severity,
+                resources: crisisResult.resources,
             });
             return;
         }
+        const lowerMsg = message.toLowerCase();
         // 2. Fetch User Context
         const { data: profile } = await supabase
             .from('users')
@@ -64,6 +90,29 @@ const postChat = async (req, res) => {
       User Query: ${message}
     `;
         let responseText = await (0, vertexAI_1.generateCompletion)(SYSTEM_PROMPT, userPrompt);
+        // 4b. AI Output Safety Check
+        const outputScan = (0, safety_1.scanAIOutput)(responseText, 'ai_response');
+        if (!outputScan.safe) {
+            // Log the flagged content for review
+            console.warn('[Chat] AI output flagged:', outputScan.reason);
+            if (supabaseUserId) {
+                await supabase.from('ai_audit_log').insert({
+                    user_id: supabaseUserId,
+                    decision_type: 'ai_output_flagged',
+                    model_used: (0, vertexAI_1.getCompletionModelName)(),
+                    prompt: userPrompt,
+                    response: 'FLAGGED - Content replaced with safe fallback',
+                    reasoning: outputScan.reason || 'AI output contained unsafe content',
+                    citations: [],
+                    metadata: {
+                        flagged_keywords: outputScan.flaggedKeywords,
+                        severity: outputScan.severity,
+                    },
+                });
+            }
+            // Replace with safe fallback
+            responseText = (0, safety_1.getSafeFallbackResponse)('ai_response');
+        }
         // Append disclaimer if medical keywords detected (simplified)
         const medicalKeywords = ['pain', 'doctor', 'prescription', 'diagnose', 'symptom', 'medication'];
         if (medicalKeywords.some(k => lowerMsg.includes(k))) {

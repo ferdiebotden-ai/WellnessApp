@@ -6,12 +6,17 @@ exports.getCompletionModelName = getCompletionModelName;
 exports.getEmbeddingModelName = getEmbeddingModelName;
 const vertexai_1 = require("@google-cloud/vertexai");
 /**
- * Vertex AI client wrapper for Gemini 2.0 Flash
+ * Vertex AI client wrapper for Gemini 2.5 Flash
  * Provides completion and embedding generation for wellness coaching
+ *
+ * Model: gemini-2.5-flash (GA since June 2025)
+ * - "Thinking" capabilities for better reasoning
+ * - Best price/performance ratio per Google
+ * - 54% on SWE-Bench (improved from 48.9%)
  */
 const PROJECT_ID = 'wellness-os-app';
 const LOCATION = 'us-central1';
-const COMPLETION_MODEL = 'gemini-2.0-flash-001';
+const COMPLETION_MODEL = 'gemini-2.5-flash';
 const EMBEDDING_MODEL = 'text-embedding-005';
 // Initialize Vertex AI client lazily
 let vertexAI = null;
@@ -44,7 +49,7 @@ const safetySettings = [
     },
 ];
 /**
- * Generate a text completion using Gemini 2.0 Flash
+ * Generate a text completion using Gemini 2.5 Flash
  * @param systemPrompt System-level instructions for the model
  * @param userPrompt User's query or context
  * @param temperature Controls randomness (0-1, default 0.7)
