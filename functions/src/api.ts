@@ -43,6 +43,7 @@ app.get('/', (req, res) => {
 // Routes
 // User routes
 app.post('/api/users', createUser);
+app.post('/api/users/sync', createUser);  // Alias for client sync calls
 app.get('/api/users/me', getCurrentUser);
 app.patch('/api/users/me', updateCurrentUser);
 app.delete('/api/users/me', requestUserDeletion);

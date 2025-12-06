@@ -159,7 +159,9 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
 
   try {
     const { uid } = await authenticateRequest(req);
-    const supabase = getUserClient(uid);
+    // Use service client since we already validated the Firebase token
+    // This bypasses RLS which is appropriate for backend operations
+    const supabase = getServiceClient();
 
     // Fetch user profile first
     const { data: userData, error: userError } = await supabase
@@ -172,7 +174,7 @@ export async function getCurrentUser(req: Request, res: Response): Promise<void>
       throw userError;
     }
 
-    // Attempt to fetch module_enrollment separately to avoid schema relationship issues
+    // Fetch module_enrollment separately
     // Use the Supabase UUID (userData.id), not the Firebase UID
     let moduleEnrollments: unknown[] = [];
     try {

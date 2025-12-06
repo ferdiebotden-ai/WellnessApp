@@ -65,7 +65,7 @@ export async function generateCompletion(
     safetySettings,
     generationConfig: {
       temperature,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 2048,  // Increased from 1024 to prevent response truncation
       topP: 0.95,
     },
   });
