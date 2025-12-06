@@ -119,25 +119,43 @@ Android users couldn't sync health data from their wearables (Samsung Galaxy Wat
 
 ## Next Session Priority
 
-### Phase 3 Session 10: Cloud Wearables (Oura, Garmin)
+### Phase 3 Session 10: End-to-End Integration Testing
 
-**Focus:** Enable cloud-based wearable integrations for devices that don't sync via HealthKit/Health Connect.
+**Focus:** Comprehensive testing of the complete MVP before rollout.
+
+**Rationale (Decision Dec 5, 2025):**
+Cloud Wearables (Oura/Garmin direct API) deferred because:
+- Oura and Garmin already sync to Apple Health / Health Connect
+- On-device integrations cover 95%+ of target users
+- Better to validate existing MVP before adding complexity
 
 **Scope:**
-- Oura OAuth integration (cloud API)
-- Garmin Connect integration
-- Unified data flow with on-device sources
-- Token refresh and error handling
+- Full data flow testing (wearable → backend → UI)
+- Recovery score calculation validation
+- Wake detection pipeline testing
+- Calendar integration verification
+- Lite Mode check-in flow
+- Cross-platform parity (iOS HealthKit vs Android Health Connect)
+- Error handling and edge cases
+- Performance and load testing
 
-**Key Files to Review:**
-- `PRD Documents/OURA_INTEGRATION_REFERENCE.md` — Preserved Oura research
-- `functions/src/wearablesSync.ts` — Backend data processing
-- `PRD Documents/Perplexity Research Papers/` — May need fresh research
+**Key Test Areas:**
+| Area | Components |
+|------|------------|
+| Auth | Firebase auth, Supabase user sync |
+| Wearables | HealthKit, Health Connect, data normalization |
+| Recovery | Score calculation, zone badges, confidence |
+| Wake | Detection, confirmation overlay, nudge trigger |
+| Calendar | Sync, privacy filtering, event display |
+| Lite Mode | Check-in flow, manual score calculation |
+| Real-time | Firestore sync, offline queue |
+| AI | Nudge generation, reasoning display |
 
 **Expected Output:**
-- Cloud wearable OAuth flows
-- Data sync from Oura/Garmin cloud APIs
-- Unified recovery score from all sources
+- Test coverage report
+- Bug fixes for any issues found
+- Performance baseline metrics
+- Rollout readiness assessment
 
 ---
 
@@ -225,8 +243,8 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 | 7 | Reasoning UX (Edge Case Badges + Confidence) | ✅ Complete (12 files, badges, 5-factor breakdown) |
 | 8 | Lite Mode (no-wearable fallback) | ✅ Complete (Session 49) — Check-in Score, 55 tests |
 | 9 | Health Connect (Android) | ✅ Complete (Session 50) — Cross-platform parity achieved |
-| 10 | Cloud Wearables (Oura, Garmin) | 🔜 Next — See OURA_INTEGRATION_REFERENCE.md |
-| 11 | Integration Testing | 🔲 Pending |
+| 10 | Integration Testing | 🔜 Next — Full MVP validation |
+| 11 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — On-device sync covers most users |
 
 **Phase 3 Status: 9/11 sessions complete (82%)**
 
@@ -251,4 +269,4 @@ E2E:       15/35 passing + 20 skipped (Playwright) — Session 34 expanded cover
 
 ---
 
-*Last Updated: December 5, 2025 (Session 50 - Health Connect Android complete)*
+*Last Updated: December 5, 2025 (Post-Session 50 - Plan revised: Integration Testing next, Cloud Wearables deferred)*
