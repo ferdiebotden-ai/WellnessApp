@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { DimensionValue, StyleSheet, Text, View } from 'react-native';
 import type { HealthMetric } from '../types/dashboard';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -9,7 +9,10 @@ interface Props {
 }
 
 export const HealthMetricCard: React.FC<Props> = ({ metric }) => {
-  const progressWidth = useMemo(() => `${Math.round(metric.progress * 100)}%`, [metric.progress]);
+  const progressWidth = useMemo(
+    () => `${Math.round(metric.progress * 100)}%` as DimensionValue,
+    [metric.progress]
+  );
 
   return (
     <View style={styles.container} accessibilityRole="summary">

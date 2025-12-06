@@ -78,7 +78,8 @@ export const useTaskFeed = (userId?: string | null): UseTaskFeedResult => {
 
     const attachListener = (segments: string[], source: TaskSource) => {
       try {
-        const ref = collection(getFirebaseDb(), ...segments);
+        // Use type assertion for spread since collection() expects specific tuple overloads
+        const ref = collection(getFirebaseDb(), ...(segments as [string, ...string[]]));
         const scheduleQuery = query(ref, orderBy('scheduled_for', 'asc'));
         const collectionKey = segments.join('/');
         const unsubscribe = onSnapshot(

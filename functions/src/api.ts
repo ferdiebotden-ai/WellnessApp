@@ -10,7 +10,7 @@ import { handleRevenueCatWebhook } from './revenuecatWebhook';
 import { completeOnboarding } from './onboarding';
 import { getMonetizationStatus } from './monetization';
 import { getUserCorrelations } from './correlations';
-import { getModules } from './modules';
+import { getModules, updatePrimaryModule } from './modules';
 import { registerPushToken, deactivatePushTokens } from './pushTokens';
 import {
   activateMVDManually,
@@ -59,6 +59,7 @@ app.post('/api/waitlist', joinWaitlist);
 app.post('/api/wearables/sync', syncWearableData);
 app.get('/api/protocols/search', searchProtocols);
 app.get('/api/modules', getModules);
+app.patch('/api/modules/enrollment', updatePrimaryModule);
 
 // Push notification routes
 app.post('/api/push-tokens', registerPushToken);

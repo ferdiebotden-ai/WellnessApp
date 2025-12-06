@@ -11,11 +11,21 @@ export const CORE_ENTITLEMENT_ID = 'core';
 
 const REVENUECAT_KEY_FALLBACK = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? null;
 
+// Type interfaces for RevenueCat data structures
+// These match the shapes returned by RevenueCat SDK
+interface ICustomerInfo {
+  entitlements?: {
+    active?: Record<string, unknown>;
+  };
+}
+
+interface IPurchasesPackage {
+  identifier: string;
+}
+
 // Only import Purchases if we're going to use it (prevents native module errors)
 let Purchases: typeof import('react-native-purchases').default | null = null;
 let LOG_LEVEL: typeof import('react-native-purchases').LOG_LEVEL | null = null;
-let CustomerInfo: typeof import('react-native-purchases').CustomerInfo | null = null;
-let PurchasesPackage: typeof import('react-native-purchases').PurchasesPackage | null = null;
 
 let hasLoggedRevenueCatWarning = false;
 
@@ -53,8 +63,6 @@ if (shouldUseRevenueCat()) {
     const purchasesModule = require('react-native-purchases');
     Purchases = purchasesModule.default;
     LOG_LEVEL = purchasesModule.LOG_LEVEL;
-    CustomerInfo = purchasesModule.CustomerInfo;
-    PurchasesPackage = purchasesModule.PurchasesPackage;
   } catch (error) {
     // Native module not available - will use stub implementation
     if (!hasLoggedRevenueCatWarning) {
@@ -65,13 +73,13 @@ if (shouldUseRevenueCat()) {
 }
 
 interface PurchaseResult {
-  customerInfo: CustomerInfo | null;
+  customerInfo: ICustomerInfo | null;
   productIdentifier: string | null;
 }
 
 interface OfferingsResponse {
-  current?: { identifier: string; availablePackages: PurchasesPackage[] } | null;
-  all: Record<string, { identifier: string; availablePackages: PurchasesPackage[] } | undefined>;
+  current?: { identifier: string; availablePackages: IPurchasesPackage[] } | null;
+  all: Record<string, { identifier: string; availablePackages: IPurchasesPackage[] } | undefined>;
 }
 
 
@@ -87,7 +95,7 @@ function resolveOffering(offerings: OfferingsResponse): OfferingsResponse['curre
   return offerings.current ?? undefined;
 }
 
-function pickCorePackage(packages: PurchasesPackage[]): PurchasesPackage | null {
+function pickCorePackage(packages: IPurchasesPackage[]): IPurchasesPackage | null {
   const preferredOrder = [CORE_MONTHLY_PACKAGE_ID, CORE_ANNUAL_PACKAGE_ID];
 
   for (const identifier of preferredOrder) {
@@ -167,7 +175,9 @@ class RevenueCatService {
       throw new Error('No Core packages are available for purchase.');
     }
 
-    const purchaseResult = await Purchases.purchasePackage(packageToBuy);
+    // Cast to any since we're using our slim interface but the runtime object has full SDK type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const purchaseResult = await Purchases.purchasePackage(packageToBuy as any);
 
     return {
       customerInfo: purchaseResult.customerInfo,
@@ -175,7 +185,7 @@ class RevenueCatService {
     };
   }
 
-  hasActiveCoreEntitlement(info: CustomerInfo | null): boolean {
+  hasActiveCoreEntitlement(info: ICustomerInfo | null): boolean {
     if (!info) {
       return false;
     }

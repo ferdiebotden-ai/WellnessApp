@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useProtocolSearch } from '../hooks/useProtocolSearch';
-import type { ProtocolSummary } from '../types/protocol';
+import type { ProtocolSearchResult } from '../services/api';
 
 interface ProtocolSearchScreenProps {
   navigation: {
@@ -18,7 +18,7 @@ interface ProtocolSearchScreenProps {
   };
 }
 
-const KEY_EXTRACTOR = (item: ProtocolSummary) => item.id;
+const KEY_EXTRACTOR = (item: ProtocolSearchResult) => item.id;
 const getPrimaryDescription = (description?: string | string[]) => {
   if (!description) {
     return undefined;
@@ -37,21 +37,21 @@ export const ProtocolSearchScreen: React.FC<ProtocolSearchScreenProps> = ({ navi
   }, [query, search]);
 
   const handleSelect = useCallback(
-    (item: ProtocolSummary) => {
+    (item: ProtocolSearchResult) => {
       navigation.navigate('ProtocolDetail', {
         protocolId: item.id,
-        protocolName: item.name,
+        protocolName: item.name ?? undefined,
       });
     },
     [navigation]
   );
 
-  const renderItem = ({ item }: { item: ProtocolSummary }) => {
-    const primaryDescription = getPrimaryDescription(item.description);
+  const renderItem = ({ item }: { item: ProtocolSearchResult }) => {
+    const primaryDescription = getPrimaryDescription(item.description ?? undefined);
 
     return (
       <Pressable style={styles.resultCard} onPress={() => handleSelect(item)}>
-        <Text style={styles.resultTitle}>{item.name}</Text>
+        <Text style={styles.resultTitle}>{item.name ?? 'Untitled Protocol'}</Text>
         {primaryDescription ? <Text style={styles.resultDescription}>{primaryDescription}</Text> : null}
       </Pressable>
     );

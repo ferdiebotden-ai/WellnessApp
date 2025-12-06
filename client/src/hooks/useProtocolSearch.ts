@@ -1,12 +1,11 @@
 import { useCallback, useState } from 'react';
-import { searchProtocols } from '../services/api';
-import type { ProtocolSummary } from '../types/protocol';
+import { searchProtocols, ProtocolSearchResult } from '../services/api';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
 export const useProtocolSearch = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<ProtocolSummary[]>([]);
+  const [results, setResults] = useState<ProtocolSearchResult[]>([]);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
 

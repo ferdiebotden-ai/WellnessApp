@@ -1,18 +1,23 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { fetchCurrentUser, updateUserPreferences } from '../services/api';
+import { useAuth } from '../providers/AuthProvider';
+import { deactivatePushToken } from '../services/pushNotifications';
+import { openPrivacyPolicy, openTermsOfService } from '../services/legalDocuments';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import type { ProfileStackParamList } from '../navigation/ProfileStack';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
+  const { signOut } = useAuth();
   const [socialAnonymous, setSocialAnonymous] = useState<boolean>(true);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
   const [isUpdatingPreferences, setIsUpdatingPreferences] = useState(false);
   const [preferencesError, setPreferencesError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const loadUserPreferences = async () => {
@@ -52,11 +57,11 @@ export const ProfileScreen: React.FC = () => {
         setIsUpdatingPreferences(true);
         setPreferencesError(null);
         setSocialAnonymous(value);
-        
+
         // Fetch current preferences to merge with the update
         const currentUserResponse = await fetchCurrentUser();
         const currentPreferences = currentUserResponse.user.preferences || {};
-        
+
         // Merge the social_anonymous update with existing preferences
         await updateUserPreferences({
           ...currentPreferences,
@@ -72,6 +77,49 @@ export const ProfileScreen: React.FC = () => {
     },
     []
   );
+
+  const handleOpenPrivacyPolicy = useCallback(async () => {
+    try {
+      await openPrivacyPolicy();
+    } catch (error) {
+      console.error('Failed to open Privacy Policy:', error);
+    }
+  }, []);
+
+  const handleOpenTermsOfService = useCallback(async () => {
+    try {
+      await openTermsOfService();
+    } catch (error) {
+      console.error('Failed to open Terms of Service:', error);
+    }
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoggingOut(true);
+              // Deactivate push tokens before signing out
+              await deactivatePushToken();
+              await signOut();
+              // Navigation handled automatically by AuthProvider state change
+            } catch (error) {
+              console.error('Logout failed:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [signOut]);
 
   return (
     <ScrollView contentContainerStyle={styles.container} testID="profile-screen">
@@ -115,6 +163,29 @@ export const ProfileScreen: React.FC = () => {
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.cardTitle}>Legal</Text>
+        <Text style={styles.cardBody}>
+          View our Privacy Policy and Terms of Service.
+        </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.secondaryButton}
+          onPress={handleOpenPrivacyPolicy}
+          testID="open-privacy-policy"
+        >
+          <Text style={styles.secondaryButtonText}>Privacy Policy</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.secondaryButton}
+          onPress={handleOpenTermsOfService}
+          testID="open-terms-of-service"
+        >
+          <Text style={styles.secondaryButtonText}>Terms of Service</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.cardTitle}>Social Features (Coming Soon)</Text>
         <Text style={styles.cardBody}>
           Choose how you'll appear in future leaderboards and challenges.
@@ -141,6 +212,26 @@ export const ProfileScreen: React.FC = () => {
             {preferencesError}
           </Text>
         )}
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Account</Text>
+        <Text style={styles.cardBody}>
+          Manage your Apex OS account settings.
+        </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.destructiveButton}
+          onPress={handleLogout}
+          disabled={isLoggingOut}
+          testID="logout-button"
+        >
+          {isLoggingOut ? (
+            <ActivityIndicator size="small" color={palette.white} />
+          ) : (
+            <Text style={styles.destructiveButtonText}>Sign Out</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -219,5 +310,16 @@ const styles = StyleSheet.create({
     color: palette.error,
     marginTop: 8,
     fontSize: 14,
+  },
+  destructiveButton: {
+    marginTop: 8,
+    backgroundColor: palette.error,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  destructiveButtonText: {
+    ...typography.subheading,
+    color: palette.white,
   },
 });

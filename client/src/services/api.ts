@@ -5,6 +5,7 @@ import type { CorrelationsResponse } from '../types/correlations';
 import type { UserPreferences, UserProfile } from '../types/user';
 import type { WearableSyncPayload } from './wearables/aggregators';
 import type { OnboardingCompletePayload } from '../types/onboarding';
+import type { ProtocolDetail } from '../types/protocol';
 
 type HttpMethod = 'GET' | 'POST' | 'DELETE' | 'PATCH';
 
@@ -73,6 +74,22 @@ export const fetchCoreModules = async () => {
     return DEV_CORE_MODULES;
   }
 };
+
+export interface UpdatePrimaryModuleResponse {
+  success: boolean;
+  module_id: string;
+  module_name: string;
+}
+
+/**
+ * Updates the user's primary module.
+ * @param moduleId The module ID to set as primary
+ * @returns Response with success status and module details
+ */
+export const updatePrimaryModule = (moduleId: string) =>
+  request<UpdatePrimaryModuleResponse>('/api/modules/enrollment', 'PATCH', {
+    module_id: moduleId,
+  });
 
 /**
  * Syncs the current Firebase user with Supabase.
@@ -212,6 +229,29 @@ export const searchProtocols = (query: string, limit?: number) =>
     `/api/protocols/search?q=${encodeURIComponent(query)}&limit=${limit || 5}`,
     'GET'
   );
+
+/**
+ * Fetches a single protocol by ID.
+ * Uses the search API to find the protocol since there's no dedicated endpoint.
+ * @param protocolId Protocol ID to fetch
+ * @returns Protocol detail object
+ */
+export const fetchProtocolById = async (protocolId: string): Promise<ProtocolDetail> => {
+  // Use search API to find the protocol by ID
+  const results = await searchProtocols(protocolId, 10);
+  const match = results.find((r) => r.id === protocolId);
+
+  if (!match) {
+    throw new Error(`Protocol not found: ${protocolId}`);
+  }
+
+  return {
+    id: match.id,
+    name: match.name ?? '',
+    description: match.description ?? undefined,
+    citations: match.citations,
+  };
+};
 
 /**
  * Retrieves the current user profile.

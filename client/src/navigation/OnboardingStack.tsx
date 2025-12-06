@@ -12,6 +12,7 @@ export type OnboardingStackParamList = {
   AICoachIntro: undefined;
   GoalSelection: undefined;
   WearableConnection: { selectedGoal: PrimaryGoal };
+  BiometricSetup: undefined;
 };
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();

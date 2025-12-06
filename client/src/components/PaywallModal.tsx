@@ -159,7 +159,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   priceHeadline: {
-    ...typography.display,
+    ...typography.heading,
+    fontSize: 32,
     color: palette.textPrimary,
   },
   priceFrequency: {

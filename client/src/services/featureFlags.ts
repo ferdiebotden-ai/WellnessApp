@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { getRemoteConfig, getValue, RemoteConfig } from 'firebase/remote-config';
+import { getRemoteConfig, getValue, fetchAndActivate, RemoteConfig } from 'firebase/remote-config';
 import { getFirebaseApp } from './firebase';
 
 /**
@@ -85,8 +85,7 @@ class FeatureFlagService {
       this.remoteConfig.settings.minimumFetchIntervalMillis = 12 * 60 * 60 * 1000;
 
       // Fetch and activate remote config values
-      await this.remoteConfig.ensureInitialized();
-      await this.remoteConfig.fetchAndActivate();
+      await fetchAndActivate(this.remoteConfig);
 
       this.initialized = true;
     } catch (error) {
@@ -107,7 +106,7 @@ class FeatureFlagService {
     }
 
     try {
-      await this.remoteConfig.fetchAndActivate();
+      await fetchAndActivate(this.remoteConfig);
     } catch (error) {
       console.error('Failed to refresh feature flags', error);
     }
