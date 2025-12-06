@@ -67,7 +67,8 @@
           }
         }
       ],
-      "./plugins/healthConnectPlugin.js"
+      "./plugins/healthConnectPlugin.js",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

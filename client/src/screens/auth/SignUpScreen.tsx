@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,6 +21,7 @@ import {
   getPasswordStrength,
   getPasswordStrengthLabel,
 } from '../../validation/authValidation';
+import { openPrivacyPolicy, openTermsOfService } from '../../services/legalDocuments';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
 import type { AuthStackParamList } from '../../navigation/AuthStack';
@@ -33,10 +34,27 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [confirmedAge, setConfirmedAge] = useState(false);
   const [emailError, setEmailError] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
+
+  const handleOpenTerms = useCallback(async () => {
+    try {
+      await openTermsOfService();
+    } catch (error) {
+      console.error('Failed to open Terms of Service:', error);
+    }
+  }, []);
+
+  const handleOpenPrivacy = useCallback(async () => {
+    try {
+      await openPrivacyPolicy();
+    } catch (error) {
+      console.error('Failed to open Privacy Policy:', error);
+    }
+  }, []);
 
   const passwordStrength = getPasswordStrength(password);
   const passwordStrengthLabel = getPasswordStrengthLabel(passwordStrength);
@@ -81,8 +99,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
       return;
     }
 
+    if (!confirmedAge) {
+      Alert.alert('Age Verification Required', 'You must be at least 16 years old to use Apex OS.');
+      return;
+    }
+
     if (!acceptedTerms) {
-      Alert.alert('Terms Required', 'Please accept the Terms of Service to continue.');
+      Alert.alert('Terms Required', 'Please accept the Terms of Service and Privacy Policy to continue.');
       return;
     }
 
@@ -164,6 +187,22 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               testID="signup-confirm-password-input"
             />
 
+            {/* Age Verification Checkbox */}
+            <TouchableOpacity
+              style={styles.termsContainer}
+              onPress={() => setConfirmedAge(!confirmedAge)}
+              disabled={loading}
+              testID="age-verification-checkbox"
+            >
+              <View style={[styles.checkbox, confirmedAge && styles.checkboxChecked]}>
+                {confirmedAge && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.termsText}>
+                I confirm that I am at least 16 years of age
+              </Text>
+            </TouchableOpacity>
+
+            {/* Terms and Privacy Checkbox */}
             <TouchableOpacity
               style={styles.termsContainer}
               onPress={() => setAcceptedTerms(!acceptedTerms)}
@@ -174,7 +213,14 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
                 {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <Text style={styles.termsText}>
-                I agree to the Terms of Service and Privacy Policy
+                I agree to the{' '}
+                <Text style={styles.termsLink} onPress={handleOpenTerms}>
+                  Terms of Service
+                </Text>
+                {' '}and{' '}
+                <Text style={styles.termsLink} onPress={handleOpenPrivacy}>
+                  Privacy Policy
+                </Text>
               </Text>
             </TouchableOpacity>
 
@@ -182,7 +228,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               title="Create Account"
               onPress={handleSignUp}
               loading={loading}
-              disabled={loading || !acceptedTerms}
+              disabled={loading || !acceptedTerms || !confirmedAge}
               style={styles.signUpButton}
               testID="signup-submit-button"
             />
@@ -277,6 +323,10 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: palette.textSecondary,
     flex: 1,
+  },
+  termsLink: {
+    color: palette.primary,
+    textDecorationLine: 'underline',
   },
   signUpButton: {
     marginTop: 8,
