@@ -1,31 +1,31 @@
 # APEX OS FEATURE PRD: Lock Screen & Widget System
 ## Evidence Made Effortless — Ambient Surfaces Extension
 
-**Version:** 1.0
-**Date:** December 3, 2025
-**Status:** Ready for Implementation
-**Parent Document:** APEX_OS_PRD_FINAL_v6.md
-**Implements:** Part 3.1 Morning Anchor Extension + New Widget Surfaces
+**Version:** 1.1
+**Date:** December 7, 2025
+**Status:** Phase 2+ (Post-MVP)
+**Parent Document:** APEX_OS_PRD_v8.1.md
+**Implements:** Part 9.5 Widgets & Ambient Surfaces
 
 ---
 
 ## PART 0: Agent Instructions
 
 ### 0.1 Document Purpose
-This Feature PRD extends the Morning Anchor experience (PRD v6 Section 3.1) to native widget surfaces. It specifies lock screen widgets, home screen widgets, StandBy mode, and Live Activities for iOS/Android platforms.
+This Feature PRD extends the Morning Anchor experience (PRD v8.1 Part 4.1) to native widget surfaces. It specifies lock screen widgets, home screen widgets, StandBy mode, and Live Activities for iOS/Android platforms.
 
 ### 0.2 Dependencies
 Before implementing this feature, ensure:
-- [ ] Morning Anchor core logic complete (PRD v6 3.1)
-- [ ] Recovery Score calculation implemented (PRD v6 3.1.5)
-- [ ] Nudge Suppression Engine active (PRD v6 3.2)
+- [ ] Morning Anchor core logic complete (PRD v8.1 Part 4.1)
+- [ ] Recovery Score calculation implemented (PRD v8.1 Part 4.1)
+- [ ] Nudge Suppression Engine active (PRD v8.1 Part 2.3)
 - [ ] User preferences schema includes widget settings
 
 ### 0.3 Critical Rules
 | Rule | Why It Matters |
 |------|----------------|
 | Use EXACT brand colors (#63E6BE, #0F1218, etc.) | Visual consistency across all surfaces |
-| Recovery Score formula MUST match PRD v6 | Data consistency with main app |
+| Recovery Score formula MUST match PRD v8.1 | Data consistency with main app |
 | Respect 9-rule suppression engine | Widget actions trigger nudge logic |
 | NO cheerleader copy | "Recovery 34%" NOT "Great job checking in!" |
 | Evidence citations on tap | Core differentiator — even in widgets |
@@ -45,7 +45,7 @@ Widgets are **ambient retention infrastructure**. Our target user (The Optimizer
 |-----------|----------------|
 | Operating System, Not App | Widgets feel like native OS health infrastructure |
 | Evidence Made Effortless | Tap any metric → see WHY with citation |
-| Respect Intelligence | Progress Infrastructure approach—factual consistency indicators, not extrinsic manipulation (see PRD v6 Section 2.5) |
+| Respect Intelligence | Progress Infrastructure approach—factual consistency indicators, not extrinsic manipulation (see PRD v8.1 Part 2.2) |
 | Ambient, Not Annoying | Widget refreshes ≤5×/day; no animations |
 
 ### 1.3 Competitive Gap
@@ -74,7 +74,7 @@ Widgets are **ambient retention infrastructure**. Our target user (The Optimizer
 text
 
 **Left Zone (Recovery State):**
-- Recovery percentage (from PRD v6 formula)
+- Recovery percentage (from PRD v8.1 formula)
 - Status label: "Full Protocol Day" / "MVD Active" / "Recovery Focus"
 
 **Right Zone (Next Action):**
@@ -590,7 +590,9 @@ text
 
 ## PART 7: Implementation Phases
 
-### Phase 1: MVP (Launch - January 2026)
+> **Note:** Widgets are a **Phase 2+ feature** (post-MVP). The MVP launches January 1, 2026 without widgets. Widget implementation begins after core app stability is confirmed.
+
+### Phase 2A: Foundation (Q1 2026)
 **Scope:** iOS Lock Screen + Home Screen Small
 - [ ] Accessory Rectangular widget (recovery + next protocol)
 - [ ] Accessory Circular widget (recovery score only)
@@ -598,14 +600,14 @@ text
 - [ ] Deep linking to Morning Anchor
 - [ ] App Group data sync
 
-### Phase 2: Enhanced (Q1 2026)
+### Phase 2B: Enhanced (Q1-Q2 2026)
 **Scope:** iOS Medium + Interactive + Android
 - [ ] Home Screen Medium widget (full protocol list)
 - [ ] Interactive "Start Protocol" button (iOS 17+)
 - [ ] Android Glance widgets (Small, Medium)
 - [ ] Protocol completion from widget
 
-### Phase 3: Advanced (Q2 2026)
+### Phase 2C: Advanced (Q2 2026)
 **Scope:** StandBy + Live Activities
 - [ ] StandBy full-screen Morning Anchor
 - [ ] Night mode for StandBy
@@ -684,5 +686,6 @@ Firebase Analytics is NOT supported in iOS widget extensions. The analytics docu
 ---
 
 **Document End**
-Last Updated: December 3, 2025
+Last Updated: December 7, 2025
+Parent Document: APEX_OS_PRD_v8.1.md (Part 9.5)
 Author: Claude for Apex OS

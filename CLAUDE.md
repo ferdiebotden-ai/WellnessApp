@@ -87,7 +87,7 @@ Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies 
 
 ### Before Coding
 1. Read `STATUS.md` — Know current project state
-2. Read relevant PRD/docs for the feature (`PRD Documents/APEX_OS_PRD_v7.md`)
+2. Read relevant PRD/docs for the feature (`PRD Documents/APEX_OS_PRD_v8.1.md`)
 3. Output bulleted **Execution Plan** for approval
 4. **Wait for approval** before writing code
 
@@ -154,15 +154,21 @@ Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies 
 ## 6. KEY FILES
 
 ```
-PRD Documents/APEX_OS_PRD_v7.md           — Master PRD (source of truth)
-PRD Documents/PHASE_III_IMPLEMENTATION_PLAN.md — Phase 3 implementation roadmap
-Master_Protocol_Library.md                — 18 protocols with evidence
-STATUS.md                                 — Session state (YOU maintain this)
+PRD Documents/APEX_OS_PRD_v8.1.md           — Master PRD (vision + requirements)
+PRD Documents/APEX_OS_TECHNICAL_SPEC_v1.md  — Implementation reference (algorithms, APIs, components)
+PRD Documents/APEX_OS_WIDGET_PRD_v1.md      — Widget specifications (Phase 2)
+Master_Protocol_Library.md                  — 18 protocols with evidence
+STATUS.md                                   — Session state (YOU maintain this)
 
 /client/                       — React Native app
 /functions/                    — Cloud Functions
 /supabase/migrations/          — Database schema
 ```
+
+**When to use each document:**
+- **PRD v8.1** — Product vision, user journeys, core experiences, success criteria
+- **Technical Spec** — How things are implemented (recovery formula, confidence scoring, API endpoints, component library)
+- **Widget PRD** — Detailed widget specifications when implementing Phase 2 widgets
 
 ---
 
@@ -589,4 +595,4 @@ claude mcp list
 
 **Research:** `PRD Documents/Perplexity Research Papers/autonomous UI testing for Claude Code Research Report.md`
 
-*Last Updated: December 4, 2025*
+*Last Updated: December 7, 2025*
