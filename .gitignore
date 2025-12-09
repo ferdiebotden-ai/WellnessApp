@@ -46,3 +46,6 @@ firestore-debug.log
 # Archived documentation (historical reference, not for version control)
 archive/
 
+
+# Playwright MCP screenshots
+.playwright-mcp/
