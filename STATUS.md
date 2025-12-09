@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 57 (next) |
-| **Progress** | Session 56 complete (Biometrics Collection) |
+| **Session** | 58 (next) |
+| **Progress** | Session 57 complete (Home Screen Redesign) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,73 +52,72 @@
 
 ## Last Session
 
-**Date:** December 9, 2025 (Session 56)
-**Focus:** Biometrics Collection in Onboarding
+**Date:** December 9, 2025 (Session 57)
+**Focus:** Home Screen Redesign
 
-**Context:** First session of PRD v8.1 frontend rebuild. Added optional biometric data collection (age, sex, height, weight, timezone) during onboarding and in settings.
+**Context:** Major UI overhaul following PRD v8.1 design system. Created new component architecture with Bloomberg-style data visualization and AI-curated recommendations.
 
 **Accomplished:**
 
-### Onboarding Flow Update
-- Created `BiometricProfileScreen.tsx` — new dark-mode onboarding step after Goal Selection
-- Collects: birthday (date picker), biological sex (radio), height/weight (with imperial/metric toggle), timezone (auto-detected)
-- Optional step — user can skip without blocking progress
-- Animated with FadeInDown, haptic feedback on selections
+### New Components (5 files)
+- `HomeHeader.tsx` — Personalized greeting with time-of-day logic, date display, chat/profile action buttons
+- `TodaysFocusCard.tsx` — AI-curated "One Big Thing" with MVD badge, expandable reasoning, START NOW CTA
+- `DayTimeline.tsx` — Horizontal Bloomberg-style timeline with pulsing time dots (7am-9pm), horizontal scroll protocol cards
+- `WeeklyProgressCard.tsx` — Top 3 protocols with adherence dots, "See Weekly Synthesis" link
+- `AdherenceDots.tsx` — Reusable 7-dot adherence indicator (5/7 format, not streaks)
 
-### Backend Integration
-- Created Supabase migration `20251209000000_add_user_biometrics.sql`
-- Added 6 columns to users table: birth_date, biological_sex, height_cm, weight_kg, timezone, weight_updated_at
-- Updated `onboarding.ts` backend endpoint to persist biometrics
-- Updated `api.ts` client to send biometrics payload with ISO date serialization
+### New Hooks (2 files)
+- `useTodaysFocus.ts` — MVD (Minimum Viable Day) selection logic based on recovery zone
+- `useWeeklyProgress.ts` — 7-day protocol completion calculation from Firestore + mock fallback
 
-### Profile Settings
-- Created `BiometricSettingsScreen.tsx` — edit biometrics anytime from Profile
-- Added "Biometric Profile" card to ProfileScreen with "Edit Biometrics" button
-- Updated `ProfileStack.tsx` navigation to include BiometricSettings route
-- Added `updateUserBiometrics()` API function for PATCH /api/users/me
+### Enhancements
+- `RecoveryScoreCard.tsx` — 56px hero sizing with 800ms count-up animation, hero elevation shadow
+- Removed paywall concept (no LockedModuleCard — Apex OS launches with full access)
+- 28px section gaps per design system
 
-### Type System & Backend
-- Updated `UserProfile` type with biometric fields
-- Updated `users.ts` backend to allow biometric field updates via MUTABLE_FIELDS
-- Analytics tracking now includes `hasBiometrics` property
+### Home Screen Layout Order
+1. HomeHeader (greeting + date + quick actions)
+2. Recovery Score Hero (or LiteModeScoreCard for no-wearable users)
+3. Today's Focus (One Big Thing)
+4. Day Timeline (horizontal scroll)
+5. Your Focus Areas + Add Protocol button
+6. Weekly Progress + Synthesis link
 
-### Documentation
-- Added Appendix E to PRD v8.1.2: Biometric Profile Collection
-- Documented HRV adjustment factors by age and sex
-- Privacy considerations and implementation details
+**Files Created:**
+- `client/src/components/home/HomeHeader.tsx`
+- `client/src/components/home/TodaysFocusCard.tsx`
+- `client/src/components/home/DayTimeline.tsx`
+- `client/src/components/home/WeeklyProgressCard.tsx`
+- `client/src/components/home/AdherenceDots.tsx`
+- `client/src/components/home/index.ts`
+- `client/src/hooks/useTodaysFocus.ts`
+- `client/src/hooks/useWeeklyProgress.ts`
 
-**Files Modified/Created:**
-- `client/src/screens/onboarding/BiometricProfileScreen.tsx` (new)
-- `client/src/screens/settings/BiometricSettingsScreen.tsx` (new)
-- `client/src/navigation/OnboardingStack.tsx`
-- `client/src/navigation/ProfileStack.tsx`
-- `client/src/screens/ProfileScreen.tsx`
-- `client/src/types/onboarding.ts`
-- `client/src/types/user.ts`
-- `client/src/services/api.ts`
-- `client/src/services/AnalyticsService.ts`
-- `client/src/services/AnalyticsService.web.ts`
-- `functions/src/onboarding.ts`
-- `functions/src/users.ts`
-- `supabase/migrations/20251209000000_add_user_biometrics.sql` (new)
-- `PRD Documents/APEX_OS_PRD_v8.1.md`
+**Files Modified:**
+- `client/src/components/RecoveryScoreCard.tsx` (hero styling + animations)
+- `client/src/screens/HomeScreen.tsx` (complete layout overhaul)
 
-**Result:** Full biometrics collection feature implemented. Ready for visual testing
+**Files Deleted:**
+- `client/src/components/LockedModuleCard.tsx` (no paywall gates)
+
+**Commit:** `5a09399` — feat: redesign Home Screen with new component architecture (Session 57)
+
+**Result:** Home Screen redesign complete and visually verified in web preview
 
 ---
 
 ## Previous Session
 
-**Date:** December 9, 2025 (Session 55)
-**Focus:** Documentation Consolidation & Design System Setup
+**Date:** December 9, 2025 (Session 56)
+**Focus:** Biometrics Collection in Onboarding
 
 **Accomplished:**
-- Committed 84 files to GitHub (commit `7356a8d`)
-- Added `skills/apex-os-design/` comprehensive design system
-- Bloomberg-meets-Calm aesthetic documented for consistent UI development
-- Added brand assets to `client/assets/Logo/`
+- Created `BiometricProfileScreen.tsx` — onboarding step for age, sex, height, weight, timezone
+- Created `BiometricSettingsScreen.tsx` — edit biometrics from Profile
+- Supabase migration `20251209000000_add_user_biometrics.sql`
+- Backend integration for biometric persistence
 
-**Commit:** `7356a8d` — docs: PRD v8.1 consolidation, design system, and documentation overhaul
+**Commit:** `ba78934` — feat: add biometric profile collection in onboarding
 
 ---
 
@@ -135,24 +134,25 @@
 
 ## Next Session Priority
 
-### Session 57 Focus: Home Screen Redesign
+### Session 58 Focus: Protocol Detail Screen & Navigation
 
-Per the PRD v8.1 implementation plan (`~/.claude/plans/fluttering-puzzling-mango.md`):
+Following the Home Screen redesign, the next priority is completing the Protocol experience:
 
-1. **Morning Anchor Section**
-   - Recovery score as hero metric with Confidence indicator
-   - 3 MVD-protocol recommendations (swipeable)
-   - "Why this recommendation" expandable panel
+1. **Protocol Detail Screen**
+   - Protocol card tap → detail view with full description
+   - Evidence panel with DOI links
+   - "Why this protocol for you" personalization
+   - Start/Log action buttons
 
-2. **Day Structure Timeline**
-   - Visual timeline with protocol slots
-   - Tap-to-log quick actions
-   - Calendar-aware scheduling
+2. **Protocol Logging Flow**
+   - Quick log from Home (tap Done on timeline card)
+   - Full log from detail screen with notes
+   - Duration tracking and completion confirmation
 
-3. **Weekly Progress Glance**
-   - Consistency indicator (5/7 days, not streaks)
-   - Module progress summary
-   - Link to Weekly Synthesis
+3. **Navigation Polish**
+   - Add Protocol button → Protocols tab with filter
+   - Weekly Synthesis link → Insights tab
+   - Profile avatar → Profile tab
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -259,4 +259,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 9, 2025 (Session 56 closeout - Biometrics Collection feature complete)*
+*Last Updated: December 9, 2025 (Session 57 closeout - Home Screen Redesign complete)*
