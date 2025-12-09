@@ -11,8 +11,9 @@
  * @created December 4, 2025
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AccessibilityInfo,
   LayoutChangeEvent,
   Pressable,
   StyleSheet,
@@ -20,10 +21,14 @@ import {
   View,
 } from 'react-native';
 import Animated, {
+  Easing,
   interpolate,
+  runOnJS,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -90,6 +95,62 @@ const ZONE_DESCRIPTIONS: Record<RecoveryZone, string> = {
   green: 'Ready for high-intensity training',
   yellow: 'Moderate activity recommended',
   red: 'Prioritize rest and recovery',
+};
+
+// =============================================================================
+// ANIMATED SCORE (Count-up animation)
+// =============================================================================
+
+interface AnimatedScoreProps {
+  score: number;
+  color: string;
+}
+
+/**
+ * Animated score display with count-up effect
+ * Respects reduced motion preferences
+ */
+const AnimatedScore: React.FC<AnimatedScoreProps> = ({ score, color }) => {
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const animatedScore = useSharedValue(0);
+  const [displayScore, setDisplayScore] = useState(0);
+
+  // Check for reduced motion preference
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const listener = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion
+    );
+    return () => {
+      listener.remove();
+    };
+  }, []);
+
+  // Animate score on mount or score change
+  useEffect(() => {
+    if (reduceMotion) {
+      setDisplayScore(score);
+      return;
+    }
+
+    animatedScore.value = 0;
+    animatedScore.value = withTiming(score, {
+      duration: 800,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [score, reduceMotion, animatedScore]);
+
+  // Update display score as animation progresses
+  useDerivedValue(() => {
+    runOnJS(setDisplayScore)(Math.round(animatedScore.value));
+  });
+
+  return (
+    <Text style={[styles.scoreHero, { color }]}>
+      {displayScore}
+    </Text>
+  );
 };
 
 // =============================================================================
@@ -319,7 +380,7 @@ export const RecoveryScoreCard: React.FC<Props> = ({
           )}
         </View>
         <View style={styles.headerRight}>
-          <Text style={[styles.score, { color: zoneColor }]}>{data.score}</Text>
+          <AnimatedScore score={data.score} color={zoneColor} />
           <Text style={styles.scoreMax}>/100</Text>
         </View>
       </Pressable>
@@ -396,6 +457,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
+    // Hero elevation shadow (Session 57)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.32,
+    shadowRadius: 16,
+    elevation: 12,
   },
 
   // Loading
@@ -435,6 +502,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -1,
   },
+  // Hero sizing for Session 57 redesign (56px, monospace-style)
+  scoreHero: {
+    fontSize: 56,
+    fontWeight: '700',
+    letterSpacing: -2,
+    fontVariant: ['tabular-nums'],
+  },
   scoreMax: {
     ...typography.subheading,
     color: palette.textMuted,
@@ -461,17 +535,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Progress bar
+  // Progress bar (6px height for Session 57 redesign)
   progressBarBackground: {
-    height: 8,
+    height: 6,
     backgroundColor: palette.elevated,
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 16,
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
 
   // Status row

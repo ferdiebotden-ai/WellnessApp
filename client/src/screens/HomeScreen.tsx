@@ -1,23 +1,28 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HealthMetricCard } from '../components/HealthMetricCard';
+import { useNavigation } from '@react-navigation/native';
 import { ModuleEnrollmentCard } from '../components/ModuleEnrollmentCard';
-import { TaskList } from '../components/TaskList';
 import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { LiteModeScoreCard } from '../components/LiteModeScoreCard';
 import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
-import type { ManualCheckInInput, CheckInResult } from '../types/checkIn';
+// New Home Screen components (Session 57)
+import { HomeHeader } from '../components/home/HomeHeader';
+import { TodaysFocusCard } from '../components/home/TodaysFocusCard';
+import { DayTimeline } from '../components/home/DayTimeline';
+import { WeeklyProgressCard } from '../components/home/WeeklyProgressCard';
+import type { ManualCheckInInput } from '../types/checkIn';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
 import { useRecoveryScore } from '../hooks/useRecoveryScore';
 import { useWakeDetection } from '../hooks/useWakeDetection';
 import { useNudgeActions } from '../hooks/useNudgeActions';
-import { useTodayMetrics } from '../hooks/useTodayMetrics';
-import type { DashboardTask, HealthMetric, ModuleEnrollment } from '../types/dashboard';
+// New hooks (Session 57)
+import { useTodaysFocus } from '../hooks/useTodaysFocus';
+import { useWeeklyProgress, useMockWeeklyProgress } from '../hooks/useWeeklyProgress';
+import type { DashboardTask, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
-import { LockedModuleCard } from '../components/LockedModuleCard';
 import type { HomeStackParamList } from '../navigation/HomeStack';
 import { useMonetization } from '../providers/MonetizationProvider';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
@@ -25,38 +30,10 @@ import { useDashboardData } from '../hooks/useDashboardData';
 
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
-interface LockedModule {
-  id: string;
-  title: string;
-  description: string;
-  tier: 'pro' | 'elite';
-}
-
-const LOCKED_MODULES: LockedModule[] = [
-  {
-    id: 'mod_stress_regulation',
-    title: 'Stress & Emotional Regulation',
-    description: 'Unlock HRV-guided breathing plans and advanced stress resilience analytics.',
-    tier: 'pro',
-  },
-  {
-    id: 'mod_energy_recovery',
-    title: 'Energy & Recovery',
-    description: 'Access metabolic recovery dashboards, cold exposure protocols, and readiness forecasting.',
-    tier: 'pro',
-  },
-  {
-    id: 'elite_concierge',
-    title: 'Elite Concierge',
-    description: 'Get 1:1 concierge coaching, lab integrations, and executive performance planning.',
-    tier: 'elite',
-  },
-];
-
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const userId = firebaseAuth.currentUser?.uid ?? null;
   const { tasks, loading: loadingTasks } = useTaskFeed(userId);
-  const { metrics, enrollments, loading: loadingDashboard } = useDashboardData();
+  const { enrollments, loading: loadingDashboard } = useDashboardData();
   const {
     data: recoveryData,
     baselineStatus,
@@ -68,8 +45,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { requestProModuleAccess } = useMonetization();
   const { isModuleEnabled } = useFeatureFlags();
 
-  // Real-time metrics from Firestore (Phase 3 Session 6)
-  const { metrics: todayMetrics } = useTodayMetrics(userId);
+  // Session 57: Today's Focus (One Big Thing)
+  const { focus, isMVD } = useTodaysFocus({
+    tasks,
+    recoveryZone: recoveryData?.zone ?? null,
+    recoveryScore: recoveryData?.score ?? null,
+  });
+
+  // Session 57: Weekly Progress (use mock if Firestore unavailable)
+  const weeklyProgress = useWeeklyProgress(userId);
+  const mockProgress = useMockWeeklyProgress();
+  const { protocols: weeklyProtocols, loading: loadingWeekly } =
+    weeklyProgress.protocols.length > 0 ? weeklyProgress : mockProgress;
+
+  // Get user's first name for greeting
+  const userName = firebaseAuth.currentUser?.displayName?.split(' ')[0] || undefined;
 
   // Track tasks currently being updated
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set());
@@ -201,53 +191,55 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     [filteredEnrolledModules]
   );
 
-  // Filter locked modules based on feature flags
-  const filteredLockedModules = useMemo(() => {
-    return LOCKED_MODULES.filter((module) => {
-      // Map module IDs to feature flags
-      if (module.id === 'mod_stress_regulation') {
-        return isModuleEnabled('stress');
-      }
-      if (module.id === 'mod_energy_recovery') {
-        return isModuleEnabled('energy');
-      }
-      // Elite concierge doesn't have a specific flag - show if any pro module is enabled
-      if (module.id === 'elite_concierge') {
-        return isModuleEnabled('stress') || isModuleEnabled('energy') || isModuleEnabled('dopamine');
-      }
-      // Default to enabled if not mapped
-      return true;
-    });
-  }, [isModuleEnabled]);
+  // Session 57: Navigation callbacks
+  const handleProfilePress = useCallback(() => {
+    // Navigate to Profile tab
+    navigation.getParent()?.navigate('Profile');
+  }, [navigation]);
 
-  const handleLockedModulePress = useCallback(
-    (moduleId: string) => {
-      const module = LOCKED_MODULES.find((item) => item.id === moduleId);
-      if (!module) {
-        return;
-      }
+  const handleChatPress = useCallback(() => {
+    // TODO: Open AI chat modal
+    Alert.alert('AI Coach', 'Chat feature coming soon!');
+  }, []);
 
-      navigation.navigate('Waitlist', {
-        tier: module.tier,
-        moduleName: module.title,
-      });
+  const handleAddProtocol = useCallback(() => {
+    // Navigate to Protocols tab
+    navigation.getParent()?.navigate('Protocols');
+  }, [navigation]);
+
+  const handleSynthesisPress = useCallback(() => {
+    // Navigate to Insights tab (Weekly Synthesis)
+    navigation.getParent()?.navigate('Insights');
+  }, [navigation]);
+
+  const handleFocusStart = useCallback(
+    async (taskId: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (task) {
+        await handleTaskComplete(task);
+      }
     },
-    [navigation]
+    [tasks, handleTaskComplete]
   );
 
   return (
     <View style={styles.root} testID="home-screen">
       <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContent} testID="home-scroll-view">
+        {/* 1. Header with greeting, date, and actions */}
+        <HomeHeader
+          userName={userName}
+          onProfilePress={handleProfilePress}
+          onChatPress={handleChatPress}
+        />
+
+        {/* 2. Recovery Score Hero */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Health Outcomes</Text>
-          {/* Conditional rendering: LiteModeScoreCard for manual check-in users, RecoveryScoreCard for wearable users */}
           {isLiteMode ? (
             <LiteModeScoreCard
               data={checkInData}
               loading={loadingRecovery}
               onCheckIn={() => {
-                // Trigger wake confirmation overlay to start check-in
                 handleWakeConfirm();
               }}
             />
@@ -258,70 +250,87 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               loading={loadingRecovery}
             />
           )}
-          <View style={styles.metricsRow}>
-            {metrics.length > 0 ? (
-              metrics.map((metric) => (
-                <HealthMetricCard metric={metric} key={metric.id} />
-              ))
-            ) : (
-              <Text style={styles.emptyState}>No health metrics available yet.</Text>
-            )}
-          </View>
         </View>
 
+        {/* 3. Today's Focus (One Big Thing) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Active Protocols</Text>
+          <TodaysFocusCard
+            focus={focus}
+            isMVD={isMVD}
+            onStart={handleFocusStart}
+            loading={loadingTasks}
+          />
+        </View>
+
+        {/* 4. Day Timeline (Horizontal) */}
+        <View style={styles.section}>
+          <DayTimeline
+            tasks={tasks.filter((t) => t.scheduledAt)}
+            onComplete={handleTaskComplete}
+            loading={loadingTasks}
+          />
+        </View>
+
+        {/* 5. Active Protocols with Add button */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>YOUR FOCUS AREAS</Text>
           {orderedModules.length > 0 ? (
             <View style={styles.moduleStack}>
-              {orderedModules.map((module) => (
+              {orderedModules.slice(0, 3).map((module) => (
                 <ModuleEnrollmentCard
                   key={module.id}
                   module={module}
-                  locked={module.tier === 'pro'}
+                  locked={false}
                   onPress={() => handleModulePress(module)}
                   testID={`module-card-${module.id}`}
                 />
               ))}
+              {/* Add Protocol link */}
+              <Pressable
+                onPress={handleAddProtocol}
+                style={({ pressed }) => [
+                  styles.addProtocolButton,
+                  pressed && styles.addProtocolButtonPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Add protocol"
+                testID="add-protocol-button"
+              >
+                <Text style={styles.addProtocolIcon}>+</Text>
+                <Text style={styles.addProtocolText}>Add Protocol</Text>
+              </Pressable>
             </View>
           ) : (
-            <Text style={styles.emptyState}>No active modules available.</Text>
+            <Pressable
+              onPress={handleAddProtocol}
+              style={({ pressed }) => [
+                styles.emptyProtocolsCard,
+                pressed && styles.addProtocolButtonPressed,
+              ]}
+            >
+              <Text style={styles.emptyProtocolsText}>
+                No active protocols yet
+              </Text>
+              <Text style={styles.addProtocolLink}>+ Add your first protocol</Text>
+            </Pressable>
           )}
         </View>
 
-        {filteredLockedModules.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Unlock Next-Level Modules</Text>
-            <View style={styles.lockedModules}>
-              {filteredLockedModules.map((module) => (
-                <LockedModuleCard
-                  key={module.id}
-                  id={module.id}
-                  title={module.title}
-                  description={module.description}
-                  tier={module.tier}
-                  onPress={handleLockedModulePress}
-                />
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View style={[styles.section, styles.taskSection]}>
-          <Text style={styles.sectionTitle}>Today's Plan</Text>
-          <TaskList
-            loading={loadingTasks}
-            tasks={tasks}
-            emptyMessage="Your schedule is clear."
-            onComplete={handleTaskComplete}
-            onDismiss={handleTaskDismiss}
-            updatingTasks={updatingTasks}
+        {/* 6. Weekly Progress */}
+        <View style={styles.section}>
+          <WeeklyProgressCard
+            protocols={weeklyProtocols}
+            onSynthesisPress={handleSynthesisPress}
+            loading={loadingWeekly}
           />
-          {pendingActions > 0 && (
-            <Text style={styles.syncStatus}>
-              {isSyncing ? 'Syncing...' : `${pendingActions} action${pendingActions > 1 ? 's' : ''} pending`}
-            </Text>
-          )}
         </View>
+
+        {/* Sync status indicator */}
+        {pendingActions > 0 && (
+          <Text style={styles.syncStatus}>
+            {isSyncing ? 'Syncing...' : `${pendingActions} action${pendingActions > 1 ? 's' : ''} pending`}
+          </Text>
+        )}
       </ScrollView>
 
       {/* Wake Confirmation Overlay - shows check-in questionnaire for Lite Mode users */}
@@ -346,37 +355,63 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     paddingHorizontal: 20,
     paddingTop: 8,
-    gap: 32,
+    gap: 28, // Session 57: 28px section gaps per design system
   },
   section: {
     gap: 16,
   },
   sectionTitle: {
-    ...typography.subheading,
-    color: palette.textSecondary,
+    ...typography.caption,
+    color: palette.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: 16,
-    flexWrap: 'wrap',
+    fontWeight: '600',
   },
   moduleStack: {
-    gap: 16,
+    gap: 12,
   },
-  lockedModules: {
-    gap: 16,
+  // Add Protocol button
+  addProtocolButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderStyle: 'dashed',
+    paddingVertical: 16,
+    gap: 8,
   },
-  taskSection: {
-    paddingBottom: 16,
+  addProtocolButtonPressed: {
+    opacity: 0.7,
   },
-  emptyState: {
+  addProtocolIcon: {
+    fontSize: 20,
+    color: palette.primary,
+    fontWeight: '600',
+  },
+  addProtocolText: {
     ...typography.body,
-    color: palette.textSecondary,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingVertical: 24,
+    color: palette.primary,
+    fontWeight: '600',
+  },
+  // Empty protocols state
+  emptyProtocolsCard: {
+    backgroundColor: palette.surface,
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyProtocolsText: {
+    ...typography.body,
+    color: palette.textMuted,
+  },
+  addProtocolLink: {
+    ...typography.body,
+    color: palette.primary,
+    fontWeight: '600',
   },
   syncStatus: {
     ...typography.caption,
