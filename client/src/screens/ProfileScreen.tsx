@@ -51,6 +51,10 @@ export const ProfileScreen: React.FC = () => {
     navigation.navigate('CalendarSettings');
   }, [navigation]);
 
+  const handleBiometricSettingsPress = useCallback(() => {
+    navigation.navigate('BiometricSettings');
+  }, [navigation]);
+
   const handleSocialAnonymousToggle = useCallback(
     async (value: boolean) => {
       try {
@@ -124,6 +128,22 @@ export const ProfileScreen: React.FC = () => {
   return (
     <ScrollView contentContainerStyle={styles.container} testID="profile-screen">
       <Text style={styles.heading}>Profile</Text>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Biometric Profile</Text>
+        <Text style={styles.cardBody}>
+          Your age, height, and weight help personalize HRV baselines and protocol recommendations.
+        </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.primaryButton}
+          onPress={handleBiometricSettingsPress}
+          testID="open-biometric-settings"
+        >
+          <Text style={styles.primaryButtonText}>Edit Biometrics</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Data Integrations</Text>
         <Text style={styles.cardBody}>

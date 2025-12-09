@@ -5,6 +5,8 @@ import { verifyFirebaseToken } from './firebaseAdmin';
 import { getConfig } from './config';
 import { extractBearerToken, isPatchPayloadAllowed } from './utils/http';
 
+type BiologicalSex = 'male' | 'female' | 'prefer_not_to_say';
+
 interface UserProfileInsert {
   firebase_uid: string;
   email?: string | null;
@@ -17,6 +19,13 @@ interface UserProfileInsert {
   healthMetrics?: Record<string, unknown>;
   earnedBadges?: string[];
   subscription_id?: string | null;
+  // Biometric fields
+  birth_date?: string | null;
+  biological_sex?: BiologicalSex | null;
+  height_cm?: number | null;
+  weight_kg?: number | null;
+  timezone?: string | null;
+  weight_updated_at?: string | null;
 }
 
 const MUTABLE_FIELDS = new Set<keyof UserProfileInsert>([
@@ -24,7 +33,14 @@ const MUTABLE_FIELDS = new Set<keyof UserProfileInsert>([
   'onboarding_complete',
   'preferences',
   'healthMetrics',
-  'earnedBadges'
+  'earnedBadges',
+  // Biometric fields
+  'birth_date',
+  'biological_sex',
+  'height_cm',
+  'weight_kg',
+  'timezone',
+  'weight_updated_at'
 ]);
 
 async function authenticateRequest(req: Request): Promise<{ uid: string; email?: string | null }>
@@ -107,6 +123,37 @@ function filterMutableFields(payload: Record<string, unknown>): Partial<UserProf
       case 'earnedBadges':
         if (Array.isArray(value)) {
           updates.earnedBadges = value.map(String);
+        }
+        break;
+      // Biometric fields
+      case 'birth_date':
+        if (typeof value === 'string' || value === null) {
+          updates.birth_date = value as string | null;
+        }
+        break;
+      case 'biological_sex':
+        if (value === null || ['male', 'female', 'prefer_not_to_say'].includes(value as string)) {
+          updates.biological_sex = value as BiologicalSex | null;
+        }
+        break;
+      case 'height_cm':
+        if (typeof value === 'number' || value === null) {
+          updates.height_cm = value as number | null;
+        }
+        break;
+      case 'weight_kg':
+        if (typeof value === 'number' || value === null) {
+          updates.weight_kg = value as number | null;
+        }
+        break;
+      case 'timezone':
+        if (typeof value === 'string' || value === null) {
+          updates.timezone = value as string | null;
+        }
+        break;
+      case 'weight_updated_at':
+        if (typeof value === 'string' || value === null) {
+          updates.weight_updated_at = value as string | null;
         }
         break;
       default:

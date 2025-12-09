@@ -59,7 +59,12 @@ class AnalyticsService {
   /**
    * Tracks completion of the onboarding flow along with the selected module.
    */
-  async trackOnboardingComplete(params: { primaryModuleId: string }): Promise<void> {
+  async trackOnboardingComplete(params: {
+    primaryModuleId: string;
+    goal?: string;
+    wearable?: string | null;
+    hasBiometrics?: boolean;
+  }): Promise<void> {
     console.log('WEB MOCK: Analytics trackOnboardingComplete', params);
   }
 

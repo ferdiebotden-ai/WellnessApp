@@ -18,6 +18,7 @@ import {
   GOAL_TO_MODULE_MAP,
   type WearableSource,
   type PrimaryGoal,
+  type BiometricProfileData,
 } from '../../types/onboarding';
 import { completeOnboarding } from '../../services/api';
 import { useUpdateOnboarding } from '../../providers/AuthProvider';
@@ -34,7 +35,7 @@ const AUTO_ADVANCE_DELAY = 600; // ms after selection before completing
 export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> = ({
   route,
 }) => {
-  const { selectedGoal } = route.params;
+  const { selectedGoal, biometrics } = route.params;
   const [submitting, setSubmitting] = useState(false);
   const [selectedWearable, setSelectedWearable] = useState<WearableSource | null>(null);
   const updateOnboarding = useUpdateOnboarding();
@@ -57,6 +58,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
           primary_goal: selectedGoal as PrimaryGoal,
           wearable_source: wearableSource,
           primary_module_id: primaryModuleId,
+          biometrics: biometrics ?? null,
         });
 
         // Track analytics
@@ -64,6 +66,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
           primaryModuleId,
           goal: selectedGoal,
           wearable: wearableSource ?? 'skipped',
+          hasBiometrics: !!biometrics?.birthDate || !!biometrics?.biologicalSex,
         });
 
         // Mark onboarding complete - RootNavigator will show MainStack
@@ -76,7 +79,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
         ]);
       }
     },
-    [selectedGoal, updateOnboarding]
+    [selectedGoal, biometrics, updateOnboarding]
   );
 
   const handleSelectWearable = useCallback(

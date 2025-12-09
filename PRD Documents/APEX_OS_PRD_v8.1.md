@@ -802,6 +802,59 @@ Full synthesis: `STRATEGIC_SYNTHESIS.md`
 
 ---
 
+# APPENDIX E: Biometric Profile Collection
+
+## Purpose
+
+Biometric data enables personalized protocol recommendations and accurate HRV baseline calibration. Collected during onboarding and editable from Profile settings.
+
+## Data Collected
+
+| Field | Purpose | Storage | Validation |
+|-------|---------|---------|------------|
+| `birth_date` | Age-based HRV baseline adjustment | DATE | 16-120 years old |
+| `biological_sex` | HRV baseline calibration (male/female differ by ~10ms) | TEXT | male, female, prefer_not_to_say |
+| `height_cm` | BMI context for protocol dosing | SMALLINT | 50-300 cm |
+| `weight_kg` | Protocol dosing, supplement recommendations | DECIMAL(5,2) | 20-500 kg |
+| `timezone` | Nudge scheduling at appropriate local times | TEXT | IANA timezone string |
+
+## Privacy Considerations
+
+- All biometric fields are **optional** (nullable in database)
+- User can skip during onboarding without blocking progress
+- Editable anytime from Profile → Biometric Profile
+- Weight tracking includes `weight_updated_at` for longitudinal analysis
+- Data never shared externally; used only for personalization
+
+## Age-Based HRV Adjustments
+
+| Age Range | Typical Baseline HRV | Adjustment Factor |
+|-----------|---------------------|-------------------|
+| 18-29 | 55-105 ms | 1.0 |
+| 30-39 | 45-90 ms | 0.95 |
+| 40-49 | 35-80 ms | 0.90 |
+| 50-59 | 25-70 ms | 0.85 |
+| 60+ | 20-60 ms | 0.80 |
+
+*Note: Factors applied to recovery score calculations when HRV data available.*
+
+## Biological Sex HRV Calibration
+
+Research indicates average HRV differs by sex:
+- **Male baseline:** 50-80 ms typical
+- **Female baseline:** 40-70 ms typical
+
+Protocol recommendations account for these baseline differences when calculating recovery zones.
+
+## Implementation
+
+- **Onboarding:** BiometricProfileScreen (optional step after Goal Selection)
+- **Settings:** ProfileScreen → BiometricSettingsScreen
+- **Backend:** POST /api/onboarding/complete, PATCH /api/users/me
+- **Database:** users table columns with trigger for weight_updated_at
+
+---
+
 # Document History
 
 | Version | Date | Changes |
@@ -811,6 +864,7 @@ Full synthesis: `STRATEGIC_SYNTHESIS.md`
 | 8.0 | Dec 7, 2025 | Implementation-focused format (deprecated) |
 | 8.1 | Dec 7, 2025 | Vision-first structure optimized for Opus 4.5 reasoning |
 | **8.1.1** | **Dec 9, 2025** | **Added Technical Spec reference, confidence factors, recovery formula, 6 MVD triggers, safety constraints, Appendix D** |
+| **8.1.2** | **Dec 9, 2025** | **Added Appendix E: Biometric Profile Collection (age, sex, height, weight, timezone for HRV personalization)** |
 
 ---
 

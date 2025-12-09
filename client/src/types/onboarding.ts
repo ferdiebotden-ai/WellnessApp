@@ -28,12 +28,26 @@ export interface OnboardingWearable {
   platforms: ('ios' | 'android' | 'web')[];
 }
 
+/** Biological sex for HRV baseline personalization */
+export type BiologicalSex = 'male' | 'female' | 'prefer_not_to_say';
+
+/** Biometric profile data collected during onboarding */
+export interface BiometricProfileData {
+  birthDate: Date | null;
+  biologicalSex: BiologicalSex | null;
+  heightCm: number | null;
+  weightKg: number | null;
+  timezone: string;
+}
+
 /** Onboarding completion payload */
 export interface OnboardingCompletePayload {
   primary_goal: PrimaryGoal;
   wearable_source?: WearableSource | null;
   /** Derived from goal → module mapping */
   primary_module_id?: string;
+  /** Biometric profile data */
+  biometrics?: BiometricProfileData | null;
 }
 
 /** Goal → Module mapping for enrollment

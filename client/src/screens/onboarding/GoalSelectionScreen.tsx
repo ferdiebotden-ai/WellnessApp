@@ -28,7 +28,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({ naviga
 
     // Auto-advance after delay
     autoAdvanceTimer.current = setTimeout(() => {
-      navigation.navigate('WearableConnection', {
+      navigation.navigate('BiometricProfile', {
         selectedGoal: goalId as PrimaryGoal,
       });
     }, AUTO_ADVANCE_DELAY);

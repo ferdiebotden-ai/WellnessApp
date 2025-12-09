@@ -114,11 +114,22 @@ export const syncUser = async (): Promise<{ user_id: string; created: boolean }>
 };
 
 /**
- * Completes onboarding with goal and optional wearable selection.
- * Accepts the new conversational onboarding payload with primary_goal and wearable_source.
+ * Completes onboarding with goal, biometrics, and optional wearable selection.
+ * Accepts the new conversational onboarding payload with primary_goal, biometrics, and wearable_source.
  */
 export const completeOnboarding = async (payload: OnboardingCompletePayload) => {
   try {
+    // Serialize biometrics with birthDate as ISO string for the backend
+    const biometricsPayload = payload.biometrics
+      ? {
+          birthDate: payload.biometrics.birthDate?.toISOString() ?? null,
+          biologicalSex: payload.biometrics.biologicalSex,
+          heightCm: payload.biometrics.heightCm,
+          weightKg: payload.biometrics.weightKg,
+          timezone: payload.biometrics.timezone,
+        }
+      : null;
+
     return await request<{
       success: boolean;
       trial_start_date: string;
@@ -126,10 +137,13 @@ export const completeOnboarding = async (payload: OnboardingCompletePayload) => 
       primary_module_id: string;
       primary_goal: string;
       wearable_source: string | null;
+      has_biometrics: boolean;
+      timezone: string;
     }>('/api/onboarding/complete', 'POST', {
       primary_goal: payload.primary_goal,
       wearable_source: payload.wearable_source ?? null,
       primary_module_id: payload.primary_module_id,
+      biometrics: biometricsPayload,
     });
   } catch (error) {
     console.warn('Backend API unavailable, simulating onboarding completion.', error);
@@ -143,6 +157,8 @@ export const completeOnboarding = async (payload: OnboardingCompletePayload) => 
       primary_module_id: payload.primary_module_id ?? '',
       primary_goal: payload.primary_goal,
       wearable_source: payload.wearable_source ?? null,
+      has_biometrics: !!payload.biometrics,
+      timezone: payload.biometrics?.timezone ?? 'UTC',
     };
   }
 };
@@ -266,6 +282,22 @@ export const fetchCurrentUser = () => request<{ user: UserProfile }>('/api/users
  */
 export const updateUserPreferences = (preferences: Partial<UserPreferences>) =>
   request<{ user: UserProfile }>('/api/users/me', 'PATCH', { preferences });
+
+export interface BiometricUpdatePayload {
+  birth_date?: string | null;
+  biological_sex?: 'male' | 'female' | 'prefer_not_to_say' | null;
+  height_cm?: number | null;
+  weight_kg?: number | null;
+  timezone?: string | null;
+}
+
+/**
+ * Updates user biometric profile (age, sex, height, weight, timezone).
+ * @param biometrics Biometric fields to update.
+ * @returns Updated user profile.
+ */
+export const updateUserBiometrics = (biometrics: BiometricUpdatePayload) =>
+  request<{ user: UserProfile }>('/api/users/me', 'PATCH', biometrics);
 
 /**
  * Retrieves the current monetization status for the authenticated user.

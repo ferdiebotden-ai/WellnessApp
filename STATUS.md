@@ -8,9 +8,9 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | Phase 3: Nervous System (Real Data Flow) — 🚀 IN PROGRESS |
-| **Session** | 56 (next) |
-| **Progress** | 91% of Phase 3 (10/11 sessions) |
+| **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
+| **Session** | 57 (next) |
+| **Progress** | Session 56 complete (Biometrics Collection) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,89 +52,109 @@
 
 ## Last Session
 
-**Date:** December 9, 2025 (Session 55)
-**Focus:** Documentation Consolidation & Design System Setup
+**Date:** December 9, 2025 (Session 56)
+**Focus:** Biometrics Collection in Onboarding
 
-**Context:** Final sync of PRD v8.1 documentation ecosystem to GitHub, including user-created design system skill and brand assets.
+**Context:** First session of PRD v8.1 frontend rebuild. Added optional biometric data collection (age, sex, height, weight, timezone) during onboarding and in settings.
 
 **Accomplished:**
 
-### Git Sync & Documentation
-- Committed 84 files to GitHub (commit `7356a8d`)
-- PRD v8.1 and Technical Spec v1 now in version control
-- Research papers reorganized to `Perplexity Research Papers/`
-- Archived obsolete PRD versions (v6, v7) and Claude Reference Docs
+### Onboarding Flow Update
+- Created `BiometricProfileScreen.tsx` — new dark-mode onboarding step after Goal Selection
+- Collects: birthday (date picker), biological sex (radio), height/weight (with imperial/metric toggle), timezone (auto-detected)
+- Optional step — user can skip without blocking progress
+- Animated with FadeInDown, haptic feedback on selections
 
-### Design System Integration (User-Created)
-- Added `skills/apex-os-design/` comprehensive design system
-- 8 resource files: colors, typography, components, screens, motion-haptics, data-viz, accessibility
-- Bloomberg-meets-Calm aesthetic documented for consistent UI development
-- SKILL.md provides quick reference for frontend work
+### Backend Integration
+- Created Supabase migration `20251209000000_add_user_biometrics.sql`
+- Added 6 columns to users table: birth_date, biological_sex, height_cm, weight_kg, timezone, weight_updated_at
+- Updated `onboarding.ts` backend endpoint to persist biometrics
+- Updated `api.ts` client to send biometrics payload with ISO date serialization
 
-### Brand Assets
-- Added `client/assets/Logo/` with official Apex OS logos
-- 9 variants: horizontal, vertical, chevron-only, with/without tagline
+### Profile Settings
+- Created `BiometricSettingsScreen.tsx` — edit biometrics anytime from Profile
+- Added "Biometric Profile" card to ProfileScreen with "Edit Biometrics" button
+- Updated `ProfileStack.tsx` navigation to include BiometricSettings route
+- Added `updateUserBiometrics()` API function for PATCH /api/users/me
 
-### Enhanced Session Protocol
-- Updated `.claude/commands/start.md` with PRD/skill references
-- Updated `CLAUDE.md` KEY FILES section
-- Frontend tasks now auto-reference design system
+### Type System & Backend
+- Updated `UserProfile` type with biometric fields
+- Updated `users.ts` backend to allow biometric field updates via MUTABLE_FIELDS
+- Analytics tracking now includes `hasBiometrics` property
 
-**Commit:**
-- `7356a8d` — docs: PRD v8.1 consolidation, design system, and documentation overhaul
+### Documentation
+- Added Appendix E to PRD v8.1.2: Biometric Profile Collection
+- Documented HRV adjustment factors by age and sex
+- Privacy considerations and implementation details
 
-**Result:** Documentation ecosystem complete. Opus 4.5 now has design system guidance for all frontend work
+**Files Modified/Created:**
+- `client/src/screens/onboarding/BiometricProfileScreen.tsx` (new)
+- `client/src/screens/settings/BiometricSettingsScreen.tsx` (new)
+- `client/src/navigation/OnboardingStack.tsx`
+- `client/src/navigation/ProfileStack.tsx`
+- `client/src/screens/ProfileScreen.tsx`
+- `client/src/types/onboarding.ts`
+- `client/src/types/user.ts`
+- `client/src/services/api.ts`
+- `client/src/services/AnalyticsService.ts`
+- `client/src/services/AnalyticsService.web.ts`
+- `functions/src/onboarding.ts`
+- `functions/src/users.ts`
+- `supabase/migrations/20251209000000_add_user_biometrics.sql` (new)
+- `PRD Documents/APEX_OS_PRD_v8.1.md`
+
+**Result:** Full biometrics collection feature implemented. Ready for visual testing
 
 ---
 
 ## Previous Session
 
-**Date:** December 9, 2025 (Session 54)
-**Focus:** PRD v8.1 Gap Analysis & Technical Spec Creation
+**Date:** December 9, 2025 (Session 55)
+**Focus:** Documentation Consolidation & Design System Setup
 
 **Accomplished:**
-- Compared PRD v8.1 against archived v6/v7 PRDs
-- Created `APEX_OS_TECHNICAL_SPEC_v1.md` (algorithms, APIs, components)
-- Updated PRD v8.1 to v8.1.1 (6 sections + Appendix D)
-- Verified "God Mode" architecture was intentional (no tier gating)
+- Committed 84 files to GitHub (commit `7356a8d`)
+- Added `skills/apex-os-design/` comprehensive design system
+- Bloomberg-meets-Calm aesthetic documented for consistent UI development
+- Added brand assets to `client/assets/Logo/`
 
-**Result:** PRD ecosystem complete with vision doc + implementation reference.
+**Commit:** `7356a8d` — docs: PRD v8.1 consolidation, design system, and documentation overhaul
 
 ---
 
-## Session 53 Summary
+## Session 54 Summary
 
-**Date:** December 6, 2025
-**Focus:** Infrastructure Verification & Pre-Testing Preparation
+**Date:** December 9, 2025
+**Focus:** PRD v8.1 Gap Analysis & Technical Spec Creation
 
 **Accomplished:**
-- Cloud Run API, Nudge Engine, Schedule Generator verified
-- Supabase PostgreSQL synced (24 migrations)
-- Backend stability fixes (3 files)
-
-**Commit:** `2ccb592` — fix: backend improvements for stability and client compatibility
+- Created `APEX_OS_TECHNICAL_SPEC_v1.md` (algorithms, APIs, components)
+- Updated PRD v8.1 to v8.1.1 (6 sections + Appendix D)
 
 ---
 
 ## Next Session Priority
 
-### Session 56 Focus: Functionality Testing & Beta Prep
+### Session 57 Focus: Home Screen Redesign
 
-1. **Manual Functionality Testing** (User-driven)
-   - Authentication flow (signup, login, logout)
-   - Module switching and protocol browsing
-   - Health data entry (manual check-in)
-   - Recovery score display
+Per the PRD v8.1 implementation plan (`~/.claude/plans/fluttering-puzzling-mango.md`):
 
-2. **Beta Rollout Preparation**
-   - TestFlight / Play Store internal testing setup
-   - Production environment validation
-   - Monitoring and alerting configuration
+1. **Morning Anchor Section**
+   - Recovery score as hero metric with Confidence indicator
+   - 3 MVD-protocol recommendations (swipeable)
+   - "Why this recommendation" expandable panel
 
-3. **Fix Remaining TypeScript Errors** (Optional)
-   - `firebase.ts` / `firebase.web.ts` — Firestore null handling
-   - `aggregators.ts` — Health Connect ReadRecordsOptions type
-   - Test files (lower priority)
+2. **Day Structure Timeline**
+   - Visual timeline with protocol slots
+   - Tap-to-log quick actions
+   - Calendar-aware scheduling
+
+3. **Weekly Progress Glance**
+   - Consistency indicator (5/7 days, not streaks)
+   - Module progress summary
+   - Link to Weekly Synthesis
+
+**Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
 ---
 
@@ -239,4 +259,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 9, 2025 (Session 55 closeout - Documentation consolidation complete)*
+*Last Updated: December 9, 2025 (Session 56 closeout - Biometrics Collection feature complete)*

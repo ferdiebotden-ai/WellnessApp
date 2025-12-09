@@ -90,11 +90,13 @@ class AnalyticsService {
     primaryModuleId: string;
     goal?: string;
     wearable?: string | null;
+    hasBiometrics?: boolean;
   }): Promise<void> {
     await this.track('onboarding_complete', {
       primary_module_id: params.primaryModuleId,
       goal: params.goal ?? null,
       wearable: params.wearable ?? null,
+      has_biometrics: params.hasBiometrics ?? false,
     });
   }
 

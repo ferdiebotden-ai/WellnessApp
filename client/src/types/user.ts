@@ -35,4 +35,16 @@ export interface UserProfile {
   primary_goal?: 'better_sleep' | 'more_energy' | 'sharper_focus' | 'faster_recovery' | null;
   /** Wearable device the user tracks with, selected during onboarding */
   wearable_source?: 'oura' | 'whoop' | 'apple_health' | 'google_fit' | 'garmin' | null;
+  /** User birth date for age-based personalization (ISO date string) */
+  birth_date?: string | null;
+  /** Biological sex for HRV baseline calibration */
+  biological_sex?: 'male' | 'female' | 'prefer_not_to_say' | null;
+  /** Height in centimeters */
+  height_cm?: number | null;
+  /** Weight in kilograms */
+  weight_kg?: number | null;
+  /** User timezone for nudge scheduling */
+  timezone?: string | null;
+  /** Last weight update timestamp */
+  weight_updated_at?: string | null;
 }
