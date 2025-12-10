@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 58 (next) |
-| **Progress** | Session 57 complete (Home Screen Redesign) |
+| **Session** | 59 (next) |
+| **Progress** | Session 58 complete (Protocol Detail Screen & Navigation) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,72 +52,59 @@
 
 ## Last Session
 
-**Date:** December 9, 2025 (Session 57)
-**Focus:** Home Screen Redesign
+**Date:** December 9, 2025 (Session 58)
+**Focus:** Protocol Detail Screen & Navigation
 
-**Context:** Major UI overhaul following PRD v8.1 design system. Created new component architecture with Bloomberg-style data visualization and AI-curated recommendations.
+**Context:** Connected existing Protocol Detail Screen to navigation and redesigned with dark mode + 4-panel "Why?" sections for evidence transparency.
 
 **Accomplished:**
 
-### New Components (5 files)
-- `HomeHeader.tsx` — Personalized greeting with time-of-day logic, date display, chat/profile action buttons
-- `TodaysFocusCard.tsx` — AI-curated "One Big Thing" with MVD badge, expandable reasoning, START NOW CTA
-- `DayTimeline.tsx` — Horizontal Bloomberg-style timeline with pulsing time dots (7am-9pm), horizontal scroll protocol cards
-- `WeeklyProgressCard.tsx` — Top 3 protocols with adherence dots, "See Weekly Synthesis" link
-- `AdherenceDots.tsx` — Reusable 7-dot adherence indicator (5/7 format, not streaks)
+### Navigation Wiring
+- Added `ProtocolDetail` route to `HomeStack.tsx` with proper params
+- Connected DayTimeline card taps → Protocol Detail navigation
+- Connected Profile avatar → Profile tab
+- Connected "See Weekly Synthesis" → Insights tab
+- Connected "Add Protocol" → Protocols tab
 
-### New Hooks (2 files)
-- `useTodaysFocus.ts` — MVD (Minimum Viable Day) selection logic based on recovery zone
-- `useWeeklyProgress.ts` — 7-day protocol completion calculation from Firestore + mock fallback
+### Protocol Detail Screen Redesign
+- Full dark mode styling using design system (palette, typography)
+- Hero section with category badge (Foundation/Performance/Recovery/Optimization)
+- "What To Do" card with parsed bullet points
+- 4-panel expandable "Why?" sections:
+  - **Why This Works** — Mechanism explanation
+  - **Research & Evidence** — DOI citations with clickable links
+  - **Your Data** — Personalized context (placeholder)
+  - **Our Confidence** — High/Medium/Low indicator with explanation
+- Sticky footer with "Mark as Complete" CTA
+- Smooth 250ms spring animations for expand/collapse
 
-### Enhancements
-- `RecoveryScoreCard.tsx` — 56px hero sizing with 800ms count-up animation, hero elevation shadow
-- Removed paywall concept (no LockedModuleCard — Apex OS launches with full access)
-- 28px section gaps per design system
-
-### Home Screen Layout Order
-1. HomeHeader (greeting + date + quick actions)
-2. Recovery Score Hero (or LiteModeScoreCard for no-wearable users)
-3. Today's Focus (One Big Thing)
-4. Day Timeline (horizontal scroll)
-5. Your Focus Areas + Add Protocol button
-6. Weekly Progress + Synthesis link
-
-**Files Created:**
-- `client/src/components/home/HomeHeader.tsx`
-- `client/src/components/home/TodaysFocusCard.tsx`
-- `client/src/components/home/DayTimeline.tsx`
-- `client/src/components/home/WeeklyProgressCard.tsx`
-- `client/src/components/home/AdherenceDots.tsx`
-- `client/src/components/home/index.ts`
-- `client/src/hooks/useTodaysFocus.ts`
-- `client/src/hooks/useWeeklyProgress.ts`
+### Sub-Components Created (inline)
+- `CategoryBadge` — Color-coded protocol category indicator
+- `ExpandableSection` — Animated collapsible panel with Reanimated
+- `ConfidenceIndicator` — 3-dot confidence level display
 
 **Files Modified:**
-- `client/src/components/RecoveryScoreCard.tsx` (hero styling + animations)
-- `client/src/screens/HomeScreen.tsx` (complete layout overhaul)
+- `client/src/navigation/HomeStack.tsx` — Added ProtocolDetail route (+17 lines)
+- `client/src/screens/HomeScreen.tsx` — Added handleTaskPress + onTaskPress prop (+17 lines)
+- `client/src/screens/ProtocolDetailScreen.tsx` — Complete redesign (+573 lines, -190 lines)
 
-**Files Deleted:**
-- `client/src/components/LockedModuleCard.tsx` (no paywall gates)
+**Commit:** `60c7c77` — feat: add Protocol Detail Screen with navigation and 4-panel Why? sections (Session 58)
 
-**Commit:** `5a09399` — feat: redesign Home Screen with new component architecture (Session 57)
-
-**Result:** Home Screen redesign complete and visually verified in web preview
+**Result:** Protocol Detail Screen accessible from Home Screen with professional dark mode UI and evidence transparency panels. All navigation connections verified in web preview.
 
 ---
 
 ## Previous Session
 
-**Date:** December 9, 2025 (Session 56)
-**Focus:** Biometrics Collection in Onboarding
+**Date:** December 9, 2025 (Session 57)
+**Focus:** Home Screen Redesign
 
 **Accomplished:**
-- Created `BiometricProfileScreen.tsx` — onboarding step for age, sex, height, weight, timezone
-- Created `BiometricSettingsScreen.tsx` — edit biometrics from Profile
-- Supabase migration `20251209000000_add_user_biometrics.sql`
-- Backend integration for biometric persistence
+- Created 5 new Home Screen components (HomeHeader, TodaysFocusCard, DayTimeline, WeeklyProgressCard, AdherenceDots)
+- Created 2 new hooks (useTodaysFocus, useWeeklyProgress)
+- Complete Home Screen layout overhaul with Bloomberg-style timeline
 
-**Commit:** `ba78934` — feat: add biometric profile collection in onboarding
+**Commit:** `5a09399` — feat: redesign Home Screen with new component architecture (Session 57)
 
 ---
 
@@ -134,25 +121,24 @@
 
 ## Next Session Priority
 
-### Session 58 Focus: Protocol Detail Screen & Navigation
+### Session 59 Focus: Protocol Data Enrichment & Personalization
 
-Following the Home Screen redesign, the next priority is completing the Protocol experience:
+With Protocol Detail Screen complete, the next priority is enriching the protocol data:
 
-1. **Protocol Detail Screen**
-   - Protocol card tap → detail view with full description
-   - Evidence panel with DOI links
-   - "Why this protocol for you" personalization
-   - Start/Log action buttons
+1. **Protocol Data from Master Library**
+   - Seed Supabase with structured protocol data from `Master_Protocol_Library.md`
+   - Include: mechanism, evidenceSummary, coreParameters, expectedOutcomes
+   - Update `useProtocolDetail` hook to fetch enriched data
 
-2. **Protocol Logging Flow**
-   - Quick log from Home (tap Done on timeline card)
-   - Full log from detail screen with notes
-   - Duration tracking and completion confirmation
+2. **Real Personalization**
+   - Connect "Your Data" panel to actual user data (adherence, last completed)
+   - Connect "Our Confidence" panel to real confidence scoring from backend
+   - Display chronotype/location personalization hints
 
-3. **Navigation Polish**
-   - Add Protocol button → Protocols tab with filter
-   - Weekly Synthesis link → Insights tab
-   - Profile avatar → Profile tab
+3. **Protocol Logging Enhancements**
+   - Add notes field before completion
+   - Duration tracking (start timer on detail screen)
+   - Post-completion confirmation modal with encouragement
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -259,4 +245,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 9, 2025 (Session 57 closeout - Home Screen Redesign complete)*
+*Last Updated: December 9, 2025 (Session 58 closeout - Protocol Detail Screen & Navigation complete)*
