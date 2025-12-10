@@ -5,7 +5,8 @@ import type { CorrelationsResponse } from '../types/correlations';
 import type { UserPreferences, UserProfile } from '../types/user';
 import type { WearableSyncPayload } from './wearables/aggregators';
 import type { OnboardingCompletePayload } from '../types/onboarding';
-import type { ProtocolDetail } from '../types/protocol';
+import type { ProtocolDetail, PersonalizedProtocolResponse } from '../types/protocol';
+import { DEFAULT_USER_PROTOCOL_DATA, DEFAULT_CONFIDENCE_RESULT } from '../types/protocol';
 
 type HttpMethod = 'GET' | 'POST' | 'DELETE' | 'PATCH';
 
@@ -247,26 +248,82 @@ export const searchProtocols = (query: string, limit?: number) =>
   );
 
 /**
- * Fetches a single protocol by ID.
- * Uses the search API to find the protocol since there's no dedicated endpoint.
+ * Fetches a single protocol by ID with basic details.
+ * Falls back to search API if dedicated endpoint fails.
  * @param protocolId Protocol ID to fetch
  * @returns Protocol detail object
  */
 export const fetchProtocolById = async (protocolId: string): Promise<ProtocolDetail> => {
-  // Use search API to find the protocol by ID
-  const results = await searchProtocols(protocolId, 10);
-  const match = results.find((r) => r.id === protocolId);
+  try {
+    // Try personalized endpoint first (returns more data)
+    const response = await fetchPersonalizedProtocol(protocolId);
+    return response.protocol;
+  } catch {
+    // Fallback to search API
+    const results = await searchProtocols(protocolId, 10);
+    const match = results.find((r) => r.id === protocolId);
 
-  if (!match) {
-    throw new Error(`Protocol not found: ${protocolId}`);
+    if (!match) {
+      throw new Error(`Protocol not found: ${protocolId}`);
+    }
+
+    return {
+      id: match.id,
+      name: match.name ?? '',
+      description: match.description ?? undefined,
+      citations: match.citations,
+      category: (match.category as ProtocolDetail['category']) ?? undefined,
+      tier_required: match.tier_required ?? undefined,
+      benefits: match.benefits ?? undefined,
+      constraints: match.constraints ?? undefined,
+    };
   }
+};
 
-  return {
-    id: match.id,
-    name: match.name ?? '',
-    description: match.description ?? undefined,
-    citations: match.citations,
-  };
+/**
+ * Fetches personalized protocol data including user-specific information.
+ * Returns enriched protocol, user adherence data, and confidence scoring.
+ *
+ * @param protocolId Protocol ID to fetch
+ * @param userId Optional user ID (for testing, normally uses auth token)
+ * @returns Personalized protocol response with enrichment and user data
+ */
+export const fetchPersonalizedProtocol = async (
+  protocolId: string,
+  userId?: string
+): Promise<PersonalizedProtocolResponse> => {
+  try {
+    const queryParams = userId ? `?user_id=${userId}` : '';
+    return await request<PersonalizedProtocolResponse>(
+      `/api/protocols/${protocolId}/personalized${queryParams}`,
+      'GET'
+    );
+  } catch (error) {
+    console.warn('Personalized protocol API unavailable, returning defaults');
+
+    // Fallback to search API for protocol data
+    const results = await searchProtocols(protocolId, 10);
+    const match = results.find((r) => r.id === protocolId);
+
+    if (!match) {
+      throw new Error(`Protocol not found: ${protocolId}`);
+    }
+
+    return {
+      protocol: {
+        id: match.id,
+        name: match.name ?? '',
+        description: match.description ?? undefined,
+        citations: match.citations,
+        category: (match.category as ProtocolDetail['category']) ?? undefined,
+        tier_required: match.tier_required ?? undefined,
+        benefits: match.benefits ?? undefined,
+        constraints: match.constraints ?? undefined,
+      },
+      user_data: DEFAULT_USER_PROTOCOL_DATA,
+      confidence: DEFAULT_CONFIDENCE_RESULT,
+    };
+  }
 };
 
 /**

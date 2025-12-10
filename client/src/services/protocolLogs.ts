@@ -10,6 +10,10 @@ export interface ProtocolLogPayload {
   loggedAt?: Date;
   metadata?: Record<string, unknown>;
   progressTarget?: number;
+  /** User's difficulty rating (1-5), optional */
+  difficultyRating?: number;
+  /** User's notes about this completion, optional */
+  notes?: string;
 }
 
 const LOG_COLLECTION = 'protocol_log_queue';
@@ -25,7 +29,17 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
     throw new Error('User must be authenticated to log a protocol');
   }
 
-  const { protocolId, moduleId, enrollmentId, source = 'manual', loggedAt, metadata, progressTarget } = payload;
+  const {
+    protocolId,
+    moduleId,
+    enrollmentId,
+    source = 'manual',
+    loggedAt,
+    metadata,
+    progressTarget,
+    difficultyRating,
+    notes,
+  } = payload;
 
   if (!protocolId || !moduleId) {
     throw new Error('protocolId and moduleId are required');
@@ -48,6 +62,8 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
     loggedAt: loggedAt ? Timestamp.fromDate(loggedAt) : serverTimestamp(),
     metadata: normalizedMetadata,
     progressTarget: target,
+    difficultyRating: difficultyRating ?? null,
+    notes: notes ?? null,
     createdAt: serverTimestamp(),
   };
 

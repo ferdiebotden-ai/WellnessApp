@@ -30,6 +30,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { useProtocolDetail } from '../hooks/useProtocolDetail';
 import { enqueueProtocolLog } from '../services/protocolLogs';
+import { CompletionModal } from '../components/protocol/CompletionModal';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 
@@ -50,13 +51,14 @@ interface ProtocolDetailScreenProps {
 // CONSTANTS
 // =============================================================================
 
-type ProtocolCategory = 'foundation' | 'performance' | 'recovery' | 'optimization';
+type ProtocolCategory = 'foundation' | 'performance' | 'recovery' | 'optimization' | 'meta';
 
 const CATEGORY_COLORS: Record<ProtocolCategory, string> = {
   foundation: palette.secondary,
   performance: palette.primary,
   recovery: palette.accent,
   optimization: palette.success,
+  meta: '#8B5CF6', // Purple for meta protocols
 };
 
 const CATEGORY_LABELS: Record<ProtocolCategory, string> = {
@@ -64,6 +66,7 @@ const CATEGORY_LABELS: Record<ProtocolCategory, string> = {
   performance: 'PERFORMANCE',
   recovery: 'RECOVERY',
   optimization: 'OPTIMIZATION',
+  meta: 'META',
 };
 
 // =============================================================================
@@ -210,9 +213,10 @@ const parseDescription = (description?: string | string[]) => {
 
 export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ route }) => {
   const { protocolId, protocolName, moduleId: routeModuleId, enrollmentId, source, progressTarget } = route.params;
-  const { protocol, status, error, reload } = useProtocolDetail(protocolId);
+  const { protocol, userData, confidence, status, error, reload } = useProtocolDetail(protocolId);
   const [logStatus, setLogStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
   const [logError, setLogError] = useState<string | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Parsed content
   const bullets = useMemo(() => parseDescription(protocol?.description), [protocol?.description]);
@@ -220,24 +224,62 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
   const displayName = protocol?.name ?? protocolName ?? 'Protocol';
   const moduleId = routeModuleId;
 
-  const handleLogComplete = useCallback(async () => {
+  // Format user data for display
+  const formatLastCompleted = (dateString: string | null): string => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      const displayMinutes = minutes.toString().padStart(2, '0');
+      return `Today at ${displayHours}:${displayMinutes} ${ampm}`;
+    }
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
+  const formatDifficultyRating = (avg: number | null): string => {
+    if (avg === null) return 'Not rated';
+    const stars = Math.round(avg);
+    return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+  };
+
+  // Show the completion modal when button is pressed
+  const handleMarkComplete = useCallback(() => {
     if (!protocolId || !moduleId) {
       setLogStatus('error');
       setLogError('Module context missing.');
       return;
     }
+    setShowCompletionModal(true);
+  }, [protocolId, moduleId]);
 
+  // Called when user completes the modal with rating/notes
+  const handleLogComplete = useCallback(async (
+    difficultyRating: number | null,
+    notes: string | null
+  ) => {
+    setShowCompletionModal(false);
     setLogStatus('pending');
     setLogError(null);
 
     try {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await enqueueProtocolLog({
-        protocolId,
-        moduleId,
+        protocolId: protocolId!,
+        moduleId: moduleId!,
         enrollmentId,
         source,
         progressTarget,
+        difficultyRating: difficultyRating ?? undefined,
+        notes: notes ?? undefined,
         metadata: {
           protocolName: displayName,
         },
@@ -248,6 +290,16 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
       setLogError(logErr instanceof Error ? logErr.message : 'Unable to log protocol right now.');
     }
   }, [protocolId, moduleId, enrollmentId, source, progressTarget, displayName]);
+
+  // Called when user skips the modal (logs without rating)
+  const handleSkipModal = useCallback(() => {
+    handleLogComplete(null, null);
+  }, [handleLogComplete]);
+
+  // Called when user cancels the modal
+  const handleCancelModal = useCallback(() => {
+    setShowCompletionModal(false);
+  }, []);
 
   // Open DOI link in browser
   const handleOpenCitation = useCallback((link: string) => {
@@ -260,7 +312,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
       <ScrollView contentContainerStyle={styles.content}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <CategoryBadge />
+          <CategoryBadge category={(protocol?.category?.toLowerCase() as ProtocolCategory) || 'foundation'} />
           <Text accessibilityRole="header" style={styles.title}>
             {displayName}
           </Text>
@@ -307,9 +359,8 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
               {/* Mechanism */}
               <ExpandableSection title="Why This Works" icon="🧬">
                 <Text style={styles.mechanismText}>
-                  This protocol works by signaling your body's natural systems to adapt.
-                  When practiced consistently, it helps establish healthier patterns
-                  that compound over time.
+                  {protocol.mechanism_description ||
+                    'This protocol works by signaling your body\'s natural systems to adapt. When practiced consistently, it helps establish healthier patterns that compound over time.'}
                 </Text>
                 <Text style={styles.caveatText}>
                   Note: Individual response varies based on genetics and baseline health.
@@ -342,35 +393,85 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
 
               {/* Your Data */}
               <ExpandableSection title="Your Data" icon="📈">
-                <Text style={styles.yourDataText}>
-                  Based on your recent patterns, this protocol aligns with your current
-                  recovery status and goals.
-                </Text>
+                {userData.memory_insight ? (
+                  <Text style={styles.yourDataText}>{userData.memory_insight}</Text>
+                ) : userData.total_completions > 0 ? (
+                  <Text style={styles.yourDataText}>
+                    You've completed this protocol {userData.total_completions} time{userData.total_completions !== 1 ? 's' : ''}.
+                  </Text>
+                ) : (
+                  <Text style={styles.yourDataText}>
+                    Complete this protocol to start tracking your patterns.
+                  </Text>
+                )}
                 <View style={styles.dataPointRow}>
-                  <Text style={styles.dataPointLabel}>Adherence (7 days)</Text>
-                  <Text style={styles.dataPointValue}>—</Text>
+                  <Text style={styles.dataPointLabel}>This week</Text>
+                  <Text style={styles.dataPointValue}>{userData.adherence_7d}/7 days</Text>
                 </View>
                 <View style={styles.dataPointRow}>
                   <Text style={styles.dataPointLabel}>Last completed</Text>
-                  <Text style={styles.dataPointValue}>—</Text>
+                  <Text style={styles.dataPointValue}>{formatLastCompleted(userData.last_completed_at)}</Text>
                 </View>
+                {userData.difficulty_avg !== null && (
+                  <View style={styles.dataPointRow}>
+                    <Text style={styles.dataPointLabel}>Your difficulty</Text>
+                    <Text style={styles.dataPointValue}>{formatDifficultyRating(userData.difficulty_avg)}</Text>
+                  </View>
+                )}
               </ExpandableSection>
 
               {/* Confidence */}
               <ExpandableSection title="Our Confidence" icon="🎯">
-                <ConfidenceIndicator level="medium" />
+                <ConfidenceIndicator level={confidence.level} />
                 <Text style={styles.confidenceExplainer}>
-                  Confidence is calculated from: data days available, correlation
-                  strength, baseline stability, user data volatility, and extrapolation risk.
+                  {confidence.reasoning}
                 </Text>
-                <Text style={styles.caveatText}>
-                  Based on population averages; individual results vary.
-                </Text>
+                <View style={styles.confidenceFactors}>
+                  <View style={styles.factorRow}>
+                    <Text style={styles.factorLabel}>Goal Fit</Text>
+                    <View style={styles.factorBar}>
+                      <View style={[styles.factorFill, { width: `${confidence.factors.protocol_fit * 100}%` }]} />
+                    </View>
+                  </View>
+                  <View style={styles.factorRow}>
+                    <Text style={styles.factorLabel}>Memory</Text>
+                    <View style={styles.factorBar}>
+                      <View style={[styles.factorFill, { width: `${confidence.factors.memory_support * 100}%` }]} />
+                    </View>
+                  </View>
+                  <View style={styles.factorRow}>
+                    <Text style={styles.factorLabel}>Timing</Text>
+                    <View style={styles.factorBar}>
+                      <View style={[styles.factorFill, { width: `${confidence.factors.timing_fit * 100}%` }]} />
+                    </View>
+                  </View>
+                  <View style={styles.factorRow}>
+                    <Text style={styles.factorLabel}>No Conflicts</Text>
+                    <View style={styles.factorBar}>
+                      <View style={[styles.factorFill, { width: `${confidence.factors.conflict_risk * 100}%` }]} />
+                    </View>
+                  </View>
+                  <View style={styles.factorRow}>
+                    <Text style={styles.factorLabel}>Evidence</Text>
+                    <View style={styles.factorBar}>
+                      <View style={[styles.factorFill, { width: `${confidence.factors.evidence_strength * 100}%` }]} />
+                    </View>
+                  </View>
+                </View>
               </ExpandableSection>
             </View>
           </>
         )}
       </ScrollView>
+
+      {/* Completion Modal */}
+      <CompletionModal
+        visible={showCompletionModal}
+        protocolName={displayName}
+        onComplete={handleLogComplete}
+        onSkip={handleSkipModal}
+        onCancel={handleCancelModal}
+      />
 
       {/* Sticky Footer */}
       <View style={styles.footer}>
@@ -378,7 +479,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
           accessibilityRole="button"
           accessibilityState={{ disabled: !moduleId || logStatus === 'pending' || logStatus === 'success' }}
           disabled={!moduleId || logStatus === 'pending' || logStatus === 'success'}
-          onPress={handleLogComplete}
+          onPress={handleMarkComplete}
           style={({ pressed }) => [
             styles.primaryButton,
             logStatus === 'success' && styles.primaryButtonSuccess,
@@ -651,6 +752,32 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: palette.textMuted,
     lineHeight: 18,
+    marginBottom: 12,
+  },
+  confidenceFactors: {
+    gap: 8,
+  },
+  factorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  factorLabel: {
+    ...typography.caption,
+    color: palette.textMuted,
+    width: 80,
+  },
+  factorBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: palette.elevated,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  factorFill: {
+    height: '100%',
+    backgroundColor: palette.primary,
+    borderRadius: 3,
   },
 
   // Footer

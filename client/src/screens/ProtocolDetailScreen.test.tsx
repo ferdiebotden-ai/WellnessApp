@@ -2,6 +2,10 @@ import React from 'react';
 import { Linking } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { ProtocolDetailScreen } from './ProtocolDetailScreen';
+import {
+  DEFAULT_USER_PROTOCOL_DATA,
+  DEFAULT_CONFIDENCE_RESULT,
+} from '../types/protocol';
 
 jest.mock('../hooks/useProtocolDetail', () => ({
   useProtocolDetail: jest.fn(),
@@ -50,6 +54,8 @@ describe('ProtocolDetailScreen', () => {
         description: 'Supports rest\nImproves sleep latency',
         citations: ['https://doi.org/123'],
       },
+      userData: DEFAULT_USER_PROTOCOL_DATA,
+      confidence: DEFAULT_CONFIDENCE_RESULT,
       status: 'success',
       error: null,
       reload: jest.fn(),
@@ -63,7 +69,7 @@ describe('ProtocolDetailScreen', () => {
   });
 
   it('opens evidence list and handles citation taps', () => {
-    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValueOnce();
+    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValueOnce(undefined);
 
     mockUseProtocolDetail.mockReturnValue({
       protocol: {
@@ -72,6 +78,8 @@ describe('ProtocolDetailScreen', () => {
         description: ['Stabilizes glucose'],
         citations: ['https://pubmed.gov/abc123'],
       },
+      userData: DEFAULT_USER_PROTOCOL_DATA,
+      confidence: DEFAULT_CONFIDENCE_RESULT,
       status: 'success',
       error: null,
       reload: jest.fn(),
@@ -93,6 +101,8 @@ describe('ProtocolDetailScreen', () => {
     const reloadMock = jest.fn();
     mockUseProtocolDetail.mockReturnValue({
       protocol: null,
+      userData: DEFAULT_USER_PROTOCOL_DATA,
+      confidence: DEFAULT_CONFIDENCE_RESULT,
       status: 'error',
       error: 'network',
       reload: reloadMock,
@@ -112,6 +122,8 @@ describe('ProtocolDetailScreen', () => {
         description: 'Supports rest',
         citations: [],
       },
+      userData: DEFAULT_USER_PROTOCOL_DATA,
+      confidence: DEFAULT_CONFIDENCE_RESULT,
       status: 'success',
       error: null,
       reload: jest.fn(),
@@ -139,6 +151,8 @@ describe('ProtocolDetailScreen', () => {
         description: 'Supports rest',
         citations: [],
       },
+      userData: DEFAULT_USER_PROTOCOL_DATA,
+      confidence: DEFAULT_CONFIDENCE_RESULT,
       status: 'success',
       error: null,
       reload: jest.fn(),
