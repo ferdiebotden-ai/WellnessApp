@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 61 (next) |
-| **Progress** | Session 60 complete (Backend Deployment & E2E Verification) |
+| **Session** | 62 (next) |
+| **Progress** | Session 61 complete (Duration Tracking & Protocol Scheduling) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,49 +52,102 @@
 
 ## Last Session
 
-**Date:** December 9, 2025 (Session 60)
-**Focus:** Backend Deployment & E2E Verification
+**Date:** December 9, 2025 (Session 61)
+**Focus:** Duration Tracking & Protocol Scheduling
 
-**Context:** Session 59 completed protocol enrichment and personalization. Session 60 verified deployment and tested the full stack.
+**Context:** Session 60 verified backend deployment and E2E flow. Session 61 added the ability for users to browse and add protocols to their schedule, plus track time spent on each protocol.
 
 **Accomplished:**
 
-### Backend Deployment Verification
-- Confirmed GitHub Actions deployed revision `api-00178-gd4` to Cloud Run
-- Verified API health endpoint responds correctly
-- Tested personalized protocol endpoint returns full enriched data
+### Protocol Scheduling System
+- **Migration:** Created `user_protocol_enrollment` table for individual protocol scheduling
+  - Stores user-selected protocols with `default_time_utc` preference
+  - Supports `is_active` toggle for enabling/disabling
+- **API Endpoints:** Added 3 new endpoints in `protocolEnrollment.ts`:
+  - `POST /api/protocols/:id/enroll` — Add protocol to schedule
+  - `DELETE /api/protocols/:id/enroll` — Remove from schedule
+  - `GET /api/user/enrolled-protocols` — List user's enrolled protocols
+- **Intelligent Defaults:** `getDefaultTimeForProtocol()` assigns smart times based on protocol type:
+  - Foundation/Morning protocols → 07:00 UTC
+  - Sleep/Evening protocols → 20:00 UTC
+  - Recovery/Afternoon protocols → 14:00 UTC
+  - Others → 12:00 UTC
 
-### Personalized Endpoint Testing
-```bash
-GET /api/protocols/protocol_1_morning_light/personalized
-```
-Returns:
-- Protocol with mechanism_description, parameter_ranges, implementation_rules, success_metrics, study_sources
-- User data: adherence_7d, last_completed_at, difficulty_avg, total_completions, memory_insight
-- Confidence: 5-factor scoring (protocol_fit, memory_support, timing_fit, conflict_risk, evidence_strength)
+### Protocol Browser Screen
+- **New Screen:** `ProtocolBrowserScreen.tsx` with:
+  - Search bar with debounced input
+  - Protocols grouped by category (Foundation, Performance, Recovery, Optimization)
+  - Protocol cards showing name, description, match percentage
+  - "Tap to add to schedule" CTA with enrollment toggle
+  - Toast notifications for success/error feedback
+- **Navigation:** Wired "Add Protocol" button on Home → ProtocolBrowser
 
-### E2E Testing via Playwright
-- Expo web server running on port 8081
-- Home screen loads with authenticated user (FUrI5W0vMWgLhbWJoFHO032suGU2)
-- Weekly Progress shows protocols (Morning Light 5/7, Cold Exposure 3/7, Breathwork 4/7)
-- Sleep Optimization module activated
-- No API errors in browser console
+### Daily Scheduler Enhancement
+- Updated `dailyScheduler.ts` to include user-enrolled protocols
+- User protocol enrollments take priority over module-based protocols
+- Respects user's `default_time_utc` preference for scheduling
 
-### Asset Cleanup
-- Reorganized logo files into Archive folder
-- Added Logo Usage documentation to apex-os-design SKILL.md
+### Duration Tracking
+- **Timer UI:** Added active timer to `ProtocolDetailScreen`:
+  - Timer starts on screen mount
+  - Displays elapsed time in MM:SS format (or HH:MM for long sessions)
+  - Stops on completion or unmount
+- **CompletionModal:** Enhanced with duration display card
+  - Shows "Completed in X:XX" with stopwatch icon
+  - Styled with primary accent border
+- **Data Flow:** Wired `durationSeconds` through entire pipeline:
+  - `protocolLogs.ts` includes duration in Firestore queue document
+  - `onProtocolLogWritten.ts` extracts and converts to `duration_minutes` for Supabase
+  - Also now includes `difficulty_rating` and `notes` in protocol_logs insert
 
-**Commits:**
-- `851da1a` — docs: update STATUS.md for Session 60
-- `ce6d8ca` — chore: reorganize logo assets and add logo usage docs
+### E2E Verification
+- Tested full flow via Playwright:
+  - Home → Add Protocol navigation works
+  - ProtocolBrowserScreen renders with grouped protocols
+  - Protocol cards display with match scores
+  - Error handling shows toast on API failures
+  - Back navigation works correctly
 
-**Result:** Full stack verified working. Personalized protocol API deployed and returning enriched data with 5-factor confidence scoring.
+**Files Created:**
+- `supabase/migrations/20251209200000_create_user_protocol_enrollment.sql`
+- `functions/src/protocolEnrollment.ts`
+- `client/src/screens/ProtocolBrowserScreen.tsx`
+
+**Files Modified:**
+- `functions/src/api.ts` — Route registration
+- `functions/src/dailyScheduler.ts` — User enrollment support
+- `functions/src/onProtocolLogWritten.ts` — Duration + enrichment fields
+- `client/src/services/api.ts` — Enrollment API functions
+- `client/src/services/protocolLogs.ts` — Duration field
+- `client/src/screens/ProtocolDetailScreen.tsx` — Timer UI
+- `client/src/screens/HomeScreen.tsx` — ProtocolBrowser navigation
+- `client/src/navigation/HomeStack.tsx` — Route registration
+- `client/src/components/protocol/CompletionModal.tsx` — Duration display
+
+**Commit:** `c8497d9` — feat: add protocol scheduling and duration tracking (Session 61)
+
+**Result:** Users can now browse and add protocols to their schedule with intelligent default times. Time spent on each protocol is tracked and displayed in the completion modal.
 
 ---
 
 ## Previous Session
 
-**Date:** December 9, 2025 (Session 59)
+**Date:** December 9, 2025 (Session 60)
+**Focus:** Backend Deployment & E2E Verification
+
+**Accomplished:**
+- Confirmed GitHub Actions deployed revision `api-00178-gd4` to Cloud Run
+- Verified personalized protocol endpoint returns full enriched data
+- E2E tested via Playwright (Home screen, Weekly Progress, modules)
+- Reorganized logo assets with usage documentation
+
+**Commit:** `851da1a` — docs: update STATUS.md for Session 60
+
+---
+
+## Session 59 Summary
+
+**Date:** December 9, 2025
 **Focus:** Protocol Data Enrichment & Personalization
 
 **Accomplished:**
@@ -109,40 +162,26 @@ Returns:
 
 ---
 
-## Session 58 Summary
-
-**Date:** December 9, 2025
-**Focus:** Protocol Detail Screen & Navigation
-
-**Accomplished:**
-- Created ProtocolDetailScreen with 4-panel Why? sections
-- Added navigation from DayTimeline to Protocol Detail
-- Connected Home Screen navigation (Profile, Weekly Synthesis, Add Protocol)
-
-**Commit:** `60c7c77` — feat: add Protocol Detail Screen with navigation and 4-panel Why? sections (Session 58)
-
----
-
 ## Next Session Priority
 
-### Session 61 Focus: Duration Tracking & Protocol Scheduling
+### Session 62 Focus: Deploy & Complete Flow Testing
 
-With backend verified and E2E flow working, the next priority is completing the protocol logging experience:
+Session 61 built the UI and backend logic for protocol scheduling and duration tracking. Next priorities:
 
-1. **Duration Tracking**
-   - Add timer state to ProtocolDetailScreen (start on mount)
-   - Track elapsed time from screen open to completion
-   - Include duration_seconds in protocol log payload
-   - Display duration in completion confirmation
+1. **Deploy Backend Updates**
+   - Push new protocolEnrollment endpoints to Cloud Run
+   - Apply `user_protocol_enrollment` migration to Supabase
+   - Verify enrollment flow works end-to-end
 
-2. **Protocol Scheduling**
-   - Enable "Add Protocol" flow to schedule protocols for daily timeline
-   - Wire DayTimeline to show scheduled protocols (clickable → ProtocolDetail)
-   - Persist schedule to user's enrollment/preferences
-
-3. **Push Notification Setup** (if time permits)
+2. **Push Notification Setup**
    - Configure expo-notifications for scheduled protocol reminders
    - Wire to nudge engine for personalized timing
+   - Test notification delivery on iOS/Android
+
+3. **Polish & Edge Cases**
+   - Handle offline enrollment queue
+   - Add visual feedback for enrolled protocols on ProtocolBrowser
+   - Test timer accuracy over long protocol sessions
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -155,6 +194,7 @@ With backend verified and E2E flow working, the next priority is completing the 
 cd ~/projects/WellnessApp/client && npx expo start --web  # Web preview
 cd ~/projects/WellnessApp/functions && npx tsc --noEmit   # Type check functions
 cd ~/projects/WellnessApp/client && npx tsc --noEmit      # Type check client
+supabase db push                                           # Apply migrations
 ```
 
 **API:** `https://api-26324650924.us-central1.run.app/`
@@ -249,4 +289,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 9, 2025 (Session 60 closeout - Backend Deployment & E2E Verification complete)*
+*Last Updated: December 9, 2025 (Session 61 closeout - Duration Tracking & Protocol Scheduling complete)*
