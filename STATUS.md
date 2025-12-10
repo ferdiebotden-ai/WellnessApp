@@ -124,83 +124,18 @@
 
 ---
 
-## Session 61 Summary
+## Session 63 Summary
 
-**Date:** December 9, 2025
-**Focus:** Duration Tracking & Protocol Scheduling
-
-**Context:** Session 60 verified backend deployment and E2E flow. Session 61 added the ability for users to browse and add protocols to their schedule, plus track time spent on each protocol.
+**Date:** December 10, 2025
+**Focus:** Push Notifications & Protocol Flexibility
 
 **Accomplished:**
+- Push notification infrastructure wired end-to-end
+- Protocol reminder scheduler (15-min Pub/Sub job)
+- Custom time selection for enrollment (TimePickerBottomSheet)
+- Protocol implementation methods (Morning Light with 3 options)
 
-### Protocol Scheduling System
-- **Migration:** Created `user_protocol_enrollment` table for individual protocol scheduling
-  - Stores user-selected protocols with `default_time_utc` preference
-  - Supports `is_active` toggle for enabling/disabling
-- **API Endpoints:** Added 3 new endpoints in `protocolEnrollment.ts`:
-  - `POST /api/protocols/:id/enroll` — Add protocol to schedule
-  - `DELETE /api/protocols/:id/enroll` — Remove from schedule
-  - `GET /api/user/enrolled-protocols` — List user's enrolled protocols
-- **Intelligent Defaults:** `getDefaultTimeForProtocol()` assigns smart times based on protocol type:
-  - Foundation/Morning protocols → 07:00 UTC
-  - Sleep/Evening protocols → 20:00 UTC
-  - Recovery/Afternoon protocols → 14:00 UTC
-  - Others → 12:00 UTC
-
-### Protocol Browser Screen
-- **New Screen:** `ProtocolBrowserScreen.tsx` with:
-  - Search bar with debounced input
-  - Protocols grouped by category (Foundation, Performance, Recovery, Optimization)
-  - Protocol cards showing name, description, match percentage
-  - "Tap to add to schedule" CTA with enrollment toggle
-  - Toast notifications for success/error feedback
-- **Navigation:** Wired "Add Protocol" button on Home → ProtocolBrowser
-
-### Daily Scheduler Enhancement
-- Updated `dailyScheduler.ts` to include user-enrolled protocols
-- User protocol enrollments take priority over module-based protocols
-- Respects user's `default_time_utc` preference for scheduling
-
-### Duration Tracking
-- **Timer UI:** Added active timer to `ProtocolDetailScreen`:
-  - Timer starts on screen mount
-  - Displays elapsed time in MM:SS format (or HH:MM for long sessions)
-  - Stops on completion or unmount
-- **CompletionModal:** Enhanced with duration display card
-  - Shows "Completed in X:XX" with stopwatch icon
-  - Styled with primary accent border
-- **Data Flow:** Wired `durationSeconds` through entire pipeline:
-  - `protocolLogs.ts` includes duration in Firestore queue document
-  - `onProtocolLogWritten.ts` extracts and converts to `duration_minutes` for Supabase
-  - Also now includes `difficulty_rating` and `notes` in protocol_logs insert
-
-### E2E Verification
-- Tested full flow via Playwright:
-  - Home → Add Protocol navigation works
-  - ProtocolBrowserScreen renders with grouped protocols
-  - Protocol cards display with match scores
-  - Error handling shows toast on API failures
-  - Back navigation works correctly
-
-**Files Created:**
-- `supabase/migrations/20251209200000_create_user_protocol_enrollment.sql`
-- `functions/src/protocolEnrollment.ts`
-- `client/src/screens/ProtocolBrowserScreen.tsx`
-
-**Files Modified:**
-- `functions/src/api.ts` — Route registration
-- `functions/src/dailyScheduler.ts` — User enrollment support
-- `functions/src/onProtocolLogWritten.ts` — Duration + enrichment fields
-- `client/src/services/api.ts` — Enrollment API functions
-- `client/src/services/protocolLogs.ts` — Duration field
-- `client/src/screens/ProtocolDetailScreen.tsx` — Timer UI
-- `client/src/screens/HomeScreen.tsx` — ProtocolBrowser navigation
-- `client/src/navigation/HomeStack.tsx` — Route registration
-- `client/src/components/protocol/CompletionModal.tsx` — Duration display
-
-**Commit:** `c8497d9` — feat: add protocol scheduling and duration tracking (Session 61)
-
-**Result:** Users can now browse and add protocols to their schedule with intelligent default times. Time spent on each protocol is tracked and displayed in the completion modal.
+**Commits:** `5fcc4c0`, `c8d22f5`
 
 ---
 
@@ -335,4 +270,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 10, 2025 (Session 64 complete - My Schedule Display Enhancement)*
+*Last Updated: December 10, 2025 (Session 65 complete - My Schedule Enhancements + Push Notification Gaps)*
