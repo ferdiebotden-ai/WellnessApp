@@ -11,12 +11,14 @@ import { apiApp } from './api';
  * 4. runMemoryMaintenance - Pub/Sub triggered memory decay/pruning (daily)
  * 5. onNudgeFeedback - Firestore triggered memory creation from feedback
  * 6. generateWeeklySyntheses - Pub/Sub triggered weekly synthesis (Sunday 8:45am UTC)
+ * 7. sendScheduledProtocolReminders - Pub/Sub triggered protocol reminders (every 15 min)
  */
 
 // Export Pub/Sub-triggered functions
 export { generateDailySchedules, runMemoryMaintenance } from './dailyScheduler';
 export { generateAdaptiveNudges } from './nudgeEngine';
 export { generateWeeklySyntheses } from './weeklySynthesisScheduler';
+export { sendScheduledProtocolReminders } from './protocolReminderScheduler';
 
 // Export Firestore-triggered functions (Memory Layer)
 export { onNudgeFeedback } from './onNudgeFeedback';

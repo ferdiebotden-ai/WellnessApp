@@ -486,15 +486,25 @@ export interface UnenrollProtocolResponse {
 /**
  * Enrolls the user in a protocol with intelligent default timing.
  * @param protocolId Protocol ID to enroll in
- * @param moduleId Optional module ID for context
+ * @param options Optional enrollment options
+ * @param options.moduleId Optional module ID for context
+ * @param options.time Optional custom time in "HH:MM" format (UTC)
  * @returns Enrollment response with default schedule time
  */
-export const enrollInProtocol = (protocolId: string, moduleId?: string) =>
-  request<EnrollProtocolResponse>(
+export const enrollInProtocol = (
+  protocolId: string,
+  options?: { moduleId?: string; time?: string }
+) => {
+  const body: Record<string, string> = {};
+  if (options?.moduleId) body.module_id = options.moduleId;
+  if (options?.time) body.time = options.time;
+
+  return request<EnrollProtocolResponse>(
     `/api/protocols/${protocolId}/enroll`,
     'POST',
-    moduleId ? { module_id: moduleId } : {}
+    Object.keys(body).length > 0 ? body : {}
   );
+};
 
 /**
  * Unenrolls the user from a protocol (soft delete).

@@ -42,6 +42,7 @@ import {
   isProtocolApprovedForMVD,
   MVDState,
 } from './mvd';
+import { sendPushToUser } from './notifications/pushService';
 
 // Interfaces
 interface ModuleEnrollmentRow {
@@ -432,6 +433,22 @@ export const generateAdaptiveNudges = async (
     };
 
     await firestore.collection('live_nudges').doc(userId).collection('entries').add(taskDoc);
+
+    // Send push notification to user's devices
+    try {
+      const pushResult = await sendPushToUser(
+        userId,
+        bestMatch.protocol.name || 'New Recommendation',
+        nudgeText.substring(0, 100), // Truncate for push body
+        { type: 'nudge', protocol_id: suggestedProtocolId, protocol_name: bestMatch.protocol.name }
+      );
+      if (pushResult.sent > 0) {
+        console.log(`[NudgeEngine] Push sent to user ${userId}: ${pushResult.sent} device(s)`);
+      }
+    } catch (pushError) {
+      // Non-critical - nudge is still in Firestore for in-app display
+      console.warn(`[NudgeEngine] Push failed for ${userId}:`, pushError);
+    }
 
     // Log to Audit Log (includes memory IDs and confidence for traceability)
     const memoryIdsUsed = memories.map((m) => m.id);

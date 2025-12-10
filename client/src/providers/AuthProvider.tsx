@@ -17,6 +17,7 @@ import {
   updateOnboardingStatus,
 } from '../services/AuthService';
 import { syncUser } from '../services/api';
+import { setupPushNotifications, deactivatePushToken } from '../services/pushNotifications';
 import type {
   AuthContextValue,
   AuthState,
@@ -115,6 +116,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             console.warn('⚠️ Failed to sync user to Supabase on session restore:', syncError);
           }
 
+          // Register for push notifications after successful auth sync
+          try {
+            const pushResult = await setupPushNotifications();
+            console.log(`✅ Push: ${pushResult ? 'registered' : 'skipped (web/simulator)'}`);
+          } catch (pushError) {
+            // Non-critical - app works without push notifications
+            console.warn('⚠️ Push setup failed:', pushError);
+          }
+
           await refreshUserProfile(firebaseUser);
           setState('authenticated');
         } catch (profileError) {
@@ -151,6 +161,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const handleSignOut = useCallback(async () => {
+    // Deactivate push token before signing out
+    try {
+      await deactivatePushToken();
+    } catch (error) {
+      console.warn('⚠️ Push token deactivation failed:', error);
+    }
+
     await signOut();
     setUser(null);
     setOnboardingStatus('pending');

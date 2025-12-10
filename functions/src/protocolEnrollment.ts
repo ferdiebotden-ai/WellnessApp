@@ -119,7 +119,8 @@ function getDefaultTimeForProtocol(protocolId: string, category: string): string
  * POST /api/protocols/:id/enroll
  *
  * Adds a protocol to the user's daily schedule with intelligent default timing.
- * Body (optional): { module_id?: string }
+ * Body (optional): { module_id?: string, time?: string }
+ * - time: Custom schedule time in "HH:MM" format (overrides intelligent default)
  *
  * Returns: { enrolled: true, protocol_id, default_time, protocol_name }
  */
@@ -174,11 +175,11 @@ export async function enrollProtocol(req: Request, res: Response): Promise<void>
       return;
     }
 
-    // 5. Get optional module_id from body
-    const { module_id } = (req.body || {}) as { module_id?: string };
+    // 5. Get optional module_id and custom time from body
+    const { module_id, time } = (req.body || {}) as { module_id?: string; time?: string };
 
-    // 6. Calculate default time based on protocol type
-    const defaultTime = getDefaultTimeForProtocol(protocolId, protocolData.category);
+    // 6. Use custom time if provided, otherwise calculate intelligent default
+    const scheduleTime = time || getDefaultTimeForProtocol(protocolId, protocolData.category);
 
     // 7. Upsert enrollment (reactivate if previously soft-deleted)
     const { error: upsertError } = await serviceClient
@@ -188,7 +189,7 @@ export async function enrollProtocol(req: Request, res: Response): Promise<void>
           user_id: supabaseUserId,
           protocol_id: protocolId,
           module_id: module_id || null,
-          default_time_utc: defaultTime,
+          default_time_utc: scheduleTime,
           is_active: true,
           enrolled_at: new Date().toISOString(),
         },
@@ -205,7 +206,7 @@ export async function enrollProtocol(req: Request, res: Response): Promise<void>
       enrolled: true,
       protocol_id: protocolId,
       protocol_name: protocolData.name,
-      default_time: defaultTime,
+      default_time: scheduleTime,
     });
   } catch (error) {
     console.error('[enrollProtocol] Error:', error);

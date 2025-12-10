@@ -33,6 +33,7 @@ import {
 } from '../services/api';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { TimePickerBottomSheet } from '../components/protocol/TimePickerBottomSheet';
 
 type Status = 'idle' | 'loading' | 'searching' | 'success' | 'error';
 
@@ -43,6 +44,67 @@ const DEFAULT_SEARCH_QUERIES = [
   'breathing exercises',
   'sleep optimization',
 ];
+
+/**
+ * Determine suggested time based on protocol characteristics.
+ * Mirrors backend logic in protocolEnrollment.ts
+ */
+function getSuggestedTime(protocolId: string, category: string | null): string {
+  const id = protocolId.toLowerCase();
+
+  // Morning protocols
+  if (
+    id.includes('morning_light') ||
+    id.includes('foundation') ||
+    id.includes('sunlight') ||
+    id.includes('wake')
+  ) {
+    return '07:00';
+  }
+
+  // Mid-morning exercise/cold
+  if (
+    id.includes('exercise') ||
+    id.includes('cold_exposure') ||
+    id.includes('cold_shower') ||
+    id.includes('workout')
+  ) {
+    return '10:00';
+  }
+
+  // Midday/afternoon focus
+  if (
+    id.includes('breathwork') ||
+    id.includes('meditation') ||
+    id.includes('nsdr') ||
+    id.includes('yoga_nidra') ||
+    id.includes('cyclic_sigh')
+  ) {
+    return '13:00';
+  }
+
+  // Evening wind-down
+  if (
+    id.includes('wind_down') ||
+    id.includes('sleep') ||
+    id.includes('evening') ||
+    id.includes('magnesium') ||
+    id.includes('blue_light')
+  ) {
+    return '21:00';
+  }
+
+  // Category-based fallback
+  if (category === 'Foundation') {
+    return '07:00';
+  }
+  if (category === 'Recovery') {
+    return '21:00';
+  }
+
+  // Default midday
+  return '12:00';
+}
 
 interface ProtocolCardProps {
   protocol: ProtocolSearchResult;
@@ -156,6 +218,7 @@ export const ProtocolBrowserScreen: React.FC = () => {
     message: '',
     visible: false,
   });
+  const [timePickerProtocol, setTimePickerProtocol] = useState<ProtocolSearchResult | null>(null);
 
   // Load enrolled protocols on mount
   useEffect(() => {
@@ -234,36 +297,72 @@ export const ProtocolBrowserScreen: React.FC = () => {
     setTimeout(() => setToast({ message: '', visible: false }), 2500);
   }, []);
 
-  // Toggle enrollment handler
-  const handleToggleEnrollment = useCallback(
-    async (protocol: ProtocolSearchResult) => {
+  // Handle card tap - either unenroll or show time picker
+  const handleCardTap = useCallback(
+    (protocol: ProtocolSearchResult) => {
       const isCurrentlyEnrolled = enrolledIds.has(protocol.id);
-      setUpdatingProtocolId(protocol.id);
 
+      if (isCurrentlyEnrolled) {
+        // Unenroll immediately
+        void handleUnenroll(protocol);
+      } else {
+        // Show time picker for new enrollment
+        setTimePickerProtocol(protocol);
+      }
+    },
+    [enrolledIds]
+  );
+
+  // Unenroll handler
+  const handleUnenroll = useCallback(
+    async (protocol: ProtocolSearchResult) => {
+      setUpdatingProtocolId(protocol.id);
       try {
-        if (isCurrentlyEnrolled) {
-          // Unenroll
-          await unenrollFromProtocol(protocol.id);
-          setEnrolledIds((prev) => {
-            const next = new Set(prev);
-            next.delete(protocol.id);
-            return next;
-          });
-          showToast(`${protocol.name} removed from schedule`);
-        } else {
-          // Enroll
-          const response = await enrollInProtocol(protocol.id);
-          setEnrolledIds((prev) => new Set([...prev, protocol.id]));
-          showToast(`${protocol.name} added at ${response.default_time}`);
-        }
+        await unenrollFromProtocol(protocol.id);
+        setEnrolledIds((prev) => {
+          const next = new Set(prev);
+          next.delete(protocol.id);
+          return next;
+        });
+        showToast(`${protocol.name} removed from schedule`);
       } catch (error) {
-        console.error('[ProtocolBrowserScreen] Toggle failed:', error);
-        showToast('Failed to update. Please try again.');
+        console.error('[ProtocolBrowserScreen] Unenroll failed:', error);
+        showToast('Failed to remove. Please try again.');
       } finally {
         setUpdatingProtocolId(null);
       }
     },
-    [enrolledIds, showToast]
+    [showToast]
+  );
+
+  // Enroll with selected time
+  const handleEnrollWithTime = useCallback(
+    async (time: string) => {
+      if (!timePickerProtocol) return;
+
+      const protocol = timePickerProtocol;
+      setTimePickerProtocol(null); // Close modal
+      setUpdatingProtocolId(protocol.id);
+
+      try {
+        const response = await enrollInProtocol(protocol.id, { time });
+        setEnrolledIds((prev) => new Set([...prev, protocol.id]));
+
+        // Format time for display (HH:MM → h:mm AM/PM)
+        const [hours, mins] = time.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+        const displayTime = `${displayHours}:${mins.toString().padStart(2, '0')} ${period}`;
+
+        showToast(`${protocol.name} scheduled at ${displayTime}`);
+      } catch (error) {
+        console.error('[ProtocolBrowserScreen] Enroll failed:', error);
+        showToast('Failed to add. Please try again.');
+      } finally {
+        setUpdatingProtocolId(null);
+      }
+    },
+    [timePickerProtocol, showToast]
   );
 
   // Group protocols by category
@@ -358,7 +457,7 @@ export const ProtocolBrowserScreen: React.FC = () => {
                   protocol={protocol}
                   isEnrolled={enrolledIds.has(protocol.id)}
                   isUpdating={updatingProtocolId === protocol.id}
-                  onToggle={() => handleToggleEnrollment(protocol)}
+                  onToggle={() => handleCardTap(protocol)}
                 />
               ))}
             </View>
@@ -394,6 +493,20 @@ export const ProtocolBrowserScreen: React.FC = () => {
           <Text style={styles.toastText}>{toast.message}</Text>
         </View>
       )}
+
+      {/* Time Picker Modal */}
+      <TimePickerBottomSheet
+        visible={timePickerProtocol !== null}
+        onClose={() => setTimePickerProtocol(null)}
+        onConfirm={handleEnrollWithTime}
+        protocolName={timePickerProtocol?.name || ''}
+        suggestedTime={
+          timePickerProtocol
+            ? getSuggestedTime(timePickerProtocol.id, timePickerProtocol.category)
+            : '12:00'
+        }
+        category={timePickerProtocol?.category}
+      />
     </View>
   );
 };

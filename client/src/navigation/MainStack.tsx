@@ -14,10 +14,14 @@ import { firebaseAuth } from '../services/firebase';
 import { revenueCat } from '../services/RevenueCatService';
 import { palette } from '../theme/palette';
 import { useEffect } from 'react';
+import { useNotificationHandler } from '../hooks/useNotificationHandler';
 
 const AppScaffold: React.FC = () => {
   const { requestChatAccess, refreshStatus, closePaywall } = useMonetization();
   const [isChatVisible, setChatVisible] = React.useState(false);
+
+  // Handle push notification taps and navigate to appropriate screens
+  useNotificationHandler();
 
   const handleAiCoachPress = () => {
     console.log('AI Coach button pressed');
