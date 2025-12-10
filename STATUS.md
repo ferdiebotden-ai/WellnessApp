@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 62 (next) |
-| **Progress** | Session 61 complete (Duration Tracking & Protocol Scheduling) |
+| **Session** | 63 (next) |
+| **Progress** | Session 62 complete (Deploy & Verify Protocol Enrollment) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -51,6 +51,43 @@
 ---
 
 ## Last Session
+
+**Date:** December 10, 2025 (Session 62)
+**Focus:** Deploy & Verify Protocol Enrollment
+
+**Context:** Session 61 built the Protocol Browser and enrollment system but the migration wasn't applied to Supabase. Session 62 deployed everything and fixed a critical FK constraint issue.
+
+**Accomplished:**
+
+### Migration Deployment
+- Applied `user_protocol_enrollment` migration to Supabase
+- Verified all 3 enrollment API endpoints are live and responding
+
+### Critical Bug Fix
+- **Issue:** FK constraint referenced `auth.users(id)` but app uses Firebase Auth
+- **Error:** `Key (user_id)=... is not present in table "users"`
+- **Fix:** Created migration `20251210000000_fix_user_protocol_enrollment_fk.sql`
+  - Changed FK from `auth.users(id)` to `public.users(id)`
+  - Firebase-authenticated users are synced to `public.users`, not `auth.users`
+
+### E2E Verification via Playwright
+- Tested full enrollment flow:
+  - Home → Add Protocol button → ProtocolBrowserScreen
+  - Protocol cards display with categories and match percentages
+  - Tap to enroll: "SCHEDULED" badge appears, toast shows "added at 07:00"
+  - Tap to unenroll: badge removed, toast shows "removed from schedule"
+  - Visual feedback working correctly (teal border, action hints)
+
+**Files Created:**
+- `supabase/migrations/20251210000000_fix_user_protocol_enrollment_fk.sql`
+
+**Commit:** `b6a2d7a` — fix: correct FK constraint on user_protocol_enrollment table
+
+**Result:** Protocol enrollment is now fully functional end-to-end.
+
+---
+
+## Previous Session
 
 **Date:** December 9, 2025 (Session 61)
 **Focus:** Duration Tracking & Protocol Scheduling
@@ -130,9 +167,9 @@
 
 ---
 
-## Previous Session
+## Session 60 Summary
 
-**Date:** December 9, 2025 (Session 60)
+**Date:** December 9, 2025
 **Focus:** Backend Deployment & E2E Verification
 
 **Accomplished:**
@@ -164,24 +201,24 @@
 
 ## Next Session Priority
 
-### Session 62 Focus: Deploy & Complete Flow Testing
+### Session 63 Focus: Push Notifications & Schedule Display
 
-Session 61 built the UI and backend logic for protocol scheduling and duration tracking. Next priorities:
+Session 62 deployed and verified protocol enrollment. Next priorities:
 
-1. **Deploy Backend Updates**
-   - Push new protocolEnrollment endpoints to Cloud Run
-   - Apply `user_protocol_enrollment` migration to Supabase
-   - Verify enrollment flow works end-to-end
-
-2. **Push Notification Setup**
+1. **Push Notification Setup**
    - Configure expo-notifications for scheduled protocol reminders
    - Wire to nudge engine for personalized timing
    - Test notification delivery on iOS/Android
 
+2. **Schedule Display on Home Screen**
+   - Show enrolled protocols in "TODAY'S SCHEDULE" section
+   - Display scheduled time for each protocol
+   - Allow quick access to start protocol from schedule
+
 3. **Polish & Edge Cases**
    - Handle offline enrollment queue
-   - Add visual feedback for enrolled protocols on ProtocolBrowser
    - Test timer accuracy over long protocol sessions
+   - Add search functionality improvements
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -289,4 +326,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 9, 2025 (Session 61 closeout - Duration Tracking & Protocol Scheduling complete)*
+*Last Updated: December 10, 2025 (Session 62 closeout - Protocol Enrollment FK fix & E2E verification)*
