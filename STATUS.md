@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 64 (next) |
-| **Progress** | Session 63 complete (Push Notifications & Protocol Flexibility) |
+| **Session** | 65 (next) |
+| **Progress** | Session 64 complete (My Schedule Display Enhancement) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,87 +52,65 @@
 
 ## Last Session
 
-**Date:** December 10, 2025 (Session 63)
-**Focus:** Push Notifications & Protocol Flexibility
+**Date:** December 10, 2025 (Session 64)
+**Focus:** My Schedule Display Enhancement
 
-**Context:** Session 62 deployed and verified protocol enrollment. Session 63 wires up push notifications for nudges and scheduled reminders, plus adds protocol implementation flexibility (e.g., Morning Light can be outdoor sun OR 10k lux lamp).
+**Context:** Session 63 completed push notifications and protocol flexibility. Session 64 replaces the "Your Focus Areas" module section on Home screen with a new "My Schedule" section showing enrolled protocols with their scheduled times.
 
 **Accomplished:**
 
-### Push Notification Infrastructure (Full Wire-Up)
-- **AuthProvider:** Added `setupPushNotifications()` on sign-in, `deactivatePushToken()` on sign-out
-- **Deep Linking:** Created `useNotificationHandler` hook that routes notification taps to:
-  - `protocol_reminder` / `nudge` → ProtocolDetailScreen
-  - `weekly_synthesis` → InsightsScreen
-- **FK Fix:** Created migration for `user_push_tokens` table (same auth.users → public.users issue as Session 62)
+### My Schedule Section (Home Screen)
+- **Replaced:** "Your Focus Areas" module cards with "My Schedule" protocol display
+- **New section shows:** User's enrolled protocols with scheduled times
+- **Visual indicators:** "NOW" badge for due protocols (±15 min), "In X min" for upcoming (15-60 min)
+- **Tap-to-start:** Navigate directly to ProtocolDetailScreen
 
-### Nudge Engine Push Integration
-- Wired `sendPushToUser()` after Firestore nudge write
-- Nudges now trigger push notifications with protocol name and recommendation text
+### useEnrolledProtocols Hook
+- **Fetches:** Enrolled protocols from `GET /api/user/enrolled-protocols`
+- **UTC→Local conversion:** Converts `default_time_utc` to user's local timezone
+- **Status calculation:** `isDueNow`, `isUpcoming`, `minutesUntil`
+- **Sorting:** Protocols sorted by scheduled time (earliest first)
 
-### Protocol Reminder Scheduler
-- **New Cloud Function:** `protocolReminderScheduler.ts` (runs every 15 min via Pub/Sub)
-- Queries `user_protocol_enrollment` for protocols due in current 15-min window
-- Respects quiet hours via existing suppression engine
-- Sends push: "Time for [Protocol Name]" with deep link to start
+### ScheduledProtocolCard Component
+- **Time badge:** Shows local time (e.g., "7:00 AM")
+- **Protocol name** and **duration pill** (e.g., "10 min")
+- **Category dot:** Color-coded by protocol category
+- **Pulsing animation:** Teal border pulses when protocol is due now
+- **Pressable:** Scale animation on tap
 
-### Custom Time Selection for Enrollment
-- **TimePickerBottomSheet:** New modal with:
-  - Suggested time based on protocol type (intelligent defaults)
-  - Quick-select time grid (6 AM - 9 PM)
-  - Category-specific hints (e.g., "Foundation protocols work best in the morning")
-- **Backend:** Updated `enrollInProtocol` to accept optional `time` parameter
-- **UI:** ProtocolBrowserScreen now shows time picker when adding protocols
-
-### Protocol Implementation Methods (Morning Light)
-- **Migration:** Added `implementation_methods` JSONB column to `protocols` table
-- **Seeded Morning Light** with 3 methods:
-  - Outdoor Sunlight (10-30 min natural light)
-  - 10,000 Lux Light Box (20-30 min at eye level)
-  - Light Bar / Panel (mounted at desk)
-- **Backend:** Updated personalized protocol endpoint to return `implementation_methods`
-- **UI:** Added "WAYS TO DO THIS" section in ProtocolDetailScreen with method cards
+### MyScheduleSection Container
+- **Loading state:** "Loading schedule..." message
+- **Empty state:** Friendly CTA to add first protocol
+- **Error state:** Error message with retry option
+- **Add Protocol button:** Dashed border style, navigates to ProtocolBrowser
 
 **Files Created:**
-- `supabase/migrations/20251210100000_fix_user_push_tokens_fk.sql`
-- `supabase/migrations/20251210120000_add_implementation_methods.sql`
-- `functions/src/protocolReminderScheduler.ts`
-- `client/src/components/protocol/TimePickerBottomSheet.tsx`
-- `client/src/hooks/useNotificationHandler.ts`
+- `client/src/hooks/useEnrolledProtocols.ts`
+- `client/src/components/home/ScheduledProtocolCard.tsx`
+- `client/src/components/home/MyScheduleSection.tsx`
 
 **Files Modified:**
-- `functions/src/index.ts` — Export new scheduler
-- `functions/src/nudgeEngine.ts` — Push notification integration
-- `functions/src/protocolEnrollment.ts` — Custom time support
-- `functions/src/protocolPersonalized.ts` — implementation_methods field
-- `client/src/providers/AuthProvider.tsx` — Push notification setup
-- `client/src/navigation/MainStack.tsx` — Notification handler hook
-- `client/src/screens/ProtocolBrowserScreen.tsx` — TimePickerBottomSheet integration
-- `client/src/screens/ProtocolDetailScreen.tsx` — Method selector UI
-- `client/src/services/api.ts` — enrollInProtocol time parameter
-- `client/src/types/protocol.ts` — ImplementationMethod type
+- `client/src/screens/HomeScreen.tsx` — Replaced module section with MyScheduleSection
 
 **Commits:**
-- `5fcc4c0` — feat: add push notifications and custom protocol scheduling (Session 63)
-- `c8d22f5` — feat: add protocol implementation methods (Session 63)
+- `c91549c` — feat: add My Schedule section to Home screen (Session 64)
 
-**Result:** Push notifications are now wired end-to-end for nudges and scheduled reminders. Users can customize reminder times when adding protocols. Morning Light shows multiple implementation options.
+**Result:** Users now see their enrolled protocols with scheduled times prominently on the Home screen. Visual indicators show when protocols are due, and tapping navigates directly to start the protocol.
 
 ---
 
 ## Previous Session
 
-**Date:** December 10, 2025 (Session 62)
-**Focus:** Deploy & Verify Protocol Enrollment
-
-**Context:** Session 61 built the Protocol Browser and enrollment system but the migration wasn't applied to Supabase. Session 62 deployed everything and fixed a critical FK constraint issue.
+**Date:** December 10, 2025 (Session 63)
+**Focus:** Push Notifications & Protocol Flexibility
 
 **Accomplished:**
-- Applied `user_protocol_enrollment` migration to Supabase
-- Fixed FK constraint (auth.users → public.users)
-- E2E tested full enrollment flow via Playwright
+- Push notification infrastructure wired end-to-end
+- Protocol reminder scheduler (15-min Pub/Sub job)
+- Custom time selection for enrollment (TimePickerBottomSheet)
+- Protocol implementation methods (Morning Light with 3 options)
 
-**Commit:** `b6a2d7a` — fix: correct FK constraint on user_protocol_enrollment table
+**Commits:** `5fcc4c0`, `c8d22f5`
 
 ---
 
@@ -250,28 +228,27 @@
 
 ## Next Session Priority
 
-### Session 64 Focus: Testing & Polish
+### Session 65 Focus: Testing & Polish
 
-Session 63 completed push notifications and protocol flexibility. Next priorities:
+Session 64 completed the Schedule Display Enhancement. Next priorities:
 
 1. **Push Notification Testing**
    - Test notification delivery on physical iOS/Android devices
    - Verify deep linking from notifications works end-to-end
    - Test quiet hours suppression
 
-2. **Schedule Display Enhancement**
-   - Show enrolled protocols with custom times on Home screen
-   - Add visual indicator for upcoming scheduled protocols
-   - Quick tap to start scheduled protocol
-
-3. **Implementation Methods Expansion**
+2. **Implementation Methods Expansion**
    - Add implementation methods to other protocols (Cold Exposure, Breathwork)
    - Consider user preference tracking for methods (future)
 
-4. **Polish & Edge Cases**
+3. **Polish & Edge Cases**
    - Handle offline enrollment queue
    - Test timer accuracy over long sessions
    - Search improvements in ProtocolBrowser
+
+4. **My Schedule Enhancements (if time)**
+   - Auto-refresh status every minute (for "In X min" updates)
+   - Swipe actions on protocol cards (dismiss, snooze)
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -379,4 +356,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 10, 2025 (Session 63 closeout - Push Notifications & Protocol Implementation Flexibility)*
+*Last Updated: December 10, 2025 (Session 64 complete - My Schedule Display Enhancement)*
