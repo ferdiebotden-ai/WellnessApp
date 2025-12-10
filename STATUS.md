@@ -194,38 +194,6 @@
 
 ---
 
-## Session 60 Summary
-
-**Date:** December 9, 2025
-**Focus:** Backend Deployment & E2E Verification
-
-**Accomplished:**
-- Confirmed GitHub Actions deployed revision `api-00178-gd4` to Cloud Run
-- Verified personalized protocol endpoint returns full enriched data
-- E2E tested via Playwright (Home screen, Weekly Progress, modules)
-- Reorganized logo assets with usage documentation
-
-**Commit:** `851da1a` — docs: update STATUS.md for Session 60
-
----
-
-## Session 59 Summary
-
-**Date:** December 9, 2025
-**Focus:** Protocol Data Enrichment & Personalization
-
-**Accomplished:**
-- Added 7 enrichment columns to `protocols` table
-- Seeded 18 protocols from Master Protocol Library with full evidence data
-- Created `GET /api/protocols/:id/personalized` endpoint with 5-factor confidence
-- Expanded client types and hooks for personalized data
-- Wired Protocol Detail panels to real backend data
-- Created CompletionModal with difficulty rating and notes
-
-**Commit:** `a34c350` — feat: add protocol data enrichment and personalization (Session 59)
-
----
-
 ## Next Session Priority
 
 ### Session 65 Focus: Testing & Polish
