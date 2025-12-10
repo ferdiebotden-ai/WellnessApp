@@ -221,6 +221,82 @@ For chart patterns (line trends, progress bars, adherence dots, correlation card
 
 For complete accessibility checklist, see [accessibility.md](accessibility.md).
 
+## Logo Usage
+
+### Assets Location
+
+Logo files live in `/client/assets/logo/` (NOT in the skill folder).
+
+### Variants
+
+| Variant | File | Use Case |
+|---------|------|----------|
+| **Chevron only** | `chevron-only.png` | App icon, loading animation, favicon, compact spaces |
+| **Vertical** | `vertical_-_Logo-Brand_Name.png` | Splash screen, onboarding, centered layouts |
+| **Horizontal** | `horizontal_-_Logo-Brand_Name.png` | Navigation header, login screen, in-app branding |
+| **Horizontal + tagline** | `horizontal_-_Logo-Brand_Name-Tagline.png` | Landing page, external marketing only |
+
+### Tagline
+
+**Canonical tagline:** "Your Performance Operating System"
+
+Use tagline version for marketing/external only. Inside the app, use the no-tagline variants.
+
+### Logo Colors
+
+The chevron uses a gradient (do not flatten to solid):
+```
+Top:    #63E6BE (teal)
+Bottom: #5B8DEF (blue)
+```
+
+The wordmark:
+- "APEX": White (#F6F8FC), bold weight
+- "OS": Light gray (#A7B4C7), light weight
+
+**Important:** These logos have white/light wordmarks designed for dark backgrounds. Always place on dark surfaces (#0F1218 canvas or #181C25 surface).
+
+### Sizing Guidelines
+
+| Context | Recommended Size |
+|---------|------------------|
+| App icon | 1024×1024 source, system scales |
+| Navigation header | Height: 32px |
+| Splash screen | Width: 40% of screen, centered |
+| Loading indicator | 48×48px (chevron only) |
+
+### Clear Space
+
+Minimum padding around logo = height of one chevron stroke.
+
+### Usage Rules
+
+**Do:**
+- Place on dark backgrounds only (#0F1218, #181C25)
+- Maintain aspect ratio
+- Use chevron-only for loading animation (pulsing)
+
+**Don't:**
+- Place on light backgrounds (wordmark invisible)
+- Stretch or distort
+- Add shadows/glows to the logo itself
+- Use tagline version inside the app
+- Recreate — always use official assets
+
+### Loading Animation
+
+```typescript
+import ChevronLogo from '@/assets/logo/chevron-only.png';
+
+// Pulsing loader (see motion-haptics.md for full implementation)
+<ApexLoadingIndicator 
+  source={ChevronLogo}
+  size={48}
+/>
+```
+
+---
+
 ## UI Copy Guidelines
 
 **Voice:** "Warm expertise"—knowledgeable friend who's also a health scientist.
