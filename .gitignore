@@ -49,3 +49,10 @@ archive/
 
 # Playwright MCP screenshots
 .playwright-mcp/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Windows Zone.Identifier files
+*:Zone.Identifier
