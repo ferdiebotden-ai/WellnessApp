@@ -38,6 +38,13 @@ interface SuccessMetric {
   timeline: string;
 }
 
+interface ImplementationMethod {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+}
+
 interface EnrichedProtocol {
   id: string;
   name: string;
@@ -54,6 +61,7 @@ interface EnrichedProtocol {
   implementation_rules: Record<string, string>;
   success_metrics: SuccessMetric[];
   study_sources: StudySource[];
+  implementation_methods: ImplementationMethod[];
 }
 
 interface UserProtocolData {
@@ -133,6 +141,7 @@ async function fetchProtocolById(protocolId: string): Promise<EnrichedProtocol |
       implementation_rules,
       success_metrics,
       study_sources,
+      implementation_methods,
       is_active
     `)
     .eq('id', protocolId)
@@ -163,6 +172,7 @@ async function fetchProtocolById(protocolId: string): Promise<EnrichedProtocol |
     implementation_rules: (data.implementation_rules as Record<string, string>) || {},
     success_metrics: (data.success_metrics as SuccessMetric[]) || [],
     study_sources: (data.study_sources as StudySource[]) || [],
+    implementation_methods: (data.implementation_methods as ImplementationMethod[]) || [],
   };
 }
 

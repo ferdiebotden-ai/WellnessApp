@@ -61,6 +61,22 @@ export interface SuccessMetric {
 }
 
 /**
+ * Implementation method option for protocols with multiple ways to achieve the same goal.
+ * Example: Morning Light can be outdoor sunlight, 10k lux lamp, or light bar.
+ * Session 63: Protocol Implementation Flexibility
+ */
+export interface ImplementationMethod {
+  /** Unique identifier for this method */
+  id: string;
+  /** Display name (e.g., "Outdoor Sunlight") */
+  name: string;
+  /** Description with instructions */
+  description: string;
+  /** Optional Ionicons icon name */
+  icon?: string;
+}
+
+/**
  * Full protocol detail with enrichment data
  */
 export interface ProtocolDetail extends ProtocolSummary {
@@ -101,6 +117,9 @@ export interface ProtocolDetail extends ProtocolSummary {
 
   /** Detailed study citations with author, year, DOI */
   study_sources?: StudySource[];
+
+  /** Alternative implementation methods (Session 63) */
+  implementation_methods?: ImplementationMethod[];
 }
 
 // =============================================================================

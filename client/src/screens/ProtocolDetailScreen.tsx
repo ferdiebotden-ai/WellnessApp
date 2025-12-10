@@ -28,11 +28,13 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { useProtocolDetail } from '../hooks/useProtocolDetail';
 import { enqueueProtocolLog } from '../services/protocolLogs';
 import { CompletionModal } from '../components/protocol/CompletionModal';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import type { ImplementationMethod } from '../types/protocol';
 
 interface ProtocolDetailScreenProps {
   route: {
@@ -186,6 +188,45 @@ const ConfidenceIndicator: React.FC<{ level?: 'high' | 'medium' | 'low' }> = ({ 
         ))}
       </View>
       <Text style={[styles.confidenceLabel, { color }]}>{label}</Text>
+    </View>
+  );
+};
+
+/** Method Card for implementation options */
+interface MethodCardProps {
+  method: ImplementationMethod;
+}
+
+const MethodCard: React.FC<MethodCardProps> = ({ method }) => {
+  // Map icon string to Ionicons name (with fallback)
+  const getIconName = (iconHint?: string): keyof typeof Ionicons.glyphMap => {
+    const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+      sunny: 'sunny',
+      bulb: 'bulb',
+      flashlight: 'flashlight',
+      fitness: 'fitness',
+      water: 'water',
+      thermometer: 'thermometer',
+      bed: 'bed',
+      cafe: 'cafe',
+      leaf: 'leaf',
+    };
+    return iconMap[iconHint || ''] || 'checkmark-circle';
+  };
+
+  return (
+    <View style={styles.methodCard}>
+      <View style={styles.methodIconContainer}>
+        <Ionicons
+          name={getIconName(method.icon)}
+          size={24}
+          color={palette.primary}
+        />
+      </View>
+      <View style={styles.methodContent}>
+        <Text style={styles.methodName}>{method.name}</Text>
+        <Text style={styles.methodDescription}>{method.description}</Text>
+      </View>
     </View>
   );
 };
@@ -404,6 +445,21 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
                 <Text style={styles.placeholderText}>Protocol instructions coming soon.</Text>
               )}
             </View>
+
+            {/* Implementation Methods (Session 63) */}
+            {protocol.implementation_methods && protocol.implementation_methods.length > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>WAYS TO DO THIS</Text>
+                <Text style={styles.methodsIntro}>
+                  Choose whichever method works best for your situation:
+                </Text>
+                <View style={styles.methodsContainer}>
+                  {protocol.implementation_methods.map((method) => (
+                    <MethodCard key={method.id} method={method} />
+                  ))}
+                </View>
+              </View>
+            )}
 
             {/* 4-Panel Why? Sections */}
             <View style={styles.whySection}>
@@ -925,5 +981,47 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: palette.error,
     textAlign: 'center',
+  },
+
+  // Implementation Methods (Session 63)
+  methodsIntro: {
+    ...typography.body,
+    color: palette.textSecondary,
+    marginBottom: 16,
+  },
+  methodsContainer: {
+    gap: 12,
+  },
+  methodCard: {
+    flexDirection: 'row',
+    backgroundColor: palette.elevated,
+    borderRadius: 12,
+    padding: 16,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  methodIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: `${palette.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  methodContent: {
+    flex: 1,
+    gap: 4,
+  },
+  methodName: {
+    ...typography.subheading,
+    color: palette.textPrimary,
+    fontSize: 15,
+  },
+  methodDescription: {
+    ...typography.body,
+    color: palette.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
