@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 60 (next) |
-| **Progress** | Session 59 complete (Protocol Data Enrichment & Personalization) |
+| **Session** | 61 (next) |
+| **Progress** | Session 60 complete (Backend Deployment & E2E Verification) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,117 +52,97 @@
 
 ## Last Session
 
-**Date:** December 9, 2025 (Session 59)
-**Focus:** Protocol Data Enrichment & Personalization
+**Date:** December 9, 2025 (Session 60)
+**Focus:** Backend Deployment & E2E Verification
 
-**Context:** Session 58 completed Protocol Detail Screen with placeholder data. Session 59 bridges backend intelligence to frontend display.
+**Context:** Session 59 completed protocol enrichment and personalization. Session 60 verified deployment and tested the full stack.
 
 **Accomplished:**
 
-### Schema Migration
-- Added 7 enrichment columns to `protocols` table: mechanism_description, duration_minutes, frequency_per_week, parameter_ranges, implementation_rules, success_metrics, study_sources
-- Created indexes for mechanism completeness filtering
+### Backend Deployment Verification
+- Confirmed GitHub Actions deployed revision `api-00178-gd4` to Cloud Run
+- Verified API health endpoint responds correctly
+- Tested personalized protocol endpoint returns full enriched data
 
-### Protocol Seeding (18 protocols)
-- Foundation: Morning Light, Evening Light, Sleep Optimization, Hydration & Electrolytes
-- Performance: Caffeine Timing, Morning Movement, Walking Breaks, Nutrition, Fitness for Focus
-- Recovery: NSDR, Breathwork, Cold Exposure
-- Optimization: Supplements, Dopamine Management, Alcohol Optimization, Focus Enhancement
-- Meta: Cognitive Testing, Social Accountability
-- Full evidence data from Master Protocol Library (mechanism, parameters, citations, study sources)
+### Personalized Endpoint Testing
+```bash
+GET /api/protocols/protocol_1_morning_light/personalized
+```
+Returns:
+- Protocol with mechanism_description, parameter_ranges, implementation_rules, success_metrics, study_sources
+- User data: adherence_7d, last_completed_at, difficulty_avg, total_completions, memory_insight
+- Confidence: 5-factor scoring (protocol_fit, memory_support, timing_fit, conflict_risk, evidence_strength)
 
-### Backend Personalization API
-- Created `GET /api/protocols/:id/personalized` endpoint
-- Returns enriched protocol + user_data (adherence, last completed, difficulty) + 5-factor confidence
-- Integrated with memory layer for memory_insight extraction
-- Server-side confidence calculation (protocol_fit, memory_support, timing_fit, conflict_risk, evidence_strength)
+### E2E Testing via Playwright
+- Expo web server running on port 8081
+- Home screen loads with authenticated user (FUrI5W0vMWgLhbWJoFHO032suGU2)
+- Weekly Progress shows protocols (Morning Light 5/7, Cold Exposure 3/7, Breathwork 4/7)
+- Sleep Optimization module activated
+- No API errors in browser console
 
-### Client Updates
-- Expanded `ProtocolDetail` type with enrichment fields
-- Added `PersonalizedProtocolResponse`, `UserProtocolData`, `ConfidenceResult` types
-- Updated `fetchPersonalizedProtocol` API function with fallback
-- Updated `useProtocolDetail` hook to return userData and confidence
+### Asset Cleanup
+- Reorganized logo files into Archive folder
+- Added Logo Usage documentation to apex-os-design SKILL.md
 
-### UI Panel Wiring
-- "Why This Works" → Shows real mechanism_description from database
-- "Your Data" → Shows real adherence (X/7 days, last completed, difficulty rating)
-- "Our Confidence" → Shows real 5-factor score with visual progress bars
-- CategoryBadge → Uses actual protocol category with 'meta' support
+**Commits:**
+- `851da1a` — docs: update STATUS.md for Session 60
+- `ce6d8ca` — chore: reorganize logo assets and add logo usage docs
 
-### Completion Modal
-- Created `CompletionModal` component with 5-star difficulty rating
-- Optional notes field (280 char limit)
-- Skip option for quick logging without rating
-- Integrated into ProtocolDetailScreen before enqueueProtocolLog
-
-**Files Created:**
-- `supabase/migrations/20251209100000_add_protocol_enrichment_fields.sql` — Schema migration
-- `supabase/migrations/20251209100001_seed_protocols.sql` — 18 protocols seeded
-- `functions/src/protocolPersonalized.ts` — Personalization endpoint (+452 lines)
-- `functions/scripts/seed_protocols.ts` — TypeScript seed script (backup)
-- `client/src/components/protocol/CompletionModal.tsx` — Rating modal (+262 lines)
-
-**Files Modified:**
-- `functions/src/api.ts` — Register new endpoint
-- `client/src/types/protocol.ts` — Expanded types (+170 lines)
-- `client/src/services/api.ts` — Personalized fetch (+80 lines)
-- `client/src/services/protocolLogs.ts` — Added difficultyRating, notes fields
-- `client/src/hooks/useProtocolDetail.ts` — Returns userData, confidence
-- `client/src/screens/ProtocolDetailScreen.tsx` — Wire all panels to real data (+130 lines)
-- `client/src/screens/ProtocolDetailScreen.test.tsx` — Update mocks
-
-**Commit:** `a34c350` — feat: add protocol data enrichment and personalization (Session 59)
-
-**Result:** Protocol Detail Screen now shows real personalized data from backend. 18 protocols seeded with scientific mechanisms. Completion modal captures user feedback for learning.
+**Result:** Full stack verified working. Personalized protocol API deployed and returning enriched data with 5-factor confidence scoring.
 
 ---
 
 ## Previous Session
 
-**Date:** December 9, 2025 (Session 57)
-**Focus:** Home Screen Redesign
+**Date:** December 9, 2025 (Session 59)
+**Focus:** Protocol Data Enrichment & Personalization
 
 **Accomplished:**
-- Created 5 new Home Screen components (HomeHeader, TodaysFocusCard, DayTimeline, WeeklyProgressCard, AdherenceDots)
-- Created 2 new hooks (useTodaysFocus, useWeeklyProgress)
-- Complete Home Screen layout overhaul with Bloomberg-style timeline
+- Added 7 enrichment columns to `protocols` table
+- Seeded 18 protocols from Master Protocol Library with full evidence data
+- Created `GET /api/protocols/:id/personalized` endpoint with 5-factor confidence
+- Expanded client types and hooks for personalized data
+- Wired Protocol Detail panels to real backend data
+- Created CompletionModal with difficulty rating and notes
 
-**Commit:** `5a09399` — feat: redesign Home Screen with new component architecture (Session 57)
+**Commit:** `a34c350` — feat: add protocol data enrichment and personalization (Session 59)
 
 ---
 
-## Session 54 Summary
+## Session 58 Summary
 
 **Date:** December 9, 2025
-**Focus:** PRD v8.1 Gap Analysis & Technical Spec Creation
+**Focus:** Protocol Detail Screen & Navigation
 
 **Accomplished:**
-- Created `APEX_OS_TECHNICAL_SPEC_v1.md` (algorithms, APIs, components)
-- Updated PRD v8.1 to v8.1.1 (6 sections + Appendix D)
+- Created ProtocolDetailScreen with 4-panel Why? sections
+- Added navigation from DayTimeline to Protocol Detail
+- Connected Home Screen navigation (Profile, Weekly Synthesis, Add Protocol)
+
+**Commit:** `60c7c77` — feat: add Protocol Detail Screen with navigation and 4-panel Why? sections (Session 58)
 
 ---
 
 ## Next Session Priority
 
-### Session 60 Focus: Backend Deployment & E2E Verification
+### Session 61 Focus: Duration Tracking & Protocol Scheduling
 
-With protocol enrichment complete, the next priority is deploying and verifying the full stack:
+With backend verified and E2E flow working, the next priority is completing the protocol logging experience:
 
-1. **Deploy Backend Changes**
-   - Deploy `protocolPersonalized.ts` endpoint to Cloud Run
-   - Verify API health and new endpoint accessibility
-   - Check Cloud Run logs for any startup errors
+1. **Duration Tracking**
+   - Add timer state to ProtocolDetailScreen (start on mount)
+   - Track elapsed time from screen open to completion
+   - Include duration_seconds in protocol log payload
+   - Display duration in completion confirmation
 
-2. **End-to-End Flow Testing**
-   - Test personalized protocol fetch from Home → Protocol Detail
-   - Verify confidence scoring displays correctly
-   - Test completion modal with difficulty rating and notes
-   - Confirm protocol logs include new fields in Firestore
+2. **Protocol Scheduling**
+   - Enable "Add Protocol" flow to schedule protocols for daily timeline
+   - Wire DayTimeline to show scheduled protocols (clickable → ProtocolDetail)
+   - Persist schedule to user's enrollment/preferences
 
-3. **Duration Tracking (Deferred from S59)**
-   - Add timer state to ProtocolDetailScreen
-   - Track time from screen open to completion
-   - Include duration in protocol log payload
+3. **Push Notification Setup** (if time permits)
+   - Configure expo-notifications for scheduled protocol reminders
+   - Wire to nudge engine for personalized timing
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -269,4 +249,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 9, 2025 (Session 59 closeout - Protocol Data Enrichment & Personalization complete)*
+*Last Updated: December 9, 2025 (Session 60 closeout - Backend Deployment & E2E Verification complete)*
