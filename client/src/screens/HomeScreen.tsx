@@ -22,6 +22,7 @@ import { useNudgeActions } from '../hooks/useNudgeActions';
 import { useTodaysFocus } from '../hooks/useTodaysFocus';
 import { useWeeklyProgress, useMockWeeklyProgress } from '../hooks/useWeeklyProgress';
 import { useEnrolledProtocols, ScheduledProtocol } from '../hooks/useEnrolledProtocols';
+import { unenrollFromProtocol } from '../services/api';
 import type { DashboardTask, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
 import type { HomeStackParamList } from '../navigation/HomeStack';
@@ -64,7 +65,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     protocols: enrolledProtocols,
     loading: loadingEnrolled,
     error: enrolledError,
+    refresh: refreshEnrolledProtocols,
   } = useEnrolledProtocols();
+
+  // Track protocols currently being updated (for swipe actions)
+  const [updatingProtocolIds, setUpdatingProtocolIds] = useState<Set<string>>(new Set());
 
   // Get user's first name for greeting
   const userName = firebaseAuth.currentUser?.displayName?.split(' ')[0] || undefined;
@@ -230,6 +235,55 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     [navigation]
   );
 
+  // Session 65: Handle swipe-right to start protocol (same as tap)
+  const handleProtocolStart = useCallback(
+    (protocol: ScheduledProtocol) => {
+      // Navigate to protocol detail to start it
+      navigation.navigate('ProtocolDetail', {
+        protocolId: protocol.protocol_id,
+        protocolName: protocol.protocol.name,
+        moduleId: protocol.module_id || undefined,
+        source: 'schedule',
+      });
+    },
+    [navigation]
+  );
+
+  // Session 65: Handle swipe-left to unenroll from protocol
+  const handleProtocolUnenroll = useCallback(
+    async (protocol: ScheduledProtocol) => {
+      // Show confirmation dialog
+      Alert.alert(
+        'Remove from Schedule',
+        `Remove "${protocol.protocol.name}" from your schedule?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: async () => {
+              setUpdatingProtocolIds((prev) => new Set(prev).add(protocol.id));
+              try {
+                await unenrollFromProtocol(protocol.protocol_id);
+                await refreshEnrolledProtocols();
+              } catch (error) {
+                console.error('[HomeScreen] Unenroll failed:', error);
+                Alert.alert('Error', 'Failed to remove protocol. Please try again.');
+              } finally {
+                setUpdatingProtocolIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(protocol.id);
+                  return next;
+                });
+              }
+            },
+          },
+        ]
+      );
+    },
+    [refreshEnrolledProtocols]
+  );
+
   const handleSynthesisPress = useCallback(() => {
     // Navigate to Insights tab (Weekly Synthesis)
     navigation.getParent()?.navigate('Insights');
@@ -303,6 +357,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             error={enrolledError}
             onProtocolPress={handleScheduledProtocolPress}
             onAddProtocol={handleAddProtocol}
+            onProtocolStart={handleProtocolStart}
+            onProtocolUnenroll={handleProtocolUnenroll}
+            updatingProtocolIds={updatingProtocolIds}
             testID="my-schedule-section"
           />
         </View>

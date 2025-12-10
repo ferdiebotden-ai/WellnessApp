@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
-import { ScheduledProtocolCard } from './ScheduledProtocolCard';
+import { SwipeableProtocolCard } from './SwipeableProtocolCard';
 import type { ScheduledProtocol } from '../../hooks/useEnrolledProtocols';
 
 interface MyScheduleSectionProps {
@@ -11,6 +11,12 @@ interface MyScheduleSectionProps {
   error: string | null;
   onProtocolPress: (protocol: ScheduledProtocol) => void;
   onAddProtocol: () => void;
+  /** Called when user swipes right to start/complete protocol (only when due now) */
+  onProtocolStart?: (protocol: ScheduledProtocol) => void;
+  /** Called when user swipes left to remove protocol from schedule */
+  onProtocolUnenroll?: (protocol: ScheduledProtocol) => void;
+  /** Protocol IDs currently being updated (disables swipe) */
+  updatingProtocolIds?: Set<string>;
   testID?: string;
 }
 
@@ -24,6 +30,9 @@ export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
   error,
   onProtocolPress,
   onAddProtocol,
+  onProtocolStart,
+  onProtocolUnenroll,
+  updatingProtocolIds = new Set(),
   testID,
 }) => {
   // Loading state
@@ -86,10 +95,13 @@ export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
       <Text style={styles.sectionTitle}>MY SCHEDULE</Text>
       <View style={styles.protocolStack}>
         {protocols.map((protocol) => (
-          <ScheduledProtocolCard
+          <SwipeableProtocolCard
             key={protocol.id}
             protocol={protocol}
             onPress={onProtocolPress}
+            onSwipeRight={onProtocolStart}
+            onSwipeLeft={onProtocolUnenroll}
+            isUpdating={updatingProtocolIds.has(protocol.id)}
             testID={`scheduled-protocol-${protocol.protocol_id}`}
           />
         ))}

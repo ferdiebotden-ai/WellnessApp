@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { fetchCurrentUser, updateUserPreferences } from '../services/api';
@@ -10,6 +10,21 @@ import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import type { ProfileStackParamList } from '../navigation/ProfileStack';
 
+/** Format time string "HH:MM" to display format "10:00 PM" */
+const formatTimeDisplay = (time: string): string => {
+  const [hours, minutes] = time.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return time;
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
+
+/** Time options for picker (every hour) */
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const hours = i.toString().padStart(2, '0');
+  return { value: `${hours}:00`, label: formatTimeDisplay(`${hours}:00`) };
+});
+
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const { signOut } = useAuth();
@@ -19,14 +34,26 @@ export const ProfileScreen: React.FC = () => {
   const [preferencesError, setPreferencesError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Quiet Hours state (Session 65)
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState<boolean>(false);
+  const [quietStartTime, setQuietStartTime] = useState<string>('22:00');
+  const [quietEndTime, setQuietEndTime] = useState<string>('07:00');
+  const [isUpdatingQuietHours, setIsUpdatingQuietHours] = useState(false);
+
   useEffect(() => {
     const loadUserPreferences = async () => {
       try {
         setIsLoadingPreferences(true);
         setPreferencesError(null);
         const response = await fetchCurrentUser();
-        const currentValue = response.user.preferences?.social_anonymous ?? true;
+        const prefs = response.user.preferences;
+        const currentValue = prefs?.social_anonymous ?? true;
         setSocialAnonymous(currentValue);
+
+        // Load quiet hours preferences (Session 65)
+        setQuietHoursEnabled(prefs?.quiet_hours_enabled ?? false);
+        setQuietStartTime(prefs?.quiet_start_time ?? '22:00');
+        setQuietEndTime(prefs?.quiet_end_time ?? '07:00');
       } catch (error) {
         // Graceful degradation: use default value (true = anonymous) on load failure
         // Don't show error to user - toggle will work with default value
@@ -54,6 +81,102 @@ export const ProfileScreen: React.FC = () => {
   const handleBiometricSettingsPress = useCallback(() => {
     navigation.navigate('BiometricSettings');
   }, [navigation]);
+
+  // Session 65: Quiet hours handlers
+  const updateQuietHoursPreferences = useCallback(
+    async (updates: { enabled?: boolean; startTime?: string; endTime?: string }) => {
+      try {
+        setIsUpdatingQuietHours(true);
+        setPreferencesError(null);
+
+        // Optimistically update local state
+        if (updates.enabled !== undefined) setQuietHoursEnabled(updates.enabled);
+        if (updates.startTime !== undefined) setQuietStartTime(updates.startTime);
+        if (updates.endTime !== undefined) setQuietEndTime(updates.endTime);
+
+        // Fetch current preferences to merge with update
+        const currentUserResponse = await fetchCurrentUser();
+        const currentPreferences = currentUserResponse.user.preferences || {};
+
+        // Merge quiet hours updates
+        await updateUserPreferences({
+          ...currentPreferences,
+          quiet_hours_enabled: updates.enabled ?? quietHoursEnabled,
+          quiet_start_time: updates.startTime ?? quietStartTime,
+          quiet_end_time: updates.endTime ?? quietEndTime,
+        });
+      } catch (error) {
+        console.error('Failed to update quiet hours:', error);
+        // Revert optimistic updates
+        const response = await fetchCurrentUser().catch(() => null);
+        if (response) {
+          const prefs = response.user.preferences;
+          setQuietHoursEnabled(prefs?.quiet_hours_enabled ?? false);
+          setQuietStartTime(prefs?.quiet_start_time ?? '22:00');
+          setQuietEndTime(prefs?.quiet_end_time ?? '07:00');
+        }
+        setPreferencesError('Failed to update notification settings. Please try again.');
+      } finally {
+        setIsUpdatingQuietHours(false);
+      }
+    },
+    [quietHoursEnabled, quietStartTime, quietEndTime]
+  );
+
+  const handleQuietHoursToggle = useCallback(
+    (value: boolean) => {
+      void updateQuietHoursPreferences({ enabled: value });
+    },
+    [updateQuietHoursPreferences]
+  );
+
+  const showTimePicker = useCallback(
+    (type: 'start' | 'end') => {
+      const currentTime = type === 'start' ? quietStartTime : quietEndTime;
+      const title = type === 'start' ? 'Quiet Hours Start' : 'Quiet Hours End';
+
+      // Create options array for Alert
+      const options = TIME_OPTIONS.map((opt) => ({
+        text: opt.label,
+        onPress: () => {
+          if (type === 'start') {
+            void updateQuietHoursPreferences({ startTime: opt.value });
+          } else {
+            void updateQuietHoursPreferences({ endTime: opt.value });
+          }
+        },
+      }));
+
+      // Split into chunks for multiple alerts (iOS limitation)
+      // Show common times in a simpler picker
+      const commonTimes = [
+        { value: '06:00', label: '6:00 AM' },
+        { value: '07:00', label: '7:00 AM' },
+        { value: '08:00', label: '8:00 AM' },
+        { value: '21:00', label: '9:00 PM' },
+        { value: '22:00', label: '10:00 PM' },
+        { value: '23:00', label: '11:00 PM' },
+      ];
+
+      const alertOptions = commonTimes.map((opt) => ({
+        text: opt.label,
+        onPress: () => {
+          if (type === 'start') {
+            void updateQuietHoursPreferences({ startTime: opt.value });
+          } else {
+            void updateQuietHoursPreferences({ endTime: opt.value });
+          }
+        },
+      }));
+
+      Alert.alert(
+        title,
+        `Current: ${formatTimeDisplay(currentTime)}`,
+        [...alertOptions, { text: 'Cancel', style: 'cancel' }]
+      );
+    },
+    [quietStartTime, quietEndTime, updateQuietHoursPreferences]
+  );
 
   const handleSocialAnonymousToggle = useCallback(
     async (value: boolean) => {
@@ -180,6 +303,68 @@ export const ProfileScreen: React.FC = () => {
         >
           <Text style={styles.primaryButtonText}>Open Privacy Dashboard</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Session 65: Quiet Hours / Notification Settings */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Notifications</Text>
+        <Text style={styles.cardBody}>
+          Set quiet hours to pause notifications during sleep or focus time.
+        </Text>
+        {isLoadingPreferences ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={palette.primary} />
+          </View>
+        ) : (
+          <>
+            <View style={styles.toggleContainer}>
+              <Text style={styles.toggleLabel}>Enable Quiet Hours</Text>
+              <Switch
+                value={quietHoursEnabled}
+                onValueChange={handleQuietHoursToggle}
+                disabled={isUpdatingQuietHours}
+                trackColor={{ false: palette.border, true: palette.primary }}
+                thumbColor={palette.surface}
+                testID="quiet-hours-toggle"
+              />
+            </View>
+            {quietHoursEnabled && (
+              <View style={styles.timePickerRow}>
+                <View style={styles.timePickerItem}>
+                  <Text style={styles.timePickerLabel}>Start</Text>
+                  <TouchableOpacity
+                    style={styles.timePickerButton}
+                    onPress={() => showTimePicker('start')}
+                    disabled={isUpdatingQuietHours}
+                    testID="quiet-hours-start-time"
+                  >
+                    <Text style={styles.timePickerValue}>
+                      {formatTimeDisplay(quietStartTime)}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.timePickerItem}>
+                  <Text style={styles.timePickerLabel}>End</Text>
+                  <TouchableOpacity
+                    style={styles.timePickerButton}
+                    onPress={() => showTimePicker('end')}
+                    disabled={isUpdatingQuietHours}
+                    testID="quiet-hours-end-time"
+                  >
+                    <Text style={styles.timePickerValue}>
+                      {formatTimeDisplay(quietEndTime)}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+            {quietHoursEnabled && (
+              <Text style={styles.quietHoursInfo}>
+                Notifications paused {formatTimeDisplay(quietStartTime)} – {formatTimeDisplay(quietEndTime)}
+              </Text>
+            )}
+          </>
+        )}
       </View>
 
       <View style={styles.card}>
@@ -330,6 +515,43 @@ const styles = StyleSheet.create({
     color: palette.error,
     marginTop: 8,
     fontSize: 14,
+  },
+  // Session 65: Quiet Hours styles
+  timePickerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+    marginTop: 8,
+  },
+  timePickerItem: {
+    flex: 1,
+    gap: 4,
+  },
+  timePickerLabel: {
+    ...typography.caption,
+    color: palette.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  timePickerButton: {
+    backgroundColor: palette.elevated,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  timePickerValue: {
+    ...typography.subheading,
+    color: palette.textPrimary,
+  },
+  quietHoursInfo: {
+    ...typography.caption,
+    color: palette.textMuted,
+    marginTop: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   destructiveButton: {
     marginTop: 8,

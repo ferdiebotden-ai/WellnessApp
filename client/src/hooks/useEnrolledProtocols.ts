@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { fetchEnrolledProtocols, EnrolledProtocol } from '../services/api';
 
 /**
@@ -70,10 +71,16 @@ const getMinutesUntil = (scheduledTime: Date): number => {
  *
  * @returns {Object} protocols, loading, error, refresh
  */
+/** Default interval for status recalculation (60 seconds) */
+const STATUS_REFRESH_INTERVAL = 60000;
+
 export const useEnrolledProtocols = () => {
   const [rawProtocols, setRawProtocols] = useState<EnrolledProtocol[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Tick counter triggers useMemo recalculation without API call
+  const [tick, setTick] = useState(0);
+  const appStateRef = useRef(AppState.currentState);
 
   const fetchProtocols = useCallback(async () => {
     setLoading(true);
@@ -93,6 +100,28 @@ export const useEnrolledProtocols = () => {
   useEffect(() => {
     fetchProtocols();
   }, [fetchProtocols]);
+
+  // Auto-refresh status every minute (recalculates isDueNow, isUpcoming without API call)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, STATUS_REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Refresh when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App came to foreground - recalculate status immediately
+        setTick(t => t + 1);
+      }
+      appStateRef.current = nextAppState;
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // Transform raw protocols with local time and status
   const protocols = useMemo((): ScheduledProtocol[] => {
@@ -121,7 +150,7 @@ export const useEnrolledProtocols = () => {
       })
       // Sort by scheduled time (earliest first)
       .sort((a, b) => a.localTimeDate.getTime() - b.localTimeDate.getTime());
-  }, [rawProtocols]);
+  }, [rawProtocols, tick]); // tick triggers recalculation without API call
 
   return {
     protocols,
