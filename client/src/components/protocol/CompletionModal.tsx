@@ -24,14 +24,29 @@ import { typography } from '../../theme/typography';
 interface CompletionModalProps {
   visible: boolean;
   protocolName: string;
+  /** Session 61: Duration in seconds (optional) */
+  durationSeconds?: number;
   onComplete: (difficultyRating: number | null, notes: string | null) => void;
   onSkip: () => void;
   onCancel: () => void;
 }
 
+/** Format seconds to MM:SS display */
+const formatDuration = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins >= 60) {
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    return `${hours}h ${remainingMins}m`;
+  }
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 export const CompletionModal: React.FC<CompletionModalProps> = ({
   visible,
   protocolName,
+  durationSeconds,
   onComplete,
   onSkip,
   onCancel,
@@ -75,6 +90,17 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
         <View style={styles.modal}>
           <Text style={styles.title}>Log Completion</Text>
           <Text style={styles.subtitle}>{protocolName}</Text>
+
+          {/* Session 61: Duration Display */}
+          {durationSeconds !== undefined && durationSeconds > 0 && (
+            <View style={styles.durationCard}>
+              <Text style={styles.durationIcon}>⏱️</Text>
+              <View style={styles.durationContent}>
+                <Text style={styles.durationLabel}>Completed in</Text>
+                <Text style={styles.durationValue}>{formatDuration(durationSeconds)}</Text>
+              </View>
+            </View>
+          )}
 
           {/* Difficulty Rating */}
           <View style={styles.ratingSection}>
@@ -183,6 +209,35 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
+  },
+  // Session 61: Duration display
+  durationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: palette.elevated,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 20,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: palette.primary,
+  },
+  durationIcon: {
+    fontSize: 24,
+  },
+  durationContent: {
+    flex: 1,
+  },
+  durationLabel: {
+    ...typography.caption,
+    color: palette.textSecondary,
+  },
+  durationValue: {
+    fontFamily: 'monospace',
+    fontSize: 20,
+    fontWeight: '700',
+    color: palette.primary,
   },
   ratingSection: {
     marginBottom: 20,

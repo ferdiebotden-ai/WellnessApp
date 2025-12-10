@@ -440,3 +440,79 @@ export const disconnectCalendar = (provider?: CalendarProvider) => {
 
 export const fetchRecentCalendarMetrics = (days: number = 14) =>
   request<RecentMetricsResponse>(`/api/calendar/recent?days=${days}`, 'GET');
+
+// =============================================================================
+// PROTOCOL ENROLLMENT API
+// =============================================================================
+
+/**
+ * Enrolled protocol with schedule info and protocol details.
+ */
+export interface EnrolledProtocol {
+  id: string;
+  protocol_id: string;
+  module_id: string | null;
+  default_time_utc: string;
+  enrolled_at: string;
+  protocol: {
+    id: string;
+    name: string;
+    short_name: string;
+    category: string;
+    summary: string;
+    duration_minutes: number | null;
+    frequency_per_week: number | null;
+  };
+}
+
+/**
+ * Response from enrolling in a protocol.
+ */
+export interface EnrollProtocolResponse {
+  enrolled: boolean;
+  protocol_id: string;
+  protocol_name: string;
+  default_time: string;
+}
+
+/**
+ * Response from unenrolling from a protocol.
+ */
+export interface UnenrollProtocolResponse {
+  enrolled: boolean;
+  protocol_id: string;
+}
+
+/**
+ * Enrolls the user in a protocol with intelligent default timing.
+ * @param protocolId Protocol ID to enroll in
+ * @param moduleId Optional module ID for context
+ * @returns Enrollment response with default schedule time
+ */
+export const enrollInProtocol = (protocolId: string, moduleId?: string) =>
+  request<EnrollProtocolResponse>(
+    `/api/protocols/${protocolId}/enroll`,
+    'POST',
+    moduleId ? { module_id: moduleId } : {}
+  );
+
+/**
+ * Unenrolls the user from a protocol (soft delete).
+ * @param protocolId Protocol ID to unenroll from
+ * @returns Unenrollment response
+ */
+export const unenrollFromProtocol = (protocolId: string) =>
+  request<UnenrollProtocolResponse>(`/api/protocols/${protocolId}/enroll`, 'DELETE');
+
+/**
+ * Fetches all protocols the user is enrolled in.
+ * @returns Array of enrolled protocols with schedule info and details
+ */
+export const fetchEnrolledProtocols = async (): Promise<EnrolledProtocol[]> => {
+  try {
+    return await request<EnrolledProtocol[]>('/api/user/enrolled-protocols', 'GET');
+  } catch (error) {
+    console.warn('Failed to fetch enrolled protocols:', error);
+    return [];
+  }
+};

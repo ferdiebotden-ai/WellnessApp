@@ -14,6 +14,8 @@ export interface ProtocolLogPayload {
   difficultyRating?: number;
   /** User's notes about this completion, optional */
   notes?: string;
+  /** Session 61: Duration in seconds for time tracking */
+  durationSeconds?: number;
 }
 
 const LOG_COLLECTION = 'protocol_log_queue';
@@ -39,6 +41,7 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
     progressTarget,
     difficultyRating,
     notes,
+    durationSeconds,
   } = payload;
 
   if (!protocolId || !moduleId) {
@@ -64,6 +67,8 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
     progressTarget: target,
     difficultyRating: difficultyRating ?? null,
     notes: notes ?? null,
+    // Session 61: Duration tracking
+    durationSeconds: typeof durationSeconds === 'number' && durationSeconds > 0 ? durationSeconds : null,
     createdAt: serverTimestamp(),
   };
 

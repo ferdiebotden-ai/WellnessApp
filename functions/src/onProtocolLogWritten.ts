@@ -175,6 +175,22 @@ export const onProtocolLogWritten = async (event: FirestoreCloudEvent): Promise<
     ? progressTargetRaw
     : DEFAULT_PROGRESS_TARGET;
 
+  // Session 61: Duration tracking (client sends seconds, DB stores minutes)
+  const durationSecondsRaw = typeof payload.durationSeconds === 'number' ? payload.durationSeconds : null;
+  const durationMinutes = durationSecondsRaw && durationSecondsRaw > 0
+    ? Math.round(durationSecondsRaw / 60)
+    : null;
+
+  // Session 59: Difficulty rating and notes
+  const difficultyRating = typeof payload.difficultyRating === 'number'
+    && payload.difficultyRating >= 1
+    && payload.difficultyRating <= 5
+    ? payload.difficultyRating
+    : null;
+  const notes = typeof payload.notes === 'string' && payload.notes.trim().length > 0
+    ? payload.notes.trim()
+    : null;
+
   // Look up the user's Supabase UUID from their Firebase UID
   const { data: user, error: userLookupError } = await supabase
     .from('users')
@@ -199,6 +215,11 @@ export const onProtocolLogWritten = async (event: FirestoreCloudEvent): Promise<
       status,
       logged_at: loggedAt.toISOString(),
       metadata,
+      // Session 61: Duration tracking
+      duration_minutes: durationMinutes,
+      // Session 59: Difficulty rating and notes
+      difficulty_rating: difficultyRating,
+      notes,
     },
   ]);
 

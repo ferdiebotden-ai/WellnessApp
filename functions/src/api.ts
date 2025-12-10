@@ -29,6 +29,7 @@ import {
 import { getRecoveryScore } from './recovery';
 import { submitManualCheckIn, getTodayCheckIn } from './manualCheckIn';
 import { getPersonalizedProtocol } from './protocolPersonalized';
+import { enrollProtocol, unenrollProtocol, getEnrolledProtocols } from './protocolEnrollment';
 
 const app = express();
 
@@ -60,6 +61,9 @@ app.post('/api/waitlist', joinWaitlist);
 app.post('/api/wearables/sync', syncWearableData);
 app.get('/api/protocols/search', searchProtocols);
 app.get('/api/protocols/:id/personalized', getPersonalizedProtocol);
+app.post('/api/protocols/:id/enroll', enrollProtocol);
+app.delete('/api/protocols/:id/enroll', unenrollProtocol);
+app.get('/api/user/enrolled-protocols', getEnrolledProtocols);
 app.get('/api/modules', getModules);
 app.patch('/api/modules/enrollment', updatePrimaryModule);
 

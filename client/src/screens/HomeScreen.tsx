@@ -219,8 +219,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 
   const handleAddProtocol = useCallback(() => {
-    // Navigate to Protocols tab
-    navigation.getParent()?.navigate('Protocols');
+    // Navigate to Protocol Browser screen
+    navigation.navigate('ProtocolBrowser');
   }, [navigation]);
 
   const handleSynthesisPress = useCallback(() => {
