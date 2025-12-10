@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { ModuleEnrollmentCard } from '../components/ModuleEnrollmentCard';
 import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { LiteModeScoreCard } from '../components/LiteModeScoreCard';
 import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
@@ -11,6 +10,7 @@ import { HomeHeader } from '../components/home/HomeHeader';
 import { TodaysFocusCard } from '../components/home/TodaysFocusCard';
 import { DayTimeline } from '../components/home/DayTimeline';
 import { WeeklyProgressCard } from '../components/home/WeeklyProgressCard';
+import { MyScheduleSection } from '../components/home/MyScheduleSection';
 import type { ManualCheckInInput } from '../types/checkIn';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -21,6 +21,7 @@ import { useNudgeActions } from '../hooks/useNudgeActions';
 // New hooks (Session 57)
 import { useTodaysFocus } from '../hooks/useTodaysFocus';
 import { useWeeklyProgress, useMockWeeklyProgress } from '../hooks/useWeeklyProgress';
+import { useEnrolledProtocols, ScheduledProtocol } from '../hooks/useEnrolledProtocols';
 import type { DashboardTask, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
 import type { HomeStackParamList } from '../navigation/HomeStack';
@@ -57,6 +58,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const mockProgress = useMockWeeklyProgress();
   const { protocols: weeklyProtocols, loading: loadingWeekly } =
     weeklyProgress.protocols.length > 0 ? weeklyProgress : mockProgress;
+
+  // Session 64: Enrolled protocols for My Schedule section
+  const {
+    protocols: enrolledProtocols,
+    loading: loadingEnrolled,
+    error: enrolledError,
+  } = useEnrolledProtocols();
 
   // Get user's first name for greeting
   const userName = firebaseAuth.currentUser?.displayName?.split(' ')[0] || undefined;
@@ -156,21 +164,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     [dismiss]
   );
 
-  const handleModulePress = useCallback(
-    (module: ModuleEnrollment) => {
-      if (module.tier === 'pro') {
-        const allowed = requestProModuleAccess(module.id);
-        if (!allowed) {
-          return;
-        }
-      }
-
-      Alert.alert(module.title, 'Module details will be available soon.');
-    },
-    [requestProModuleAccess]
-  );
-
-  // Filter modules based on feature flags
+  // Filter modules based on feature flags (still used for handleTaskPress fallback)
   const filteredEnrolledModules = useMemo(() => {
     return enrollments.filter((module) => {
       // Map module IDs to feature flags
@@ -222,6 +216,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     // Navigate to Protocol Browser screen
     navigation.navigate('ProtocolBrowser');
   }, [navigation]);
+
+  // Session 64: Handle tap on scheduled protocol card
+  const handleScheduledProtocolPress = useCallback(
+    (protocol: ScheduledProtocol) => {
+      navigation.navigate('ProtocolDetail', {
+        protocolId: protocol.protocol_id,
+        protocolName: protocol.protocol.name,
+        moduleId: protocol.module_id || undefined,
+        source: 'schedule',
+      });
+    },
+    [navigation]
+  );
 
   const handleSynthesisPress = useCallback(() => {
     // Navigate to Insights tab (Weekly Synthesis)
@@ -288,49 +295,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         </View>
 
-        {/* 5. Active Protocols with Add button */}
+        {/* 5. My Schedule - Session 64 (replaces Your Focus Areas) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>YOUR FOCUS AREAS</Text>
-          {orderedModules.length > 0 ? (
-            <View style={styles.moduleStack}>
-              {orderedModules.slice(0, 3).map((module) => (
-                <ModuleEnrollmentCard
-                  key={module.id}
-                  module={module}
-                  locked={false}
-                  onPress={() => handleModulePress(module)}
-                  testID={`module-card-${module.id}`}
-                />
-              ))}
-              {/* Add Protocol link */}
-              <Pressable
-                onPress={handleAddProtocol}
-                style={({ pressed }) => [
-                  styles.addProtocolButton,
-                  pressed && styles.addProtocolButtonPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Add protocol"
-                testID="add-protocol-button"
-              >
-                <Text style={styles.addProtocolIcon}>+</Text>
-                <Text style={styles.addProtocolText}>Add Protocol</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable
-              onPress={handleAddProtocol}
-              style={({ pressed }) => [
-                styles.emptyProtocolsCard,
-                pressed && styles.addProtocolButtonPressed,
-              ]}
-            >
-              <Text style={styles.emptyProtocolsText}>
-                No active protocols yet
-              </Text>
-              <Text style={styles.addProtocolLink}>+ Add your first protocol</Text>
-            </Pressable>
-          )}
+          <MyScheduleSection
+            protocols={enrolledProtocols}
+            loading={loadingEnrolled}
+            error={enrolledError}
+            onProtocolPress={handleScheduledProtocolPress}
+            onAddProtocol={handleAddProtocol}
+            testID="my-schedule-section"
+          />
         </View>
 
         {/* 6. Weekly Progress */}
@@ -376,59 +350,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: 16,
-  },
-  sectionTitle: {
-    ...typography.caption,
-    color: palette.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    fontWeight: '600',
-  },
-  moduleStack: {
-    gap: 12,
-  },
-  // Add Protocol button
-  addProtocolButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: palette.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderStyle: 'dashed',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  addProtocolButtonPressed: {
-    opacity: 0.7,
-  },
-  addProtocolIcon: {
-    fontSize: 20,
-    color: palette.primary,
-    fontWeight: '600',
-  },
-  addProtocolText: {
-    ...typography.body,
-    color: palette.primary,
-    fontWeight: '600',
-  },
-  // Empty protocols state
-  emptyProtocolsCard: {
-    backgroundColor: palette.surface,
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyProtocolsText: {
-    ...typography.body,
-    color: palette.textMuted,
-  },
-  addProtocolLink: {
-    ...typography.body,
-    color: palette.primary,
-    fontWeight: '600',
   },
   syncStatus: {
     ...typography.caption,
