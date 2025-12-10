@@ -202,6 +202,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     Alert.alert('AI Coach', 'Chat feature coming soon!');
   }, []);
 
+  // Session 58: Navigate to Protocol Detail
+  const handleTaskPress = useCallback(
+    (task: DashboardTask) => {
+      // Get moduleId from first enrolled module (if available)
+      const moduleId = orderedModules[0]?.id;
+
+      navigation.navigate('ProtocolDetail', {
+        protocolId: task.id,
+        protocolName: task.title,
+        moduleId,
+        source: task.source === 'nudge' ? 'nudge' : 'schedule',
+      });
+    },
+    [navigation, orderedModules]
+  );
+
   const handleAddProtocol = useCallback(() => {
     // Navigate to Protocols tab
     navigation.getParent()?.navigate('Protocols');
@@ -267,6 +283,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <DayTimeline
             tasks={tasks.filter((t) => t.scheduledAt)}
             onComplete={handleTaskComplete}
+            onTaskPress={handleTaskPress}
             loading={loadingTasks}
           />
         </View>

@@ -2,11 +2,20 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen } from '../screens/HomeScreen';
 import { WaitlistScreen } from '../screens/WaitlistScreen';
+import { ProtocolDetailScreen } from '../screens/ProtocolDetailScreen';
 import { palette } from '../theme/palette';
 
 export type HomeStackParamList = {
   Home: undefined;
   Waitlist: { tier: 'pro' | 'elite'; moduleName: string };
+  ProtocolDetail: {
+    protocolId: string;
+    protocolName?: string;
+    moduleId?: string;
+    enrollmentId?: string;
+    source?: 'schedule' | 'manual' | 'nudge';
+    progressTarget?: number;
+  };
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -28,6 +37,14 @@ export const HomeStackNavigator: React.FC = () => (
       name="Waitlist"
       component={WaitlistScreen}
       options={{ title: 'Join the Waitlist' }}
+    />
+    <Stack.Screen
+      name="ProtocolDetail"
+      component={ProtocolDetailScreen}
+      options={({ route }) => ({
+        title: route.params.protocolName || 'Protocol',
+        headerBackTitle: 'Back',
+      })}
     />
   </Stack.Navigator>
 );
