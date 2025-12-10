@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 59 (next) |
-| **Progress** | Session 58 complete (Protocol Detail Screen & Navigation) |
+| **Session** | 60 (next) |
+| **Progress** | Session 59 complete (Protocol Data Enrichment & Personalization) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,45 +52,68 @@
 
 ## Last Session
 
-**Date:** December 9, 2025 (Session 58)
-**Focus:** Protocol Detail Screen & Navigation
+**Date:** December 9, 2025 (Session 59)
+**Focus:** Protocol Data Enrichment & Personalization
 
-**Context:** Connected existing Protocol Detail Screen to navigation and redesigned with dark mode + 4-panel "Why?" sections for evidence transparency.
+**Context:** Session 58 completed Protocol Detail Screen with placeholder data. Session 59 bridges backend intelligence to frontend display.
 
 **Accomplished:**
 
-### Navigation Wiring
-- Added `ProtocolDetail` route to `HomeStack.tsx` with proper params
-- Connected DayTimeline card taps → Protocol Detail navigation
-- Connected Profile avatar → Profile tab
-- Connected "See Weekly Synthesis" → Insights tab
-- Connected "Add Protocol" → Protocols tab
+### Schema Migration
+- Added 7 enrichment columns to `protocols` table: mechanism_description, duration_minutes, frequency_per_week, parameter_ranges, implementation_rules, success_metrics, study_sources
+- Created indexes for mechanism completeness filtering
 
-### Protocol Detail Screen Redesign
-- Full dark mode styling using design system (palette, typography)
-- Hero section with category badge (Foundation/Performance/Recovery/Optimization)
-- "What To Do" card with parsed bullet points
-- 4-panel expandable "Why?" sections:
-  - **Why This Works** — Mechanism explanation
-  - **Research & Evidence** — DOI citations with clickable links
-  - **Your Data** — Personalized context (placeholder)
-  - **Our Confidence** — High/Medium/Low indicator with explanation
-- Sticky footer with "Mark as Complete" CTA
-- Smooth 250ms spring animations for expand/collapse
+### Protocol Seeding (18 protocols)
+- Foundation: Morning Light, Evening Light, Sleep Optimization, Hydration & Electrolytes
+- Performance: Caffeine Timing, Morning Movement, Walking Breaks, Nutrition, Fitness for Focus
+- Recovery: NSDR, Breathwork, Cold Exposure
+- Optimization: Supplements, Dopamine Management, Alcohol Optimization, Focus Enhancement
+- Meta: Cognitive Testing, Social Accountability
+- Full evidence data from Master Protocol Library (mechanism, parameters, citations, study sources)
 
-### Sub-Components Created (inline)
-- `CategoryBadge` — Color-coded protocol category indicator
-- `ExpandableSection` — Animated collapsible panel with Reanimated
-- `ConfidenceIndicator` — 3-dot confidence level display
+### Backend Personalization API
+- Created `GET /api/protocols/:id/personalized` endpoint
+- Returns enriched protocol + user_data (adherence, last completed, difficulty) + 5-factor confidence
+- Integrated with memory layer for memory_insight extraction
+- Server-side confidence calculation (protocol_fit, memory_support, timing_fit, conflict_risk, evidence_strength)
+
+### Client Updates
+- Expanded `ProtocolDetail` type with enrichment fields
+- Added `PersonalizedProtocolResponse`, `UserProtocolData`, `ConfidenceResult` types
+- Updated `fetchPersonalizedProtocol` API function with fallback
+- Updated `useProtocolDetail` hook to return userData and confidence
+
+### UI Panel Wiring
+- "Why This Works" → Shows real mechanism_description from database
+- "Your Data" → Shows real adherence (X/7 days, last completed, difficulty rating)
+- "Our Confidence" → Shows real 5-factor score with visual progress bars
+- CategoryBadge → Uses actual protocol category with 'meta' support
+
+### Completion Modal
+- Created `CompletionModal` component with 5-star difficulty rating
+- Optional notes field (280 char limit)
+- Skip option for quick logging without rating
+- Integrated into ProtocolDetailScreen before enqueueProtocolLog
+
+**Files Created:**
+- `supabase/migrations/20251209100000_add_protocol_enrichment_fields.sql` — Schema migration
+- `supabase/migrations/20251209100001_seed_protocols.sql` — 18 protocols seeded
+- `functions/src/protocolPersonalized.ts` — Personalization endpoint (+452 lines)
+- `functions/scripts/seed_protocols.ts` — TypeScript seed script (backup)
+- `client/src/components/protocol/CompletionModal.tsx` — Rating modal (+262 lines)
 
 **Files Modified:**
-- `client/src/navigation/HomeStack.tsx` — Added ProtocolDetail route (+17 lines)
-- `client/src/screens/HomeScreen.tsx` — Added handleTaskPress + onTaskPress prop (+17 lines)
-- `client/src/screens/ProtocolDetailScreen.tsx` — Complete redesign (+573 lines, -190 lines)
+- `functions/src/api.ts` — Register new endpoint
+- `client/src/types/protocol.ts` — Expanded types (+170 lines)
+- `client/src/services/api.ts` — Personalized fetch (+80 lines)
+- `client/src/services/protocolLogs.ts` — Added difficultyRating, notes fields
+- `client/src/hooks/useProtocolDetail.ts` — Returns userData, confidence
+- `client/src/screens/ProtocolDetailScreen.tsx` — Wire all panels to real data (+130 lines)
+- `client/src/screens/ProtocolDetailScreen.test.tsx` — Update mocks
 
-**Commit:** `60c7c77` — feat: add Protocol Detail Screen with navigation and 4-panel Why? sections (Session 58)
+**Commit:** `a34c350` — feat: add protocol data enrichment and personalization (Session 59)
 
-**Result:** Protocol Detail Screen accessible from Home Screen with professional dark mode UI and evidence transparency panels. All navigation connections verified in web preview.
+**Result:** Protocol Detail Screen now shows real personalized data from backend. 18 protocols seeded with scientific mechanisms. Completion modal captures user feedback for learning.
 
 ---
 
@@ -121,24 +144,25 @@
 
 ## Next Session Priority
 
-### Session 59 Focus: Protocol Data Enrichment & Personalization
+### Session 60 Focus: Backend Deployment & E2E Verification
 
-With Protocol Detail Screen complete, the next priority is enriching the protocol data:
+With protocol enrichment complete, the next priority is deploying and verifying the full stack:
 
-1. **Protocol Data from Master Library**
-   - Seed Supabase with structured protocol data from `Master_Protocol_Library.md`
-   - Include: mechanism, evidenceSummary, coreParameters, expectedOutcomes
-   - Update `useProtocolDetail` hook to fetch enriched data
+1. **Deploy Backend Changes**
+   - Deploy `protocolPersonalized.ts` endpoint to Cloud Run
+   - Verify API health and new endpoint accessibility
+   - Check Cloud Run logs for any startup errors
 
-2. **Real Personalization**
-   - Connect "Your Data" panel to actual user data (adherence, last completed)
-   - Connect "Our Confidence" panel to real confidence scoring from backend
-   - Display chronotype/location personalization hints
+2. **End-to-End Flow Testing**
+   - Test personalized protocol fetch from Home → Protocol Detail
+   - Verify confidence scoring displays correctly
+   - Test completion modal with difficulty rating and notes
+   - Confirm protocol logs include new fields in Firestore
 
-3. **Protocol Logging Enhancements**
-   - Add notes field before completion
-   - Duration tracking (start timer on detail screen)
-   - Post-completion confirmation modal with encouragement
+3. **Duration Tracking (Deferred from S59)**
+   - Add timer state to ProtocolDetailScreen
+   - Track time from screen open to completion
+   - Include duration in protocol log payload
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -245,4 +269,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 9, 2025 (Session 58 closeout - Protocol Detail Screen & Navigation complete)*
+*Last Updated: December 9, 2025 (Session 59 closeout - Protocol Data Enrichment & Personalization complete)*
