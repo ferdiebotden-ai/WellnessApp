@@ -265,10 +265,11 @@ Claude Code connects to external services via MCP (Model Context Protocol) serve
 
 | Server | Purpose | Status |
 |--------|---------|--------|
-| `github` | PR/issue management, repo sync | Configured |
 | `ide` | VS Code diagnostics, Jupyter kernel | Built-in |
 | `playwright` | Autonomous browser automation | Configured |
 | `chrome-devtools` | Collaborative browser debugging | Configured |
+
+**Note:** GitHub operations use `git` CLI directly (commits, pushes). For PRs/issues, use `gh` CLI or GitHub web UI.
 
 ### Chrome DevTools MCP (Collaborative Debugging)
 
@@ -337,8 +338,11 @@ When a todo item is marked complete and involves code changes:
 # Check MCP server status
 claude mcp list
 
-# Verify GitHub connection (in Claude Code)
+# Check MCP connections in Claude Code
 /mcp
+
+# Git operations (no MCP needed)
+git status && git log --oneline -5
 ```
 
 ---
