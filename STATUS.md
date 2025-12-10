@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 65 (next) |
-| **Progress** | Session 64 complete (My Schedule Display Enhancement) |
+| **Session** | 66 (next) |
+| **Progress** | Session 65 complete (My Schedule Enhancements + Push Notification Gaps) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,65 +52,75 @@
 
 ## Last Session
 
-**Date:** December 10, 2025 (Session 64)
-**Focus:** My Schedule Display Enhancement
+**Date:** December 10, 2025 (Session 65)
+**Focus:** My Schedule Enhancements + Push Notification Gaps
 
-**Context:** Session 63 completed push notifications and protocol flexibility. Session 64 replaces the "Your Focus Areas" module section on Home screen with a new "My Schedule" section showing enrolled protocols with their scheduled times.
+**Context:** Session 64 added the My Schedule section to Home screen. Session 65 enhances it with auto-refresh, swipe gestures, and fills push notification gaps (quiet hours UI, deep linking).
 
 **Accomplished:**
 
-### My Schedule Section (Home Screen)
-- **Replaced:** "Your Focus Areas" module cards with "My Schedule" protocol display
-- **New section shows:** User's enrolled protocols with scheduled times
-- **Visual indicators:** "NOW" badge for due protocols (±15 min), "In X min" for upcoming (15-60 min)
-- **Tap-to-start:** Navigate directly to ProtocolDetailScreen
+### My Schedule Auto-Refresh
+- **Status badges auto-update:** Every 60 seconds without API calls
+- **Foreground refresh:** Recalculates when app comes to foreground via AppState listener
+- **Implementation:** Added `tick` state + interval to `useEnrolledProtocols` hook
+- **Result:** "NOW" and "In X min" badges stay accurate without manual refresh
 
-### useEnrolledProtocols Hook
-- **Fetches:** Enrolled protocols from `GET /api/user/enrolled-protocols`
-- **UTC→Local conversion:** Converts `default_time_utc` to user's local timezone
-- **Status calculation:** `isDueNow`, `isUpcoming`, `minutesUntil`
-- **Sorting:** Protocols sorted by scheduled time (earliest first)
+### Swipeable Protocol Cards
+- **SwipeableProtocolCard component:** PanResponder + Reanimated for gestures
+- **Swipe right (>80px):** Start/navigate to protocol (only when `isDueNow`)
+- **Swipe left (>80px):** Unenroll from schedule (with confirmation dialog)
+- **Haptic feedback:** Medium impact at threshold crossing
+- **Spring animations:** Card returns to center after release
+- **Visual indicators:** Teal "Start" indicator, red "Remove" indicator
 
-### ScheduledProtocolCard Component
-- **Time badge:** Shows local time (e.g., "7:00 AM")
-- **Protocol name** and **duration pill** (e.g., "10 min")
-- **Category dot:** Color-coded by protocol category
-- **Pulsing animation:** Teal border pulses when protocol is due now
-- **Pressable:** Scale animation on tap
+### Quiet Hours UI (Profile Screen)
+- **New "Notifications" card** in Profile screen
+- **Enable toggle:** `quiet_hours_enabled` preference
+- **Time pickers:** Start and end time selection via Alert picker
+- **Common times:** 6 AM - 8 AM for end, 9 PM - 11 PM for start
+- **Info display:** Shows active quiet hours range
+- **API integration:** Saves to `users.preferences` via `updateUserPreferences`
 
-### MyScheduleSection Container
-- **Loading state:** "Loading schedule..." message
-- **Empty state:** Friendly CTA to add first protocol
-- **Error state:** Error message with retry option
-- **Add Protocol button:** Dashed border style, navigates to ProtocolBrowser
+### Deep Linking Configuration
+- **URL scheme:** `wellnessos://` (defined in app.json)
+- **Routes configured:**
+  - `wellnessos://home` → Home screen
+  - `wellnessos://protocol/:protocolId` → ProtocolDetail
+  - `wellnessos://protocols` → Protocol browser
+  - `wellnessos://insights` → Insights tab
+  - `wellnessos://profile` → Profile tab
+- **Future-ready:** `https://app.apexos.com` prefix for web deep links
 
 **Files Created:**
-- `client/src/hooks/useEnrolledProtocols.ts`
-- `client/src/components/home/ScheduledProtocolCard.tsx`
-- `client/src/components/home/MyScheduleSection.tsx`
+- `client/src/components/home/SwipeableProtocolCard.tsx`
 
 **Files Modified:**
-- `client/src/screens/HomeScreen.tsx` — Replaced module section with MyScheduleSection
+- `client/src/hooks/useEnrolledProtocols.ts` — Auto-refresh + foreground detection
+- `client/src/components/home/MyScheduleSection.tsx` — Swipe callbacks
+- `client/src/components/home/index.ts` — Export new component
+- `client/src/screens/HomeScreen.tsx` — Swipe handlers
+- `client/src/screens/ProfileScreen.tsx` — Quiet hours UI
+- `client/src/navigation/RootNavigator.tsx` — Deep linking config
 
 **Commits:**
-- `c91549c` — feat: add My Schedule section to Home screen (Session 64)
+- `001c78b` — feat: add My Schedule enhancements and quiet hours UI (Session 65)
 
-**Result:** Users now see their enrolled protocols with scheduled times prominently on the Home screen. Visual indicators show when protocols are due, and tapping navigates directly to start the protocol.
+**Result:** Schedule cards now auto-refresh and support swipe gestures. Users can configure quiet hours in Profile. Deep linking is configured for future notification improvements.
 
 ---
 
 ## Previous Session
 
-**Date:** December 10, 2025 (Session 63)
-**Focus:** Push Notifications & Protocol Flexibility
+**Date:** December 10, 2025 (Session 64)
+**Focus:** My Schedule Display Enhancement
 
 **Accomplished:**
-- Push notification infrastructure wired end-to-end
-- Protocol reminder scheduler (15-min Pub/Sub job)
-- Custom time selection for enrollment (TimePickerBottomSheet)
-- Protocol implementation methods (Morning Light with 3 options)
+- Replaced "Your Focus Areas" with "My Schedule" section on Home screen
+- Created useEnrolledProtocols hook with UTC→local conversion
+- Created ScheduledProtocolCard with pulsing animation for due protocols
+- Created MyScheduleSection with loading, empty, and error states
 
-**Commits:** `5fcc4c0`, `c8d22f5`
+**Commits:** `c91549c`
 
 ---
 
@@ -196,14 +206,14 @@
 
 ## Next Session Priority
 
-### Session 65 Focus: Testing & Polish
+### Session 66 Focus: Testing & Protocol Expansion
 
-Session 64 completed the Schedule Display Enhancement. Next priorities:
+Session 65 completed My Schedule enhancements and push notification gaps. Next priorities:
 
-1. **Push Notification Testing**
+1. **Push Notification Testing** (requires physical device)
    - Test notification delivery on physical iOS/Android devices
    - Verify deep linking from notifications works end-to-end
-   - Test quiet hours suppression
+   - Test quiet hours suppression behavior
 
 2. **Implementation Methods Expansion**
    - Add implementation methods to other protocols (Cold Exposure, Breathwork)
@@ -214,9 +224,10 @@ Session 64 completed the Schedule Display Enhancement. Next priorities:
    - Test timer accuracy over long sessions
    - Search improvements in ProtocolBrowser
 
-4. **My Schedule Enhancements (if time)**
-   - Auto-refresh status every minute (for "In X min" updates)
-   - Swipe actions on protocol cards (dismiss, snooze)
+4. **E2E Testing**
+   - Add Playwright tests for new swipe gestures (web)
+   - Test quiet hours UI flow
+   - Verify deep linking in Expo web
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
