@@ -30,14 +30,33 @@ const generateDailySchedules = async (_event, context) => {
     const dateKey = formatDateKey(runDate);
     const firestore = (0, firestore_1.getFirestore)((0, firebaseAdmin_1.getFirebaseApp)());
     const supabase = (0, supabaseClient_1.getServiceClient)();
-    // 1. Fetch all active enrollments
-    const { data: enrollments, error: enrollmentsError } = await supabase
-        .from('module_enrollment')
-        .select('id, user_id, module_id');
-    if (enrollmentsError) {
-        throw new Error(`Failed to fetch enrollments: ${enrollmentsError.message}`);
+    // 1. Fetch all active module enrollments and user protocol enrollments
+    const [enrollmentsResult, userProtocolEnrollmentsResult] = await Promise.all([
+        supabase.from('module_enrollment').select('id, user_id, module_id'),
+        supabase
+            .from('user_protocol_enrollment')
+            .select('id, user_id, protocol_id, module_id, default_time_utc, is_active')
+            .eq('is_active', true),
+    ]);
+    if (enrollmentsResult.error) {
+        throw new Error(`Failed to fetch enrollments: ${enrollmentsResult.error.message}`);
     }
-    if (enrollments.length === 0)
+    const enrollments = enrollmentsResult.data || [];
+    // Session 61: Fetch user protocol enrollments (individual protocol selections)
+    const userProtocolEnrollments = (userProtocolEnrollmentsResult.data || []);
+    if (userProtocolEnrollmentsResult.error) {
+        console.warn(`[DailyScheduler] Failed to fetch user protocol enrollments: ${userProtocolEnrollmentsResult.error.message}`);
+        // Continue with module-based scheduling only
+    }
+    // Group user protocol enrollments by user_id for efficient lookup
+    const userProtocolsByUser = new Map();
+    for (const upe of userProtocolEnrollments) {
+        const list = userProtocolsByUser.get(upe.user_id) || [];
+        list.push(upe);
+        userProtocolsByUser.set(upe.user_id, list);
+    }
+    // If no module enrollments and no user protocol enrollments, nothing to do
+    if (enrollments.length === 0 && userProtocolEnrollments.length === 0)
         return;
     // 2. Fetch all protocols and mappings (cache them)
     const [protocolsResult, mappingsResult] = await Promise.all([
@@ -65,15 +84,47 @@ const generateDailySchedules = async (_event, context) => {
         list.push(e);
         userEnrollments.set(e.user_id, list);
     }
+    // Collect all user IDs from both module enrollments and protocol enrollments
+    const allUserIds = new Set([...userEnrollments.keys(), ...userProtocolsByUser.keys()]);
     const batch = firestore.batch();
     let batchCount = 0;
-    for (const [userId, userModules] of userEnrollments) {
+    for (const userId of allUserIds) {
+        const userModules = userEnrollments.get(userId) || [];
+        const userProtocols = userProtocolsByUser.get(userId) || [];
         const dailyProtocols = [];
         const scheduledProtocolIds = new Set();
         // Check if user is in MVD mode - filter protocols accordingly
         const mvdState = await (0, mvd_1.getMVDState)(userId);
         const mvdActive = mvdState?.mvd_active ?? false;
         const mvdType = mvdState?.mvd_type ?? null;
+        // Session 61: First, add user-enrolled protocols with their preferred times
+        // These take priority over module-based protocols
+        for (const upe of userProtocols) {
+            if (scheduledProtocolIds.has(upe.protocol_id))
+                continue;
+            // Filter based on MVD state if active
+            if (mvdActive && mvdType && !(0, mvd_1.isProtocolApprovedForMVD)(upe.protocol_id, mvdType)) {
+                continue;
+            }
+            const protocol = protocols.get(upe.protocol_id);
+            if (!protocol)
+                continue;
+            // Parse the default_time_utc (format: "HH:MM")
+            const [hourStr, minuteStr] = upe.default_time_utc.split(':');
+            const hour = parseInt(hourStr, 10) || 12;
+            const minute = parseInt(minuteStr, 10) || 0;
+            const scheduledTime = new Date(runDate);
+            scheduledTime.setUTCHours(hour, minute, 0, 0);
+            dailyProtocols.push({
+                protocol_id: upe.protocol_id,
+                module_id: upe.module_id || '',
+                scheduled_time_utc: scheduledTime.toISOString(),
+                duration_minutes: protocol.duration_minutes || 10,
+                status: 'pending',
+            });
+            scheduledProtocolIds.add(upe.protocol_id);
+        }
+        // Then add module-based protocols (original logic)
         for (const enrollment of userModules) {
             let protocolIds = moduleProtocols.get(enrollment.module_id) || [];
             // Filter protocols based on MVD state
@@ -82,7 +133,7 @@ const generateDailySchedules = async (_event, context) => {
             }
             for (const pid of protocolIds) {
                 if (scheduledProtocolIds.has(pid))
-                    continue; // Avoid duplicates across modules
+                    continue; // Avoid duplicates across modules and user enrollments
                 const protocol = protocols.get(pid);
                 if (!protocol)
                     continue;

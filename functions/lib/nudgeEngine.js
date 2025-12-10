@@ -13,6 +13,7 @@ const suppression_1 = require("./suppression");
 const safety_1 = require("./safety");
 const whyEngine_1 = require("./reasoning/whyEngine");
 const mvd_1 = require("./mvd");
+const pushService_1 = require("./notifications/pushService");
 const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis. **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
 /**
  * Protocol IDs that qualify as morning anchors
@@ -296,6 +297,18 @@ const generateAdaptiveNudges = async (_event, _context) => {
             why_expansion: whyExpansion,
         };
         await firestore.collection('live_nudges').doc(userId).collection('entries').add(taskDoc);
+        // Send push notification to user's devices
+        try {
+            const pushResult = await (0, pushService_1.sendPushToUser)(userId, bestMatch.protocol.name || 'New Recommendation', nudgeText.substring(0, 100), // Truncate for push body
+            { type: 'nudge', protocol_id: suggestedProtocolId, protocol_name: bestMatch.protocol.name });
+            if (pushResult.sent > 0) {
+                console.log(`[NudgeEngine] Push sent to user ${userId}: ${pushResult.sent} device(s)`);
+            }
+        }
+        catch (pushError) {
+            // Non-critical - nudge is still in Firestore for in-app display
+            console.warn(`[NudgeEngine] Push failed for ${userId}:`, pushError);
+        }
         // Log to Audit Log (includes memory IDs and confidence for traceability)
         const memoryIdsUsed = memories.map((m) => m.id);
         const suppressedCount = scoredProtocols.length - validProtocols.length;

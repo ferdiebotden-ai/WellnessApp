@@ -27,7 +27,7 @@ function resolveError(error) {
  * POST /api/onboarding/complete
  *
  * Completes user onboarding with conversational AI flow data:
- * 1. Storing primary_goal and wearable_source on user profile
+ * 1. Storing primary_goal, wearable_source, and biometrics on user profile
  * 2. Setting onboarding_complete = true
  * 3. Creating module_enrollment record for goal-mapped module
  *
@@ -35,6 +35,7 @@ function resolveError(error) {
  * - primary_goal: User's wellness focus (better_sleep, more_energy, sharper_focus, faster_recovery)
  * - wearable_source: Optional wearable device (oura, whoop, apple_health, google_fit, garmin)
  * - primary_module_id: Optional explicit module (defaults to goal→module mapping)
+ * - biometrics: Optional biometric profile (birthDate, biologicalSex, heightCm, weightKg, timezone)
  */
 async function completeOnboarding(req, res) {
     if (req.method !== 'POST') {
@@ -79,10 +80,10 @@ async function completeOnboarding(req, res) {
             res.status(404).json({ error: `Module '${primaryModuleId}' not found` });
             return;
         }
-        // 3. Update user profile with goal, wearable, and mark onboarding complete
-        const { error: updateError } = await serviceClient
-            .from('users')
-            .update({
+        // 3. Build user profile update with goal, wearable, biometrics, and mark onboarding complete
+        const biometrics = body.biometrics;
+        // Build update object
+        const updateData = {
             onboarding_complete: true,
             primary_goal: body.primary_goal,
             wearable_source: wearableSource,
@@ -90,7 +91,29 @@ async function completeOnboarding(req, res) {
                 ...(user.preferences || {}),
                 primary_module_id: primaryModuleId
             }
-        })
+        };
+        // Add biometric fields if provided
+        if (biometrics) {
+            if (biometrics.birthDate) {
+                updateData.birth_date = biometrics.birthDate;
+            }
+            if (biometrics.biologicalSex) {
+                updateData.biological_sex = biometrics.biologicalSex;
+            }
+            if (biometrics.heightCm !== null && biometrics.heightCm > 0) {
+                updateData.height_cm = Math.round(biometrics.heightCm);
+            }
+            if (biometrics.weightKg !== null && biometrics.weightKg > 0) {
+                updateData.weight_kg = Math.round(biometrics.weightKg * 100) / 100; // 2 decimal places
+                updateData.weight_updated_at = new Date().toISOString();
+            }
+            if (biometrics.timezone) {
+                updateData.timezone = biometrics.timezone;
+            }
+        }
+        const { error: updateError } = await serviceClient
+            .from('users')
+            .update(updateData)
             .eq('id', user.id);
         if (updateError) {
             throw updateError;
@@ -131,7 +154,9 @@ async function completeOnboarding(req, res) {
             trial_end_date: user.trial_end_date,
             primary_module_id: primaryModuleId,
             primary_goal: body.primary_goal,
-            wearable_source: wearableSource
+            wearable_source: wearableSource,
+            has_biometrics: !!(biometrics?.birthDate || biometrics?.biologicalSex || biometrics?.heightCm || biometrics?.weightKg),
+            timezone: biometrics?.timezone ?? 'UTC'
         });
     }
     catch (error) {

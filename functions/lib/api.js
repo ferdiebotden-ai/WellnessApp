@@ -23,6 +23,8 @@ const wakeEvents_1 = require("./wakeEvents");
 const calendarSync_1 = require("./calendarSync");
 const recovery_1 = require("./recovery");
 const manualCheckIn_1 = require("./manualCheckIn");
+const protocolPersonalized_1 = require("./protocolPersonalized");
+const protocolEnrollment_1 = require("./protocolEnrollment");
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)({ origin: true }));
@@ -48,7 +50,12 @@ app.post('/api/onboarding/complete', onboarding_1.completeOnboarding);
 app.post('/api/waitlist', waitlist_1.joinWaitlist);
 app.post('/api/wearables/sync', wearablesSync_1.syncWearableData);
 app.get('/api/protocols/search', protocolSearch_1.searchProtocols);
+app.get('/api/protocols/:id/personalized', protocolPersonalized_1.getPersonalizedProtocol);
+app.post('/api/protocols/:id/enroll', protocolEnrollment_1.enrollProtocol);
+app.delete('/api/protocols/:id/enroll', protocolEnrollment_1.unenrollProtocol);
+app.get('/api/user/enrolled-protocols', protocolEnrollment_1.getEnrolledProtocols);
 app.get('/api/modules', modules_1.getModules);
+app.patch('/api/modules/enrollment', modules_1.updatePrimaryModule);
 // Push notification routes
 app.post('/api/push-tokens', pushTokens_1.registerPushToken);
 app.delete('/api/push-tokens', pushTokens_1.deactivatePushTokens);

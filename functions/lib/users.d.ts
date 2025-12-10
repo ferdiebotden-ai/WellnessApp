@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+type BiologicalSex = 'male' | 'female' | 'prefer_not_to_say';
 interface UserProfileInsert {
     firebase_uid: string;
     email?: string | null;
@@ -11,6 +12,12 @@ interface UserProfileInsert {
     healthMetrics?: Record<string, unknown>;
     earnedBadges?: string[];
     subscription_id?: string | null;
+    birth_date?: string | null;
+    biological_sex?: BiologicalSex | null;
+    height_cm?: number | null;
+    weight_kg?: number | null;
+    timezone?: string | null;
+    weight_updated_at?: string | null;
 }
 declare function authenticateRequest(req: Request): Promise<{
     uid: string;

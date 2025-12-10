@@ -15,7 +15,14 @@ const MUTABLE_FIELDS = new Set([
     'onboarding_complete',
     'preferences',
     'healthMetrics',
-    'earnedBadges'
+    'earnedBadges',
+    // Biometric fields
+    'birth_date',
+    'biological_sex',
+    'height_cm',
+    'weight_kg',
+    'timezone',
+    'weight_updated_at'
 ]);
 async function authenticateRequest(req) {
     const token = (0, http_1.extractBearerToken)(req);
@@ -89,6 +96,37 @@ function filterMutableFields(payload) {
             case 'earnedBadges':
                 if (Array.isArray(value)) {
                     updates.earnedBadges = value.map(String);
+                }
+                break;
+            // Biometric fields
+            case 'birth_date':
+                if (typeof value === 'string' || value === null) {
+                    updates.birth_date = value;
+                }
+                break;
+            case 'biological_sex':
+                if (value === null || ['male', 'female', 'prefer_not_to_say'].includes(value)) {
+                    updates.biological_sex = value;
+                }
+                break;
+            case 'height_cm':
+                if (typeof value === 'number' || value === null) {
+                    updates.height_cm = value;
+                }
+                break;
+            case 'weight_kg':
+                if (typeof value === 'number' || value === null) {
+                    updates.weight_kg = value;
+                }
+                break;
+            case 'timezone':
+                if (typeof value === 'string' || value === null) {
+                    updates.timezone = value;
+                }
+                break;
+            case 'weight_updated_at':
+                if (typeof value === 'string' || value === null) {
+                    updates.weight_updated_at = value;
                 }
                 break;
             default:
