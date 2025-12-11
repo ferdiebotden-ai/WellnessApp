@@ -8,9 +8,9 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | PRD v8.1 Frontend Rebuild — 🚀 IN PROGRESS |
-| **Session** | 66 (next) |
-| **Progress** | Session 65 complete (My Schedule Enhancements + Push Notification Gaps) |
+| **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
+| **Session** | 67 (next) |
+| **Progress** | Session 66 complete (Weekly Synthesis UI + Protocol Methods) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,66 +52,68 @@
 
 ## Last Session
 
-**Date:** December 10, 2025 (Session 65)
-**Focus:** My Schedule Enhancements + Push Notification Gaps
+**Date:** December 11, 2025 (Session 66)
+**Focus:** Weekly Synthesis UI + Protocol Implementation Methods
 
-**Context:** Session 64 added the My Schedule section to Home screen. Session 65 enhances it with auto-refresh, swipe gestures, and fills push notification gaps (quiet hours UI, deep linking).
+**Context:** MVP Progress Report showed 90% completion. Session 66 addresses key gap: Weekly Synthesis UI was showing placeholder instead of real data.
 
 **Accomplished:**
 
-### My Schedule Auto-Refresh
-- **Status badges auto-update:** Every 60 seconds without API calls
-- **Foreground refresh:** Recalculates when app comes to foreground via AppState listener
-- **Implementation:** Added `tick` state + interval to `useEnrolledProtocols` hook
-- **Result:** "NOW" and "In X min" badges stay accurate without manual refresh
+### Weekly Synthesis UI (Major Feature)
+- **Backend API:** Created `GET /api/users/me/weekly-synthesis` endpoint
+- **Response includes:** 5-section narrative (Win, Watch, Pattern, Trajectory, Experiment)
+- **Client hook:** Created `useWeeklySynthesis` for data fetching
+- **WeeklySynthesisCard component:** Displays 5 sections with color-coded icons
+  - Win (green) - What improved this week
+  - Watch (amber) - What needs attention
+  - Pattern (blue) - Correlation discovered
+  - Trajectory (gray) - Where trends are heading
+  - Experiment (teal) - Actionable suggestion
+- **Empty state:** Progress bar showing days tracked vs required
+- **InsightsScreen updated:** Shows synthesis above correlations, removed placeholder
 
-### Swipeable Protocol Cards
-- **SwipeableProtocolCard component:** PanResponder + Reanimated for gestures
-- **Swipe right (>80px):** Start/navigate to protocol (only when `isDueNow`)
-- **Swipe left (>80px):** Unenroll from schedule (with confirmation dialog)
-- **Haptic feedback:** Medium impact at threshold crossing
-- **Spring animations:** Card returns to center after release
-- **Visual indicators:** Teal "Start" indicator, red "Remove" indicator
-
-### Quiet Hours UI (Profile Screen)
-- **New "Notifications" card** in Profile screen
-- **Enable toggle:** `quiet_hours_enabled` preference
-- **Time pickers:** Start and end time selection via Alert picker
-- **Common times:** 6 AM - 8 AM for end, 9 PM - 11 PM for start
-- **Info display:** Shows active quiet hours range
-- **API integration:** Saves to `users.preferences` via `updateUserPreferences`
-
-### Deep Linking Configuration
-- **URL scheme:** `wellnessos://` (defined in app.json)
-- **Routes configured:**
-  - `wellnessos://home` → Home screen
-  - `wellnessos://protocol/:protocolId` → ProtocolDetail
-  - `wellnessos://protocols` → Protocol browser
-  - `wellnessos://insights` → Insights tab
-  - `wellnessos://profile` → Profile tab
-- **Future-ready:** `https://app.apexos.com` prefix for web deep links
+### Protocol Implementation Methods
+- **Cold Exposure:** 4 methods (cold shower, cold plunge, contrast therapy, cryotherapy)
+- **Breathwork:** 4 methods (cyclic sighing, box breathing, 4-7-8 breathing, physiological sigh)
+- **Database migration:** Applied to production
 
 **Files Created:**
-- `client/src/components/home/SwipeableProtocolCard.tsx`
+- `functions/src/weeklySynthesisApi.ts` - Backend API endpoint
+- `client/src/hooks/useWeeklySynthesis.ts` - Data fetching hook
+- `client/src/components/WeeklySynthesisCard.tsx` - UI component with empty state
+- `supabase/migrations/20251211100000_add_cold_breathwork_methods.sql`
 
 **Files Modified:**
-- `client/src/hooks/useEnrolledProtocols.ts` — Auto-refresh + foreground detection
-- `client/src/components/home/MyScheduleSection.tsx` — Swipe callbacks
-- `client/src/components/home/index.ts` — Export new component
-- `client/src/screens/HomeScreen.tsx` — Swipe handlers
-- `client/src/screens/ProfileScreen.tsx` — Quiet hours UI
-- `client/src/navigation/RootNavigator.tsx` — Deep linking config
+- `functions/src/api.ts` - Added weekly-synthesis route
+- `client/src/services/api.ts` - Added fetchWeeklySynthesis function
+- `client/src/screens/InsightsScreen.tsx` - Wired to real synthesis data
 
 **Commits:**
-- `001c78b` — feat: add My Schedule enhancements and quiet hours UI (Session 65)
+- `53e82c1` — feat: add Weekly Synthesis UI to Insights screen (Session 66)
+- `dd0355d` — feat: add implementation methods for Cold Exposure and Breathwork (Session 66)
 
-**Result:** Schedule cards now auto-refresh and support swipe gestures. Users can configure quiet hours in Profile. Deep linking is configured for future notification improvements.
+**Result:** InsightsScreen now displays actual AI-generated weekly synthesis narratives instead of placeholder text. Protocol browser shows implementation methods for Morning Light, Cold Exposure, and Breathwork.
 
 ---
 
 ## Previous Session
 
-**Date:** December 10, 2025 (Session 64)
+**Date:** December 10, 2025 (Session 65)
+**Focus:** My Schedule Enhancements + Push Notification Gaps
+
+**Accomplished:**
+- Swipeable protocol cards with complete/skip/snooze gestures
+- Auto-refresh for enrolled protocols with foreground detection
+- Quiet hours UI in Profile settings (toggle + time range picker)
+- Deep linking configuration (`wellnessos://` URL scheme)
+
+**Commits:** `001c78b`
+
+---
+
+## Session 64 Summary
+
+**Date:** December 10, 2025
 **Focus:** My Schedule Display Enhancement
 
 **Accomplished:**
@@ -124,45 +126,26 @@
 
 ---
 
-## Session 63 Summary
-
-**Date:** December 10, 2025
-**Focus:** Push Notifications & Protocol Flexibility
-
-**Accomplished:**
-- Push notification infrastructure wired end-to-end
-- Protocol reminder scheduler (15-min Pub/Sub job)
-- Custom time selection for enrollment (TimePickerBottomSheet)
-- Protocol implementation methods (Morning Light with 3 options)
-
-**Commits:** `5fcc4c0`, `c8d22f5`
-
----
-
 ## Next Session Priority
 
-### Session 66 Focus: Testing & Protocol Expansion
+### Session 67 Focus: Push Notifications + Deep Linking Testing
 
-Session 65 completed My Schedule enhancements and push notification gaps. Next priorities:
+Session 66 completed Weekly Synthesis UI and protocol methods. Next priorities:
 
 1. **Push Notification Testing** (requires physical device)
    - Test notification delivery on physical iOS/Android devices
    - Verify deep linking from notifications works end-to-end
    - Test quiet hours suppression behavior
 
-2. **Implementation Methods Expansion**
-   - Add implementation methods to other protocols (Cold Exposure, Breathwork)
-   - Consider user preference tracking for methods (future)
+2. **E2E Testing**
+   - Add Playwright tests for Weekly Synthesis UI
+   - Test protocol enrollment with implementation method selection
+   - Verify swipe gestures work on web
 
 3. **Polish & Edge Cases**
    - Handle offline enrollment queue
    - Test timer accuracy over long sessions
    - Search improvements in ProtocolBrowser
-
-4. **E2E Testing**
-   - Add Playwright tests for new swipe gestures (web)
-   - Test quiet hours UI flow
-   - Verify deep linking in Expo web
 
 **Design Reference:** `skills/apex-os-design/` for colors, typography, components
 
@@ -270,4 +253,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 10, 2025 (Session 65 complete - My Schedule Enhancements + Push Notification Gaps)*
+*Last Updated: December 11, 2025 (Session 66 complete - Weekly Synthesis UI + Protocol Methods)*
