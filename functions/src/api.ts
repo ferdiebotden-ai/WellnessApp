@@ -30,6 +30,7 @@ import { getRecoveryScore } from './recovery';
 import { submitManualCheckIn, getTodayCheckIn } from './manualCheckIn';
 import { getPersonalizedProtocol } from './protocolPersonalized';
 import { enrollProtocol, unenrollProtocol, getEnrolledProtocols } from './protocolEnrollment';
+import { getLatestWeeklySynthesis } from './weeklySynthesisApi';
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.post('/api/users/me/export', requestUserDataExport);
 app.get('/api/users/me/privacy', getPrivacyDashboardData);
 app.get('/api/users/me/monetization', getMonetizationStatus);
 app.get('/api/users/me/correlations', getUserCorrelations);
+app.get('/api/users/me/weekly-synthesis', getLatestWeeklySynthesis);
 
 // Feature routes
 app.post('/api/chat', postChat);

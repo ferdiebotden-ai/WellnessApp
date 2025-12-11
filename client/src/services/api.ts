@@ -403,6 +403,77 @@ export const fetchCorrelations = async (): Promise<CorrelationsResponse> => {
 };
 
 // =============================================================================
+// WEEKLY SYNTHESIS API
+// =============================================================================
+
+/**
+ * Metrics summary from the weekly synthesis
+ */
+export interface WeeklySynthesisMetrics {
+  protocol_adherence?: number;
+  days_with_completion?: number;
+  avg_recovery_score?: number | null;
+  hrv_trend_percent?: number | null;
+  sleep_quality_trend_percent?: number | null;
+  total_protocols_completed?: number;
+  data_days_available?: number;
+  has_wearable_data?: boolean;
+  protocol_breakdown?: Array<{
+    protocol_id: string;
+    name: string;
+    completed_days: number;
+    completion_rate: number;
+  }>;
+}
+
+/**
+ * Weekly synthesis data from the API
+ */
+export interface WeeklySynthesis {
+  id: string;
+  week_start: string;
+  week_end: string;
+  narrative: string;
+  win_of_week: string;
+  area_to_watch: string;
+  pattern_insight: string | null;
+  trajectory_prediction: string | null;
+  experiment: string;
+  metrics: WeeklySynthesisMetrics;
+  generated_at: string;
+}
+
+/**
+ * Response format for GET /api/users/me/weekly-synthesis
+ */
+export interface WeeklySynthesisResponse {
+  has_synthesis: boolean;
+  synthesis: WeeklySynthesis | null;
+  days_tracked: number;
+  min_days_required: number;
+}
+
+/**
+ * Retrieves the user's latest weekly synthesis narrative.
+ * Falls back to empty synthesis when the API is unavailable.
+ *
+ * @returns Weekly synthesis response with narrative and metrics.
+ */
+export const fetchWeeklySynthesis = async (): Promise<WeeklySynthesisResponse> => {
+  try {
+    return await request<WeeklySynthesisResponse>('/api/users/me/weekly-synthesis', 'GET');
+  } catch (error) {
+    console.warn('Backend API unavailable, returning empty synthesis.');
+    return {
+      has_synthesis: false,
+      synthesis: null,
+      days_tracked: 0,
+      min_days_required: 4,
+    };
+  }
+};
+
+// =============================================================================
 // CALENDAR API
 // =============================================================================
 

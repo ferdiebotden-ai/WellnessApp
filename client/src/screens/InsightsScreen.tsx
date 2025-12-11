@@ -3,40 +3,64 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { useCorrelations } from '../hooks/useCorrelations';
+import { useWeeklySynthesis } from '../hooks/useWeeklySynthesis';
 import { CorrelationCard } from '../components/CorrelationCard';
 import { EmptyCorrelationState } from '../components/EmptyCorrelationState';
+import { WeeklySynthesisCard, WeeklySynthesisEmptyState } from '../components/WeeklySynthesisCard';
 
 /**
- * Insights Screen - Correlation Dashboard
+ * Insights Screen - Weekly Synthesis + Correlation Dashboard
  *
- * Displays protocol-outcome correlations from weekly synthesis.
- * Shows empty state for users with < 14 days of data.
+ * Displays:
+ * 1. Weekly Synthesis - AI-generated 5-section narrative (Win, Watch, Pattern, Trajectory, Experiment)
+ * 2. Protocol-outcome correlations from weekly synthesis
  *
- * Design per PRD Section 5.8.
+ * Per PRD Section 4.5 (Weekly Synthesis) and Section 5.8 (Correlations).
  */
 export const InsightsScreen: React.FC = () => {
-  const { correlations, daysTracked, minDaysRequired, loading, error } = useCorrelations();
+  const { correlations, daysTracked: correlationDays, minDaysRequired: correlationMinDays, loading: correlationsLoading, error: correlationsError } = useCorrelations();
+  const { hasSynthesis, synthesis, daysTracked: synthesisDays, minDaysRequired: synthesisMinDays, loading: synthesisLoading, error: synthesisError } = useWeeklySynthesis();
 
-  const hasEnoughData = daysTracked >= minDaysRequired;
+  const hasEnoughCorrelationData = correlationDays >= correlationMinDays;
   const hasCorrelations = correlations.length > 0;
 
   return (
     <ScrollView contentContainerStyle={styles.container} testID="insights-screen">
+      {/* Section: Weekly Synthesis */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>WEEKLY SYNTHESIS</Text>
+
+        {synthesisLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={palette.primary} />
+            <Text style={styles.loadingText}>Loading synthesis...</Text>
+          </View>
+        ) : synthesisError ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Unable to load synthesis. Please try again later.</Text>
+          </View>
+        ) : hasSynthesis && synthesis ? (
+          <WeeklySynthesisCard synthesis={synthesis} />
+        ) : (
+          <WeeklySynthesisEmptyState daysTracked={synthesisDays} minDaysRequired={synthesisMinDays} />
+        )}
+      </View>
+
       {/* Section: Your Patterns */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>YOUR PATTERNS</Text>
 
-        {loading ? (
+        {correlationsLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={palette.primary} />
             <Text style={styles.loadingText}>Loading patterns...</Text>
           </View>
-        ) : error ? (
+        ) : correlationsError ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Unable to load patterns. Please try again later.</Text>
           </View>
-        ) : !hasEnoughData || !hasCorrelations ? (
-          <EmptyCorrelationState daysTracked={daysTracked} minDaysRequired={minDaysRequired} />
+        ) : !hasEnoughCorrelationData || !hasCorrelations ? (
+          <EmptyCorrelationState daysTracked={correlationDays} minDaysRequired={correlationMinDays} />
         ) : (
           <View style={styles.correlationsList}>
             {correlations.map((correlation) => (
@@ -44,17 +68,6 @@ export const InsightsScreen: React.FC = () => {
             ))}
           </View>
         )}
-      </View>
-
-      {/* Section: AI Coaching Insight (keep existing placeholder) */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>COACHING INSIGHT</Text>
-        <View style={styles.card}>
-          <Text style={styles.cardBody}>
-            Your HRV stability indicates readiness for higher intensity work today. Pair breathwork
-            with progressive overload for optimal adaptation.
-          </Text>
-        </View>
       </View>
     </ScrollView>
   );
@@ -100,16 +113,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: palette.error,
     textAlign: 'center',
-  },
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 20,
-    gap: 12,
-  },
-  cardBody: {
-    ...typography.body,
-    color: palette.textSecondary,
-    lineHeight: 20,
   },
 });
