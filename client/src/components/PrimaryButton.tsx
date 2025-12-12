@@ -1,22 +1,49 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
+  PressableProps,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  TouchableOpacityProps,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { palette } from '../theme/palette';
-import { typography } from '../theme/typography';
+import { typography, fontFamily } from '../theme/typography';
+import { tokens } from '../theme/tokens';
+import { haptic } from '../utils/haptics';
 
-interface PrimaryButtonProps extends TouchableOpacityProps {
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+
+interface PrimaryButtonProps extends Omit<PressableProps, 'style'> {
+  /** Button label text */
   title: string;
+  /** Show loading spinner */
   loading?: boolean;
-  variant?: 'primary' | 'secondary';
+  /** Visual variant */
+  variant?: ButtonVariant;
+  /** Custom container style */
+  style?: ViewStyle;
+  /** Custom text style */
+  textStyle?: TextStyle;
+  /** Enable haptic feedback (default: true) */
+  hapticFeedback?: boolean;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 /**
- * Reusable primary button component with loading state support.
+ * Primary Button Component
+ *
+ * A premium button with press animation and haptic feedback.
+ * - Primary: Teal background, dark text
+ * - Secondary: Outlined with teal border
+ * - Ghost: Text only, no background
  */
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   title,
@@ -24,73 +51,150 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   disabled,
   variant = 'primary',
   style,
-  ...touchableProps
+  textStyle,
+  hapticFeedback = true,
+  onPress,
+  ...pressableProps
 }) => {
+  const scale = useSharedValue(1);
   const isDisabled = disabled || loading;
 
+  const handlePressIn = useCallback(() => {
+    if (!isDisabled) {
+      scale.value = withTiming(0.97, { duration: tokens.animation.fast });
+      if (hapticFeedback) {
+        void haptic.light();
+      }
+    }
+  }, [isDisabled, hapticFeedback, scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withTiming(1, { duration: tokens.animation.fast });
+  }, [scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const buttonStyle = getButtonStyle(variant);
+  const buttonTextStyle = getTextStyle(variant);
+  const loadingColor = getLoadingColor(variant);
+
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       style={[
         styles.button,
-        variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
-        isDisabled ? styles.buttonDisabled : null,
+        buttonStyle,
+        isDisabled && styles.buttonDisabled,
         style,
+        animatedStyle,
       ]}
       disabled={isDisabled}
-      {...touchableProps}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      {...pressableProps}
     >
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? palette.white : palette.textPrimary}
-          size="small"
-        />
+        <ActivityIndicator color={loadingColor} size="small" />
       ) : (
         <Text
           style={[
             styles.buttonText,
-            variant === 'primary'
-              ? styles.primaryButtonText
-              : styles.secondaryButtonText,
-            isDisabled ? styles.buttonTextDisabled : null,
+            buttonTextStyle,
+            isDisabled && styles.buttonTextDisabled,
+            textStyle,
           ]}
         >
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 };
 
+function getButtonStyle(variant: ButtonVariant): ViewStyle {
+  switch (variant) {
+    case 'secondary':
+      return styles.secondaryButton;
+    case 'ghost':
+      return styles.ghostButton;
+    default:
+      return styles.primaryButton;
+  }
+}
+
+function getTextStyle(variant: ButtonVariant): TextStyle {
+  switch (variant) {
+    case 'secondary':
+      return styles.secondaryButtonText;
+    case 'ghost':
+      return styles.ghostButtonText;
+    default:
+      return styles.primaryButtonText;
+  }
+}
+
+function getLoadingColor(variant: ButtonVariant): string {
+  switch (variant) {
+    case 'secondary':
+    case 'ghost':
+      return palette.primary;
+    default:
+      return palette.canvas; // Dark on teal
+  }
+}
+
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
+    borderRadius: tokens.radius.md,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    minHeight: 52,
+    minHeight: tokens.touch.preferred, // 48px
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   primaryButton: {
     backgroundColor: palette.primary,
   },
+
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: palette.elevated,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: palette.primary,
   },
+
+  ghostButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    minHeight: tokens.touch.min, // 44px
+  },
+
   buttonDisabled: {
     opacity: 0.5,
   },
+
   buttonText: {
-    ...typography.subheading,
+    fontFamily: fontFamily.semiBold,
+    fontSize: 16,
+    lineHeight: 20,
     textAlign: 'center',
   },
+
   primaryButtonText: {
-    color: palette.white,
+    color: palette.canvas, // Dark text on teal background
   },
+
   secondaryButtonText: {
-    color: palette.textPrimary,
+    color: palette.primary, // Teal text
   },
+
+  ghostButtonText: {
+    color: palette.primary, // Teal text
+  },
+
   buttonTextDisabled: {
     opacity: 0.7,
   },
