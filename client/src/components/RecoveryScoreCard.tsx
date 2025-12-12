@@ -30,8 +30,14 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { palette } from '../theme/palette';
-import { typography } from '../theme/typography';
+import { palette, getRecoveryColor } from '../theme/palette';
+import { typography, fontFamily } from '../theme/typography';
+import { tokens } from '../theme/tokens';
+import { elevation } from '../theme/elevation';
+import { Card } from './ui/Card';
+import { AnimatedNumber } from './ui/AnimatedNumber';
+import { ProgressBar } from './ui/ProgressBar';
+import { Skeleton } from './ui/Skeleton';
 import type { EdgeCases } from '../types/edgeCases';
 import { EdgeCaseBadgeRow } from './EdgeCaseBadgeRow';
 
@@ -98,7 +104,7 @@ const ZONE_DESCRIPTIONS: Record<RecoveryZone, string> = {
 };
 
 // =============================================================================
-// ANIMATED SCORE (Count-up animation)
+// ANIMATED SCORE (Now uses AnimatedNumber from ui/)
 // =============================================================================
 
 interface AnimatedScoreProps {
@@ -108,48 +114,16 @@ interface AnimatedScoreProps {
 
 /**
  * Animated score display with count-up effect
- * Respects reduced motion preferences
+ * Now using the centralized AnimatedNumber component
  */
 const AnimatedScore: React.FC<AnimatedScoreProps> = ({ score, color }) => {
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const animatedScore = useSharedValue(0);
-  const [displayScore, setDisplayScore] = useState(0);
-
-  // Check for reduced motion preference
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const listener = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      setReduceMotion
-    );
-    return () => {
-      listener.remove();
-    };
-  }, []);
-
-  // Animate score on mount or score change
-  useEffect(() => {
-    if (reduceMotion) {
-      setDisplayScore(score);
-      return;
-    }
-
-    animatedScore.value = 0;
-    animatedScore.value = withTiming(score, {
-      duration: 800,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [score, reduceMotion, animatedScore]);
-
-  // Update display score as animation progresses
-  useDerivedValue(() => {
-    runOnJS(setDisplayScore)(Math.round(animatedScore.value));
-  });
-
   return (
-    <Text style={[styles.scoreHero, { color }]}>
-      {displayScore}
-    </Text>
+    <AnimatedNumber
+      value={score}
+      style={styles.scoreHero}
+      color={color}
+      duration={tokens.animation.metric}
+    />
   );
 };
 
@@ -342,28 +316,34 @@ export const RecoveryScoreCard: React.FC<Props> = ({
     return ZONE_COLORS[data.zone];
   }, [data]);
 
-  // Loading state
+  // Loading state with skeleton
   if (loading) {
     return (
-      <View style={styles.container}>
+      <Card variant="hero" style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading recovery data...</Text>
+          <View style={styles.headerLeft}>
+            <Skeleton width={80} height={14} style={styles.mb8} />
+            <Skeleton width={100} height={24} borderRadius={12} />
+          </View>
+          <Skeleton width={80} height={56} />
         </View>
-      </View>
+        <Skeleton width="100%" height={6} style={styles.progressSkeleton} />
+        <Skeleton width="60%" height={16} />
+      </Card>
     );
   }
 
   // If baseline not ready, show building state
   if (!baselineStatus.ready || !data) {
     return (
-      <View style={styles.container}>
+      <Card variant="hero" style={styles.container}>
         <BuildingBaseline status={baselineStatus} />
-      </View>
+      </Card>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Card variant="hero" style={styles.container}>
       {/* Header: Label + Score */}
       <Pressable onPress={onPress} style={styles.header}>
         <View style={styles.headerLeft}>
@@ -385,15 +365,14 @@ export const RecoveryScoreCard: React.FC<Props> = ({
         </View>
       </Pressable>
 
-      {/* Progress bar */}
-      <View style={styles.progressBarBackground}>
-        <View
-          style={[
-            styles.progressBarFill,
-            { width: progressWidth as any, backgroundColor: zoneColor },
-          ]}
-        />
-      </View>
+      {/* Progress bar - using new ProgressBar component */}
+      <ProgressBar
+        progress={data.score}
+        max={100}
+        height={6}
+        fillColor={zoneColor}
+        style={styles.progressBar}
+      />
 
       {/* Status row: Zone description + Trend + Confidence */}
       <View style={styles.statusRow}>
@@ -443,7 +422,7 @@ export const RecoveryScoreCard: React.FC<Props> = ({
           )}
         </View>
       </Animated.View>
-    </View>
+    </Card>
   );
 };
 
@@ -453,27 +432,23 @@ export const RecoveryScoreCard: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    // Hero elevation shadow (Session 57)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.32,
-    shadowRadius: 16,
-    elevation: 12,
+    // Card component handles bg, radius, shadow
+    // Just add marginBottom
+    marginBottom: tokens.spacing.md,
   },
 
-  // Loading
+  // Loading skeleton
   loadingContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: tokens.spacing.md,
   },
-  loadingText: {
-    ...typography.body,
-    color: palette.textMuted,
+  progressSkeleton: {
+    marginBottom: tokens.spacing.md,
+  },
+  mb8: {
+    marginBottom: tokens.spacing.sm,
   },
 
   // Header
@@ -481,11 +456,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: tokens.spacing.md,
   },
   headerLeft: {
     flexDirection: 'column',
-    gap: 8,
+    gap: tokens.spacing.sm,
   },
   headerRight: {
     flexDirection: 'row',
@@ -502,8 +477,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -1,
   },
-  // Hero sizing for Session 57 redesign (56px, monospace-style)
+  // Hero sizing - monospace font for metrics
   scoreHero: {
+    fontFamily: fontFamily.monoBold,
     fontSize: 56,
     fontWeight: '700',
     letterSpacing: -2,
@@ -512,7 +488,7 @@ const styles = StyleSheet.create({
   scoreMax: {
     ...typography.subheading,
     color: palette.textMuted,
-    marginLeft: 4,
+    marginLeft: tokens.spacing.xs,
   },
 
   // Zone badge
@@ -521,7 +497,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: tokens.radius.md,
     gap: 6,
   },
   zoneDot: {
@@ -535,17 +511,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Progress bar (6px height for Session 57 redesign)
-  progressBarBackground: {
-    height: 6,
-    backgroundColor: palette.elevated,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 3,
+  // Progress bar (now using ProgressBar component)
+  progressBar: {
+    marginBottom: tokens.spacing.md,
   },
 
   // Status row

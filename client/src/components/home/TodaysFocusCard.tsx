@@ -21,9 +21,13 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
+import { tokens } from '../../theme/tokens';
+import { haptic } from '../../utils/haptics';
+import { Card } from '../ui/Card';
+import { PrimaryButton } from '../PrimaryButton';
+import { Skeleton } from '../ui/Skeleton';
 import type { TodaysFocus } from '../../hooks/useTodaysFocus';
 import { ReasoningExpansion } from '../ReasoningExpansion';
 
@@ -70,7 +74,7 @@ export const TodaysFocusCard: React.FC<Props> = ({
 
   const handleStart = useCallback(() => {
     if (focus && onStart) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      void haptic.medium();
       onStart(focus.task.id);
     }
   }, [focus, onStart]);
@@ -86,21 +90,25 @@ export const TodaysFocusCard: React.FC<Props> = ({
     };
   });
 
-  // Loading state
+  // Loading state with skeleton
   if (loading) {
     return (
-      <View style={styles.container} testID={testID}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Finding your focus...</Text>
+      <Card style={styles.container} testID={testID}>
+        <Skeleton width={100} height={12} style={styles.skeletonLabel} />
+        <Skeleton width="80%" height={24} style={styles.skeletonTitle} />
+        <View style={styles.skeletonMeta}>
+          <Skeleton width={60} height={20} borderRadius={4} />
+          <Skeleton width="60%" height={16} />
         </View>
-      </View>
+        <Skeleton width="100%" height={48} borderRadius={tokens.radius.md} />
+      </Card>
     );
   }
 
   // Empty state - all tasks completed
   if (!focus) {
     return (
-      <View style={styles.container} testID={testID}>
+      <Card style={styles.container} testID={testID}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>✓</Text>
           <Text style={styles.emptyTitle}>All caught up!</Text>
@@ -108,7 +116,7 @@ export const TodaysFocusCard: React.FC<Props> = ({
             No pending protocols. Check back later or explore new ones.
           </Text>
         </View>
-      </View>
+      </Card>
     );
   }
 
@@ -116,7 +124,7 @@ export const TodaysFocusCard: React.FC<Props> = ({
   const hasExpansion = !!task.whyExpansion;
 
   return (
-    <View style={styles.container} testID={testID}>
+    <Card style={styles.container} testID={testID}>
       {/* MVD Badge */}
       {isMVD && (
         <View style={styles.mvdBadge}>
@@ -186,46 +194,43 @@ export const TodaysFocusCard: React.FC<Props> = ({
         </>
       )}
 
-      {/* CTA Button */}
-      <Pressable
+      {/* CTA Button - using PrimaryButton */}
+      <PrimaryButton
+        title="START NOW"
         onPress={handleStart}
-        style={({ pressed }) => [
-          styles.startButton,
-          pressed && styles.startButtonPressed,
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={`Start ${task.title}`}
+        style={styles.startButton}
         testID={`${testID}-start-button`}
-      >
-        <Text style={styles.startButtonText}>START NOW</Text>
-      </Pressable>
-    </View>
+      />
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 20,
+    // Card handles bg, border, padding
   },
-  loadingContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
+  // Skeleton loading styles
+  skeletonLabel: {
+    marginBottom: tokens.spacing.sm,
   },
-  loadingText: {
-    ...typography.body,
-    color: palette.textMuted,
+  skeletonTitle: {
+    marginBottom: tokens.spacing.md,
   },
+  skeletonMeta: {
+    flexDirection: 'row',
+    gap: tokens.spacing.sm,
+    marginBottom: tokens.spacing.md,
+  },
+  // Empty state
   emptyContainer: {
-    paddingVertical: 24,
+    paddingVertical: tokens.spacing.lg,
     alignItems: 'center',
-    gap: 8,
+    gap: tokens.spacing.sm,
   },
   emptyIcon: {
     fontSize: 32,
     color: palette.success,
-    marginBottom: 8,
+    marginBottom: tokens.spacing.sm,
   },
   emptyTitle: {
     ...typography.subheading,
@@ -242,8 +247,8 @@ const styles = StyleSheet.create({
     backgroundColor: `${palette.accent}20`,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 12,
+    borderRadius: tokens.radius.sm,
+    marginBottom: tokens.spacing.md,
   },
   mvdText: {
     ...typography.caption,
@@ -256,26 +261,26 @@ const styles = StyleSheet.create({
     color: palette.textMuted,
     letterSpacing: 1.2,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: tokens.spacing.sm,
   },
   title: {
     ...typography.heading,
     color: palette.textPrimary,
     fontSize: 20,
-    marginBottom: 8,
+    marginBottom: tokens.spacing.sm,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: tokens.spacing.sm,
+    marginBottom: tokens.spacing.sm,
   },
   duration: {
     ...typography.caption,
     color: palette.primary,
     fontWeight: '600',
     backgroundColor: `${palette.primary}15`,
-    paddingHorizontal: 8,
+    paddingHorizontal: tokens.spacing.sm,
     paddingVertical: 2,
     borderRadius: 4,
   },
@@ -288,11 +293,11 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: palette.primary,
     fontStyle: 'italic',
-    marginBottom: 8,
+    marginBottom: tokens.spacing.sm,
   },
   whyButton: {
-    marginTop: 4,
-    marginBottom: 16,
+    marginTop: tokens.spacing.xs,
+    marginBottom: tokens.spacing.md,
     alignSelf: 'flex-start',
   },
   whyText: {
@@ -308,22 +313,9 @@ const styles = StyleSheet.create({
     right: 0,
     pointerEvents: 'none',
   },
+  // PrimaryButton handles styling, just add margin
   startButton: {
-    backgroundColor: palette.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  startButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  startButtonText: {
-    ...typography.subheading,
-    color: palette.background,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    marginTop: tokens.spacing.md,
   },
 });
 

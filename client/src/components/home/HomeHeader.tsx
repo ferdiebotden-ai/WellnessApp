@@ -7,10 +7,12 @@
  * @file client/src/components/home/HomeHeader.tsx
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
+import { tokens } from '../../theme/tokens';
+import { haptic } from '../../utils/haptics';
 
 interface Props {
   /** User's first name for greeting */
@@ -50,6 +52,17 @@ export const HomeHeader: React.FC<Props> = ({
   const greeting = useMemo(() => getGreeting(), []);
   const dateString = useMemo(() => formatDate(), []);
 
+  // Haptic-enhanced press handlers
+  const handleChatPress = useCallback(() => {
+    void haptic.light();
+    onChatPress?.();
+  }, [onChatPress]);
+
+  const handleProfilePress = useCallback(() => {
+    void haptic.light();
+    onProfilePress?.();
+  }, [onProfilePress]);
+
   const greetingText = userName ? `${greeting}, ${userName}` : greeting;
 
   return (
@@ -66,7 +79,7 @@ export const HomeHeader: React.FC<Props> = ({
       <View style={styles.actions}>
         {/* Chat button */}
         <Pressable
-          onPress={onChatPress}
+          onPress={handleChatPress}
           style={({ pressed }) => [
             styles.iconButton,
             pressed && styles.iconButtonPressed,
@@ -81,7 +94,7 @@ export const HomeHeader: React.FC<Props> = ({
 
         {/* Profile avatar */}
         <Pressable
-          onPress={onProfilePress}
+          onPress={handleProfilePress}
           style={({ pressed }) => [
             styles.avatarButton,
             pressed && styles.iconButtonPressed,
@@ -107,17 +120,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingTop: 16,
+    paddingTop: tokens.spacing.md,
   },
   textContainer: {
     flex: 1,
-    gap: 4,
+    gap: tokens.spacing.xs,
   },
   greeting: {
-    ...typography.heading,
+    ...typography.h1,
     color: palette.textPrimary,
     fontSize: 24,
-    fontWeight: '700',
   },
   date: {
     ...typography.body,
@@ -126,12 +138,12 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: tokens.spacing.md,
   },
   iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: tokens.touch.min,
+    height: tokens.touch.min,
+    borderRadius: tokens.touch.min / 2,
     backgroundColor: palette.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -144,14 +156,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   avatarButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: tokens.touch.min,
+    height: tokens.touch.min,
+    borderRadius: tokens.touch.min / 2,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: tokens.touch.min,
+    height: tokens.touch.min,
+    borderRadius: tokens.touch.min / 2,
     backgroundColor: palette.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -159,7 +171,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 18,
     fontWeight: '700',
-    color: palette.background,
+    color: palette.canvas,
   },
 });
 
