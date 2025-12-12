@@ -9,7 +9,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 67 (in progress) |
+| **Session** | 67 (complete) |
 | **Progress** | UI/UX Design System Refactor (Phases 1-4 complete) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
@@ -52,102 +52,94 @@
 
 ## Last Session
 
-**Date:** December 11, 2025 (Session 66)
-**Focus:** Weekly Synthesis UI + Protocol Implementation Methods
+**Date:** December 12, 2025 (Session 67)
+**Focus:** UI/UX Design System Refactor — Phase 4 Screen Refactoring
 
-**Context:** MVP Progress Report showed 90% completion. Session 66 addresses key gap: Weekly Synthesis UI was showing placeholder instead of real data.
+**Context:** Continuing 7-phase design system refactor. Phases 1-3 completed in prior session (theme, components, protocol icons). Phase 4 focused on refactoring major screens.
 
 **Accomplished:**
 
-### Weekly Synthesis UI (Major Feature)
-- **Backend API:** Created `GET /api/users/me/weekly-synthesis` endpoint
-- **Response includes:** 5-section narrative (Win, Watch, Pattern, Trajectory, Experiment)
-- **Client hook:** Created `useWeeklySynthesis` for data fetching
-- **WeeklySynthesisCard component:** Displays 5 sections with color-coded icons
-  - Win (green) - What improved this week
-  - Watch (amber) - What needs attention
-  - Pattern (blue) - Correlation discovered
-  - Trajectory (gray) - Where trends are heading
-  - Experiment (teal) - Actionable suggestion
-- **Empty state:** Progress bar showing days tracked vs required
-- **InsightsScreen updated:** Shows synthesis above correlations, removed placeholder
+### Phase 4: Screen Refactoring (Complete)
+- **InsightsScreen:** Replaced ActivityIndicator with ApexLoadingIndicator, Card components for states
+- **WeeklySynthesisCard:** Wrapped in Card, uses ProgressBar, monospace metrics
+- **CorrelationCard:** Uses Card component with ProgressBar for days tracked
+- **ProfileScreen:** All cards use Card component, buttons use PrimaryButton, haptic feedback added
+- **ChatModal:** Haptic feedback on send/close, asymmetric bubble corners per design spec
 
-### Protocol Implementation Methods
-- **Cold Exposure:** 4 methods (cold shower, cold plunge, contrast therapy, cryotherapy)
-- **Breathwork:** 4 methods (cyclic sighing, box breathing, 4-7-8 breathing, physiological sigh)
-- **Database migration:** Applied to production
-
-**Files Created:**
-- `functions/src/weeklySynthesisApi.ts` - Backend API endpoint
-- `client/src/hooks/useWeeklySynthesis.ts` - Data fetching hook
-- `client/src/components/WeeklySynthesisCard.tsx` - UI component with empty state
-- `supabase/migrations/20251211100000_add_cold_breathwork_methods.sql`
+### Component Updates
+- **PrimaryButton:** Added `destructive` variant for sign-out button
+- **Card:** Added accessibility props support (accessibilityRole, accessibilityLabel)
 
 **Files Modified:**
-- `functions/src/api.ts` - Added weekly-synthesis route
-- `client/src/services/api.ts` - Added fetchWeeklySynthesis function
-- `client/src/screens/InsightsScreen.tsx` - Wired to real synthesis data
+- `client/src/screens/InsightsScreen.tsx`
+- `client/src/screens/ProfileScreen.tsx`
+- `client/src/components/WeeklySynthesisCard.tsx`
+- `client/src/components/CorrelationCard.tsx`
+- `client/src/components/ChatModal.tsx`
+- `client/src/components/PrimaryButton.tsx`
+- `client/src/components/ui/Card.tsx`
 
 **Commits:**
-- `53e82c1` — feat: add Weekly Synthesis UI to Insights screen (Session 66)
-- `dd0355d` — feat: add implementation methods for Cold Exposure and Breathwork (Session 66)
+- `96c7dbe` — feat: refactor Insights, Profile, Chat screens with design system (Phase 4 - Part 3)
+- `925f307` — feat: add design system to ProtocolDetailScreen (Phase 4 - Part 2)
+- `3fcb3f3` — feat: refactor home screen components with design system (Phase 4 - Part 1)
 
-**Result:** InsightsScreen now displays actual AI-generated weekly synthesis narratives instead of placeholder text. Protocol browser shows implementation methods for Morning Light, Cold Exposure, and Breathwork.
+**Result:** All major screens now use the Apex OS design system with consistent Card components, design tokens, ApexLoadingIndicator, and haptic feedback.
 
 ---
 
 ## Previous Session
 
-**Date:** December 10, 2025 (Session 65)
+**Date:** December 11, 2025 (Session 66)
+**Focus:** Weekly Synthesis UI + Protocol Implementation Methods
+
+**Accomplished:**
+- Weekly Synthesis UI: Backend API, WeeklySynthesisCard with 5 sections (Win, Watch, Pattern, Trajectory, Experiment)
+- Protocol Implementation Methods: Cold Exposure (4 methods), Breathwork (4 methods)
+- InsightsScreen wired to real synthesis data
+
+**Commits:** `53e82c1`, `dd0355d`
+
+---
+
+## Session 65 Summary
+
+**Date:** December 10, 2025
 **Focus:** My Schedule Enhancements + Push Notification Gaps
 
 **Accomplished:**
 - Swipeable protocol cards with complete/skip/snooze gestures
 - Auto-refresh for enrolled protocols with foreground detection
-- Quiet hours UI in Profile settings (toggle + time range picker)
+- Quiet hours UI in Profile settings
 - Deep linking configuration (`wellnessos://` URL scheme)
 
 **Commits:** `001c78b`
 
 ---
 
-## Session 64 Summary
-
-**Date:** December 10, 2025
-**Focus:** My Schedule Display Enhancement
-
-**Accomplished:**
-- Replaced "Your Focus Areas" with "My Schedule" section on Home screen
-- Created useEnrolledProtocols hook with UTC→local conversion
-- Created ScheduledProtocolCard with pulsing animation for due protocols
-- Created MyScheduleSection with loading, empty, and error states
-
-**Commits:** `c91549c`
-
----
-
 ## Next Session Priority
 
-### Session 67 Focus: Push Notifications + Deep Linking Testing
+### Session 68 Focus: Design System Phase 5-7
 
-Session 66 completed Weekly Synthesis UI and protocol methods. Next priorities:
+Continue UI/UX Design System Refactor:
 
-1. **Push Notification Testing** (requires physical device)
-   - Test notification delivery on physical iOS/Android devices
-   - Verify deep linking from notifications works end-to-end
-   - Test quiet hours suppression behavior
+1. **Phase 5: Navigation & Chrome**
+   - Update Bottom Navigation (teal active state, haptic on tab switch)
+   - Update TopNavigationBar with elevated background
+   - Screen transitions (crossfade, slide, scale)
 
-2. **E2E Testing**
-   - Add Playwright tests for Weekly Synthesis UI
-   - Test protocol enrollment with implementation method selection
-   - Verify swipe gestures work on web
+2. **Phase 6: Logo Integration**
+   - Update Splash screen with logo
+   - Replace remaining ActivityIndicator instances
+   - Onboarding logo placement
 
-3. **Polish & Edge Cases**
-   - Handle offline enrollment queue
-   - Test timer accuracy over long sessions
-   - Search improvements in ProtocolBrowser
+3. **Phase 7: Polish & Micro-Delights**
+   - Protocol completion celebration animation
+   - Recovery score reveal animation
+   - Empty state breathing animations
+   - Pull-to-refresh haptic feedback
 
-**Design Reference:** `skills/apex-os-design/` for colors, typography, components
+**Design Reference:** `skills/apex-os-design/SKILL.md`
 
 ---
 
@@ -183,7 +175,7 @@ supabase db push                                           # Apply migrations
 | `PRD Documents/APEX_OS_WIDGET_PRD_v1.md` | Widget specifications for iOS/Android |
 | `Master_Protocol_Library.md` | Protocol evidence library (18 protocols) |
 | `CLAUDE.md` | Agent operating instructions |
-| `skills/apex-os-design/SKILL.md` | **NEW** — Design system for UI/frontend work |
+| `skills/apex-os-design/SKILL.md` | Design system for UI/frontend work |
 
 ---
 
@@ -253,4 +245,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 11, 2025 (Session 66 complete - Weekly Synthesis UI + Protocol Methods)*
+*Last Updated: December 12, 2025 (Session 67 complete - Design System Phase 4)*
