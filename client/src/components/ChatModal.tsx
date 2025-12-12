@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Modal, View, Text, TextInput, Pressable, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { tokens } from '../theme/tokens';
 import { sendChatQuery } from '../services/api';
 import { AIThinkingState } from './AIThinkingState';
+import { haptic } from '../utils/haptics';
 
 interface Message {
   id: string;
@@ -35,10 +37,11 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
     }
   }, [messages]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim() || loading) return;
 
-    // Dismiss keyboard after sending
+    // Haptic feedback and dismiss keyboard
+    void haptic.light();
     Keyboard.dismiss();
 
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input };
@@ -53,13 +56,19 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
       setMessages(prev => [...prev, aiMsg]);
     } catch (error) {
       console.error('Chat error:', error);
+      void haptic.error();
       const errorMessage = error instanceof Error ? error.message : 'Sorry, I encountered an error. Please try again.';
       const errorMsg: Message = { id: Date.now().toString(), role: 'assistant', content: errorMessage };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [input, loading, conversationId]);
+
+  const handleClose = useCallback(() => {
+    void haptic.light();
+    onClose();
+  }, [onClose]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -70,9 +79,9 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
       >
         <View style={styles.header}>
           <Text style={styles.title}>AI Coach</Text>
-          <TouchableOpacity onPress={onClose}>
+          <Pressable onPress={handleClose} hitSlop={8}>
             <Text style={styles.closeText}>Close</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <FlatList
@@ -115,13 +124,13 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
             multiline={false}
             blurOnSubmit={false}
           />
-          <TouchableOpacity
+          <Pressable
             onPress={handleSend}
             disabled={loading || !input.trim()}
             style={[styles.sendButton, (loading || !input.trim()) && styles.sendButtonDisabled]}
           >
             <Text style={[styles.sendText, (loading || !input.trim()) && styles.sendTextDisabled]}>Send</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -140,35 +149,123 @@ export const ChatModal: React.FC<Props> = ({ visible, onClose }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.background },
-  keyboardView: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: palette.border },
-  title: { ...typography.heading, color: palette.textPrimary },
-  closeText: { ...typography.body, color: palette.primary },
-  listContent: { padding: 20, paddingBottom: 10, flexGrow: 1 },
-  bubble: { padding: 12, borderRadius: 12, maxWidth: '80%', marginBottom: 10 },
-  userBubble: { alignSelf: 'flex-end', backgroundColor: palette.primary },
-  aiBubble: { alignSelf: 'flex-start', backgroundColor: palette.surface },
-  messageText: { ...typography.body },
-  userText: { color: '#fff' },
-  aiText: { color: palette.textPrimary },
+  container: {
+    flex: 1,
+    backgroundColor: palette.canvas,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: tokens.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.border,
+    backgroundColor: palette.elevated,
+  },
+  title: {
+    ...typography.heading,
+    color: palette.textPrimary,
+  },
+  closeText: {
+    ...typography.body,
+    color: palette.primary,
+    fontWeight: '600',
+  },
+  listContent: {
+    padding: tokens.spacing.md,
+    paddingBottom: tokens.spacing.sm,
+    flexGrow: 1,
+  },
+  bubble: {
+    padding: tokens.spacing.md,
+    maxWidth: '80%',
+    marginBottom: tokens.spacing.sm,
+  },
+  userBubble: {
+    alignSelf: 'flex-end',
+    backgroundColor: palette.primary,
+    borderRadius: tokens.radius.md,
+    borderTopRightRadius: tokens.radius.sm, // Smaller corner on user side
+  },
+  aiBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: palette.surface,
+    borderRadius: tokens.radius.md,
+    borderTopLeftRadius: tokens.radius.sm, // Smaller corner on AI side
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  messageText: {
+    ...typography.body,
+    lineHeight: 22,
+  },
+  userText: {
+    color: palette.canvas, // Dark text on teal
+  },
+  aiText: {
+    color: palette.textPrimary,
+  },
   inputContainer: {
     flexDirection: 'row',
-    padding: 16,
+    padding: tokens.spacing.md,
     borderTopWidth: 1,
     borderTopColor: palette.border,
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: palette.background,
+    gap: tokens.spacing.sm,
+    backgroundColor: palette.canvas,
   },
-  input: { flex: 1, padding: 12, backgroundColor: palette.surface, borderRadius: 20, color: palette.textPrimary, maxHeight: 100 },
-  sendButton: { paddingHorizontal: 8, paddingVertical: 4 },
-  sendButtonDisabled: { opacity: 0.5 },
-  sendText: { ...typography.subheading, color: palette.primary },
-  sendTextDisabled: { color: palette.textMuted },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, paddingTop: 60 },
-  emptyTitle: { ...typography.heading, color: palette.textPrimary, marginBottom: 12, textAlign: 'center' },
-  emptyText: { ...typography.body, color: palette.textSecondary, textAlign: 'center', lineHeight: 22 },
-  thinkingContainer: { alignSelf: 'flex-start', marginBottom: 10, maxWidth: '80%' },
+  input: {
+    flex: 1,
+    padding: tokens.spacing.md,
+    backgroundColor: palette.surface,
+    borderRadius: tokens.radius.lg, // Pill shape
+    color: palette.textPrimary,
+    maxHeight: 100,
+    borderWidth: 1,
+    borderColor: palette.border,
+    ...typography.body,
+  },
+  sendButton: {
+    paddingHorizontal: tokens.spacing.md,
+    paddingVertical: tokens.spacing.sm,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  sendText: {
+    ...typography.subheading,
+    color: palette.primary,
+    fontWeight: '600',
+  },
+  sendTextDisabled: {
+    color: palette.textMuted,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: tokens.spacing.xl,
+    paddingTop: tokens.spacing.xxl,
+  },
+  emptyTitle: {
+    ...typography.heading,
+    color: palette.textPrimary,
+    marginBottom: tokens.spacing.md,
+    textAlign: 'center',
+  },
+  emptyText: {
+    ...typography.body,
+    color: palette.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  thinkingContainer: {
+    alignSelf: 'flex-start',
+    marginBottom: tokens.spacing.sm,
+    maxWidth: '80%',
+  },
 });
 

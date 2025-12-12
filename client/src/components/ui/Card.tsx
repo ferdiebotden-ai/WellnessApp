@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { AccessibilityProps, Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,7 +13,7 @@ import { haptic } from '../../utils/haptics';
 
 export type CardVariant = 'default' | 'elevated' | 'highlighted' | 'hero' | 'glass';
 
-interface CardProps {
+export interface CardProps extends AccessibilityProps {
   children: React.ReactNode;
   variant?: CardVariant;
   onPress?: () => void;
@@ -43,6 +43,7 @@ export function Card({
   testID,
   animated = true,
   hapticFeedback = true,
+  ...accessibilityProps
 }: CardProps): JSX.Element {
   const scale = useSharedValue(1);
   const isPressed = useSharedValue(0);
@@ -81,6 +82,7 @@ export function Card({
       <View
         style={[styles.base, cardStyle, elevationStyle, style]}
         testID={testID}
+        {...accessibilityProps}
       >
         {children}
       </View>
@@ -103,6 +105,7 @@ export function Card({
         style,
         animated && animatedStyle,
       ]}
+      {...accessibilityProps}
     >
       {children}
     </AnimatedPressable>

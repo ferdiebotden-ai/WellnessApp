@@ -1,12 +1,15 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { tokens } from '../theme/tokens';
 import { useCorrelations } from '../hooks/useCorrelations';
 import { useWeeklySynthesis } from '../hooks/useWeeklySynthesis';
 import { CorrelationCard } from '../components/CorrelationCard';
 import { EmptyCorrelationState } from '../components/EmptyCorrelationState';
 import { WeeklySynthesisCard, WeeklySynthesisEmptyState } from '../components/WeeklySynthesisCard';
+import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
+import { Card } from '../components/ui/Card';
 
 /**
  * Insights Screen - Weekly Synthesis + Correlation Dashboard
@@ -31,14 +34,14 @@ export const InsightsScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>WEEKLY SYNTHESIS</Text>
 
         {synthesisLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={palette.primary} />
+          <Card style={styles.loadingContainer}>
+            <ApexLoadingIndicator size={48} />
             <Text style={styles.loadingText}>Loading synthesis...</Text>
-          </View>
+          </Card>
         ) : synthesisError ? (
-          <View style={styles.errorContainer}>
+          <Card style={styles.errorContainer}>
             <Text style={styles.errorText}>Unable to load synthesis. Please try again later.</Text>
-          </View>
+          </Card>
         ) : hasSynthesis && synthesis ? (
           <WeeklySynthesisCard synthesis={synthesis} />
         ) : (
@@ -51,14 +54,14 @@ export const InsightsScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>YOUR PATTERNS</Text>
 
         {correlationsLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={palette.primary} />
+          <Card style={styles.loadingContainer}>
+            <ApexLoadingIndicator size={48} />
             <Text style={styles.loadingText}>Loading patterns...</Text>
-          </View>
+          </Card>
         ) : correlationsError ? (
-          <View style={styles.errorContainer}>
+          <Card style={styles.errorContainer}>
             <Text style={styles.errorText}>Unable to load patterns. Please try again later.</Text>
-          </View>
+          </Card>
         ) : !hasEnoughCorrelationData || !hasCorrelations ? (
           <EmptyCorrelationState daysTracked={correlationDays} minDaysRequired={correlationMinDays} />
         ) : (
@@ -76,12 +79,12 @@ export const InsightsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: palette.background,
-    padding: 24,
-    gap: 32,
+    backgroundColor: palette.canvas,
+    padding: tokens.spacing.lg,
+    gap: tokens.spacing.xl,
   },
   section: {
-    gap: 16,
+    gap: tokens.spacing.md,
   },
   sectionTitle: {
     ...typography.caption,
@@ -90,23 +93,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   correlationsList: {
-    gap: 12,
+    gap: tokens.spacing.md,
   },
   loadingContainer: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 32,
+    paddingVertical: tokens.spacing.xl,
     alignItems: 'center',
-    gap: 12,
+    gap: tokens.spacing.md,
   },
   loadingText: {
     ...typography.body,
     color: palette.textSecondary,
   },
   errorContainer: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 24,
     alignItems: 'center',
   },
   errorText: {

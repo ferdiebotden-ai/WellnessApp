@@ -2,6 +2,9 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { tokens } from '../theme/tokens';
+import { Card } from './ui/Card';
+import { ProgressBar } from './ui/ProgressBar';
 import type { WeeklySynthesis } from '../hooks/useWeeklySynthesis';
 
 interface Props {
@@ -52,7 +55,7 @@ export const WeeklySynthesisCard: React.FC<Props> = ({ synthesis }) => {
   const recoveryScore = synthesis.metrics.avg_recovery_score?.toFixed(0) ?? '—';
 
   return (
-    <View style={styles.container} accessibilityRole="summary" accessibilityLabel="Weekly synthesis">
+    <Card accessibilityRole="summary" accessibilityLabel="Weekly synthesis">
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.weekLabel}>{weekRange}</Text>
@@ -117,7 +120,7 @@ export const WeeklySynthesisCard: React.FC<Props> = ({ synthesis }) => {
           day: 'numeric',
         })}
       </Text>
-    </View>
+    </Card>
   );
 };
 
@@ -134,10 +137,10 @@ export const WeeklySynthesisEmptyState: React.FC<EmptyStateProps> = ({
   minDaysRequired,
 }) => {
   const daysRemaining = Math.max(0, minDaysRequired - daysTracked);
-  const progressPercent = Math.min(100, (daysTracked / minDaysRequired) * 100);
+  const progress = minDaysRequired > 0 ? daysTracked / minDaysRequired : 0;
 
   return (
-    <View style={styles.emptyContainer}>
+    <Card style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📊</Text>
       <Text style={styles.emptyTitle}>Weekly Synthesis Coming Soon</Text>
       <Text style={styles.emptyBody}>
@@ -150,26 +153,18 @@ export const WeeklySynthesisEmptyState: React.FC<EmptyStateProps> = ({
 
       {/* Progress indicator */}
       <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressTrack, { width: `${progressPercent}%` }]} />
-        </View>
+        <ProgressBar progress={progress} animated />
         <Text style={styles.progressLabel}>
           {daysTracked}/{minDaysRequired} days tracked
         </Text>
       </View>
-    </View>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 20,
-    gap: 16,
-  },
   header: {
-    gap: 12,
+    gap: tokens.spacing.sm,
   },
   weekLabel: {
     ...typography.subheading,
@@ -178,17 +173,18 @@ const styles = StyleSheet.create({
   },
   metricsRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: tokens.spacing.md,
   },
   metricBadge: {
     backgroundColor: palette.elevated,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: tokens.radius.sm,
+    paddingHorizontal: tokens.spacing.md,
+    paddingVertical: tokens.spacing.xs,
     alignItems: 'center',
   },
   metricValue: {
-    ...typography.subheading,
+    fontFamily: typography.metricSmall?.fontFamily,
+    fontSize: 18,
     color: palette.primary,
     fontWeight: '700',
   },
@@ -199,18 +195,18 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: palette.border,
-    marginVertical: 4,
+    marginVertical: tokens.spacing.xs,
   },
   sectionsContainer: {
-    gap: 16,
+    gap: tokens.spacing.md,
   },
   section: {
-    gap: 6,
+    gap: tokens.spacing.xs,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: tokens.spacing.xs,
   },
   sectionIcon: {
     fontSize: 14,
@@ -224,21 +220,18 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: palette.textSecondary,
     lineHeight: 22,
-    paddingLeft: 20,
+    paddingLeft: tokens.spacing.md,
   },
   timestamp: {
     ...typography.caption,
     color: palette.textMuted,
     textAlign: 'right',
-    marginTop: 8,
+    marginTop: tokens.spacing.sm,
   },
   // Empty state styles
   emptyContainer: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 24,
     alignItems: 'center',
-    gap: 12,
+    gap: tokens.spacing.sm,
   },
   emptyIcon: {
     fontSize: 32,
@@ -257,19 +250,8 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     width: '100%',
-    gap: 8,
-    marginTop: 8,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: palette.elevated,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressTrack: {
-    height: '100%',
-    borderRadius: 6,
-    backgroundColor: palette.primary,
+    gap: tokens.spacing.sm,
+    marginTop: tokens.spacing.sm,
   },
   progressLabel: {
     ...typography.caption,

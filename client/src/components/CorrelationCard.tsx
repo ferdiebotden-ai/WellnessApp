@@ -1,8 +1,11 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { Correlation } from '../types/correlations';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { tokens } from '../theme/tokens';
+import { Card } from './ui/Card';
+import { ProgressBar } from './ui/ProgressBar';
 
 interface Props {
   correlation: Correlation;
@@ -35,14 +38,13 @@ export const CorrelationCard: React.FC<Props> = ({ correlation }) => {
     return '●';
   }, [isPositive, isNegative]);
 
-  // Progress bar: sample_size out of 30 days (lookback window)
-  const progressWidth = useMemo((): DimensionValue => {
-    const percent = Math.min(100, Math.round((correlation.sample_size / 30) * 100));
-    return `${percent}%` as DimensionValue;
+  // Progress value: sample_size out of 30 days (lookback window)
+  const progress = useMemo(() => {
+    return Math.min(1, correlation.sample_size / 30);
   }, [correlation.sample_size]);
 
   return (
-    <View style={styles.container} accessibilityRole="summary">
+    <Card accessibilityRole="summary">
       {/* Header: Arrow + Protocol → Outcome */}
       <View style={styles.headerRow}>
         <Text style={[styles.arrow, { color: trendColor }]}>{trendArrow}</Text>
@@ -58,26 +60,20 @@ export const CorrelationCard: React.FC<Props> = ({ correlation }) => {
 
       {/* Progress bar: days tracked */}
       <View style={styles.progressRow}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressTrack, { width: progressWidth }]} />
+        <View style={styles.progressBarContainer}>
+          <ProgressBar progress={progress} animated />
         </View>
         <Text style={styles.daysLabel}>{correlation.sample_size} days tracked</Text>
       </View>
-    </View>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 16,
-    gap: 10,
-  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: tokens.spacing.sm,
   },
   arrow: {
     fontSize: 18,
@@ -92,23 +88,16 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: palette.textSecondary,
     lineHeight: 20,
+    marginTop: tokens.spacing.xs,
   },
   progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: tokens.spacing.md,
+    marginTop: tokens.spacing.sm,
   },
-  progressBar: {
+  progressBarContainer: {
     flex: 1,
-    height: 6,
-    backgroundColor: palette.elevated,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressTrack: {
-    height: '100%',
-    borderRadius: 6,
-    backgroundColor: palette.primary,
   },
   daysLabel: {
     ...typography.caption,

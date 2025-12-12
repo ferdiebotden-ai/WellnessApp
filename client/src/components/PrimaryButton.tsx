@@ -18,7 +18,7 @@ import { typography, fontFamily } from '../theme/typography';
 import { tokens } from '../theme/tokens';
 import { haptic } from '../utils/haptics';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 
 interface PrimaryButtonProps extends Omit<PressableProps, 'style'> {
   /** Button label text */
@@ -119,6 +119,8 @@ function getButtonStyle(variant: ButtonVariant): ViewStyle {
       return styles.secondaryButton;
     case 'ghost':
       return styles.ghostButton;
+    case 'destructive':
+      return styles.destructiveButton;
     default:
       return styles.primaryButton;
   }
@@ -130,6 +132,8 @@ function getTextStyle(variant: ButtonVariant): TextStyle {
       return styles.secondaryButtonText;
     case 'ghost':
       return styles.ghostButtonText;
+    case 'destructive':
+      return styles.destructiveButtonText;
     default:
       return styles.primaryButtonText;
   }
@@ -140,6 +144,8 @@ function getLoadingColor(variant: ButtonVariant): string {
     case 'secondary':
     case 'ghost':
       return palette.primary;
+    case 'destructive':
+      return palette.textPrimary; // White on error background
     default:
       return palette.canvas; // Dark on teal
   }
@@ -172,6 +178,10 @@ const styles = StyleSheet.create({
     minHeight: tokens.touch.min, // 44px
   },
 
+  destructiveButton: {
+    backgroundColor: palette.error,
+  },
+
   buttonDisabled: {
     opacity: 0.5,
   },
@@ -193,6 +203,10 @@ const styles = StyleSheet.create({
 
   ghostButtonText: {
     color: palette.primary, // Teal text
+  },
+
+  destructiveButtonText: {
+    color: palette.textPrimary, // White text on error background
   },
 
   buttonTextDisabled: {

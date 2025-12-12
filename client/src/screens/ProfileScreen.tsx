@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { fetchCurrentUser, updateUserPreferences } from '../services/api';
@@ -8,6 +8,11 @@ import { deactivatePushToken } from '../services/pushNotifications';
 import { openPrivacyPolicy, openTermsOfService } from '../services/legalDocuments';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { tokens } from '../theme/tokens';
+import { Card } from '../components/ui/Card';
+import { PrimaryButton } from '../components/PrimaryButton';
+import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
+import { haptic } from '../utils/haptics';
 import type { ProfileStackParamList } from '../navigation/ProfileStack';
 
 /** Format time string "HH:MM" to display format "10:00 PM" */
@@ -67,18 +72,22 @@ export const ProfileScreen: React.FC = () => {
   }, []);
 
   const handlePrivacyPress = useCallback(() => {
+    void haptic.light();
     navigation.navigate('PrivacyDashboard');
   }, [navigation]);
 
   const handleWearableSettingsPress = useCallback(() => {
+    void haptic.light();
     navigation.navigate('WearableSettings');
   }, [navigation]);
 
   const handleCalendarSettingsPress = useCallback(() => {
+    void haptic.light();
     navigation.navigate('CalendarSettings');
   }, [navigation]);
 
   const handleBiometricSettingsPress = useCallback(() => {
+    void haptic.light();
     navigation.navigate('BiometricSettings');
   }, [navigation]);
 
@@ -252,68 +261,62 @@ export const ProfileScreen: React.FC = () => {
     <ScrollView contentContainerStyle={styles.container} testID="profile-screen">
       <Text style={styles.heading}>Profile</Text>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardTitle}>Biometric Profile</Text>
         <Text style={styles.cardBody}>
           Your age, height, and weight help personalize HRV baselines and protocol recommendations.
         </Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          style={styles.primaryButton}
+        <PrimaryButton
+          title="Edit Biometrics"
           onPress={handleBiometricSettingsPress}
+          style={styles.buttonSpacing}
           testID="open-biometric-settings"
-        >
-          <Text style={styles.primaryButtonText}>Edit Biometrics</Text>
-        </TouchableOpacity>
-      </View>
+        />
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardTitle}>Data Integrations</Text>
         <Text style={styles.cardBody}>
           Connect your wearables and calendars to personalize your recovery protocols.
         </Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          style={styles.secondaryButton}
+        <PrimaryButton
+          title="Wearable Settings"
+          variant="secondary"
           onPress={handleWearableSettingsPress}
+          style={styles.buttonSpacing}
           testID="open-wearable-settings"
-        >
-          <Text style={styles.secondaryButtonText}>Wearable Settings</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          accessibilityRole="button"
-          style={styles.secondaryButton}
+        />
+        <PrimaryButton
+          title="Calendar Integration"
+          variant="secondary"
           onPress={handleCalendarSettingsPress}
+          style={styles.buttonSpacing}
           testID="open-calendar-settings"
-        >
-          <Text style={styles.secondaryButtonText}>Calendar Integration</Text>
-        </TouchableOpacity>
-      </View>
+        />
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardTitle}>Privacy Controls</Text>
         <Text style={styles.cardBody}>
           Review how Wellness OS safeguards your personal information and exercise your privacy rights.
         </Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          style={styles.primaryButton}
+        <PrimaryButton
+          title="Open Privacy Dashboard"
           onPress={handlePrivacyPress}
+          style={styles.buttonSpacing}
           testID="open-privacy-dashboard"
-        >
-          <Text style={styles.primaryButtonText}>Open Privacy Dashboard</Text>
-        </TouchableOpacity>
-      </View>
+        />
+      </Card>
 
       {/* Session 65: Quiet Hours / Notification Settings */}
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardTitle}>Notifications</Text>
         <Text style={styles.cardBody}>
           Set quiet hours to pause notifications during sleep or focus time.
         </Text>
         {isLoadingPreferences ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={palette.primary} />
+            <ApexLoadingIndicator size={24} />
           </View>
         ) : (
           <>
@@ -332,7 +335,7 @@ export const ProfileScreen: React.FC = () => {
               <View style={styles.timePickerRow}>
                 <View style={styles.timePickerItem}>
                   <Text style={styles.timePickerLabel}>Start</Text>
-                  <TouchableOpacity
+                  <Pressable
                     style={styles.timePickerButton}
                     onPress={() => showTimePicker('start')}
                     disabled={isUpdatingQuietHours}
@@ -341,11 +344,11 @@ export const ProfileScreen: React.FC = () => {
                     <Text style={styles.timePickerValue}>
                       {formatTimeDisplay(quietStartTime)}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
                 <View style={styles.timePickerItem}>
                   <Text style={styles.timePickerLabel}>End</Text>
-                  <TouchableOpacity
+                  <Pressable
                     style={styles.timePickerButton}
                     onPress={() => showTimePicker('end')}
                     disabled={isUpdatingQuietHours}
@@ -354,7 +357,7 @@ export const ProfileScreen: React.FC = () => {
                     <Text style={styles.timePickerValue}>
                       {formatTimeDisplay(quietEndTime)}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             )}
@@ -365,39 +368,37 @@ export const ProfileScreen: React.FC = () => {
             )}
           </>
         )}
-      </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardTitle}>Legal</Text>
         <Text style={styles.cardBody}>
           View our Privacy Policy and Terms of Service.
         </Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          style={styles.secondaryButton}
+        <PrimaryButton
+          title="Privacy Policy"
+          variant="secondary"
           onPress={handleOpenPrivacyPolicy}
+          style={styles.buttonSpacing}
           testID="open-privacy-policy"
-        >
-          <Text style={styles.secondaryButtonText}>Privacy Policy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          accessibilityRole="button"
-          style={styles.secondaryButton}
+        />
+        <PrimaryButton
+          title="Terms of Service"
+          variant="secondary"
           onPress={handleOpenTermsOfService}
+          style={styles.buttonSpacing}
           testID="open-terms-of-service"
-        >
-          <Text style={styles.secondaryButtonText}>Terms of Service</Text>
-        </TouchableOpacity>
-      </View>
+        />
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardTitle}>Social Features (Coming Soon)</Text>
         <Text style={styles.cardBody}>
           Choose how you'll appear in future leaderboards and challenges.
         </Text>
         {isLoadingPreferences ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={palette.primary} />
+            <ApexLoadingIndicator size={24} />
           </View>
         ) : (
           <View style={styles.toggleContainer}>
@@ -417,27 +418,23 @@ export const ProfileScreen: React.FC = () => {
             {preferencesError}
           </Text>
         )}
-      </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardTitle}>Account</Text>
         <Text style={styles.cardBody}>
           Manage your Apex OS account settings.
         </Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          style={styles.destructiveButton}
+        <PrimaryButton
+          title={isLoggingOut ? '' : 'Sign Out'}
+          variant="destructive"
           onPress={handleLogout}
           disabled={isLoggingOut}
+          loading={isLoggingOut}
+          style={styles.buttonSpacing}
           testID="logout-button"
-        >
-          {isLoggingOut ? (
-            <ActivityIndicator size="small" color={palette.white} />
-          ) : (
-            <Text style={styles.destructiveButtonText}>Sign Out</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+        />
+      </Card>
     </ScrollView>
   );
 };
@@ -445,19 +442,13 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: palette.background,
-    padding: 24,
-    gap: 16,
+    backgroundColor: palette.canvas,
+    padding: tokens.spacing.lg,
+    gap: tokens.spacing.md,
   },
   heading: {
     ...typography.heading,
     color: palette.textPrimary,
-  },
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 20,
-    gap: 12,
   },
   cardTitle: {
     ...typography.subheading,
@@ -468,64 +459,43 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     lineHeight: 20,
   },
-  primaryButton: {
-    marginTop: 8,
-    backgroundColor: palette.primary,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    ...typography.subheading,
-    color: palette.surface,
-  },
-  secondaryButton: {
-    marginTop: 8,
-    backgroundColor: palette.background,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: palette.border,
-  },
-  secondaryButtonText: {
-    ...typography.subheading,
-    color: palette.textPrimary,
+  buttonSpacing: {
+    marginTop: tokens.spacing.sm,
   },
   loadingContainer: {
-    marginTop: 8,
+    marginTop: tokens.spacing.sm,
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: tokens.spacing.md,
   },
   toggleContainer: {
-    marginTop: 8,
+    marginTop: tokens.spacing.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: tokens.spacing.sm,
   },
   toggleLabel: {
     ...typography.body,
     color: palette.textPrimary,
     flex: 1,
-    marginRight: 12,
+    marginRight: tokens.spacing.md,
   },
   errorText: {
     ...typography.body,
     color: palette.error,
-    marginTop: 8,
+    marginTop: tokens.spacing.sm,
     fontSize: 14,
   },
   // Session 65: Quiet Hours styles
   timePickerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16,
-    marginTop: 8,
+    gap: tokens.spacing.md,
+    marginTop: tokens.spacing.sm,
   },
   timePickerItem: {
     flex: 1,
-    gap: 4,
+    gap: tokens.spacing.xs,
   },
   timePickerLabel: {
     ...typography.caption,
@@ -535,9 +505,9 @@ const styles = StyleSheet.create({
   },
   timePickerButton: {
     backgroundColor: palette.elevated,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: tokens.radius.sm,
+    paddingVertical: tokens.spacing.md,
+    paddingHorizontal: tokens.spacing.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: palette.border,
@@ -549,19 +519,8 @@ const styles = StyleSheet.create({
   quietHoursInfo: {
     ...typography.caption,
     color: palette.textMuted,
-    marginTop: 12,
+    marginTop: tokens.spacing.md,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  destructiveButton: {
-    marginTop: 8,
-    backgroundColor: palette.error,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  destructiveButtonText: {
-    ...typography.subheading,
-    color: palette.white,
   },
 });
