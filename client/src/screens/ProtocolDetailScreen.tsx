@@ -12,7 +12,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   LayoutChangeEvent,
   Linking,
   Pressable,
@@ -27,13 +26,18 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useProtocolDetail } from '../hooks/useProtocolDetail';
 import { enqueueProtocolLog } from '../services/protocolLogs';
 import { CompletionModal } from '../components/protocol/CompletionModal';
+import { ProtocolHeroIcon } from '../components/protocol/ProtocolHeroIcon';
+import { PrimaryButton } from '../components/PrimaryButton';
+import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
+import { Card } from '../components/ui/Card';
 import { palette } from '../theme/palette';
-import { typography } from '../theme/typography';
+import { typography, fontFamily } from '../theme/typography';
+import { tokens } from '../theme/tokens';
+import { haptic } from '../utils/haptics';
 import type { ImplementationMethod } from '../types/protocol';
 
 interface ProtocolDetailScreenProps {
@@ -346,7 +350,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
     setLogError(null);
 
     try {
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void haptic.success();
       await enqueueProtocolLog({
         protocolId: protocolId!,
         moduleId: moduleId!,
@@ -386,8 +390,13 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Hero Section */}
+        {/* Hero Section with Protocol Icon */}
         <View style={styles.heroSection}>
+          <ProtocolHeroIcon
+            protocolId={protocolId}
+            size={80}
+            animationDelay={100}
+          />
           <CategoryBadge category={(protocol?.category?.toLowerCase() as ProtocolCategory) || 'foundation'} />
           <Text accessibilityRole="header" style={styles.title}>
             {displayName}
@@ -413,7 +422,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
         {/* Loading State */}
         {status === 'loading' && (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color={palette.primary} />
+            <ApexLoadingIndicator size={48} />
             <Text style={styles.loadingText}>Loading protocol...</Text>
           </View>
         )}
@@ -583,27 +592,14 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
 
       {/* Sticky Footer */}
       <View style={styles.footer}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !moduleId || logStatus === 'pending' || logStatus === 'success' }}
-          disabled={!moduleId || logStatus === 'pending' || logStatus === 'success'}
+        <PrimaryButton
+          title={logStatus === 'success' ? '✓ Logged' : 'Mark as Complete'}
           onPress={handleMarkComplete}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            logStatus === 'success' && styles.primaryButtonSuccess,
-            !moduleId && styles.primaryButtonDisabled,
-            pressed && styles.primaryButtonPressed,
-          ]}
+          loading={logStatus === 'pending'}
+          disabled={!moduleId || logStatus === 'pending' || logStatus === 'success'}
+          style={logStatus === 'success' ? styles.primaryButtonSuccess : undefined}
           testID="log-complete-button"
-        >
-          {logStatus === 'pending' ? (
-            <ActivityIndicator color={palette.background} />
-          ) : (
-            <Text style={styles.primaryButtonText}>
-              {logStatus === 'success' ? '✓ Logged' : 'Mark as Complete'}
-            </Text>
-          )}
-        </Pressable>
+        />
         {!moduleId && (
           <Text style={styles.footerHint}>
             Select a module to enable logging
@@ -634,12 +630,15 @@ const styles = StyleSheet.create({
 
   // Hero Section
   heroSection: {
-    gap: 12,
+    gap: tokens.spacing.md,
+    alignItems: 'center',
+    paddingVertical: tokens.spacing.md,
   },
   title: {
-    ...typography.heading,
+    ...typography.h1,
     color: palette.textPrimary,
     fontSize: 28,
+    textAlign: 'center',
   },
 
   // Session 61: Timer Card
@@ -677,7 +676,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   timerValue: {
-    fontFamily: 'monospace',
+    fontFamily: fontFamily.monoBold,
     fontSize: 24,
     fontWeight: '700',
     color: palette.primary,
