@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 69 (complete) |
-| **Progress** | MVP Compliance (Chat Length + Magic Moment) |
+| **Session** | 70 (complete) |
+| **Progress** | AI Chat Enhancement (History, Tone, Context, Memories) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,58 +52,49 @@
 
 ## Last Session
 
-**Date:** December 13, 2025 (Session 69)
-**Focus:** MVP Compliance — Chat Response Length + Magic Moment Screen
+**Date:** December 13, 2025 (Session 70)
+**Focus:** AI Chat Enhancement — History, Tone, Context, Memories
 
-**Context:** Addressing two critical PRD requirements before beta launch:
-1. PRD 6.2: AI Chat responses must be 150-200 words max
-2. PRD 3.2: Recovery score + first protocol within 30 seconds of completing onboarding
+**Context:** Enhancing the AI chat to provide personalized, context-aware responses.
 
 **Accomplished:**
 
-### Fix 1: AI Chat Response Length (PRD 6.2)
-- **SYSTEM_PROMPT:** Added explicit word limit instructions (150-200 words, concise structure)
-- **maxOutputTokens:** Reduced from 2048 → 512 (~380 word ceiling)
-- **Post-processing:** Safety net trims responses >220 words to last complete sentence
+### Full Chat Enhancement Implementation
+- **Chat History:** Retrieve last 5 messages for conversational continuity
+- **Tone Preference:** Adapt response style based on user's `nudge_tone` setting
+  - `motivational`: Encouraging, celebrates wins, positive framing
+  - `neutral`: Factual, objective, balanced
+  - `minimal`: Extremely concise, bullet points, direct
+- **Rich User Context:** Profile, recovery score, active protocols, completions (7d)
+- **User Memories:** Surface stored facts from `user_memories` table
 
-### Fix 2: MagicMoment Screen (PRD 3.2)
-- **New Screen:** `MagicMomentScreen.tsx` (290 lines)
-  - Estimated recovery score with animated zone-color glow
-  - Goal-mapped starter protocol with science snippet
-  - Evidence citations (Khalsa 2003, Riebl & Davy 2013, Nehlig 2010, Okamoto-Mizuno 2012)
-  - "Start Your First Day" CTA
-- **Flow Change:** WearableConnection → MagicMoment → MainStack
-- **Navigation:** Updated OnboardingStack params and routing
+### Technical Implementation
+- `buildSystemPrompt()`: Dynamic system prompt with user context and memories
+- `buildUserContext()`: Parallel queries for profile, recovery, protocols, completions
+- `getUserMemories()`: Query user_memories with confidence filtering (≥0.3)
+- `getRecentMessages()`: Fetch last 5 messages from Firebase conversation
+- `formatConversationHistory()`: Format messages for prompt context
 
-**Files Modified (5):**
-- `functions/src/chat.ts` — Word limit in SYSTEM_PROMPT + post-processing
-- `functions/src/vertexAI.ts` — maxOutputTokens 2048 → 512
-- `client/src/navigation/OnboardingStack.tsx` — MagicMoment route
-- `client/src/screens/onboarding/WearableConnectionScreen.tsx` — Navigate to MagicMoment
-- `client/src/screens/onboarding/index.ts` — Export
-
-**Files Created (1):**
-- `client/src/screens/onboarding/MagicMomentScreen.tsx`
+**Files Modified (1):**
+- `functions/src/chat.ts` — Full chat enhancement (+322 lines, -25 lines)
 
 **Commits:**
-- `29a95e3` — fix: enforce 150-200 word limit on AI chat responses (PRD 6.2)
-- `e166f63` — feat: add MagicMoment screen to onboarding flow (PRD 3.2)
+- `18d1638` — feat: enhance AI chat with history, tone, context, and memories
 
-**Result:** 🎯 **MVP Compliance achieved!** Both PRD requirements now implemented. Chat responses are concise, and onboarding concludes with the "magic moment" showing recovery score + first protocol with evidence.
+**Result:** 🎯 **Chat personalization complete!** Responses now adapt to user's tone preference, reference their current recovery state, acknowledge their goals, and maintain conversational context.
 
 ---
 
 ## Previous Session
 
-**Date:** December 13, 2025 (Session 68)
-**Focus:** UI/UX Design System Refactor — Phases 5-7 (Final)
+**Date:** December 13, 2025 (Session 69)
+**Focus:** MVP Compliance — Chat Response Length + Magic Moment Screen
 
 **Accomplished:**
-- Phase 5: BottomTabs custom tab bar with Ionicons, haptics, glow indicator
-- Phase 6: Logo integration in SplashScreen, ApexLoadingIndicator replacement (33 instances)
-- Phase 7: ProtocolCelebration animation, RecoveryScoreCard reveal, BreathingEmpty
+- AI Chat Response Length (PRD 6.2): Word limit in SYSTEM_PROMPT + post-processing
+- MagicMoment Screen (PRD 3.2): Recovery score + starter protocol after onboarding
 
-**Commits:** `2e394bd`
+**Commits:** `29a95e3`, `e166f63`
 
 ---
 
@@ -123,12 +114,13 @@
 
 ## Next Session Priority
 
-### Session 70 Focus: TestFlight Preparation
+### Session 71 Focus: TestFlight Preparation
 
-MVP compliance complete. Ready for beta launch preparation:
+Chat enhancement complete. Ready for beta launch preparation:
 - **TestFlight Build:** Create release build, configure App Store Connect
 - **Crash Testing:** Manual testing of critical flows (onboarding, protocols, chat)
 - **Performance Audit:** Profiling, bundle size check, startup time
+- **Chat Testing:** Verify tone preferences, history context, memory integration
 - **Final Polish:** Any remaining visual bugs or UX issues
 
 ---
@@ -251,4 +243,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 13, 2025 (Session 69 complete - MVP Compliance: Chat Length + Magic Moment)*
+*Last Updated: December 13, 2025 (Session 70 complete - AI Chat Enhancement: History, Tone, Context, Memories)*
