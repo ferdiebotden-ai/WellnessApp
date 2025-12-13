@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -12,17 +11,11 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { WearableCard, SkipButton } from '../../components/WearableCard';
 import { palette } from '../../theme/palette';
-import { ApexLoadingIndicator } from '../../components/ui/ApexLoadingIndicator';
 import {
   ONBOARDING_WEARABLES,
-  GOAL_TO_MODULE_MAP,
   type WearableSource,
   type PrimaryGoal,
-  type BiometricProfileData,
 } from '../../types/onboarding';
-import { completeOnboarding } from '../../services/api';
-import { useUpdateOnboarding } from '../../providers/AuthProvider';
-import analytics from '../../services/AnalyticsService';
 import type { OnboardingStackParamList } from '../../navigation/OnboardingStack';
 
 type WearableConnectionScreenProps = NativeStackScreenProps<
@@ -30,15 +23,14 @@ type WearableConnectionScreenProps = NativeStackScreenProps<
   'WearableConnection'
 >;
 
-const AUTO_ADVANCE_DELAY = 600; // ms after selection before completing
+const AUTO_ADVANCE_DELAY = 600; // ms after selection before navigating to MagicMoment
 
 export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> = ({
   route,
+  navigation,
 }) => {
   const { selectedGoal, biometrics } = route.params;
-  const [submitting, setSubmitting] = useState(false);
   const [selectedWearable, setSelectedWearable] = useState<WearableSource | null>(null);
-  const updateOnboarding = useUpdateOnboarding();
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Filter wearables based on current platform
@@ -47,39 +39,16 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
     return ONBOARDING_WEARABLES.filter((w) => w.platforms.includes(currentPlatform));
   }, []);
 
-  const completeOnboardingFlow = useCallback(
-    async (wearableSource: WearableSource | null) => {
-      setSubmitting(true);
-
-      try {
-        const primaryModuleId = GOAL_TO_MODULE_MAP[selectedGoal as PrimaryGoal];
-
-        await completeOnboarding({
-          primary_goal: selectedGoal as PrimaryGoal,
-          wearable_source: wearableSource,
-          primary_module_id: primaryModuleId,
-          biometrics: biometrics ?? null,
-        });
-
-        // Track analytics
-        void analytics.trackOnboardingComplete({
-          primaryModuleId,
-          goal: selectedGoal,
-          wearable: wearableSource ?? 'skipped',
-          hasBiometrics: !!biometrics?.birthDate || !!biometrics?.biologicalSex,
-        });
-
-        // Mark onboarding complete - RootNavigator will show MainStack
-        await updateOnboarding(true);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to complete setup';
-        Alert.alert('Something went wrong', message, [
-          { text: 'Try again', onPress: () => completeOnboardingFlow(wearableSource) },
-          { text: 'Cancel', style: 'cancel', onPress: () => setSubmitting(false) },
-        ]);
-      }
+  // Navigate to MagicMoment screen instead of completing onboarding here
+  const navigateToMagicMoment = useCallback(
+    (wearableSource: WearableSource | null) => {
+      navigation.navigate('MagicMoment', {
+        selectedGoal: selectedGoal as PrimaryGoal,
+        biometrics: biometrics ?? undefined,
+        wearableSource,
+      });
     },
-    [selectedGoal, biometrics, updateOnboarding]
+    [navigation, selectedGoal, biometrics]
   );
 
   const handleSelectWearable = useCallback(
@@ -93,15 +62,15 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
 
       // Auto-advance after delay
       autoAdvanceTimer.current = setTimeout(() => {
-        void completeOnboardingFlow(wearableId as WearableSource);
+        navigateToMagicMoment(wearableId as WearableSource);
       }, AUTO_ADVANCE_DELAY);
     },
-    [completeOnboardingFlow]
+    [navigateToMagicMoment]
   );
 
   const handleSkip = useCallback(() => {
-    void completeOnboardingFlow(null);
-  }, [completeOnboardingFlow]);
+    navigateToMagicMoment(null);
+  }, [navigateToMagicMoment]);
 
   // Cleanup timer on unmount
   React.useEffect(() => {
@@ -111,17 +80,6 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
       }
     };
   }, []);
-
-  if (submitting) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ApexLoadingIndicator size={48} />
-          <Text style={styles.loadingText}>Building your system...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -213,16 +171,5 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: palette.primary,
     fontWeight: '700',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: '600',
-    color: palette.textSecondary,
   },
 });

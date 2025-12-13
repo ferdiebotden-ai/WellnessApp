@@ -5,15 +5,21 @@ import {
   GoalSelectionScreen,
   BiometricProfileScreen,
   WearableConnectionScreen,
+  MagicMomentScreen,
 } from '../screens/onboarding';
 import { palette } from '../theme/palette';
-import type { PrimaryGoal, BiometricProfileData } from '../types/onboarding';
+import type { PrimaryGoal, BiometricProfileData, WearableSource } from '../types/onboarding';
 
 export type OnboardingStackParamList = {
   AICoachIntro: undefined;
   GoalSelection: undefined;
   BiometricProfile: { selectedGoal: PrimaryGoal };
   WearableConnection: { selectedGoal: PrimaryGoal; biometrics?: BiometricProfileData };
+  MagicMoment: {
+    selectedGoal: PrimaryGoal;
+    biometrics?: BiometricProfileData;
+    wearableSource?: WearableSource | null;
+  };
 };
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -55,6 +61,11 @@ export const OnboardingStackNavigator: React.FC = () => {
         name="WearableConnection"
         component={WearableConnectionScreen}
         options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="MagicMoment"
+        component={MagicMomentScreen}
+        options={{ animation: 'fade' }}
       />
     </Stack.Navigator>
   );
