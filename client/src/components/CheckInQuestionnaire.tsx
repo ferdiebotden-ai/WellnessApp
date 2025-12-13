@@ -23,7 +23,6 @@ import {
   Text,
   View,
   Pressable,
-  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   FadeIn,
@@ -32,6 +31,7 @@ import Animated, {
   SlideOutLeft,
 } from 'react-native-reanimated';
 import { palette } from '../theme/palette';
+import { ApexLoadingIndicator } from './ui/ApexLoadingIndicator';
 import {
   ManualCheckInInput,
   QualityRating,
@@ -158,7 +158,7 @@ export const CheckInQuestionnaire: React.FC<Props> = ({ onComplete, onSkip }) =>
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ApexLoadingIndicator size={48} />
           <Text style={styles.loadingText}>Calculating your score...</Text>
         </View>
       </View>

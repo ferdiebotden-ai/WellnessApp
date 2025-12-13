@@ -13,7 +13,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,6 +21,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
 import { useNavigation } from '@react-navigation/native';
 import {
   searchProtocols,
@@ -200,7 +200,7 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
       {/* Loading Overlay */}
       {isUpdating && (
         <View style={styles.updatingOverlay}>
-          <ActivityIndicator size="small" color={palette.primary} />
+          <ApexLoadingIndicator size={24} />
         </View>
       )}
     </Pressable>
@@ -426,7 +426,7 @@ export const ProtocolBrowserScreen: React.FC = () => {
       {/* Loading State */}
       {(status === 'loading' || status === 'searching') && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ApexLoadingIndicator size={48} />
           <Text style={styles.loadingText}>
             {status === 'searching' ? 'Searching...' : 'Loading protocols...'}
           </Text>

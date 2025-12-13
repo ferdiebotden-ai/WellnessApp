@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   PressableProps,
   StyleSheet,
@@ -14,9 +13,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { palette } from '../theme/palette';
-import { typography, fontFamily } from '../theme/typography';
+import { fontFamily } from '../theme/typography';
 import { tokens } from '../theme/tokens';
 import { haptic } from '../utils/haptics';
+import { ThinkingDots } from './ui/ApexLoadingIndicator';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 
@@ -96,7 +96,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {...pressableProps}
     >
       {loading ? (
-        <ActivityIndicator color={loadingColor} size="small" />
+        <ThinkingDots color={loadingColor} size={6} />
       ) : (
         <Text
           style={[

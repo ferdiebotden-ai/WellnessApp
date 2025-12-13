@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -16,6 +15,7 @@ import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import type { HomeStackParamList } from '../navigation/HomeStack';
 import { submitWaitlistEntry } from '../services/api';
+import { ThinkingDots } from '../components/ui/ApexLoadingIndicator';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -116,7 +116,7 @@ export const WaitlistScreen: React.FC<WaitlistScreenProps> = ({ route }) => {
               testID="waitlist-submit-button"
             >
               {status === 'loading' ? (
-                <ActivityIndicator color="#ffffff" />
+                <ThinkingDots color="#ffffff" size={6} />
               ) : (
                 <Text style={styles.submitButtonLabel}>
                   {status === 'success' ? 'Request received' : 'Join the Waitlist'}

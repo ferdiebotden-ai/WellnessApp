@@ -22,14 +22,19 @@ import {
 } from 'react-native';
 import Animated, {
   Easing,
+  FadeIn,
+  FadeInDown,
   interpolate,
   runOnJS,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
+  withDelay,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { haptic } from '../utils/haptics';
 import { palette, getRecoveryColor } from '../theme/palette';
 import { typography, fontFamily } from '../theme/typography';
 import { tokens } from '../theme/tokens';
@@ -104,7 +109,7 @@ const ZONE_DESCRIPTIONS: Record<RecoveryZone, string> = {
 };
 
 // =============================================================================
-// ANIMATED SCORE (Now uses AnimatedNumber from ui/)
+// ANIMATED SCORE WITH REVEAL (Phase 7.2 - Session 68)
 // =============================================================================
 
 interface AnimatedScoreProps {
@@ -113,17 +118,51 @@ interface AnimatedScoreProps {
 }
 
 /**
- * Animated score display with count-up effect
- * Now using the centralized AnimatedNumber component
+ * Animated score display with count-up effect and glow reveal
+ * Now using the centralized AnimatedNumber component with glow pulse
  */
 const AnimatedScore: React.FC<AnimatedScoreProps> = ({ score, color }) => {
+  const glowOpacity = useSharedValue(0);
+  const glowScale = useSharedValue(0.8);
+
+  useEffect(() => {
+    // Trigger haptic on score reveal
+    haptic.light();
+
+    // Animate glow pulse
+    glowOpacity.value = withSequence(
+      withTiming(0.6, { duration: 300, easing: Easing.out(Easing.ease) }),
+      withDelay(200, withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }))
+    );
+    glowScale.value = withTiming(1.5, {
+      duration: 700,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [glowOpacity, glowScale]);
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+    transform: [{ scale: glowScale.value }],
+  }));
+
   return (
-    <AnimatedNumber
-      value={score}
-      style={styles.scoreHero}
-      color={color}
-      duration={tokens.animation.metric}
-    />
+    <View style={styles.scoreGlowContainer}>
+      {/* Glow effect */}
+      <Animated.View
+        style={[
+          styles.scoreGlow,
+          glowStyle,
+          { backgroundColor: color },
+        ]}
+      />
+      {/* Animated number */}
+      <AnimatedNumber
+        value={score}
+        style={styles.scoreHero}
+        color={color}
+        duration={tokens.animation.metric}
+      />
+    </View>
   );
 };
 
@@ -200,12 +239,18 @@ const ConfidenceIndicator: React.FC<{ level: number }> = ({ level }) => {
   );
 };
 
-/** Component breakdown row */
-const ComponentRow: React.FC<{ component: RecoveryComponent }> = ({ component }) => {
+/** Component breakdown row with staggered animation */
+const ComponentRow: React.FC<{
+  component: RecoveryComponent;
+  index?: number;
+}> = ({ component, index = 0 }) => {
   const progressWidth = `${Math.min(100, component.score)}%`;
 
   return (
-    <View style={styles.componentRow}>
+    <Animated.View
+      entering={FadeInDown.duration(300).delay(index * 80)}
+      style={styles.componentRow}
+    >
       <View style={styles.componentHeader}>
         <Text style={styles.componentLabel}>{component.label}</Text>
         <Text style={styles.componentScore}>{component.score}</Text>
@@ -222,7 +267,7 @@ const ComponentRow: React.FC<{ component: RecoveryComponent }> = ({ component })
         />
       </View>
       <Text style={styles.componentDetail}>{component.detail}</Text>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -409,7 +454,7 @@ export const RecoveryScoreCard: React.FC<Props> = ({
           {/* Component breakdown */}
           <Text style={styles.sectionTitle}>COMPONENT BREAKDOWN</Text>
           {data.components.map((component, index) => (
-            <ComponentRow key={index} component={component} />
+            <ComponentRow key={index} component={component} index={index} />
           ))}
 
           {/* Reasoning */}
@@ -489,6 +534,18 @@ const styles = StyleSheet.create({
     ...typography.subheading,
     color: palette.textMuted,
     marginLeft: tokens.spacing.xs,
+  },
+  // Score glow reveal (Phase 7.2 Session 68)
+  scoreGlowContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreGlow: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
 
   // Zone badge

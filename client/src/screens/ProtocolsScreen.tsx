@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -11,6 +10,7 @@ import {
 import { useModules } from '../hooks/useModules';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
 import type { ModuleSummary } from '../types/module';
 
 interface ModuleCardProps {
@@ -79,7 +79,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
       {/* Loading Overlay */}
       {isUpdating && (
         <View style={styles.updatingOverlay}>
-          <ActivityIndicator size="small" color={palette.primary} />
+          <ApexLoadingIndicator size={24} />
         </View>
       )}
     </Pressable>
@@ -128,7 +128,7 @@ export const ProtocolsScreen: React.FC = () => {
   if (status === 'loading') {
     return (
       <View style={styles.centerContainer} testID="protocols-loading">
-        <ActivityIndicator size="large" color={palette.primary} />
+        <ApexLoadingIndicator size={48} />
         <Text style={styles.loadingText}>Loading modules...</Text>
       </View>
     );

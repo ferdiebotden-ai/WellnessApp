@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   RefreshControl,
   ScrollView,
@@ -10,6 +9,8 @@ import {
   View,
 } from 'react-native';
 import { palette } from '../theme/palette';
+import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
+import { haptic } from '../utils/haptics';
 import { typography } from '../theme/typography';
 import {
   fetchPrivacyLogs,
@@ -74,11 +75,13 @@ export const PrivacyDashboardScreen: React.FC = () => {
   }, [loadPrivacyData]);
 
   const handleRefresh = useCallback(async () => {
+    haptic.medium(); // Haptic on pull-to-refresh trigger
     setIsRefreshing(true);
     try {
       await loadPrivacyData();
     } finally {
       setIsRefreshing(false);
+      haptic.light(); // Haptic on refresh complete
     }
   }, [loadPrivacyData]);
 
@@ -181,7 +184,7 @@ export const PrivacyDashboardScreen: React.FC = () => {
 
       {isLoading ? (
         <View style={styles.loadingState}>
-          <ActivityIndicator color={palette.primary} size="large" />
+          <ApexLoadingIndicator size={48} />
         </View>
       ) : errorMessage ? (
         <View style={styles.errorState}>

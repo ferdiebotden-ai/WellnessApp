@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   SafeAreaView,
@@ -13,6 +12,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { WearableCard, SkipButton } from '../../components/WearableCard';
 import { palette } from '../../theme/palette';
+import { ApexLoadingIndicator } from '../../components/ui/ApexLoadingIndicator';
 import {
   ONBOARDING_WEARABLES,
   GOAL_TO_MODULE_MAP,
@@ -116,7 +116,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ApexLoadingIndicator size={48} />
           <Text style={styles.loadingText}>Building your system...</Text>
         </View>
       </SafeAreaView>

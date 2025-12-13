@@ -12,7 +12,6 @@
 
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   ScrollView,
@@ -22,6 +21,7 @@ import {
   View,
 } from 'react-native';
 import { palette } from '../../theme/palette';
+import { ApexLoadingIndicator, ThinkingDots } from '../../components/ui/ApexLoadingIndicator';
 import { typography } from '../../theme/typography';
 import { useCalendar } from '../../hooks/useCalendar';
 import type { CalendarProvider } from '../../services/calendar/types';
@@ -203,7 +203,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
               disabled={isSyncing}
             >
               {isSyncing ? (
-                <ActivityIndicator size="small" color={palette.white} />
+                <ThinkingDots color={palette.white} size={6} />
               ) : (
                 <Text style={styles.buttonPrimaryText}>Sync Now</Text>
               )}
@@ -233,7 +233,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
             disabled={isConnecting}
           >
             {isConnecting ? (
-              <ActivityIndicator size="small" color={palette.white} />
+              <ThinkingDots color={palette.white} size={6} />
             ) : (
               <Text style={styles.buttonPrimaryText}>Connect {PROVIDER_LABELS[provider]}</Text>
             )}
@@ -332,7 +332,7 @@ export const CalendarSettingsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={palette.primary} />
+        <ApexLoadingIndicator size={48} />
         <Text style={styles.loadingText}>Loading calendar settings...</Text>
       </View>
     );

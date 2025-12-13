@@ -11,7 +11,6 @@
 
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   ScrollView,
@@ -22,6 +21,7 @@ import {
   View,
 } from 'react-native';
 import { palette } from '../../theme/palette';
+import { ApexLoadingIndicator, ThinkingDots } from '../../components/ui/ApexLoadingIndicator';
 import { typography } from '../../theme/typography';
 import {
   useWearableHealth,
@@ -194,7 +194,7 @@ export const WearableSettingsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={palette.primary} />
+        <ApexLoadingIndicator size={48} />
         <Text style={styles.loadingText}>Loading wearable settings...</Text>
       </View>
     );
@@ -281,7 +281,7 @@ export const WearableSettingsScreen: React.FC = () => {
                 disabled={isSyncing}
               >
                 {isSyncing ? (
-                  <ActivityIndicator size="small" color={palette.white} />
+                  <ThinkingDots color={palette.white} size={6} />
                 ) : (
                   <Text style={styles.buttonPrimaryText}>Sync Now</Text>
                 )}
@@ -302,7 +302,7 @@ export const WearableSettingsScreen: React.FC = () => {
             disabled={isConnecting}
           >
             {isConnecting ? (
-              <ActivityIndicator size="small" color={palette.white} />
+              <ThinkingDots color={palette.white} size={6} />
             ) : (
               <Text style={styles.buttonPrimaryText}>Connect {providerName}</Text>
             )}
@@ -343,7 +343,7 @@ export const WearableSettingsScreen: React.FC = () => {
         </View>
 
         {loadingPreference ? (
-          <ActivityIndicator size="small" color={palette.primary} />
+          <ThinkingDots color={palette.primary} size={6} />
         ) : (
           <View style={styles.optionList}>
             {(['latest', 'apple_health', 'oura', 'whoop'] as DataSourceOption[]).map((option) => (

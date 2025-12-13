@@ -15,7 +15,6 @@
 
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   LayoutChangeEvent,
   Pressable,
   StyleSheet,
@@ -31,6 +30,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { palette } from '../theme/palette';
 import type { CheckInResult, CheckInComponents } from '../types/checkIn';
+import { ApexLoadingIndicator } from './ui/ApexLoadingIndicator';
 
 // =============================================================================
 // TYPES
@@ -201,7 +201,7 @@ export const LiteModeScoreCard: React.FC<Props> = ({
     return (
       <View style={styles.card}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ApexLoadingIndicator size={48} />
           <Text style={styles.loadingText}>Loading your score...</Text>
         </View>
       </View>

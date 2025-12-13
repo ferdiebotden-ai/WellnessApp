@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   LayoutChangeEvent,
   Pressable,
   StyleSheet,
@@ -13,6 +12,8 @@ import Animated, {
   withSpring,
   interpolate,
 } from 'react-native-reanimated';
+import { ThinkingDots } from './ui/ApexLoadingIndicator';
+import { ProtocolCelebration } from './animations/ProtocolCelebration';
 import type { DashboardTask } from '../types/dashboard';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -46,6 +47,7 @@ export const NudgeCard: React.FC<Props> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
+  const [showCelebration, setShowCelebration] = useState(false);
   const animatedHeight = useSharedValue(0);
 
   const timeLabel = task.scheduledAt
@@ -127,6 +129,17 @@ export const NudgeCard: React.FC<Props> = ({
     }
   }, [isExpanded, onOutsideTap]);
 
+  // Handle complete with celebration animation
+  const handleCompletePress = useCallback(() => {
+    setShowCelebration(true);
+  }, []);
+
+  // After celebration, call actual onComplete
+  const handleCelebrationComplete = useCallback(() => {
+    setShowCelebration(false);
+    onComplete?.();
+  }, [onComplete]);
+
   return (
     <Pressable onPress={handleCardPress}>
       <View style={styles.card}>
@@ -192,7 +205,7 @@ export const NudgeCard: React.FC<Props> = ({
           <View style={styles.actionFooter}>
             {isUpdating ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={palette.primary} />
+                <ThinkingDots color={palette.primary} size={6} />
                 <Text style={styles.loadingText}>Updating...</Text>
               </View>
             ) : (
@@ -215,7 +228,7 @@ export const NudgeCard: React.FC<Props> = ({
                 )}
                 {onComplete && (
                   <Pressable
-                    onPress={onComplete}
+                    onPress={handleCompletePress}
                     style={({ pressed }) => [
                       styles.actionButton,
                       styles.completeButton,
@@ -231,6 +244,18 @@ export const NudgeCard: React.FC<Props> = ({
                 )}
               </>
             )}
+          </View>
+        )}
+
+        {/* Celebration overlay */}
+        {showCelebration && (
+          <View style={styles.celebrationOverlay}>
+            <ProtocolCelebration
+              visible={showCelebration}
+              onComplete={handleCelebrationComplete}
+              size={80}
+              duration={1000}
+            />
           </View>
         )}
       </View>
@@ -348,5 +373,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: palette.success,
+  },
+  // Celebration overlay (Phase 7 Session 68)
+  celebrationOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 18, 24, 0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
   },
 });

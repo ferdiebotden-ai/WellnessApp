@@ -1,9 +1,22 @@
+/**
+ * TopNavigationBar - Main header component
+ *
+ * Features:
+ * - Elevated background with subtle border
+ * - Title + subtitle display
+ * - Optional AI coach button with haptic feedback
+ *
+ * @file client/src/components/TopNavigationBar.tsx
+ * @author Claude Opus 4.5 (Session 68)
+ */
+
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { createShadow } from '../utils/shadows';
+import { haptic } from '../utils/haptics';
 
 interface Props {
   title: string;
@@ -27,6 +40,7 @@ export const TopNavigationBar: React.FC<Props> = ({ title, subtitle, onAiCoachPr
         <TouchableOpacity
           style={styles.aiCoachButton}
           onPress={() => {
+            haptic.light();
             console.log('[TopNavigationBar] AI button clicked');
             if (onAiCoachPress) {
               onAiCoachPress();
@@ -52,7 +66,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    backgroundColor: palette.background,
+    backgroundColor: palette.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.border,
   },
   textGroup: {
     gap: 4,

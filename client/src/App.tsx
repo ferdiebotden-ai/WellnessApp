@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
+import { StatusBar, View, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -21,6 +21,7 @@ import analytics from './services/AnalyticsService';
 import { firebaseAuth } from './services/firebase';
 import { revenueCat } from './services/RevenueCatService';
 import { palette } from './theme/palette';
+import { FullScreenLoading } from './components/ui/ApexLoadingIndicator';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -93,11 +94,7 @@ export const App: React.FC = () => {
 
   // Show loading state while fonts are loading
   if (!fontsLoaded) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={palette.primary} />
-      </View>
-    );
+    return <FullScreenLoading />;
   }
 
   return (
@@ -117,12 +114,6 @@ export const App: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: palette.background,
   },
 });
 

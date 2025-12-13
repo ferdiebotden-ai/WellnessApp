@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
 import type { BiometryType } from '../services/secureCredentials';
 import { useAppLock } from '../providers/AppLockProvider';
 import { palette } from '../theme/palette';
+import { ApexLoadingIndicator } from './ui/ApexLoadingIndicator';
 
 type ScreenMode = 'biometric' | 'pin-entry' | 'pin-create' | 'pin-confirm';
 
@@ -136,7 +136,7 @@ export const BiometricLockScreen: React.FC = () => {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
         {pinSetupError ? <Text style={styles.errorText}>{pinSetupError}</Text> : null}
 
-        {isProcessing ? <ActivityIndicator color={palette.primary} style={styles.indicator} /> : null}
+        {isProcessing ? <ApexLoadingIndicator size={32} style={styles.indicator} /> : null}
 
         {supportedBiometry && mode === 'biometric' ? (
           <TouchableOpacity style={styles.primaryButton} onPress={handleBiometricPress} disabled={isProcessing}>

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { ApexLoadingIndicator, ThinkingDots } from '../../components/ui/ApexLoadingIndicator';
 import * as Localization from 'expo-localization';
 import * as Haptics from 'expo-haptics';
 import { fetchCurrentUser, updateUserBiometrics } from '../../services/api';
@@ -190,7 +190,7 @@ export const BiometricSettingsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={palette.primary} />
+        <ApexLoadingIndicator size={48} />
         <Text style={styles.loadingText}>Loading profile...</Text>
       </View>
     );
@@ -405,7 +405,7 @@ export const BiometricSettingsScreen: React.FC = () => {
             disabled={isSaving}
           >
             {isSaving ? (
-              <ActivityIndicator size="small" color={palette.background} />
+              <ThinkingDots color={palette.background} size={6} />
             ) : (
               <Text style={styles.saveButtonText}>Save Changes</Text>
             )}

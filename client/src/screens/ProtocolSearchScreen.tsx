@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   SafeAreaView,
@@ -10,6 +9,8 @@ import {
   View,
 } from 'react-native';
 import { useProtocolSearch } from '../hooks/useProtocolSearch';
+import { ThinkingDots } from '../components/ui/ApexLoadingIndicator';
+import { palette } from '../theme/palette';
 import type { ProtocolSearchResult } from '../services/api';
 
 interface ProtocolSearchScreenProps {
@@ -83,7 +84,7 @@ export const ProtocolSearchScreen: React.FC<ProtocolSearchScreenProps> = ({ navi
 
       {status === 'loading' ? (
         <View style={styles.centerContent}>
-          <ActivityIndicator color="#2563eb" />
+          <ThinkingDots color={palette.primary} size={8} />
         </View>
       ) : null}
 

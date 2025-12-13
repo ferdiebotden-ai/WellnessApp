@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useMonetization } from '../providers/MonetizationProvider';
+import { ThinkingDots } from './ui/ApexLoadingIndicator';
 import type { PaywallTrigger } from '../types/monetization';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -103,7 +104,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onSubscribe }) => {
             testID="subscribe-core"
           >
             {isProcessing ? (
-              <ActivityIndicator color={palette.surface} testID="subscribe-loading" />
+              <ThinkingDots color={palette.surface} size={6} />
             ) : (
               <Text style={styles.primaryButtonText}>Upgrade to Core for $29/mo</Text>
             )}
