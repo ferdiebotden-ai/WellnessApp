@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 68 (complete) |
-| **Progress** | UI/UX Design System Refactor (Phases 1-7 COMPLETE) |
+| **Session** | 69 (complete) |
+| **Progress** | MVP Compliance (Chat Length + Magic Moment) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,87 +52,58 @@
 
 ## Last Session
 
-**Date:** December 13, 2025 (Session 68)
-**Focus:** UI/UX Design System Refactor — Phases 5-7 (Final)
+**Date:** December 13, 2025 (Session 69)
+**Focus:** MVP Compliance — Chat Response Length + Magic Moment Screen
 
-**Context:** Completing the 7-phase design system refactor. Phases 1-4 completed in prior sessions. This session implemented navigation enhancements, logo integration, and micro-delight animations.
+**Context:** Addressing two critical PRD requirements before beta launch:
+1. PRD 6.2: AI Chat responses must be 150-200 words max
+2. PRD 3.2: Recovery score + first protocol within 30 seconds of completing onboarding
 
 **Accomplished:**
 
-### Phase 5: Navigation & Chrome (Complete)
-- **BottomTabs:** Complete rewrite with custom tab bar
-  - Ionicons tab icons (home, grid, analytics, person)
-  - Haptic feedback on tab switch (`haptic.selection()`)
-  - Animated active indicator with teal glow
-  - Press animation (scale 0.92)
-- **TopNavigationBar:** Elevated background (`palette.surface`), bottom border, haptic on AI button
+### Fix 1: AI Chat Response Length (PRD 6.2)
+- **SYSTEM_PROMPT:** Added explicit word limit instructions (150-200 words, concise structure)
+- **maxOutputTokens:** Reduced from 2048 → 512 (~380 word ceiling)
+- **Post-processing:** Safety net trims responses >220 words to last complete sentence
 
-### Phase 6: Logo Integration (Complete)
-- **SplashScreen:** Official logo (40% width) + ApexLoadingIndicator
-- **ActivityIndicator Replacement:** All 33 instances across 15 files replaced:
-  - `ApexLoadingIndicator` for full-screen loading states
-  - `ThinkingDots` for button/inline loading states
+### Fix 2: MagicMoment Screen (PRD 3.2)
+- **New Screen:** `MagicMomentScreen.tsx` (290 lines)
+  - Estimated recovery score with animated zone-color glow
+  - Goal-mapped starter protocol with science snippet
+  - Evidence citations (Khalsa 2003, Riebl & Davy 2013, Nehlig 2010, Okamoto-Mizuno 2012)
+  - "Start Your First Day" CTA
+- **Flow Change:** WearableConnection → MagicMoment → MainStack
+- **Navigation:** Updated OnboardingStack params and routing
 
-### Phase 7: Polish & Micro-Delights (Complete)
-- **ProtocolCelebration:** New animation component
-  - Checkmark spring-in (scale 0 → 1.2 → 1.0)
-  - Teal glow pulse (opacity 0 → 0.8 → 0)
-  - Particle burst (5 dots radiate outward)
-  - Haptic success feedback
-- **RecoveryScoreCard:** Added reveal animation
-  - Zone-color glow pulse on initial load
-  - Staggered component row animations
-  - Haptic light on score reveal
-- **BreathingEmpty:** New animation component for empty states
-  - Scale 0.98 → 1.02, opacity 0.85 → 1.0
-  - Respects reduced motion preferences
-- **Pull-to-refresh:** Haptic feedback added to PrivacyDashboardScreen
+**Files Modified (5):**
+- `functions/src/chat.ts` — Word limit in SYSTEM_PROMPT + post-processing
+- `functions/src/vertexAI.ts` — maxOutputTokens 2048 → 512
+- `client/src/navigation/OnboardingStack.tsx` — MagicMoment route
+- `client/src/screens/onboarding/WearableConnectionScreen.tsx` — Navigate to MagicMoment
+- `client/src/screens/onboarding/index.ts` — Export
 
-**Files Modified (22):**
-- `client/src/navigation/BottomTabs.tsx`
-- `client/src/components/TopNavigationBar.tsx`
-- `client/src/screens/SplashScreen.tsx`
-- `client/src/App.tsx`
-- `client/src/components/PrimaryButton.tsx`
-- `client/src/components/NudgeCard.tsx`
-- `client/src/components/RecoveryScoreCard.tsx`
-- `client/src/components/LiteModeScoreCard.tsx`
-- `client/src/components/BiometricLockScreen.tsx`
-- `client/src/components/CheckInQuestionnaire.tsx`
-- `client/src/components/PaywallModal.tsx`
-- `client/src/screens/ProtocolBrowserScreen.tsx`
-- `client/src/screens/ProtocolsScreen.tsx`
-- `client/src/screens/ProtocolSearchScreen.tsx`
-- `client/src/screens/WaitlistScreen.tsx`
-- `client/src/screens/PrivacyDashboardScreen.tsx`
-- `client/src/screens/onboarding/WearableConnectionScreen.tsx`
-- `client/src/screens/settings/BiometricSettingsScreen.tsx`
-- `client/src/screens/settings/CalendarSettingsScreen.tsx`
-- `client/src/screens/settings/WearableSettingsScreen.tsx`
+**Files Created (1):**
+- `client/src/screens/onboarding/MagicMomentScreen.tsx`
 
-**Files Created (3):**
-- `client/src/components/animations/ProtocolCelebration.tsx`
-- `client/src/components/animations/BreathingEmpty.tsx`
-- `client/src/components/animations/index.ts`
+**Commits:**
+- `29a95e3` — fix: enforce 150-200 word limit on AI chat responses (PRD 6.2)
+- `e166f63` — feat: add MagicMoment screen to onboarding flow (PRD 3.2)
 
-**Commit:** `2e394bd` — feat: implement design system Phases 5-7 (Session 68)
-
-**Result:** 🎉 **Design System Refactor Complete!** All 7 phases implemented. App now has consistent Apex OS aesthetic with branded loading indicators, navigation with icons/haptics, and micro-delight animations.
+**Result:** 🎯 **MVP Compliance achieved!** Both PRD requirements now implemented. Chat responses are concise, and onboarding concludes with the "magic moment" showing recovery score + first protocol with evidence.
 
 ---
 
 ## Previous Session
 
-**Date:** December 12, 2025 (Session 67)
-**Focus:** UI/UX Design System Refactor — Phase 4 Screen Refactoring
+**Date:** December 13, 2025 (Session 68)
+**Focus:** UI/UX Design System Refactor — Phases 5-7 (Final)
 
 **Accomplished:**
-- InsightsScreen, WeeklySynthesisCard, CorrelationCard refactored
-- ProfileScreen with Card components, PrimaryButton, haptic feedback
-- ChatModal with haptic feedback, asymmetric bubble corners
-- PrimaryButton destructive variant added
+- Phase 5: BottomTabs custom tab bar with Ionicons, haptics, glow indicator
+- Phase 6: Logo integration in SplashScreen, ApexLoadingIndicator replacement (33 instances)
+- Phase 7: ProtocolCelebration animation, RecoveryScoreCard reveal, BreathingEmpty
 
-**Commits:** `96c7dbe`, `925f307`, `3fcb3f3`
+**Commits:** `2e394bd`
 
 ---
 
@@ -152,13 +123,13 @@
 
 ## Next Session Priority
 
-### Session 69 Focus: TBD
+### Session 70 Focus: TestFlight Preparation
 
-Design System refactor complete. Potential next focuses:
-- **TestFlight Preparation:** Final polish, crash testing, performance audit
-- **Analytics Dashboard:** Track user engagement, protocol completion rates
-- **Onboarding Optimization:** A/B test flows, reduce drop-off
-- **Additional Wearable Support:** Garmin, WHOOP cloud integration
+MVP compliance complete. Ready for beta launch preparation:
+- **TestFlight Build:** Create release build, configure App Store Connect
+- **Crash Testing:** Manual testing of critical flows (onboarding, protocols, chat)
+- **Performance Audit:** Profiling, bundle size check, startup time
+- **Final Polish:** Any remaining visual bugs or UX issues
 
 ---
 
@@ -280,4 +251,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 13, 2025 (Session 68 complete - Design System Phases 5-7)*
+*Last Updated: December 13, 2025 (Session 69 complete - MVP Compliance: Chat Length + Magic Moment)*
