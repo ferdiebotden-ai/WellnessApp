@@ -65,7 +65,7 @@ export async function generateCompletion(
     safetySettings,
     generationConfig: {
       temperature,
-      maxOutputTokens: 2048,  // Increased from 1024 to prevent response truncation
+      maxOutputTokens: 512,  // Reduced to enforce ~150-200 word responses (PRD 6.2)
       topP: 0.95,
     },
   });

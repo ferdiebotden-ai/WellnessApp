@@ -20,7 +20,15 @@ import {
   getSafeFallbackResponse,
 } from './safety';
 
-const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis. **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
+const SYSTEM_PROMPT = `You are a credible wellness coach for performance professionals. Use evidence-based language. Reference peer-reviewed studies when relevant. Celebrate progress based on health outcomes (HRV improvement, sleep quality gains), not arbitrary milestones. Tone is professional, motivational but not cheesy. Address user by name occasionally. Use 🔥 emoji only for streaks (professional standard). No other emojis.
+
+**CRITICAL RESPONSE CONSTRAINTS:**
+- Maximum response length: 150-200 words
+- Structure: Direct answer + one supporting detail + actionable recommendation
+- Be concise and data-driven
+- End with 1-2 concrete next steps
+
+**You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
 
 const MEDICAL_DISCLAIMER = "\n\n⚠️ **Important**: This is educational information, not medical advice. Consult your healthcare provider.";
 
@@ -140,6 +148,28 @@ export const postChat = async (req: Request, res: Response): Promise<void> => {
       }
       // Replace with safe fallback
       responseText = getSafeFallbackResponse('ai_response');
+    }
+
+    // 4c. Word count validation (safety net for 150-200 word target)
+    const wordCount = responseText.split(/\s+/).filter(w => w.length > 0).length;
+    if (wordCount > 220) {
+      console.warn(`[Chat] Response exceeded word limit: ${wordCount} words. Trimming.`);
+      // Find the last complete sentence within the limit
+      const sentences = responseText.match(/[^.!?]+[.!?]+/g) || [responseText];
+      let trimmedResponse = '';
+      let currentWordCount = 0;
+
+      for (const sentence of sentences) {
+        const sentenceWords = sentence.split(/\s+/).filter(w => w.length > 0).length;
+        if (currentWordCount + sentenceWords <= 200) {
+          trimmedResponse += sentence;
+          currentWordCount += sentenceWords;
+        } else {
+          break;
+        }
+      }
+
+      responseText = trimmedResponse.trim() || responseText.split(/\s+/).slice(0, 200).join(' ') + '...';
     }
 
     // Append disclaimer if medical keywords detected (simplified)
