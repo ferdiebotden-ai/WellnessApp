@@ -105,20 +105,6 @@
 
 ---
 
-## Session 66 Summary
-
-**Date:** December 11, 2025
-**Focus:** Weekly Synthesis UI + Protocol Implementation Methods
-
-**Accomplished:**
-- Weekly Synthesis UI: Backend API, WeeklySynthesisCard with 5 sections (Win, Watch, Pattern, Trajectory, Experiment)
-- Protocol Implementation Methods: Cold Exposure (4 methods), Breathwork (4 methods)
-- InsightsScreen wired to real synthesis data
-
-**Commits:** `53e82c1`, `dd0355d`
-
----
-
 ## Next Session Priority
 
 ### Session 73 Focus: TestFlight Preparation & Beta Launch
