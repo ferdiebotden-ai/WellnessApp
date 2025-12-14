@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 70 (complete) |
-| **Progress** | AI Chat Enhancement (History, Tone, Context, Memories) |
+| **Session** | 71 (complete) |
+| **Progress** | OPUS45 Brief Gap Fixes (Chat Wiring, MVD Toggle) |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,49 +52,62 @@
 
 ## Last Session
 
-**Date:** December 13, 2025 (Session 70)
-**Focus:** AI Chat Enhancement — History, Tone, Context, Memories
+**Date:** December 14, 2025 (Session 71)
+**Focus:** OPUS45 Brief Gap Fixes — Chat Wiring + MVD User Toggle
 
-**Context:** Enhancing the AI chat to provide personalized, context-aware responses.
+**Context:** Assessed GPT 5.2's OPUS45 MVP Brief and implemented the TRUE remaining gaps for beta launch.
 
 **Accomplished:**
 
-### Full Chat Enhancement Implementation
-- **Chat History:** Retrieve last 5 messages for conversational continuity
-- **Tone Preference:** Adapt response style based on user's `nudge_tone` setting
-  - `motivational`: Encouraging, celebrates wins, positive framing
-  - `neutral`: Factual, objective, balanced
-  - `minimal`: Extremely concise, bullet points, direct
-- **Rich User Context:** Profile, recovery score, active protocols, completions (7d)
-- **User Memories:** Surface stored facts from `user_memories` table
+### OPUS45 Brief Assessment
+- Comprehensive comparison of 8-session brief vs actual codebase state
+- Determined brief was ~60-70% outdated (missed Sessions 66-70)
+- Identified 4 TRUE gaps requiring implementation
+- Created condensed 3-session plan (vs original 8 sessions)
 
-### Technical Implementation
-- `buildSystemPrompt()`: Dynamic system prompt with user context and memories
-- `buildUserContext()`: Parallel queries for profile, recovery, protocols, completions
-- `getUserMemories()`: Query user_memories with confidence filtering (≥0.3)
-- `getRecentMessages()`: Fetch last 5 messages from Firebase conversation
-- `formatConversationHistory()`: Format messages for prompt context
+### Gap Fix #1: Wire ChatModal to HomeScreen
+- Replace placeholder `Alert.alert('Coming soon')` with functional chat
+- Add `chatOpen` state and wire to existing `ChatModal` component
+- Chat icon in header now opens full AI coach experience
 
-**Files Modified (1):**
-- `functions/src/chat.ts` — Full chat enhancement (+322 lines, -25 lines)
+### Gap Fix #2: MVD User Toggle ("I'm struggling today")
+- New "Recovery Mode" card in ProfileScreen
+- Toggle to manually activate Minimum Viable Day mode
+- Context-aware status messages for all 5 trigger types:
+  - manual, low_recovery, travel, heavy_calendar, consistency_drop
+- Optimistic updates with error handling and haptic feedback
+- Warning-colored UI treatment when active
+
+### MVD API Layer
+- `getMVDStatus()` — Fetch current MVD state
+- `activateMVD()` — Enable recovery mode manually
+- `deactivateMVD()` — Disable recovery mode
+- Full TypeScript types for MVDStatus interface
+
+**Files Modified (3):**
+- `client/src/screens/HomeScreen.tsx` — Wire ChatModal (+10 lines)
+- `client/src/screens/ProfileScreen.tsx` — MVD toggle card (+128 lines)
+- `client/src/services/api.ts` — MVD API functions (+39 lines)
 
 **Commits:**
-- `18d1638` — feat: enhance AI chat with history, tone, context, and memories
+- `f77593f` — feat: wire ChatModal to HomeScreen + add MVD user toggle
 
-**Result:** 🎯 **Chat personalization complete!** Responses now adapt to user's tone preference, reference their current recovery state, acknowledge their goals, and maintain conversational context.
+**Result:** 🎯 **2 of 4 critical gaps fixed!** Chat button now works, users can self-activate recovery mode.
 
 ---
 
 ## Previous Session
 
-**Date:** December 13, 2025 (Session 69)
-**Focus:** MVP Compliance — Chat Response Length + Magic Moment Screen
+**Date:** December 13, 2025 (Session 70)
+**Focus:** AI Chat Enhancement — History, Tone, Context, Memories
 
 **Accomplished:**
-- AI Chat Response Length (PRD 6.2): Word limit in SYSTEM_PROMPT + post-processing
-- MagicMoment Screen (PRD 3.2): Recovery score + starter protocol after onboarding
+- Chat History: Last 5 messages for conversational continuity
+- Tone Preference: Adapt style based on user's nudge_tone setting
+- Rich User Context: Profile, recovery, protocols, completions
+- User Memories: Surface stored facts from user_memories table
 
-**Commits:** `29a95e3`, `e166f63`
+**Commits:** `18d1638`
 
 ---
 
@@ -114,14 +127,26 @@
 
 ## Next Session Priority
 
-### Session 71 Focus: TestFlight Preparation
+### Session 72 Focus: Instrumentation (Session B from condensed plan)
 
-Chat enhancement complete. Ready for beta launch preparation:
-- **TestFlight Build:** Create release build, configure App Store Connect
-- **Crash Testing:** Manual testing of critical flows (onboarding, protocols, chat)
-- **Performance Audit:** Profiling, bundle size check, startup time
-- **Chat Testing:** Verify tone preferences, history context, memory integration
-- **Final Polish:** Any remaining visual bugs or UX issues
+Two critical gaps remain from OPUS45 assessment:
+
+**Gap #3: Nudge Delivery Logging (3 hours)**
+- Create `nudge_delivery_log` Supabase table
+- Persist suppression results from suppressionEngine
+- Track nudge send/suppress/fail states
+
+**Gap #4: Push Notification Tracking (3 hours)**
+- Create `push_notification_log` table
+- Log Expo push API responses
+- Track delivery success/failure rates
+
+**Optional: Diagnostics Screen (6 hours)**
+- New NotificationsDiagnosticsScreen
+- Show token status, recent nudges, suppression reasons
+- Wire to ProfileScreen settings
+
+**After Instrumentation:** TestFlight preparation and beta launch
 
 ---
 
@@ -243,4 +268,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 13, 2025 (Session 70 complete - AI Chat Enhancement: History, Tone, Context, Memories)*
+*Last Updated: December 14, 2025 (Session 71 complete - OPUS45 Gap Fixes: Chat Wiring, MVD Toggle)*
