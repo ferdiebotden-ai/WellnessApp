@@ -597,3 +597,42 @@ export const fetchEnrolledProtocols = async (): Promise<EnrolledProtocol[]> => {
     return [];
   }
 };
+
+// ============================================================================
+// MVD (Minimum Viable Day) API
+// ============================================================================
+
+export interface MVDStatus {
+  active: boolean;
+  type: 'low_recovery' | 'travel' | 'heavy_calendar' | 'consistency_drop' | 'manual' | null;
+  reason: string | null;
+  activated_at: string | null;
+  expires_at: string | null;
+}
+
+/**
+ * Fetches the current MVD status for the user.
+ * @returns MVD status object
+ */
+export const getMVDStatus = async (): Promise<MVDStatus> => {
+  try {
+    return await request<MVDStatus>('/api/mvd/status', 'GET');
+  } catch (error) {
+    console.warn('Failed to fetch MVD status:', error);
+    return { active: false, type: null, reason: null, activated_at: null, expires_at: null };
+  }
+};
+
+/**
+ * Manually activates MVD mode ("I'm struggling today").
+ * @returns Success response
+ */
+export const activateMVD = () =>
+  request<{ success: boolean; message: string }>('/api/mvd/activate', 'POST');
+
+/**
+ * Deactivates MVD mode ("I'm good now").
+ * @returns Success response
+ */
+export const deactivateMVD = () =>
+  request<{ success: boolean; message: string }>('/api/mvd/deactivate', 'POST');

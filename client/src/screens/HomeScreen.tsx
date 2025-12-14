@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { LiteModeScoreCard } from '../components/LiteModeScoreCard';
 import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
+import { ChatModal } from '../components/ChatModal';
 // New Home Screen components (Session 57)
 import { HomeHeader } from '../components/home/HomeHeader';
 import { TodaysFocusCard } from '../components/home/TodaysFocusCard';
@@ -70,6 +71,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   // Track protocols currently being updated (for swipe actions)
   const [updatingProtocolIds, setUpdatingProtocolIds] = useState<Set<string>>(new Set());
+
+  // AI Chat modal state
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Get user's first name for greeting
   const userName = firebaseAuth.currentUser?.displayName?.split(' ')[0] || undefined;
@@ -197,8 +201,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, [navigation]);
 
   const handleChatPress = useCallback(() => {
-    // TODO: Open AI chat modal
-    Alert.alert('AI Coach', 'Chat feature coming soon!');
+    setChatOpen(true);
   }, []);
 
   // Session 58: Navigate to Protocol Detail
@@ -389,6 +392,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onCheckInComplete={handleCheckInComplete}
         onLater={handleWakeLater}
         onDismiss={handleWakeDismiss}
+      />
+
+      {/* AI Coach Chat Modal */}
+      <ChatModal
+        visible={chatOpen}
+        onClose={() => setChatOpen(false)}
       />
     </View>
   );

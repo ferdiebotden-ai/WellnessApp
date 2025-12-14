@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { fetchCurrentUser, updateUserPreferences } from '../services/api';
+import { fetchCurrentUser, updateUserPreferences, getMVDStatus, activateMVD, deactivateMVD, type MVDStatus } from '../services/api';
 import { useAuth } from '../providers/AuthProvider';
 import { deactivatePushToken } from '../services/pushNotifications';
 import { openPrivacyPolicy, openTermsOfService } from '../services/legalDocuments';
@@ -45,6 +45,11 @@ export const ProfileScreen: React.FC = () => {
   const [quietEndTime, setQuietEndTime] = useState<string>('07:00');
   const [isUpdatingQuietHours, setIsUpdatingQuietHours] = useState(false);
 
+  // MVD (Minimum Viable Day) state (Session 71)
+  const [mvdStatus, setMvdStatus] = useState<MVDStatus | null>(null);
+  const [isLoadingMVD, setIsLoadingMVD] = useState(true);
+  const [isUpdatingMVD, setIsUpdatingMVD] = useState(false);
+
   useEffect(() => {
     const loadUserPreferences = async () => {
       try {
@@ -68,7 +73,22 @@ export const ProfileScreen: React.FC = () => {
       }
     };
 
+    // Load MVD status (Session 71)
+    const loadMVDStatus = async () => {
+      try {
+        setIsLoadingMVD(true);
+        const status = await getMVDStatus();
+        setMvdStatus(status);
+      } catch (error) {
+        console.error('Failed to load MVD status:', error);
+        setMvdStatus({ active: false, type: null, reason: null, activated_at: null, expires_at: null });
+      } finally {
+        setIsLoadingMVD(false);
+      }
+    };
+
     void loadUserPreferences();
+    void loadMVDStatus();
   }, []);
 
   const handlePrivacyPress = useCallback(() => {
@@ -90,6 +110,49 @@ export const ProfileScreen: React.FC = () => {
     void haptic.light();
     navigation.navigate('BiometricSettings');
   }, [navigation]);
+
+  // Session 71: MVD toggle handler
+  const handleMVDToggle = useCallback(async (value: boolean) => {
+    try {
+      setIsUpdatingMVD(true);
+      void haptic.light();
+
+      // Optimistic update
+      setMvdStatus((prev) => ({
+        ...prev,
+        active: value,
+        type: value ? 'manual' : null,
+        reason: value ? "You activated Recovery Mode" : null,
+        activated_at: value ? new Date().toISOString() : null,
+        expires_at: null,
+      }));
+
+      if (value) {
+        await activateMVD();
+      } else {
+        await deactivateMVD();
+      }
+
+      // Refresh status from server to ensure consistency
+      const status = await getMVDStatus();
+      setMvdStatus(status);
+    } catch (error) {
+      console.error('Failed to update MVD status:', error);
+      void haptic.error();
+      // Revert optimistic update
+      const status = await getMVDStatus().catch(() => ({
+        active: false,
+        type: null,
+        reason: null,
+        activated_at: null,
+        expires_at: null,
+      } as MVDStatus));
+      setMvdStatus(status);
+      Alert.alert('Error', 'Failed to update recovery mode. Please try again.');
+    } finally {
+      setIsUpdatingMVD(false);
+    }
+  }, []);
 
   // Session 65: Quiet hours handlers
   const updateQuietHoursPreferences = useCallback(
@@ -370,6 +433,53 @@ export const ProfileScreen: React.FC = () => {
         )}
       </Card>
 
+      {/* Session 71: MVD (Recovery Mode) Toggle */}
+      <Card>
+        <Text style={styles.cardTitle}>Recovery Mode</Text>
+        <Text style={styles.cardBody}>
+          Having a tough day? Enable Recovery Mode to reduce your protocol load to essentials only.
+        </Text>
+        {isLoadingMVD ? (
+          <View style={styles.loadingContainer}>
+            <ApexLoadingIndicator size={24} />
+          </View>
+        ) : (
+          <>
+            <View style={styles.toggleContainer}>
+              <Text style={styles.toggleLabel}>I'm struggling today</Text>
+              <Switch
+                value={mvdStatus?.active ?? false}
+                onValueChange={handleMVDToggle}
+                disabled={isUpdatingMVD}
+                trackColor={{ false: palette.border, true: palette.warning }}
+                thumbColor={palette.surface}
+                testID="mvd-toggle"
+              />
+            </View>
+            {mvdStatus?.active && (
+              <View style={styles.mvdActiveContainer}>
+                <Text style={styles.mvdActiveText}>
+                  Recovery Mode is active
+                </Text>
+                <Text style={styles.mvdReasonText}>
+                  {mvdStatus.type === 'manual'
+                    ? 'You activated this manually. Your schedule has been reduced to essential protocols only.'
+                    : mvdStatus.type === 'low_recovery'
+                    ? 'Auto-activated due to low recovery score. Take it easy today.'
+                    : mvdStatus.type === 'travel'
+                    ? 'Auto-activated because you are traveling. Protocols adjusted for your schedule.'
+                    : mvdStatus.type === 'heavy_calendar'
+                    ? 'Auto-activated due to a packed calendar. Essentials only today.'
+                    : mvdStatus.type === 'consistency_drop'
+                    ? 'Auto-activated to help you get back on track. Small wins matter.'
+                    : 'Your schedule has been reduced to essential protocols only.'}
+                </Text>
+              </View>
+            )}
+          </>
+        )}
+      </Card>
+
       <Card>
         <Text style={styles.cardTitle}>Legal</Text>
         <Text style={styles.cardBody}>
@@ -522,5 +632,24 @@ const styles = StyleSheet.create({
     marginTop: tokens.spacing.md,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  // Session 71: MVD styles
+  mvdActiveContainer: {
+    marginTop: tokens.spacing.md,
+    padding: tokens.spacing.md,
+    backgroundColor: `${palette.warning}15`,
+    borderRadius: tokens.radius.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: palette.warning,
+  },
+  mvdActiveText: {
+    ...typography.subheading,
+    color: palette.warning,
+    marginBottom: tokens.spacing.xs,
+  },
+  mvdReasonText: {
+    ...typography.body,
+    color: palette.textSecondary,
+    lineHeight: 20,
   },
 });
