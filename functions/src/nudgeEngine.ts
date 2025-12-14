@@ -23,6 +23,7 @@ import {
   buildSuppressionContext,
   getUserLocalHour,
   parseQuietHour,
+  logSuppressionResult,
   SuppressionResult,
   SUPPRESSION_CONFIG,
 } from './suppression';
@@ -54,6 +55,7 @@ interface ModuleEnrollmentRow {
 
 interface UserProfileRow {
   id: string;
+  firebase_uid?: string | null; // Session 72: Added for delivery logging
   display_name?: string | null;
   primary_goal?: PrimaryGoal | null;
   healthMetrics?: {
@@ -188,9 +190,10 @@ export const generateAdaptiveNudges = async (
   const userIds = Array.from(userEnrollments.keys()).slice(0, 50);
   
   // Fetch profiles (including preferences for suppression engine)
+  // Session 72: Added firebase_uid for delivery logging
   const { data: profilesData, error: profilesError } = await supabase
     .from('users')
-    .select('id, display_name, healthMetrics, primary_goal, preferences')
+    .select('id, firebase_uid, display_name, healthMetrics, primary_goal, preferences')
     .in('id', userIds);
     
   if (profilesError) throw new Error(profilesError.message);
@@ -330,6 +333,18 @@ export const generateAdaptiveNudges = async (
     });
 
     const suppressionResult: SuppressionResult = evaluateSuppression(suppressionContext);
+
+    // Session 72: Log suppression decision for analytics
+    const firebaseUid = profile.firebase_uid || userId; // Fallback to userId if firebase_uid unavailable
+    void logSuppressionResult({
+      firebaseUid,
+      nudgeId: `nudge_${Date.now()}_${userId.substring(0, 8)}`,
+      nudgeType: 'protocol',
+      nudgePriority: 'STANDARD',
+      protocolId: bestMatch.protocol.id,
+      result: suppressionResult,
+      context: suppressionContext,
+    });
 
     if (!suppressionResult.shouldDeliver) {
       // Nudge was suppressed - log to audit and skip this user

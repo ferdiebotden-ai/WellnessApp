@@ -35,6 +35,7 @@ import {
   buildSuppressionContext,
   getUserLocalHour,
   parseQuietHour,
+  logSuppressionResult,
 } from '../../suppression';
 import { scanAIOutput, getSafeFallbackResponse } from '../../safety';
 import { generateWhyExpansion } from '../../reasoning/whyEngine';
@@ -373,6 +374,17 @@ export class MorningAnchorService {
       });
 
       const suppressionResult = evaluateSuppression(suppressionContext);
+
+      // Session 72: Log suppression decision for analytics
+      void logSuppressionResult({
+        firebaseUid: userId, // MorningAnchor uses Firebase UID directly
+        nudgeId: `morning_anchor_${Date.now()}_${userId.substring(0, 8)}`,
+        nudgeType: 'morning_anchor',
+        nudgePriority: 'CRITICAL',
+        protocolId: bestProtocol.id,
+        result: suppressionResult,
+        context: suppressionContext,
+      });
 
       if (!suppressionResult.shouldDeliver) {
         // Log suppression but still allow if exempted

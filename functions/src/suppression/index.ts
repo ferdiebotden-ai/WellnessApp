@@ -31,4 +31,5 @@ export {
   buildSuppressionContext,
   getUserLocalHour,
   parseQuietHour,
+  logSuppressionResult,
 } from './suppressionEngine';
