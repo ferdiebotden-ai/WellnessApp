@@ -18,6 +18,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.wellnessos.app",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSHealthShareUsageDescription": "Apex OS analyzes your HRV, sleep, and activity data to personalize evidence-based recovery protocols.",
         "NSHealthUpdateUsageDescription": "Apex OS records completed protocols and activity to Apple Health.",
         "NSCalendarsUsageDescription": "Apex OS detects meeting load to optimize recovery protocols on busy days. Only meeting times are analyzed—event details are never stored.",
