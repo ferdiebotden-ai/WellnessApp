@@ -24,6 +24,10 @@
         "NSCalendarsUsageDescription": "Apex OS detects meeting load to optimize recovery protocols on busy days. Only meeting times are analyzed—event details are never stored.",
         "UIBackgroundModes": [
           "processing"
+        ],
+        "BGTaskSchedulerPermittedIdentifiers": [
+          "com.wellnessos.app.healthSync",
+          "com.wellnessos.app.nudgeRefresh"
         ]
       },
       "entitlements": {
