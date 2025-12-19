@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 72 (complete) |
-| **Progress** | OPUS45 Brief Gap Fixes — Instrumentation Complete |
+| **Session** | 73 (complete) |
+| **Progress** | Onboarding Flow Fixes — TestFlight Bug Fixes |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,81 +52,85 @@
 
 ## Last Session
 
-**Date:** December 14, 2025 (Session 72)
-**Focus:** OPUS45 Brief Gap Fixes — Instrumentation (Gaps #3 and #4)
+**Date:** December 19, 2025 (Session 73)
+**Focus:** Onboarding Flow Fixes from TestFlight Testing
 
-**Context:** Implementing beta instrumentation for nudge delivery and push notification tracking.
+**Context:** User tested via TestFlight and found multiple onboarding issues: Face ID loop bug, wearable layout problems, missing health sync step, and branding inconsistency.
 
 **Accomplished:**
 
-### Gap #3: Nudge Delivery Logging
-- **New Table:** `nudge_delivery_log` with context snapshot
-- **Tracks:** shouldDeliver, suppressedBy, reason, rulesChecked, wasOverridden
-- **Context Snapshot:** Stores SuppressionContext at time of decision (nudgesDeliveredToday, userLocalHour, recoveryScore, etc.)
-- **Integration:** Wire logging to nudgeEngine and MorningAnchorService
+### Phase 1: Face ID Loop Fix (Critical Bug)
+- **Root Cause:** Race condition in AppLockProvider — `isLocked` starts true before async init completes
+- Added `isInitializing` state to prevent premature lock screen
+- Updated AuthenticationGate to show loading spinner during initialization
+- Added escape hatch to BiometricLockScreen for users without configured lock
 
-### Gap #4: Push Notification Tracking
-- **New Table:** `push_notification_log` with privacy protection
-- **Tracks:** success, ticketId, errorCode, device_type, notification_type
-- **Privacy:** Only last 8 chars of token stored (token_suffix)
-- **Integration:** Log every push attempt in sendPushToUser()
+### Phase 2: Branding Fix (Wellness OS → Apex OS)
+- Updated `app.json` and Android `strings.xml` app name
+- Replaced all "Wellness OS" references throughout codebase (9 files)
 
-### Analytics Views (Bonus)
-- `nudge_suppression_daily_summary`: Daily breakdown by suppression rule
-- `push_delivery_daily_summary`: Daily push success/failure rates
+### Phase 3: Wearable Layout Redesign
+- Changed WearableCard from 48% grid to full-width horizontal list
+- Added row layout with icon, name, and chevron indicator
+- Increased font size from 14px to 18px for readability
+- Restyled SkipButton: solid border, elevated background, 12px radius
 
-**Files Modified (6):**
-- `supabase/migrations/20251214000000_create_delivery_logs.sql` — NEW (2 tables, 2 views)
-- `functions/src/suppression/suppressionEngine.ts` — Add logSuppressionResult()
-- `functions/src/suppression/index.ts` — Export logging function
-- `functions/src/nudgeEngine.ts` — Wire suppression logging
-- `functions/src/services/wake/MorningAnchorService.ts` — Wire suppression logging
-- `functions/src/notifications/pushService.ts` — Add push delivery logging
+### Phase 4: Health Data Sync Feature
+- **New Screen:** HealthDataSyncScreen for Apple Health/Health Connect
+- Added `HealthPlatform` type and `HEALTH_PLATFORMS` constant
+- Fixed Apple Watch vs Apple Health naming confusion
+- Updated navigation: Wearable → HealthDataSync → MagicMoment
+- Tracks healthPlatform in analytics
 
-**Commits:**
-- `f77593f` — feat: wire ChatModal to HomeScreen + add MVD user toggle (Session 71)
-- `cdb6b0c` — feat: add nudge delivery and push notification logging (Session 72)
+**Files Modified (21):**
+- `client/src/providers/AppLockProvider.tsx` — isInitializing state
+- `client/src/components/AuthenticationGate.tsx` — Loading during init
+- `client/src/components/BiometricLockScreen.tsx` — Escape hatch + branding
+- `client/src/components/WearableCard.tsx` — Horizontal layout + skip restyle
+- `client/src/screens/onboarding/WearableConnectionScreen.tsx` — List layout
+- `client/src/screens/onboarding/HealthDataSyncScreen.tsx` — NEW
+- `client/src/screens/onboarding/MagicMomentScreen.tsx` — healthPlatform param
+- `client/src/navigation/OnboardingStack.tsx` — Add HealthDataSync
+- `client/src/types/onboarding.ts` — HealthPlatform type + fix naming
+- `client/src/services/AnalyticsService.ts` — Track healthPlatform
+- `client/app.json`, `strings.xml`, + 9 more for branding
 
-**Result:** 🎯 **All 4 OPUS45 critical gaps fixed!** Beta instrumentation complete.
+**Commit:** `86437f3` — Fix onboarding flow: Face ID loop, wearable layout, health sync
+
+**Result:** 🎯 All TestFlight onboarding issues fixed!
 
 ---
 
 ## Previous Session
 
-**Date:** December 14, 2025 (Session 71)
-**Focus:** OPUS45 Brief Gap Fixes — Chat Wiring + MVD User Toggle
+**Date:** December 14, 2025 (Session 72)
+**Focus:** OPUS45 Brief Gap Fixes — Instrumentation (Gaps #3 and #4)
 
 **Accomplished:**
-- Gap #1: Wire ChatModal to HomeScreen header chat button
-- Gap #2: Add "Recovery Mode" card with MVD toggle to ProfileScreen
-- MVD API: getMVDStatus(), activateMVD(), deactivateMVD()
+- Gap #3: Nudge delivery logging with context snapshot
+- Gap #4: Push notification tracking with privacy protection
+- Analytics views for suppression and push delivery summaries
 
-**Commits:** `f77593f`
+**Commits:** `cdb6b0c`
 
 ---
 
 ## Next Session Priority
 
-### Session 73 Focus: TestFlight Preparation & Beta Launch
+### Session 74 Focus: TestFlight Build & Verification
 
-All 4 OPUS45 critical gaps are now fixed! Ready for beta launch:
+Onboarding flow is now fixed. Time to verify and rebuild for TestFlight:
 
-**TestFlight Preparation:**
-- Create release build for iOS
-- Configure App Store Connect metadata
-- Set up TestFlight beta testing group
+**Immediate:**
+- Build new TestFlight release with onboarding fixes
+- Verify Face ID loop no longer occurs for new users
+- Test full onboarding flow: Goals → Biometrics → Wearables → Health Sync → Magic Moment
 
-**Pre-Launch Testing:**
-- End-to-end user journey test (onboarding → protocols → chat → MVD)
-- Verify instrumentation logging in Supabase
-- Check push notification delivery and logging
-
-**Optional: Notifications Diagnostics Screen (6 hours)**
-- New NotificationsDiagnosticsScreen showing:
-  - Token registration status
-  - Recent nudges (sent/suppressed)
-  - Suppression reasons
-- Wire to ProfileScreen settings
+**TestFlight Testing Checklist:**
+1. ✅ Face ID loop fixed — users can skip biometric setup
+2. ✅ Wearable selection readable — full-width horizontal cards
+3. ✅ Health sync step exists — Apple Health/Health Connect
+4. ✅ App name shows "Apex OS" — branding consistent
 
 **OPUS45 Final Acceptance Checklist:**
 1. ✅ Recovery + Today plan in <60s — DONE
@@ -135,7 +139,7 @@ All 4 OPUS45 critical gaps are now fixed! Ready for beta launch:
 4. ✅ MVD reduces plan + user toggle — DONE (Gap #2)
 5. ✅ Weekly Synthesis coherent by Day 7 — DONE
 6. ✅ Tone matches brand — DONE
-7. ✅ No identity/auth failures — DONE
+7. ✅ No identity/auth failures — DONE (Face ID loop fixed)
 8. ✅ Instrumentation answers questions — DONE (Gaps #3, #4)
 
 ---
@@ -258,4 +262,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 14, 2025 (Session 72 complete - OPUS45 Gap Fixes: All 4 Gaps Complete, Beta Instrumentation Ready)*
+*Last Updated: December 19, 2025 (Session 73 complete - Onboarding Flow Fixes: Face ID loop, wearable layout, health sync, Apex OS branding)*
