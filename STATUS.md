@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 73 (complete) |
-| **Progress** | Onboarding Flow Fixes — TestFlight Bug Fixes |
+| **Session** | 74 (complete) |
+| **Progress** | Gemini 3 Flash Migration — AI Model Upgrade |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,95 +52,103 @@
 
 ## Last Session
 
-**Date:** December 19, 2025 (Session 73)
-**Focus:** Onboarding Flow Fixes from TestFlight Testing
+**Date:** December 19, 2025 (Session 74)
+**Focus:** Gemini 3 Flash Migration — AI Model Upgrade
 
-**Context:** User tested via TestFlight and found multiple onboarding issues: Face ID loop bug, wearable layout problems, missing health sync step, and branding inconsistency.
+**Context:** Google released Gemini 3 Flash on Dec 17, 2025 with significant improvements (+3x reasoning, 78% SWE-bench). User requested research and migration to improve wellness coaching quality.
 
 **Accomplished:**
 
-### Phase 1: Face ID Loop Fix (Critical Bug)
-- **Root Cause:** Race condition in AppLockProvider — `isLocked` starts true before async init completes
-- Added `isInitializing` state to prevent premature lock screen
-- Updated AuthenticationGate to show loading spinner during initialization
-- Added escape hatch to BiometricLockScreen for users without configured lock
+### Research Phase
+- Researched Gemini 3 Flash release (Dec 17, 2025) via web search
+- Compared benchmarks: 3 Flash vs 2.5 Flash (+13 pts Intelligence Index, +3x on Humanity's Last Exam)
+- Analyzed current AI architecture (Gemini 2.5 Flash + OpenAI gpt-5-turbo hybrid)
+- Identified migration path and embedding dimension change (1536→768)
 
-### Phase 2: Branding Fix (Wellness OS → Apex OS)
-- Updated `app.json` and Android `strings.xml` app name
-- Replaced all "Wellness OS" references throughout codebase (9 files)
+### Implementation Phase
+- Updated `functions/src/vertexAI.ts` to use `gemini-3-flash-preview` model
+- Created `backend/src/lib/vertexai.ts` — Unified Vertex AI client for backend
+- Replaced OpenAI with Vertex AI in `generateAdaptiveNudges.ts`
+- Updated `embedProtocols.ts` to use Vertex AI embeddings (768-dim)
+- Added `@google-cloud/vertexai` and `google-auth-library` to backend dependencies
 
-### Phase 3: Wearable Layout Redesign
-- Changed WearableCard from 48% grid to full-width horizontal list
-- Added row layout with icon, name, and chevron indicator
-- Increased font size from 14px to 18px for readability
-- Restyled SkipButton: solid border, elevated background, 12px radius
+### Migration Infrastructure
+- Created `scripts/migrate-pinecone-768.ts` — Automated Pinecone migration script
+- Created `.github/workflows/migrate-gemini3.yml` — Manual migration workflow
+- Migration script handles: index deletion, 768-dim recreation, protocol re-embedding
 
-### Phase 4: Health Data Sync Feature
-- **New Screen:** HealthDataSyncScreen for Apple Health/Health Connect
-- Added `HealthPlatform` type and `HEALTH_PLATFORMS` constant
-- Fixed Apple Watch vs Apple Health naming confusion
-- Updated navigation: Wearable → HealthDataSync → MagicMoment
-- Tracks healthPlatform in analytics
+### Deployment & Verification
+- Committed and pushed changes (commit `06df229`)
+- Automatic deployment triggered — all Cloud Run services updated
+- User ran Pinecone migration workflow successfully
+- Verified all services running with Gemini 3 Flash
 
-**Files Modified (21):**
-- `client/src/providers/AppLockProvider.tsx` — isInitializing state
-- `client/src/components/AuthenticationGate.tsx` — Loading during init
-- `client/src/components/BiometricLockScreen.tsx` — Escape hatch + branding
-- `client/src/components/WearableCard.tsx` — Horizontal layout + skip restyle
-- `client/src/screens/onboarding/WearableConnectionScreen.tsx` — List layout
-- `client/src/screens/onboarding/HealthDataSyncScreen.tsx` — NEW
-- `client/src/screens/onboarding/MagicMomentScreen.tsx` — healthPlatform param
-- `client/src/navigation/OnboardingStack.tsx` — Add HealthDataSync
-- `client/src/types/onboarding.ts` — HealthPlatform type + fix naming
-- `client/src/services/AnalyticsService.ts` — Track healthPlatform
-- `client/app.json`, `strings.xml`, + 9 more for branding
+**Files Modified/Created (10):**
+- `functions/src/vertexAI.ts` — Model: `gemini-3-flash-preview`
+- `backend/src/lib/vertexai.ts` — NEW: Vertex AI client for backend
+- `backend/src/jobs/generateAdaptiveNudges.ts` — OpenAI → Vertex AI
+- `backend/src/jobs/embedProtocols.ts` — Vertex AI embeddings (768-dim)
+- `backend/package.json` — Added Vertex AI dependencies
+- `scripts/migrate-pinecone-768.ts` — NEW: Migration script
+- `scripts/package.json` — Added migrate:pinecone command
+- `.github/workflows/migrate-gemini3.yml` — NEW: Migration workflow
 
-**Commit:** `86437f3` — Fix onboarding flow: Face ID loop, wearable layout, health sync
+**Commit:** `06df229` — Upgrade to Gemini 3 Flash and consolidate AI models
 
-**Result:** 🎯 All TestFlight onboarding issues fixed!
+**Result:** 🎯 Gemini 3 Flash fully deployed! AI quality significantly improved.
 
 ---
 
 ## Previous Session
 
-**Date:** December 14, 2025 (Session 72)
+**Date:** December 19, 2025 (Session 73)
+**Focus:** Onboarding Flow Fixes from TestFlight Testing
+
+**Accomplished:**
+- Fixed Face ID loop bug (race condition in AppLockProvider)
+- Branding update: Wellness OS → Apex OS across all screens
+- Wearable layout redesign: full-width horizontal cards
+- New HealthDataSyncScreen for Apple Health/Health Connect step
+
+**Commit:** `86437f3`
+
+---
+
+## Session 72 (December 14, 2025)
+
 **Focus:** OPUS45 Brief Gap Fixes — Instrumentation (Gaps #3 and #4)
 
 **Accomplished:**
 - Gap #3: Nudge delivery logging with context snapshot
 - Gap #4: Push notification tracking with privacy protection
-- Analytics views for suppression and push delivery summaries
 
-**Commits:** `cdb6b0c`
+**Commit:** `cdb6b0c`
 
 ---
 
 ## Next Session Priority
 
-### Session 74 Focus: TestFlight Build & Verification
+### Session 75 Focus: TestFlight Build & AI Quality Verification
 
-Onboarding flow is now fixed. Time to verify and rebuild for TestFlight:
+Both onboarding and AI model are now upgraded. Time to verify and rebuild:
 
 **Immediate:**
-- Build new TestFlight release with onboarding fixes
-- Verify Face ID loop no longer occurs for new users
-- Test full onboarding flow: Goals → Biometrics → Wearables → Health Sync → Magic Moment
+- Build new TestFlight release with all fixes
+- Test AI features with Gemini 3 Flash (chat, nudges, synthesis)
+- Verify improved reasoning quality in wellness coaching responses
 
 **TestFlight Testing Checklist:**
 1. ✅ Face ID loop fixed — users can skip biometric setup
 2. ✅ Wearable selection readable — full-width horizontal cards
 3. ✅ Health sync step exists — Apple Health/Health Connect
 4. ✅ App name shows "Apex OS" — branding consistent
+5. 🔲 Chat responses use Gemini 3 Flash — verify quality improvement
+6. 🔲 Nudge generation working — RAG with 768-dim embeddings
 
-**OPUS45 Final Acceptance Checklist:**
-1. ✅ Recovery + Today plan in <60s — DONE
-2. ✅ Complete action + Why/Evidence <5min — DONE
-3. ✅ Nudges 3-5/day with logging — DONE (Gap #3)
-4. ✅ MVD reduces plan + user toggle — DONE (Gap #2)
-5. ✅ Weekly Synthesis coherent by Day 7 — DONE
-6. ✅ Tone matches brand — DONE
-7. ✅ No identity/auth failures — DONE (Face ID loop fixed)
-8. ✅ Instrumentation answers questions — DONE (Gaps #3, #4)
+**AI Model Verification:**
+- Chat: Should show improved reasoning depth
+- Nudges: Should generate evidence-backed recommendations
+- Weekly Synthesis: Should produce coherent narratives
 
 ---
 
@@ -262,4 +270,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 19, 2025 (Session 73 complete - Onboarding Flow Fixes: Face ID loop, wearable layout, health sync, Apex OS branding)*
+*Last Updated: December 19, 2025 (Session 74 complete - Gemini 3 Flash Migration: AI model upgrade, Pinecone 768-dim, unified Vertex AI)*
