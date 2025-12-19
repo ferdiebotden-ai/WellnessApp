@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 74 (complete) |
-| **Progress** | Gemini 3 Flash Migration — AI Model Upgrade |
+| **Session** | 75 (complete) |
+| **Progress** | Face ID Loop Fix & Login Screen Redesign |
 | **Branch** | main |
 | **Blocker** | ✅ None |
 
@@ -52,56 +52,71 @@
 
 ## Last Session
 
-**Date:** December 19, 2025 (Session 74)
-**Focus:** Gemini 3 Flash Migration — AI Model Upgrade
+**Date:** December 19, 2025 (Session 75)
+**Focus:** Face ID Loop Fix & Login Screen Redesign
 
-**Context:** Google released Gemini 3 Flash on Dec 17, 2025 with significant improvements (+3x reasoning, 78% SWE-bench). User requested research and migration to improve wellness coaching quality.
+**Context:** TestFlight users reported Face ID getting stuck in a loop during sign-in. Additionally, the login screen text fields had vertical centering issues causing text cutoff.
 
 **Accomplished:**
 
-### Research Phase
-- Researched Gemini 3 Flash release (Dec 17, 2025) via web search
-- Compared benchmarks: 3 Flash vs 2.5 Flash (+13 pts Intelligence Index, +3x on Humanity's Last Exam)
-- Analyzed current AI architecture (Gemini 2.5 Flash + OpenAI gpt-5-turbo hybrid)
-- Identified migration path and embedding dimension change (1536→768)
+### Bug Fix: Face ID Loop (Complete Removal)
+- Removed ALL app lock features (biometrics + PIN) to fix Face ID loop bug
+- Deleted `AppLockProvider.tsx` — Lock state management (269 lines)
+- Deleted `AuthenticationGate.tsx` — Lock gate wrapper (46 lines)
+- Deleted `BiometricLockScreen.tsx` — Face ID/PIN lock screen (404 lines)
+- Deleted `BiometricSetupScreen.tsx` — Biometric setup during onboarding (220 lines)
+- Updated `MainStack.tsx` — Removed lock provider wrapping
+- Updated `auth/index.ts` — Removed BiometricSetupScreen export
+- Cleaned up `App.test.tsx` — Removed dead mocks
 
-### Implementation Phase
-- Updated `functions/src/vertexAI.ts` to use `gemini-3-flash-preview` model
-- Created `backend/src/lib/vertexai.ts` — Unified Vertex AI client for backend
-- Replaced OpenAI with Vertex AI in `generateAdaptiveNudges.ts`
-- Updated `embedProtocols.ts` to use Vertex AI embeddings (768-dim)
-- Added `@google-cloud/vertexai` and `google-auth-library` to backend dependencies
+### UI Fix: FormInput Text Cutoff
+- Fixed padding calculation in `FormInput.tsx`
+- Changed `paddingVertical: 14` → `paddingVertical: 12` (gives 24px content area for 24px lineHeight)
+- Changed `paddingHorizontal: 14` → `paddingHorizontal: 16`
+- Added `textAlignVertical: 'center'` for Android
 
-### Migration Infrastructure
-- Created `scripts/migrate-pinecone-768.ts` — Automated Pinecone migration script
-- Created `.github/workflows/migrate-gemini3.yml` — Manual migration workflow
-- Migration script handles: index deletion, 768-dim recreation, protocol re-embedding
+### Login Screen Redesign (Premium Dark UI)
+- Redesigned `SignInScreen.tsx` with Apex OS brand aesthetic
+- Added **APEX OS** branding header with teal accent color (#63E6BE)
+- Added tagline "Your AI wellness operating system"
+- Implemented staggered fade-in animations using `react-native-reanimated`
+- Applied design tokens for premium spacing (28px, 40px, 56px)
+- Used `palette.canvas` (#0F1218) deep dark background
 
-### Deployment & Verification
-- Committed and pushed changes (commit `06df229`)
-- Automatic deployment triggered — all Cloud Run services updated
-- User ran Pinecone migration workflow successfully
-- Verified all services running with Gemini 3 Flash
+**Files Modified/Deleted (9):**
+- `client/src/providers/AppLockProvider.tsx` — DELETED
+- `client/src/components/AuthenticationGate.tsx` — DELETED
+- `client/src/components/BiometricLockScreen.tsx` — DELETED
+- `client/src/screens/auth/BiometricSetupScreen.tsx` — DELETED
+- `client/src/navigation/MainStack.tsx` — Removed lock wrapping
+- `client/src/screens/auth/index.ts` — Updated exports
+- `client/src/components/FormInput.tsx` — Fixed padding
+- `client/src/screens/auth/SignInScreen.tsx` — Premium redesign
+- `client/src/App.test.tsx` — Cleaned up mocks
 
-**Files Modified/Created (10):**
-- `functions/src/vertexAI.ts` — Model: `gemini-3-flash-preview`
-- `backend/src/lib/vertexai.ts` — NEW: Vertex AI client for backend
-- `backend/src/jobs/generateAdaptiveNudges.ts` — OpenAI → Vertex AI
-- `backend/src/jobs/embedProtocols.ts` — Vertex AI embeddings (768-dim)
-- `backend/package.json` — Added Vertex AI dependencies
-- `scripts/migrate-pinecone-768.ts` — NEW: Migration script
-- `scripts/package.json` — Added migrate:pinecone command
-- `.github/workflows/migrate-gemini3.yml` — NEW: Migration workflow
+**Commit:** `6882306` — Remove Face ID loop bug and redesign login screen
 
-**Commit:** `06df229` — Upgrade to Gemini 3 Flash and consolidate AI models
-
-**Result:** 🎯 Gemini 3 Flash fully deployed! AI quality significantly improved.
+**Result:** 🎯 Face ID loop fixed, login screen beautiful with premium dark UI!
 
 ---
 
 ## Previous Session
 
-**Date:** December 19, 2025 (Session 73)
+**Date:** December 19, 2025 (Session 74)
+**Focus:** Gemini 3 Flash Migration — AI Model Upgrade
+
+**Accomplished:**
+- Upgraded AI model from Gemini 2.5 Flash to Gemini 3 Flash (Dec 17 release)
+- Consolidated AI backends (OpenAI → Vertex AI)
+- Migrated Pinecone embeddings from 1536-dim to 768-dim
+- Created automated migration script and GitHub workflow
+
+**Commit:** `06df229`
+
+---
+
+## Session 73 (December 19, 2025)
+
 **Focus:** Onboarding Flow Fixes from TestFlight Testing
 
 **Accomplished:**
@@ -114,41 +129,31 @@
 
 ---
 
-## Session 72 (December 14, 2025)
-
-**Focus:** OPUS45 Brief Gap Fixes — Instrumentation (Gaps #3 and #4)
-
-**Accomplished:**
-- Gap #3: Nudge delivery logging with context snapshot
-- Gap #4: Push notification tracking with privacy protection
-
-**Commit:** `cdb6b0c`
-
----
-
 ## Next Session Priority
 
-### Session 75 Focus: TestFlight Build & AI Quality Verification
+### Session 76 Focus: TestFlight Build & Full Testing
 
-Both onboarding and AI model are now upgraded. Time to verify and rebuild:
+All major bugs fixed and UI polished. Time for comprehensive testing and TestFlight release:
 
 **Immediate:**
-- Build new TestFlight release with all fixes
+- Build new TestFlight release with all Session 73-75 fixes
+- Full onboarding flow test (new users + existing users)
 - Test AI features with Gemini 3 Flash (chat, nudges, synthesis)
-- Verify improved reasoning quality in wellness coaching responses
 
 **TestFlight Testing Checklist:**
-1. ✅ Face ID loop fixed — users can skip biometric setup
-2. ✅ Wearable selection readable — full-width horizontal cards
-3. ✅ Health sync step exists — Apple Health/Health Connect
-4. ✅ App name shows "Apex OS" — branding consistent
-5. 🔲 Chat responses use Gemini 3 Flash — verify quality improvement
-6. 🔲 Nudge generation working — RAG with 768-dim embeddings
+1. ✅ Face ID loop fixed — app lock features removed entirely
+2. ✅ Login screen beautiful — premium dark UI with animations
+3. ✅ Text fields work — no more text cutoff
+4. ✅ Wearable selection readable — full-width horizontal cards
+5. ✅ Health sync step exists — Apple Health/Health Connect
+6. ✅ App name shows "Apex OS" — branding consistent
+7. 🔲 Chat responses use Gemini 3 Flash — verify quality improvement
+8. 🔲 Nudge generation working — RAG with 768-dim embeddings
 
-**AI Model Verification:**
-- Chat: Should show improved reasoning depth
-- Nudges: Should generate evidence-backed recommendations
-- Weekly Synthesis: Should produce coherent narratives
+**Future Auth Features (Deferred):**
+- Sign in with Apple
+- Sign in with Google
+- Face ID/Touch ID (proper implementation after OAuth)
 
 ---
 
@@ -270,4 +275,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 19, 2025 (Session 74 complete - Gemini 3 Flash Migration: AI model upgrade, Pinecone 768-dim, unified Vertex AI)*
+*Last Updated: December 19, 2025 (Session 75 complete - Face ID loop fix, FormInput text cutoff fix, Login screen redesign with premium dark UI)*
