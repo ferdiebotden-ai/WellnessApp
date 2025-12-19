@@ -6,6 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "seed": "ts-node seed-pinecone.ts",
+    "migrate:pinecone": "ts-node migrate-pinecone-768.ts",
     "test:e2e": "ts-node test-e2e-nudge-flow.ts",
     "build": "tsc"
   },

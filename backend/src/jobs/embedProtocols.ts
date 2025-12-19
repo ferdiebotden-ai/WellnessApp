@@ -1,9 +1,10 @@
-import { getOpenAIClient } from '../lib/openai';
+import { generateEmbeddings, getEmbeddingDimensions, getEmbeddingModelName } from '../lib/vertexai';
 import { getPineconeIndex } from '../lib/pinecone';
 import { getSupabaseClient } from '../lib/supabase';
 
-const EMBEDDING_MODEL = 'text-embedding-3-large';
-const EMBEDDING_DIMENSIONS = 1536;
+// Using Vertex AI text-embedding-005 (768 dimensions)
+// Migrated from OpenAI text-embedding-3-large (1536 dimensions) on Dec 2025
+const EMBEDDING_DIMENSIONS = getEmbeddingDimensions(); // 768
 const BATCH_SIZE = 20;
 
 type Citation = string;
@@ -69,7 +70,6 @@ const chunkProtocols = <T>(items: T[], chunkSize: number): T[][] => {
 
 export const embedProtocols = async (): Promise<void> => {
   const supabase = getSupabaseClient();
-  const openai = getOpenAIClient();
   const pineconeIndex = getPineconeIndex();
 
   const { data, error } = await supabase
@@ -97,17 +97,14 @@ export const embedProtocols = async (): Promise<void> => {
   for (const batch of batches) {
     const inputs = batch.map(buildEmbeddingInput);
 
-    const response = await openai.embeddings.create({
-      model: EMBEDDING_MODEL,
-      input: inputs,
-      dimensions: EMBEDDING_DIMENSIONS,
-    });
+    // Generate embeddings using Vertex AI (Gemini 3 Flash era)
+    const embeddings = await generateEmbeddings(inputs);
 
-    const vectors = response.data.map((item, index) => {
+    const vectors = embeddings.map((embedding, index) => {
       const protocol = batch[index];
       return {
         id: protocol.id,
-        values: item.embedding,
+        values: embedding,
         metadata: {
           protocol_id: protocol.id,
           name: protocol.name ?? '',

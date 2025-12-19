@@ -1,13 +1,19 @@
 import { subDays } from 'date-fns';
 import { getFirestore } from '../lib/firebase';
-import { getOpenAIClient } from '../lib/openai';
+import {
+  generateEmbedding,
+  generateStructuredCompletion,
+  getCompletionModelName,
+  getEmbeddingDimensions,
+} from '../lib/vertexai';
 import { getPineconeIndex } from '../lib/pinecone';
 import { getSupabaseClient } from '../lib/supabase';
 
 const LOOKBACK_DAYS = 7;
-const EMBEDDING_MODEL = 'text-embedding-3-large';
-const EMBEDDING_DIMENSIONS = 1536;
-const COMPLETION_MODEL = 'gpt-5-turbo';
+// Vertex AI text-embedding-005 (768 dimensions)
+const EMBEDDING_DIMENSIONS = getEmbeddingDimensions();
+// Gemini 3 Flash for structured nudge generation
+const COMPLETION_MODEL = getCompletionModelName();
 const PINECONE_TOP_K = 5;
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -332,21 +338,12 @@ const queryUsers = async () => {
 };
 
 const queryRag = async (user: UserRecord, adherence: ProtocolLogRecord[], wearable: WearableRecord | null) => {
-  const openai = getOpenAIClient();
   const pineconeIndex = getPineconeIndex();
 
   const queryText = buildRagQuery(user, adherence, wearable);
-  const embeddingResponse = await openai.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: [queryText],
-    dimensions: EMBEDDING_DIMENSIONS,
-  });
 
-  const vector = embeddingResponse.data[0]?.embedding;
-
-  if (!vector) {
-    return [] as RagMatch[];
-  }
+  // Generate embedding using Vertex AI (Gemini 3 Flash era)
+  const vector = await generateEmbedding(queryText);
 
   const pineconeResponse = await pineconeIndex.query({
     vector,
@@ -361,55 +358,43 @@ const queryRag = async (user: UserRecord, adherence: ProtocolLogRecord[], wearab
   return pineconeResponse.matches as RagMatch[];
 };
 
-const callOpenAi = async (
+const callVertexAI = async (
   user: UserRecord,
   adherence: ProtocolLogRecord[],
   wearable: WearableRecord | null,
   ragMatches: RagMatch[],
 ): Promise<{ nudge: GeneratedNudge; prompt: { system: string; user: string } }> => {
-  const openai = getOpenAIClient();
   const prompt = buildPrompt(user, adherence, wearable, ragMatches);
 
-  const response = await openai.chat.completions.create({
-    model: COMPLETION_MODEL,
-    temperature: 0.7,
-    messages: [
-      { role: 'system', content: prompt.system },
-      { role: 'user', content: prompt.user },
-    ],
-    functions: [
-      {
-        name: 'submit_nudge',
-        description: 'Return the structured adaptive nudge payload',
-        parameters: {
-          type: 'object',
-          properties: {
-            protocol_id: { type: 'string' },
-            module_id: { type: 'string', nullable: true },
-            nudge_text: { type: 'string' },
-            reasoning: { type: 'string' },
-            evidence_citation: { type: 'string' },
-            timing: { type: 'string' },
-            confidence_score: { type: 'number' },
-          },
-          required: ['protocol_id', 'nudge_text', 'reasoning', 'evidence_citation', 'timing'],
-        },
-      },
-    ],
-    function_call: { name: 'submit_nudge' },
-  });
+  // Enhanced prompt for structured JSON output (Gemini 3 Flash)
+  const structuredPrompt = `${prompt.user}
 
-  const choice = response.choices[0];
-  const functionCall = choice?.message?.function_call;
+Return your response as a JSON object with this exact structure:
+{
+  "protocol_id": "string - ID of the recommended protocol",
+  "module_id": "string or null - module ID if applicable",
+  "nudge_text": "string - the actual nudge message for the user",
+  "reasoning": "string - why this nudge was chosen",
+  "evidence_citation": "string - DOI or study reference",
+  "timing": "string - when the user should act",
+  "confidence_score": "number between 0 and 1"
+}`;
 
-  if (!functionCall || !functionCall.arguments) {
-    throw new Error('OpenAI response missing function call payload');
-  }
+  // Use Gemini 3 Flash structured completion with JSON mode
+  const response = await generateStructuredCompletion<{
+    protocol_id: string;
+    module_id?: string | null;
+    nudge_text: string;
+    reasoning: string;
+    evidence_citation: string;
+    timing: string;
+    confidence_score?: number;
+  }>(prompt.system, structuredPrompt, 0.7);
 
-  const parsed = parseFunctionResult(JSON.parse(functionCall.arguments));
+  const parsed = parseFunctionResult(response);
 
   if (!parsed) {
-    throw new Error('OpenAI response could not be parsed');
+    throw new Error('Vertex AI response could not be parsed as nudge');
   }
 
   if (!parsed.module_id) {
@@ -467,14 +452,14 @@ export const generateAdaptiveNudges = async (
     let finalNudge: GeneratedNudge | null = null;
 
     try {
-      const { nudge, prompt } = await callOpenAi(user, adherence, wearable, ragMatches);
+      const { nudge, prompt } = await callVertexAI(user, adherence, wearable, ragMatches);
       finalNudge = nudge;
       promptRecord = prompt;
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('OpenAI nudge generation failed', { user_id: user.id, error });
-      errorMessage = error instanceof Error ? error.message : 'Unknown OpenAI error';
-      fallbackReason = 'openai_error';
+      console.error('Vertex AI nudge generation failed', { user_id: user.id, error });
+      errorMessage = error instanceof Error ? error.message : 'Unknown Vertex AI error';
+      fallbackReason = 'vertexai_error';
 
       try {
         finalNudge = generateRuleBasedNudge(user, adherence, wearable, ragMatches);

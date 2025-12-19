@@ -6,17 +6,18 @@ exports.getCompletionModelName = getCompletionModelName;
 exports.getEmbeddingModelName = getEmbeddingModelName;
 const vertexai_1 = require("@google-cloud/vertexai");
 /**
- * Vertex AI client wrapper for Gemini 2.5 Flash
+ * Vertex AI client wrapper for Gemini 3 Flash
  * Provides completion and embedding generation for wellness coaching
  *
- * Model: gemini-2.5-flash (GA since June 2025)
- * - "Thinking" capabilities for better reasoning
- * - Best price/performance ratio per Google
- * - 54% on SWE-Bench (improved from 48.9%)
+ * Model: gemini-3-flash-preview (Released Dec 17, 2025)
+ * - +3x better reasoning on complex benchmarks
+ * - 78% on SWE-Bench (vs 54% for 2.5 Flash)
+ * - 90.4% on GPQA Diamond (PhD-level reasoning)
+ * - Improved multimodal capabilities
  */
 const PROJECT_ID = 'wellness-os-app';
 const LOCATION = 'us-central1';
-const COMPLETION_MODEL = 'gemini-2.5-flash';
+const COMPLETION_MODEL = 'gemini-3-flash-preview';
 const EMBEDDING_MODEL = 'text-embedding-005';
 // Initialize Vertex AI client lazily
 let vertexAI = null;
@@ -61,7 +62,7 @@ async function generateCompletion(systemPrompt, userPrompt, temperature = 0.7) {
         safetySettings,
         generationConfig: {
             temperature,
-            maxOutputTokens: 2048, // Increased from 1024 to prevent response truncation
+            maxOutputTokens: 512, // Reduced to enforce ~150-200 word responses (PRD 6.2)
             topP: 0.95,
         },
     });
