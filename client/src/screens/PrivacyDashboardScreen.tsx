@@ -140,7 +140,7 @@ export const PrivacyDashboardScreen: React.FC = () => {
     >
       <Text style={styles.heading}>Privacy Dashboard</Text>
       <Text style={styles.subheading}>
-        Review and export the data Wellness OS stores on your behalf. All requests are processed using HIPAA-compliant controls.
+        Review and export the data Apex OS stores on your behalf. All requests are processed using HIPAA-compliant controls.
       </Text>
 
       <View style={styles.actionsRow}>

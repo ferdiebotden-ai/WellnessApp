@@ -35,6 +35,7 @@ import type {
   PrimaryGoal,
   BiometricProfileData,
   WearableSource,
+  HealthPlatform,
 } from '../../types/onboarding';
 import { GOAL_TO_MODULE_MAP } from '../../types/onboarding';
 import { completeOnboarding } from '../../services/api';
@@ -128,7 +129,7 @@ function estimateRecoveryScore(
 export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
   route,
 }) => {
-  const { selectedGoal, biometrics, wearableSource } = route.params;
+  const { selectedGoal, biometrics, wearableSource, healthPlatform } = route.params;
   const [submitting, setSubmitting] = useState(false);
   const updateOnboarding = useUpdateOnboarding();
 
@@ -149,6 +150,7 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
       await completeOnboarding({
         primary_goal: selectedGoal,
         wearable_source: wearableSource ?? null,
+        health_platform: healthPlatform ?? null,
         primary_module_id: primaryModuleId,
         biometrics: biometrics ?? null,
       });
@@ -158,6 +160,7 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
         primaryModuleId,
         goal: selectedGoal,
         wearable: wearableSource ?? 'skipped',
+        healthPlatform: healthPlatform ?? 'skipped',
         hasBiometrics: !!biometrics?.birthDate || !!biometrics?.biologicalSex,
       });
 
@@ -171,7 +174,7 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
         { text: 'Cancel', style: 'cancel', onPress: () => setSubmitting(false) },
       ]);
     }
-  }, [selectedGoal, biometrics, wearableSource, updateOnboarding]);
+  }, [selectedGoal, biometrics, wearableSource, healthPlatform, updateOnboarding]);
 
   if (submitting) {
     return (

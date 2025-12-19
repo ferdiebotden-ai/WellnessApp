@@ -176,7 +176,7 @@ export const submitWaitlistEntry = (email: string, tierInterestedIn: 'pro' | 'el
   });
 
 /**
- * Sends wearable readings to the Wellness OS API for synchronization.
+ * Sends wearable readings to the Apex OS API for synchronization.
  * @param payload Normalized wearable metrics payload.
  * @returns API response indicating whether the sync was accepted.
  */

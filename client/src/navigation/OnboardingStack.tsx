@@ -5,20 +5,32 @@ import {
   GoalSelectionScreen,
   BiometricProfileScreen,
   WearableConnectionScreen,
+  HealthDataSyncScreen,
   MagicMomentScreen,
 } from '../screens/onboarding';
 import { palette } from '../theme/palette';
-import type { PrimaryGoal, BiometricProfileData, WearableSource } from '../types/onboarding';
+import type {
+  PrimaryGoal,
+  BiometricProfileData,
+  WearableSource,
+  HealthPlatform,
+} from '../types/onboarding';
 
 export type OnboardingStackParamList = {
   AICoachIntro: undefined;
   GoalSelection: undefined;
   BiometricProfile: { selectedGoal: PrimaryGoal };
   WearableConnection: { selectedGoal: PrimaryGoal; biometrics?: BiometricProfileData };
+  HealthDataSync: {
+    selectedGoal: PrimaryGoal;
+    biometrics?: BiometricProfileData;
+    wearableSource?: WearableSource | null;
+  };
   MagicMoment: {
     selectedGoal: PrimaryGoal;
     biometrics?: BiometricProfileData;
     wearableSource?: WearableSource | null;
+    healthPlatform?: HealthPlatform | null;
   };
 };
 
@@ -27,11 +39,11 @@ const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 /**
  * Navigation stack for authenticated users who haven't completed onboarding.
  *
- * Flow: AI Intro → Goal Selection → Biometric Profile → Wearable Connection → Main app
+ * Flow: AI Intro → Goal Selection → Biometric Profile → Wearable Connection → Health Data Sync → Main app
  *
  * Design: Conversational AI onboarding with typographic/cinematic intro,
  * tap-to-advance goal selection, optional biometric profile (age, sex, height, weight),
- * and optional wearable connection.
+ * optional wearable connection, and optional health platform sync.
  *
  * Note: No trial language - users go directly into the app experience.
  */
@@ -60,6 +72,11 @@ export const OnboardingStackNavigator: React.FC = () => {
       <Stack.Screen
         name="WearableConnection"
         component={WearableConnectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="HealthDataSync"
+        component={HealthDataSyncScreen}
         options={{ animation: 'slide_from_right' }}
       />
       <Stack.Screen

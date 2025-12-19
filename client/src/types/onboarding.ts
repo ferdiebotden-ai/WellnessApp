@@ -7,7 +7,10 @@
 export type PrimaryGoal = 'better_sleep' | 'more_energy' | 'sharper_focus' | 'faster_recovery';
 
 /** Wearable device options for tracking */
-export type WearableSource = 'oura' | 'whoop' | 'apple_health' | 'health_connect' | 'garmin';
+export type WearableSource = 'oura' | 'whoop' | 'apple_watch' | 'garmin';
+
+/** Health platform for data sync */
+export type HealthPlatform = 'apple_health' | 'health_connect';
 
 /** Goal card data for onboarding selection */
 export interface OnboardingGoal {
@@ -44,6 +47,7 @@ export interface BiometricProfileData {
 export interface OnboardingCompletePayload {
   primary_goal: PrimaryGoal;
   wearable_source?: WearableSource | null;
+  health_platform?: HealthPlatform | null;
   /** Derived from goal → module mapping */
   primary_module_id?: string;
   /** Biometric profile data */
@@ -97,7 +101,33 @@ export const ONBOARDING_GOALS: OnboardingGoal[] = [
 export const ONBOARDING_WEARABLES: OnboardingWearable[] = [
   { id: 'oura', name: 'Oura Ring', icon: '⭕', platforms: ['ios', 'android'] },
   { id: 'whoop', name: 'WHOOP', icon: '📊', platforms: ['ios', 'android'] },
-  { id: 'apple_health', name: 'Apple Watch', icon: '⌚', platforms: ['ios'] },
-  { id: 'health_connect', name: 'Health Connect', icon: '📱', platforms: ['android'] },
+  { id: 'apple_watch', name: 'Apple Watch', icon: '⌚', platforms: ['ios'] },
   { id: 'garmin', name: 'Garmin', icon: '🏃', platforms: ['ios', 'android'] },
+];
+
+/** Health platform option for onboarding health data sync */
+export interface OnboardingHealthPlatform {
+  id: HealthPlatform;
+  name: string;
+  icon: string;
+  description: string;
+  platform: 'ios' | 'android';
+}
+
+/** Available health platforms for syncing health data */
+export const HEALTH_PLATFORMS: OnboardingHealthPlatform[] = [
+  {
+    id: 'apple_health',
+    name: 'Apple Health',
+    icon: '❤️',
+    description: 'Access steps, sleep, heart rate & more',
+    platform: 'ios',
+  },
+  {
+    id: 'health_connect',
+    name: 'Health Connect',
+    icon: '💚',
+    description: 'Access steps, sleep, heart rate & more',
+    platform: 'android',
+  },
 ];

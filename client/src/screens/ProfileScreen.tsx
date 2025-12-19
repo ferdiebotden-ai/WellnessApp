@@ -361,7 +361,7 @@ export const ProfileScreen: React.FC = () => {
       <Card>
         <Text style={styles.cardTitle}>Privacy Controls</Text>
         <Text style={styles.cardBody}>
-          Review how Wellness OS safeguards your personal information and exercise your privacy rights.
+          Review how Apex OS safeguards your personal information and exercise your privacy rights.
         </Text>
         <PrimaryButton
           title="Open Privacy Dashboard"

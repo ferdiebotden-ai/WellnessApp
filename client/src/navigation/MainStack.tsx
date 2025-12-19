@@ -118,7 +118,7 @@ const AppScaffold: React.FC = () => {
       <SafeAreaView style={styles.safeArea}>
         <TopNavigationBar
           title="Health Dashboard"
-          subtitle="Wellness OS"
+          subtitle="Apex OS"
           onAiCoachPress={handleAiCoachPress}
         />
         <TrialBanner />

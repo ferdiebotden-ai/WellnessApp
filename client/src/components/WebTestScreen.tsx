@@ -6,7 +6,7 @@ export const WebTestScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>✅ Web Build Working!</Text>
-      <Text style={styles.subtitle}>Wellness OS is running in the browser</Text>
+      <Text style={styles.subtitle}>Apex OS is running in the browser</Text>
     </View>
   );
 };

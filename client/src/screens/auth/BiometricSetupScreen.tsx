@@ -123,7 +123,7 @@ export const BiometricSetupScreen: React.FC<BiometricSetupScreenProps> = ({
         <View style={styles.header}>
           <Text style={styles.title}>Enable {getBiometryLabel(supportedBiometry)}</Text>
           <Text style={styles.subtitle}>
-            Unlock Wellness OS quickly and securely with {getBiometryLabel(supportedBiometry)}.
+            Unlock Apex OS quickly and securely with {getBiometryLabel(supportedBiometry)}.
             Your health data stays protected.
           </Text>
         </View>

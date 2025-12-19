@@ -23,7 +23,7 @@ type WearableConnectionScreenProps = NativeStackScreenProps<
   'WearableConnection'
 >;
 
-const AUTO_ADVANCE_DELAY = 600; // ms after selection before navigating to MagicMoment
+const AUTO_ADVANCE_DELAY = 600; // ms after selection before navigating to HealthDataSync
 
 export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> = ({
   route,
@@ -39,10 +39,10 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
     return ONBOARDING_WEARABLES.filter((w) => w.platforms.includes(currentPlatform));
   }, []);
 
-  // Navigate to MagicMoment screen instead of completing onboarding here
-  const navigateToMagicMoment = useCallback(
+  // Navigate to HealthDataSync screen to optionally sync health platform data
+  const navigateToHealthDataSync = useCallback(
     (wearableSource: WearableSource | null) => {
-      navigation.navigate('MagicMoment', {
+      navigation.navigate('HealthDataSync', {
         selectedGoal: selectedGoal as PrimaryGoal,
         biometrics: biometrics ?? undefined,
         wearableSource,
@@ -62,15 +62,15 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
 
       // Auto-advance after delay
       autoAdvanceTimer.current = setTimeout(() => {
-        navigateToMagicMoment(wearableId as WearableSource);
+        navigateToHealthDataSync(wearableId as WearableSource);
       }, AUTO_ADVANCE_DELAY);
     },
-    [navigateToMagicMoment]
+    [navigateToHealthDataSync]
   );
 
   const handleSkip = useCallback(() => {
-    navigateToMagicMoment(null);
-  }, [navigateToMagicMoment]);
+    navigateToHealthDataSync(null);
+  }, [navigateToHealthDataSync]);
 
   // Cleanup timer on unmount
   React.useEffect(() => {
@@ -97,7 +97,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
           </Text>
         </Animated.View>
 
-        <View style={styles.wearablesGrid}>
+        <View style={styles.wearablesList}>
           {platformWearables.map((wearable, index) => (
             <Animated.View
               key={wearable.id}
@@ -109,7 +109,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
                 onSelect={handleSelectWearable}
               />
               {selectedWearable === wearable.id && (
-                <View style={styles.selectedOverlay}>
+                <View style={styles.selectedIndicator}>
                   <Text style={styles.selectedCheck}>✓</Text>
                 </View>
               )}
@@ -150,25 +150,22 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     lineHeight: 24,
   },
-  wearablesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  wearablesList: {
+    gap: 12,
     marginBottom: 24,
   },
   wearableItem: {
-    width: '48%',
     position: 'relative',
   },
-  selectedOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(99, 230, 190, 0.15)',
-    borderRadius: 16,
-    alignItems: 'center',
+  selectedIndicator: {
+    position: 'absolute',
+    right: 16,
+    top: 0,
+    bottom: 0,
     justifyContent: 'center',
   },
   selectedCheck: {
-    fontSize: 32,
+    fontSize: 24,
     color: palette.primary,
     fontWeight: '700',
   },

@@ -39,9 +39,11 @@ export const BiometricLockScreen: React.FC = () => {
     unlockWithPin,
     configurePin,
     hasPin,
+    hasConfiguredLock,
     isProcessing,
     error,
     clearError,
+    skipLockTemporarily,
   } = useAppLock();
   const [mode, setMode] = useState<ScreenMode>('biometric');
   const [pinValue, setPinValue] = useState('');
@@ -49,11 +51,26 @@ export const BiometricLockScreen: React.FC = () => {
   const [initialPin, setInitialPin] = useState('');
   const [autoPrompted, setAutoPrompted] = useState(false);
   const [pinSetupError, setPinSetupError] = useState<string | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [showSkipOption, setShowSkipOption] = useState(false);
+
+  // Show skip option after 2 failed attempts OR if user doesn't have lock configured
+  useEffect(() => {
+    if (failedAttempts >= 2 || (error && !hasConfiguredLock)) {
+      setShowSkipOption(true);
+    }
+  }, [failedAttempts, error, hasConfiguredLock]);
 
   useEffect(() => {
     if (supportedBiometry && !autoPrompted) {
       setAutoPrompted(true);
-      unlockWithBiometrics().catch(() => null);
+      unlockWithBiometrics().then((success) => {
+        if (!success) {
+          setFailedAttempts((prev) => prev + 1);
+        }
+      }).catch(() => {
+        setFailedAttempts((prev) => prev + 1);
+      });
     }
   }, [autoPrompted, supportedBiometry, unlockWithBiometrics]);
 
@@ -74,14 +91,30 @@ export const BiometricLockScreen: React.FC = () => {
 
   const handleBiometricPress = useCallback(() => {
     clearError();
-    unlockWithBiometrics().catch(() => null);
+    unlockWithBiometrics().then((success) => {
+      if (!success) {
+        setFailedAttempts((prev) => prev + 1);
+      }
+    }).catch(() => {
+      setFailedAttempts((prev) => prev + 1);
+    });
   }, [clearError, unlockWithBiometrics]);
 
   const handlePinSubmit = useCallback(() => {
     clearError();
     setPinSetupError(null);
-    unlockWithPin(pinValue).catch(() => null);
+    unlockWithPin(pinValue).then((success) => {
+      if (!success) {
+        setFailedAttempts((prev) => prev + 1);
+      }
+    }).catch(() => {
+      setFailedAttempts((prev) => prev + 1);
+    });
   }, [clearError, pinValue, unlockWithPin]);
+
+  const handleSkip = useCallback(() => {
+    skipLockTemporarily();
+  }, [skipLockTemporarily]);
 
   const handleStartPinSetup = useCallback(() => {
     clearError();
@@ -128,7 +161,7 @@ export const BiometricLockScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Wellness OS Locked</Text>
+        <Text style={styles.title}>Apex OS Locked</Text>
         <Text style={styles.subtitle}>
           Authenticate to protect your personalized health insights.
         </Text>
@@ -148,7 +181,7 @@ export const BiometricLockScreen: React.FC = () => {
           <View style={styles.pinContainer}>
             {mode === 'pin-entry' ? (
               <>
-                <Text style={styles.pinLabel}>Enter your Wellness OS PIN</Text>
+                <Text style={styles.pinLabel}>Enter your Apex OS PIN</Text>
                 <TextInput
                   value={pinValue}
                   onChangeText={setPinValue}
@@ -243,6 +276,16 @@ export const BiometricLockScreen: React.FC = () => {
             )}
           </View>
         ) : null}
+
+        {/* Skip option for users without configured lock or after failed attempts */}
+        {showSkipOption && !hasConfiguredLock ? (
+          <View style={styles.skipContainer}>
+            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+              <Text style={styles.skipText}>Skip for now</Text>
+              <Text style={styles.skipSubtext}>You can set up security later in Settings</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -331,5 +374,31 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 24,
     alignItems: 'center',
+  },
+  skipContainer: {
+    width: '100%',
+    marginTop: 32,
+    alignItems: 'center',
+  },
+  skipButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: palette.elevated,
+    borderWidth: 1,
+    borderColor: palette.primary,
+    width: '100%',
+  },
+  skipText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: palette.primary,
+    marginBottom: 4,
+  },
+  skipSubtext: {
+    fontSize: 13,
+    color: palette.textSecondary,
   },
 });

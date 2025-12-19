@@ -21,15 +21,18 @@ const BIOMETRIC_SERVICE = 'com.wellnessos.firebaseRefreshToken';
 
 interface AppLockContextValue {
   isLocked: boolean;
+  isInitializing: boolean;
   isProcessing: boolean;
   supportedBiometry: BiometryType;
   hasPin: boolean;
+  hasConfiguredLock: boolean;
   error: string | null;
   unlockWithBiometrics: () => Promise<boolean>;
   unlockWithPin: (pin: string) => Promise<boolean>;
   configurePin: (pin: string) => Promise<void>;
   disablePin: () => Promise<void>;
   clearError: () => void;
+  skipLockTemporarily: () => void;
 }
 
 const AppLockContext = createContext<AppLockContextValue | undefined>(undefined);
@@ -42,8 +45,10 @@ const MIN_PIN_LENGTH = 4;
  */
 export const AppLockProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLocked, setIsLocked] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [supportedBiometry, setSupportedBiometry] = useState<BiometryType>(null);
   const [hasPin, setHasPin] = useState(false);
+  const [hasConfiguredLock, setHasConfiguredLock] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const latestRefreshTokenRef = useRef<string | null>(null);
@@ -51,28 +56,37 @@ export const AppLockProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   useEffect(() => {
     const initializeLock = async () => {
-      // Check if user is authenticated
-      const currentUser = firebaseAuth.currentUser;
-      if (!currentUser) {
-        setIsLocked(false);
+      try {
+        // Check if user is authenticated
+        const currentUser = firebaseAuth.currentUser;
+        if (!currentUser) {
+          setIsLocked(false);
+          setHasConfiguredLock(false);
+          hasCheckedInitialLock.current = true;
+          return;
+        }
+
+        // Check for existing biometric token or PIN
+        const hasBiometricToken = await SecureStore.getItemAsync(BIOMETRIC_SERVICE).catch(() => null);
+        const hasPinConfigured = await hasPinCredentials().catch(() => false);
+        const hasLockConfigured = Boolean(hasBiometricToken) || hasPinConfigured;
+
+        setHasConfiguredLock(hasLockConfigured);
+
+        // If no lock method exists, this is first session - unlock automatically
+        if (!hasLockConfigured) {
+          setIsLocked(false);
+          hasCheckedInitialLock.current = true;
+          return;
+        }
+
+        // User has lock configured, start locked
+        setIsLocked(true);
         hasCheckedInitialLock.current = true;
-        return;
+      } finally {
+        // Always mark initialization as complete
+        setIsInitializing(false);
       }
-
-      // Check for existing biometric token or PIN
-      const hasBiometricToken = await SecureStore.getItemAsync(BIOMETRIC_SERVICE).catch(() => null);
-      const hasPin = await hasPinCredentials().catch(() => false);
-
-      // If no lock method exists, this is first session - unlock automatically
-      if (!hasBiometricToken && !hasPin) {
-        setIsLocked(false);
-        hasCheckedInitialLock.current = true;
-        return;
-      }
-
-      // User has lock configured, start locked
-      setIsLocked(true);
-      hasCheckedInitialLock.current = true;
     };
 
     getSupportedBiometryType().then(setSupportedBiometry).catch(() => setSupportedBiometry(null));
@@ -199,27 +213,39 @@ export const AppLockProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setHasPin(false);
   }, []);
 
+  // Allow users to skip lock temporarily (for first-time users without configured lock)
+  const skipLockTemporarily = useCallback(() => {
+    setIsLocked(false);
+    setError(null);
+  }, []);
+
   const value = useMemo(
     () => ({
       isLocked,
+      isInitializing,
       isProcessing,
       supportedBiometry,
       hasPin,
+      hasConfiguredLock,
       error,
       unlockWithBiometrics,
       unlockWithPin,
       configurePin,
       disablePin,
       clearError,
+      skipLockTemporarily,
     }),
     [
       clearError,
       configurePin,
       disablePin,
       error,
+      hasConfiguredLock,
       hasPin,
+      isInitializing,
       isLocked,
       isProcessing,
+      skipLockTemporarily,
       supportedBiometry,
       unlockWithBiometrics,
       unlockWithPin,

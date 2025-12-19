@@ -90,7 +90,7 @@ export const storeBiometricRefreshToken = async (token: string): Promise<void> =
 export const retrieveRefreshTokenWithBiometrics = async (): Promise<string> => {
   // First authenticate with biometrics
   const authResult = await LocalAuthentication.authenticateAsync({
-    promptMessage: 'Unlock Wellness OS',
+    promptMessage: 'Unlock Apex OS',
     cancelLabel: 'Cancel',
     disableDeviceFallback: false,
   });

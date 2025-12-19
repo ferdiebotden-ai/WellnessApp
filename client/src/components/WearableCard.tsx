@@ -39,8 +39,11 @@ export const WearableCard: React.FC<WearableCardProps> = ({ wearable, onSelect }
       onPressOut={handlePressOut}
       style={[styles.card, animatedStyle]}
     >
-      <Text style={styles.icon}>{wearable.icon}</Text>
-      <Text style={styles.name}>{wearable.name}</Text>
+      <View style={styles.cardContent}>
+        <Text style={styles.icon}>{wearable.icon}</Text>
+        <Text style={styles.name}>{wearable.name}</Text>
+      </View>
+      <Text style={styles.chevron}>›</Text>
     </AnimatedPressable>
   );
 };
@@ -81,43 +84,51 @@ export const SkipButton: React.FC<SkipButtonProps> = ({ onPress }) => {
 
 const styles = StyleSheet.create({
   card: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     borderRadius: 16,
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.border,
-    width: '48%',
-    aspectRatio: 1,
-    marginBottom: 12,
+    width: '100%',
+    minHeight: 72,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   icon: {
-    fontSize: 36,
-    marginBottom: 8,
+    fontSize: 32,
   },
   name: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '600',
     color: palette.textPrimary,
-    textAlign: 'center',
+  },
+  chevron: {
+    fontSize: 24,
+    color: palette.textMuted,
+    fontWeight: '300',
   },
   skipButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 16,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: palette.primary,
-    borderStyle: 'dashed',
-    marginTop: 8,
+    borderRadius: 12,
+    backgroundColor: palette.elevated,
+    borderWidth: 1,
+    borderColor: palette.border,
+    marginTop: 12,
   },
   skipText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: palette.primary,
+    color: palette.textPrimary,
     marginBottom: 4,
   },
   skipSubtext: {

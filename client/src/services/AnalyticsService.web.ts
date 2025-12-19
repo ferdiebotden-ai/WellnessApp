@@ -63,6 +63,7 @@ class AnalyticsService {
     primaryModuleId: string;
     goal?: string;
     wearable?: string | null;
+    healthPlatform?: string | null;
     hasBiometrics?: boolean;
   }): Promise<void> {
     console.log('WEB MOCK: Analytics trackOnboardingComplete', params);
