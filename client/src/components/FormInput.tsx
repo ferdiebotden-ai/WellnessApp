@@ -93,9 +93,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.subtle,
     borderRadius: tokens.radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     minHeight: tokens.touch.preferred,
+    textAlignVertical: 'center',
   },
 
   inputFocused: {

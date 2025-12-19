@@ -6,8 +6,6 @@ import { TrialBanner } from '../components/TrialBanner';
 import { TrialSoftReminderModal } from '../components/TrialSoftReminderModal';
 import { PaywallModal } from '../components/PaywallModal';
 import { ChatModal } from '../components/ChatModal';
-import { AppLockProvider } from '../providers/AppLockProvider';
-import { AuthenticationGate } from '../components/AuthenticationGate';
 import { MonetizationProvider, useMonetization } from '../providers/MonetizationProvider';
 import analytics from '../services/AnalyticsService';
 import { firebaseAuth } from '../services/firebase';
@@ -134,19 +132,15 @@ const AppScaffold: React.FC = () => {
 };
 
 /**
- * Main app content with biometric lock protection.
+ * Main app content.
  * This is shown to authenticated users who have completed onboarding.
  * Note: NavigationContainer is provided at the root level in RootNavigator.
  */
 export const MainStackContent: React.FC = () => {
   return (
-    <AppLockProvider>
-      <AuthenticationGate>
-        <MonetizationProvider>
-          <AppScaffold />
-        </MonetizationProvider>
-      </AuthenticationGate>
-    </AppLockProvider>
+    <MonetizationProvider>
+      <AppScaffold />
+    </MonetizationProvider>
   );
 };
 

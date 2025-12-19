@@ -47,31 +47,6 @@ jest.mock('./services/firebase', () => ({
   },
 }));
 
-jest.mock('./providers/AppLockProvider', () => {
-  const React = require('react');
-  const mockValue = {
-    isLocked: false,
-    isProcessing: false,
-    supportedBiometry: null,
-    hasPin: false,
-    error: null,
-    unlockWithBiometrics: jest.fn(),
-    unlockWithPin: jest.fn(),
-    configurePin: jest.fn(),
-    disablePin: jest.fn(),
-    clearError: jest.fn(),
-  };
-
-  return {
-    AppLockProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    useAppLock: () => mockValue,
-  };
-});
-
-jest.mock('./components/AuthenticationGate', () => ({
-  AuthenticationGate: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 jest.mock('./providers/MonetizationProvider', () => {
   const React = require('react');
   const requestChatAccess = jest.fn().mockReturnValue(true);
