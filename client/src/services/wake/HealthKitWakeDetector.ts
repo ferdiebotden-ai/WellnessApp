@@ -106,12 +106,22 @@ export class HealthKitWakeDetector {
 
   /**
    * Check if HealthKit is available on this device.
+   * Includes defensive guards against missing native module methods.
    */
   isAvailable(): boolean {
     if (Platform.OS !== 'ios') {
       return false;
     }
-    return this.healthKitModule?.isAvailable() ?? false;
+    // Guard against missing method AND null module
+    if (!this.healthKitModule || typeof this.healthKitModule.isAvailable !== 'function') {
+      return false;
+    }
+    try {
+      return this.healthKitModule.isAvailable();
+    } catch (error) {
+      console.warn('[HealthKitWakeDetector] isAvailable() threw error:', error);
+      return false;
+    }
   }
 
   /**
@@ -133,9 +143,14 @@ export class HealthKitWakeDetector {
       }
     }
 
-    // Check availability
-    if (!this.healthKitModule.isAvailable()) {
+    // Check availability (with defensive guard)
+    if (typeof this.healthKitModule.isAvailable !== 'function' || !this.healthKitModule.isAvailable()) {
       return this.noDetection('HealthKit not available on this device');
+    }
+
+    // Check syncNow exists before calling
+    if (typeof this.healthKitModule.syncNow !== 'function') {
+      return this.noDetection('HealthKit syncNow method not available');
     }
 
     try {

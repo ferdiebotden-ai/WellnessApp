@@ -60,22 +60,34 @@ const emitter = nativeModule ? new EventEmitter(nativeModule as any) : null;
 /**
  * Check if HealthKit is available on this device.
  * Returns false on non-iOS platforms.
+ * Includes defensive guards against missing native methods.
  */
 export function isAvailable(): boolean {
-  if (!nativeModule) {
+  if (!nativeModule || typeof nativeModule.isAvailable !== 'function') {
     return false;
   }
-  return nativeModule.isAvailable();
+  try {
+    return nativeModule.isAvailable();
+  } catch (error) {
+    console.warn('[ExpoHealthKitObserver] isAvailable() threw error:', error);
+    return false;
+  }
 }
 
 /**
  * Get current HealthKit authorization status.
+ * Includes defensive guards against missing native methods.
  */
 export function getAuthorizationStatus(): HealthKitAuthorizationStatus {
-  if (!nativeModule) {
+  if (!nativeModule || typeof nativeModule.getAuthorizationStatus !== 'function') {
     return 'unavailable';
   }
-  return nativeModule.getAuthorizationStatus();
+  try {
+    return nativeModule.getAuthorizationStatus();
+  } catch (error) {
+    console.warn('[ExpoHealthKitObserver] getAuthorizationStatus() threw error:', error);
+    return 'unavailable';
+  }
 }
 
 /**
@@ -83,13 +95,18 @@ export function getAuthorizationStatus(): HealthKitAuthorizationStatus {
  * @returns Promise resolving to true if authorization was granted.
  */
 export async function requestAuthorization(): Promise<boolean> {
-  if (!nativeModule) {
+  if (!nativeModule || typeof nativeModule.requestAuthorization !== 'function') {
     console.warn(
-      '[ExpoHealthKitObserver] requestAuthorization called on non-iOS platform'
+      '[ExpoHealthKitObserver] requestAuthorization called but native method not available'
     );
     return false;
   }
-  return nativeModule.requestAuthorization();
+  try {
+    return await nativeModule.requestAuthorization();
+  } catch (error) {
+    console.warn('[ExpoHealthKitObserver] requestAuthorization() threw error:', error);
+    return false;
+  }
 }
 
 /**
@@ -103,23 +120,32 @@ export async function startObserving(
   dataTypes: HealthKitTypeIdentifier[],
   frequency: UpdateFrequency = 'immediate'
 ): Promise<boolean> {
-  if (!nativeModule) {
+  if (!nativeModule || typeof nativeModule.startObserving !== 'function') {
     console.warn(
-      '[ExpoHealthKitObserver] startObserving called on non-iOS platform'
+      '[ExpoHealthKitObserver] startObserving called but native method not available'
     );
     return false;
   }
-  return nativeModule.startObserving(dataTypes, frequency);
+  try {
+    return await nativeModule.startObserving(dataTypes, frequency);
+  } catch (error) {
+    console.warn('[ExpoHealthKitObserver] startObserving() threw error:', error);
+    return false;
+  }
 }
 
 /**
  * Stop all observer queries.
  */
 export function stopObserving(): void {
-  if (!nativeModule) {
+  if (!nativeModule || typeof nativeModule.stopObserving !== 'function') {
     return;
   }
-  nativeModule.stopObserving();
+  try {
+    nativeModule.stopObserving();
+  } catch (error) {
+    console.warn('[ExpoHealthKitObserver] stopObserving() threw error:', error);
+  }
 }
 
 /**
@@ -128,11 +154,16 @@ export function stopObserving(): void {
  * @returns Promise resolving to array of HealthKit readings
  */
 export async function syncNow(): Promise<HealthKitReading[]> {
-  if (!nativeModule) {
-    console.warn('[ExpoHealthKitObserver] syncNow called on non-iOS platform');
+  if (!nativeModule || typeof nativeModule.syncNow !== 'function') {
+    console.warn('[ExpoHealthKitObserver] syncNow called but native method not available');
     return [];
   }
-  return nativeModule.syncNow();
+  try {
+    return await nativeModule.syncNow();
+  } catch (error) {
+    console.warn('[ExpoHealthKitObserver] syncNow() threw error:', error);
+    return [];
+  }
 }
 
 /**
@@ -144,11 +175,16 @@ export async function syncNow(): Promise<HealthKitReading[]> {
 export function getLastSyncTimestamp(
   dataType: HealthKitTypeIdentifier
 ): number | null {
-  if (!nativeModule) {
+  if (!nativeModule || typeof nativeModule.getLastSyncTimestamp !== 'function') {
     return null;
   }
-  const timestamp = nativeModule.getLastSyncTimestamp(dataType);
-  return timestamp && timestamp > 0 ? timestamp : null;
+  try {
+    const timestamp = nativeModule.getLastSyncTimestamp(dataType);
+    return timestamp && timestamp > 0 ? timestamp : null;
+  } catch (error) {
+    console.warn('[ExpoHealthKitObserver] getLastSyncTimestamp() threw error:', error);
+    return null;
+  }
 }
 
 // =============================================================================

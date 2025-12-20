@@ -98,11 +98,18 @@ export class HealthConnectWakeDetector {
 
   /**
    * Initialize the Health Connect SDK.
+   * Includes defensive guards against missing methods.
    */
   private async initialize(): Promise<void> {
     try {
       const lib = await getHealthConnectLib();
       if (!lib) return;
+
+      // Guard: verify initialize method exists
+      if (typeof lib.initialize !== 'function') {
+        console.warn('[HealthConnectWakeDetector] initialize method not found on library');
+        return;
+      }
 
       await lib.initialize();
       this.isInitialized = true;
@@ -113,6 +120,7 @@ export class HealthConnectWakeDetector {
 
   /**
    * Check if Health Connect is available on this device.
+   * Includes defensive guards against missing methods.
    */
   async isAvailable(): Promise<boolean> {
     if (Platform.OS !== 'android') {
@@ -127,15 +135,29 @@ export class HealthConnectWakeDetector {
         await this.initialize();
       }
 
+      // Guard: verify getSdkStatus method exists
+      if (typeof lib.getSdkStatus !== 'function') {
+        console.warn('[HealthConnectWakeDetector] getSdkStatus method not found');
+        return false;
+      }
+
+      // Guard: verify SdkAvailabilityStatus exists
+      if (!lib.SdkAvailabilityStatus) {
+        console.warn('[HealthConnectWakeDetector] SdkAvailabilityStatus not found');
+        return false;
+      }
+
       const sdkStatus = await lib.getSdkStatus();
       return sdkStatus === lib.SdkAvailabilityStatus.SDK_AVAILABLE;
-    } catch {
+    } catch (error) {
+      console.warn('[HealthConnectWakeDetector] isAvailable error:', error);
       return false;
     }
   }
 
   /**
    * Detect wake time from Health Connect sleep data.
+   * Includes defensive guards against missing methods.
    *
    * @returns Wake detection result
    */
@@ -156,10 +178,20 @@ export class HealthConnectWakeDetector {
         await this.initialize();
       }
 
+      // Guard: verify getSdkStatus method exists
+      if (typeof lib.getSdkStatus !== 'function' || !lib.SdkAvailabilityStatus) {
+        return this.noDetection('Health Connect SDK methods not available');
+      }
+
       // Check SDK availability
       const sdkStatus = await lib.getSdkStatus();
       if (sdkStatus !== lib.SdkAvailabilityStatus.SDK_AVAILABLE) {
         return this.noDetection('Health Connect not available on this device');
+      }
+
+      // Guard: verify readRecords method exists
+      if (typeof lib.readRecords !== 'function') {
+        return this.noDetection('Health Connect readRecords method not available');
       }
 
       // Query sleep sessions from the last 24 hours

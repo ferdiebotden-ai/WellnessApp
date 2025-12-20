@@ -96,23 +96,36 @@ export function useWakeDetection(): UseWakeDetectionReturn {
   /**
    * Check if health data is available (HealthKit on iOS, Health Connect on Android).
    * If not, we're in Lite Mode.
+   * Includes defensive guards against missing methods or broken detectors.
    */
   const checkLiteMode = useCallback(async (): Promise<boolean> => {
     if (Platform.OS === 'ios') {
       try {
         const healthKitDetector = getHealthKitWakeDetector();
+        // Extra guard: verify detector and method exist
+        if (!healthKitDetector || typeof healthKitDetector.isAvailable !== 'function') {
+          console.warn('[useWakeDetection] HealthKit detector or isAvailable method not available');
+          return true; // Fallback to Lite Mode
+        }
         return !healthKitDetector.isAvailable();
-      } catch {
+      } catch (error) {
         // If we can't check, assume Lite Mode
+        console.warn('[useWakeDetection] checkLiteMode iOS error:', error);
         return true;
       }
     } else if (Platform.OS === 'android') {
       try {
         const healthConnectDetector = getHealthConnectWakeDetector();
+        // Extra guard: verify detector and method exist
+        if (!healthConnectDetector || typeof healthConnectDetector.isAvailable !== 'function') {
+          console.warn('[useWakeDetection] Health Connect detector or isAvailable method not available');
+          return true; // Fallback to Lite Mode
+        }
         const available = await healthConnectDetector.isAvailable();
         return !available;
-      } catch {
+      } catch (error) {
         // If we can't check, assume Lite Mode
+        console.warn('[useWakeDetection] checkLiteMode Android error:', error);
         return true;
       }
     }
@@ -160,6 +173,7 @@ export function useWakeDetection(): UseWakeDetectionReturn {
 
   /**
    * Try to detect wake from wearable data (HealthKit on iOS, Health Connect on Android).
+   * Includes defensive guards against missing methods.
    */
   const detectFromWearable = useCallback(async (): Promise<void> => {
     try {
@@ -168,11 +182,21 @@ export function useWakeDetection(): UseWakeDetectionReturn {
 
       if (Platform.OS === 'ios') {
         const healthKitDetector = getHealthKitWakeDetector();
+        // Guard: verify detectWake method exists
+        if (!healthKitDetector || typeof healthKitDetector.detectWake !== 'function') {
+          console.warn('[useWakeDetection] detectFromWearable: HealthKit detectWake not available');
+          return;
+        }
         const hkResult = await healthKitDetector.detectWake();
         result = hkResult;
         source = 'apple_health';
       } else if (Platform.OS === 'android') {
         const healthConnectDetector = getHealthConnectWakeDetector();
+        // Guard: verify detectWake method exists
+        if (!healthConnectDetector || typeof healthConnectDetector.detectWake !== 'function') {
+          console.warn('[useWakeDetection] detectFromWearable: Health Connect detectWake not available');
+          return;
+        }
         const hcResult = await healthConnectDetector.detectWake();
         result = hcResult;
         source = 'health_connect';
@@ -306,11 +330,17 @@ export function useWakeDetection(): UseWakeDetectionReturn {
 
   /**
    * Force check for wake (for testing or manual trigger).
+   * Includes defensive guards against missing methods.
    */
   const checkForWake = useCallback(async (): Promise<void> => {
     if (isLiteMode) {
       const detector = getPhoneUnlockDetector();
-      detector.forceTrigger();
+      // Guard: verify forceTrigger method exists
+      if (detector && typeof detector.forceTrigger === 'function') {
+        detector.forceTrigger();
+      } else {
+        console.warn('[useWakeDetection] checkForWake: PhoneUnlockDetector.forceTrigger not available');
+      }
     } else {
       await detectFromWearable();
     }

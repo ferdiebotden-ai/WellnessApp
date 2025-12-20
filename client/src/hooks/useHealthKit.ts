@@ -114,7 +114,13 @@ export function useHealthKit(): UseHealthKitReturn {
         const ExpoHealthKitObserver = await import('../../../modules/expo-healthkit-observer/src');
         moduleRef.current = ExpoHealthKitObserver;
 
-        // Check availability
+        // Check availability (with defensive guard)
+        if (typeof ExpoHealthKitObserver.isAvailable !== 'function') {
+          console.warn('[useHealthKit] isAvailable method not found on module');
+          setStatus('unavailable');
+          setIsLoading(false);
+          return;
+        }
         const available = ExpoHealthKitObserver.isAvailable();
         setIsAvailable(available);
 
@@ -124,9 +130,14 @@ export function useHealthKit(): UseHealthKitReturn {
           return;
         }
 
-        // Get authorization status
-        const authStatus = ExpoHealthKitObserver.getAuthorizationStatus();
-        setStatus(authStatus);
+        // Get authorization status (with defensive guard)
+        if (typeof ExpoHealthKitObserver.getAuthorizationStatus === 'function') {
+          const authStatus = ExpoHealthKitObserver.getAuthorizationStatus();
+          setStatus(authStatus);
+        } else {
+          console.warn('[useHealthKit] getAuthorizationStatus method not found');
+          setStatus('notDetermined');
+        }
 
         // Load stored preferences
         const [bgEnabled, lastSync] = await Promise.all([
@@ -139,12 +150,16 @@ export function useHealthKit(): UseHealthKitReturn {
           setLastSyncAt(new Date(lastSync));
         }
 
-        // Subscribe to data updates
-        subscriptionRef.current = ExpoHealthKitObserver.addDataUpdateListener(
-          (data: HealthKitDataUpdateEvent) => {
-            setLatestReadings((prev) => [data, ...prev.slice(0, 99)]);
-          }
-        );
+        // Subscribe to data updates (with defensive guard)
+        if (typeof ExpoHealthKitObserver.addDataUpdateListener === 'function') {
+          subscriptionRef.current = ExpoHealthKitObserver.addDataUpdateListener(
+            (data: HealthKitDataUpdateEvent) => {
+              setLatestReadings((prev) => [data, ...prev.slice(0, 99)]);
+            }
+          );
+        } else {
+          console.warn('[useHealthKit] addDataUpdateListener method not found');
+        }
 
         setIsLoading(false);
       } catch (err) {
@@ -164,9 +179,15 @@ export function useHealthKit(): UseHealthKitReturn {
     };
   }, []);
 
-  // Request permission
+  // Request permission (with defensive guard)
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!moduleRef.current || !isAvailable) {
+      return false;
+    }
+
+    // Guard: verify method exists
+    if (typeof moduleRef.current.requestAuthorization !== 'function') {
+      console.warn('[useHealthKit] requestAuthorization method not found');
       return false;
     }
 
@@ -190,9 +211,15 @@ export function useHealthKit(): UseHealthKitReturn {
     }
   }, [isAvailable]);
 
-  // Enable background delivery
+  // Enable background delivery (with defensive guards)
   const enableBackgroundDelivery = useCallback(async (): Promise<boolean> => {
     if (!moduleRef.current || !isAvailable || status !== 'authorized') {
+      return false;
+    }
+
+    // Guard: verify methods and constants exist
+    if (typeof moduleRef.current.startObserving !== 'function') {
+      console.warn('[useHealthKit] startObserving method not found');
       return false;
     }
 
@@ -200,6 +227,12 @@ export function useHealthKit(): UseHealthKitReturn {
 
     try {
       const { DEFAULT_OBSERVABLE_TYPES, UPDATE_FREQUENCIES } = moduleRef.current;
+
+      // Guard: verify constants exist
+      if (!DEFAULT_OBSERVABLE_TYPES || !UPDATE_FREQUENCIES) {
+        console.warn('[useHealthKit] Observable types or frequencies not found');
+        return false;
+      }
 
       const success = await moduleRef.current.startObserving(
         DEFAULT_OBSERVABLE_TYPES,
@@ -219,9 +252,15 @@ export function useHealthKit(): UseHealthKitReturn {
     }
   }, [isAvailable, status]);
 
-  // Disable background delivery
+  // Disable background delivery (with defensive guard)
   const disableBackgroundDelivery = useCallback(async (): Promise<void> => {
     if (!moduleRef.current) {
+      return;
+    }
+
+    // Guard: verify method exists
+    if (typeof moduleRef.current.stopObserving !== 'function') {
+      console.warn('[useHealthKit] stopObserving method not found');
       return;
     }
 
@@ -234,9 +273,15 @@ export function useHealthKit(): UseHealthKitReturn {
     }
   }, []);
 
-  // Manual sync
+  // Manual sync (with defensive guard)
   const syncNow = useCallback(async (): Promise<HealthKitReading[]> => {
     if (!moduleRef.current || !isAvailable || status !== 'authorized') {
+      return [];
+    }
+
+    // Guard: verify method exists
+    if (typeof moduleRef.current.syncNow !== 'function') {
+      console.warn('[useHealthKit] syncNow method not found');
       return [];
     }
 
