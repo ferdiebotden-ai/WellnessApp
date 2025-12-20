@@ -83,11 +83,13 @@ interface RecoveryApiResponse {
 
 /**
  * Make authenticated API request.
+ * Returns null if auth is not ready instead of throwing.
  */
-async function apiRequest<T>(path: string): Promise<T> {
+async function apiRequest<T>(path: string): Promise<T | null> {
   const currentUser = firebaseAuth.currentUser;
   if (!currentUser) {
-    throw new Error('User is not authenticated');
+    console.warn('[useRecoveryScore] Auth not ready - cannot make API request');
+    return null;
   }
 
   // Get auth token with proper error handling
@@ -96,7 +98,7 @@ async function apiRequest<T>(path: string): Promise<T> {
     token = await currentUser.getIdToken();
   } catch (authError) {
     console.warn('[useRecoveryScore] Failed to get auth token:', authError);
-    throw new Error('Authentication not ready - please try again');
+    return null;
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -113,7 +115,15 @@ async function apiRequest<T>(path: string): Promise<T> {
     throw new Error(message);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Defensive: Validate response is an object
+  if (!data || typeof data !== 'object') {
+    console.warn('[useRecoveryScore] Invalid API response format');
+    return null;
+  }
+
+  return data as T;
 }
 
 /**
@@ -332,6 +342,24 @@ export function useRecoveryScore(userId?: string): UseRecoveryScoreResult {
         `/api/recovery?date=${today}`
       );
 
+      // Defensive: Handle null response (auth not ready or invalid format)
+      if (!response) {
+        console.warn('[useRecoveryScore] No response from API, using defaults');
+        setBaselineStatus({
+          ready: false,
+          daysCollected: 0,
+          daysRequired: 7,
+          message: 'Loading recovery data...',
+        });
+        return;
+      }
+
+      // Defensive: Validate baseline exists
+      if (!response.baseline || typeof response.baseline !== 'object') {
+        console.warn('[useRecoveryScore] Invalid baseline in response');
+        return;
+      }
+
       // Check if this is Lite Mode response
       const liteMode = response.isLiteMode === true;
       setIsLiteMode(liteMode);
@@ -345,7 +373,7 @@ export function useRecoveryScore(userId?: string): UseRecoveryScoreResult {
           ready: true,
           daysCollected: 0,
           daysRequired: 0,
-          message: response.baseline.message,
+          message: response.baseline.message ?? 'Lite mode active',
         });
       } else {
         // Wearable Mode: Transform recovery data
@@ -358,7 +386,7 @@ export function useRecoveryScore(userId?: string): UseRecoveryScoreResult {
       console.error('[useRecoveryScore] Failed to fetch:', err);
       setError(err instanceof Error ? err : new Error('Unknown error'));
 
-      // Set default baseline status on error
+      // Set default baseline status on error - don't rethrow
       setBaselineStatus({
         ready: false,
         daysCollected: 0,

@@ -18,12 +18,26 @@ export const useDashboardData = () => {
 
   const loadData = useCallback(async () => {
     try {
-      const { user } = await fetchCurrentUser();
-      
+      const response = await fetchCurrentUser();
+
+      // Defensive: Validate response structure
+      if (!response || typeof response !== 'object') {
+        console.warn('[useDashboardData] Invalid API response format');
+        return;
+      }
+
+      const { user } = response;
+
+      // Defensive: Validate user object exists
+      if (!user || typeof user !== 'object') {
+        console.warn('[useDashboardData] No user object in response');
+        return;
+      }
+
       // Transform metrics
       const userMetrics: HealthMetric[] = [];
       // Default mock metrics if none exist (to keep UI populated for MVP)
-      if (!user.healthMetrics || Object.keys(user.healthMetrics).length === 0) {
+      if (!user.healthMetrics || typeof user.healthMetrics !== 'object' || Object.keys(user.healthMetrics).length === 0) {
          userMetrics.push(
           { id: 'sleep', label: 'Sleep Quality', valueLabel: '--', trend: 'steady', progress: 0 },
           { id: 'hrv', label: 'HRV Readiness', valueLabel: '--', trend: 'steady', progress: 0 }
@@ -32,35 +46,37 @@ export const useDashboardData = () => {
         // Map actual metrics here
         // This assumes backend populates these fields.
         if (user.healthMetrics.sleepQuality) {
-             userMetrics.push({ 
-               id: 'sleep', 
-               label: 'Sleep Quality', 
-               valueLabel: `${user.healthMetrics.sleepQuality}%`, 
-               trend: 'steady', 
-               progress: (user.healthMetrics.sleepQuality as number) / 100 
+             userMetrics.push({
+               id: 'sleep',
+               label: 'Sleep Quality',
+               valueLabel: `${user.healthMetrics.sleepQuality}%`,
+               trend: 'steady',
+               progress: (user.healthMetrics.sleepQuality as number) / 100
              });
         }
          if (user.healthMetrics.hrv) {
-             userMetrics.push({ 
-               id: 'hrv', 
-               label: 'HRV Readiness', 
-               valueLabel: `${user.healthMetrics.hrv} ms`, 
-               trend: 'steady', 
+             userMetrics.push({
+               id: 'hrv',
+               label: 'HRV Readiness',
+               valueLabel: `${user.healthMetrics.hrv} ms`,
+               trend: 'steady',
                progress: 0.5 // Placeholder normalization
              });
         }
       }
       setMetrics(userMetrics);
 
-      // Transform enrollments
-      if (user.module_enrollment) {
+      // Transform enrollments - Defensive: verify module_enrollment is an array
+      if (user.module_enrollment && Array.isArray(user.module_enrollment)) {
         const userEnrollments = user.module_enrollment.map(e => {
-          const meta = MODULE_METADATA[e.module_id] || { title: e.module_id, focusArea: 'Wellness', tier: 'core' };
+          // Defensive: ensure each enrollment has required fields
+          const moduleId = e?.module_id ?? 'unknown';
+          const meta = MODULE_METADATA[moduleId] || { title: moduleId, focusArea: 'Wellness', tier: 'core' as const };
           return {
-            id: e.module_id,
+            id: moduleId,
             title: meta.title,
-            progressPct: e.progress_pct || 0,
-            currentStreak: e.current_streak || 0,
+            progressPct: e?.progress_pct ?? 0,
+            currentStreak: e?.current_streak ?? 0,
             focusArea: meta.focusArea,
             tier: meta.tier
           };
@@ -68,7 +84,8 @@ export const useDashboardData = () => {
         setEnrollments(userEnrollments);
       }
     } catch (error) {
-      console.warn('Failed to load dashboard data', error);
+      console.warn('[useDashboardData] Failed to load dashboard data:', error);
+      // Don't rethrow - let component render with empty data
     } finally {
       setLoading(false);
     }

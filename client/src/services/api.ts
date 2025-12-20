@@ -13,6 +13,9 @@ type HttpMethod = 'GET' | 'POST' | 'DELETE' | 'PATCH';
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.example.com';
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+// Log API configuration on startup (helps debug TestFlight issues)
+console.log(`[API] Base URL configured: ${API_BASE_URL}`);
+
 const DEV_CORE_MODULES: ModuleSummary[] = [
   {
     id: 'sleep_foundations',
@@ -40,31 +43,58 @@ const DEV_CORE_MODULES: ModuleSummary[] = [
 const request = async <T>(path: string, method: HttpMethod, body?: unknown): Promise<T> => {
   const currentUser = firebaseAuth.currentUser;
   if (!currentUser) {
+    console.warn(`[API] Request to ${path} failed: User not authenticated`);
     throw new Error('User is not authenticated');
   }
 
-  const token = await currentUser.getIdToken();
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const errorPayload = await response.json().catch(() => ({}));
-    const message = (errorPayload as { error?: string }).error || 'Unexpected error';
-    throw new Error(message);
+  // Get auth token with defensive error handling
+  let token: string;
+  try {
+    token = await currentUser.getIdToken();
+  } catch (tokenError) {
+    console.warn(`[API] Failed to get auth token for ${path}:`, tokenError);
+    throw new Error('Authentication not ready - please try again');
   }
 
-  if (response.status === 204) {
-    return {} as T;
-  }
+  const url = `${API_BASE_URL}${path}`;
 
-  return response.json() as Promise<T>;
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => ({}));
+      const message = (errorPayload as { error?: string }).error || 'Unexpected error';
+      console.warn(`[API] Request failed: ${method} ${path} → ${response.status}: ${message}`);
+      throw new Error(message);
+    }
+
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    const data = await response.json();
+
+    // Defensive: Validate response is valid JSON object/array
+    if (data === null || data === undefined) {
+      console.warn(`[API] Empty response from ${method} ${path}`);
+      return {} as T;
+    }
+
+    return data as T;
+  } catch (fetchError) {
+    // Log network errors with context
+    if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
+      console.error(`[API] Network error for ${method} ${path}:`, fetchError.message);
+    }
+    throw fetchError;
+  }
 };
 
 export const fetchCoreModules = async () => {

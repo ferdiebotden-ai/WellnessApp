@@ -337,46 +337,54 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {/* 3. Today's Focus (One Big Thing) */}
         <View style={styles.section}>
-          <TodaysFocusCard
-            focus={focus}
-            isMVD={isMVD}
-            onStart={handleFocusStart}
-            loading={loadingTasks}
-          />
+          <SilentErrorBoundary>
+            <TodaysFocusCard
+              focus={focus}
+              isMVD={isMVD}
+              onStart={handleFocusStart}
+              loading={loadingTasks}
+            />
+          </SilentErrorBoundary>
         </View>
 
         {/* 4. Day Timeline (Horizontal) */}
         <View style={styles.section}>
-          <DayTimeline
-            tasks={tasks.filter((t) => t.scheduledAt)}
-            onComplete={handleTaskComplete}
-            onTaskPress={handleTaskPress}
-            loading={loadingTasks}
-          />
+          <SilentErrorBoundary>
+            <DayTimeline
+              tasks={tasks.filter((t) => t.scheduledAt)}
+              onComplete={handleTaskComplete}
+              onTaskPress={handleTaskPress}
+              loading={loadingTasks}
+            />
+          </SilentErrorBoundary>
         </View>
 
         {/* 5. My Schedule - Session 64 (replaces Your Focus Areas) */}
         <View style={styles.section}>
-          <MyScheduleSection
-            protocols={enrolledProtocols}
-            loading={loadingEnrolled}
-            error={enrolledError}
-            onProtocolPress={handleScheduledProtocolPress}
-            onAddProtocol={handleAddProtocol}
-            onProtocolStart={handleProtocolStart}
-            onProtocolUnenroll={handleProtocolUnenroll}
-            updatingProtocolIds={updatingProtocolIds}
-            testID="my-schedule-section"
-          />
+          <SilentErrorBoundary>
+            <MyScheduleSection
+              protocols={enrolledProtocols}
+              loading={loadingEnrolled}
+              error={enrolledError}
+              onProtocolPress={handleScheduledProtocolPress}
+              onAddProtocol={handleAddProtocol}
+              onProtocolStart={handleProtocolStart}
+              onProtocolUnenroll={handleProtocolUnenroll}
+              updatingProtocolIds={updatingProtocolIds}
+              testID="my-schedule-section"
+            />
+          </SilentErrorBoundary>
         </View>
 
         {/* 6. Weekly Progress */}
         <View style={styles.section}>
-          <WeeklyProgressCard
-            protocols={weeklyProtocols}
-            onSynthesisPress={handleSynthesisPress}
-            loading={loadingWeekly}
-          />
+          <SilentErrorBoundary>
+            <WeeklyProgressCard
+              protocols={weeklyProtocols}
+              onSynthesisPress={handleSynthesisPress}
+              loading={loadingWeekly}
+            />
+          </SilentErrorBoundary>
         </View>
 
         {/* Sync status indicator */}
