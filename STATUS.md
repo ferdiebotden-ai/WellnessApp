@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 77 (complete) |
-| **Progress** | Comprehensive Defensive Error Handling for TestFlight Stability |
+| **Session** | 78 (active) |
+| **Progress** | Fixed "undefined is not a function" crash, setup development build |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,7 +52,38 @@
 
 ## Last Session
 
-**Date:** December 20, 2025 (Session 77)
+**Date:** December 20, 2025 (Session 78)
+**Focus:** Fix "TypeError: undefined is not a function" crash + Setup Development Build
+
+**Context:** User reported continued crash after login on TestFlight showing "TypeError: undefined is not a function" in HomeScreen/MainStack. Also needed faster testing workflow without TestFlight limits.
+
+**Root Cause Identified:**
+The error occurs when native module methods are called without verifying they exist. Optional chaining `?.` only guards against null objects, not missing methods. If `healthKitModule` exists but `isAvailable` is undefined, calling `healthKitModule?.isAvailable()` evaluates to `undefined()` which throws the error.
+
+**Accomplished:**
+
+### Native Module Defensive Guards (5 files)
+1. **HealthKitWakeDetector.ts** — Added `typeof` checks before calling `isAvailable()`, `syncNow()` on dynamically loaded module
+2. **ExpoHealthKitObserver.ts** — Added guards to ALL native module methods: `isAvailable`, `getAuthorizationStatus`, `requestAuthorization`, `startObserving`, `stopObserving`, `syncNow`, `getLastSyncTimestamp`
+3. **useWakeDetection.ts** — Added method existence checks in `checkLiteMode()`, `detectFromWearable()`, `checkForWake()`
+4. **useHealthKit.ts** — Added typeof guards in `initialize()`, `requestPermission()`, `enableBackgroundDelivery()`, `disableBackgroundDelivery()`, `syncNow()`
+5. **HealthConnectWakeDetector.ts** — Added same defensive pattern for Android Health Connect
+
+### Development Build Setup
+- Installed `expo-dev-client` package
+- Started EAS development build (cloud-based, no Mac required)
+- Build ID: `493b2b24-fa55-477a-bcad-52e31b615917`
+- Build URL: https://expo.dev/accounts/ferdie.botden/projects/wellness-os/builds/493b2b24-fa55-477a-bcad-52e31b615917
+
+**Commits:**
+- `83eb39a` — Fix: Add defensive guards to prevent 'undefined is not a function' crash
+- `8191e39` — Add expo-dev-client for development builds
+
+---
+
+## Session 77 (Previous)
+
+**Date:** December 20, 2025
 **Focus:** Comprehensive Defensive Error Handling for TestFlight Stability
 
 **Context:** User reported "Something went wrong, an error occurred in MainStack" crash after login on TestFlight (iOS). Investigated root cause and added comprehensive defensive error handling.
