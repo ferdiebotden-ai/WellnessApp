@@ -9,10 +9,10 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 75 (complete) |
-| **Progress** | Face ID Loop Fix & Login Screen Redesign |
+| **Session** | 76 (complete) |
+| **Progress** | Post-Login Crash Fix & Error Boundary Protection |
 | **Branch** | main |
-| **Blocker** | ✅ None |
+| **Blocker** | None |
 
 ---
 
@@ -52,57 +52,85 @@
 
 ## Last Session
 
-**Date:** December 19, 2025 (Session 75)
-**Focus:** Face ID Loop Fix & Login Screen Redesign
+**Date:** December 19, 2025 (Session 76)
+**Focus:** Post-Login Crash Fix & Error Boundary Protection
 
-**Context:** TestFlight users reported Face ID getting stuck in a loop during sign-in. Additionally, the login screen text fields had vertical centering issues causing text cutoff.
+**Context:** App was hanging on splash screen for existing authenticated users. Root cause: `setupPushNotifications()` was blocking auth flow on web.
 
 **Accomplished:**
 
-### Bug Fix: Face ID Loop (Complete Removal)
-- Removed ALL app lock features (biometrics + PIN) to fix Face ID loop bug
-- Deleted `AppLockProvider.tsx` — Lock state management (269 lines)
-- Deleted `AuthenticationGate.tsx` — Lock gate wrapper (46 lines)
-- Deleted `BiometricLockScreen.tsx` — Face ID/PIN lock screen (404 lines)
-- Deleted `BiometricSetupScreen.tsx` — Biometric setup during onboarding (220 lines)
-- Updated `MainStack.tsx` — Removed lock provider wrapping
-- Updated `auth/index.ts` — Removed BiometricSetupScreen export
-- Cleaned up `App.test.tsx` — Removed dead mocks
+### Bug Fix: Auth State Restoration Hang
+- Made push notifications non-blocking with fire-and-forget pattern
+- Added 5-second timeout using `Promise.race()` to prevent indefinite hangs
+- Auth flow now completes in ~1 second instead of hanging forever
 
-### UI Fix: FormInput Text Cutoff
-- Fixed padding calculation in `FormInput.tsx`
-- Changed `paddingVertical: 14` → `paddingVertical: 12` (gives 24px content area for 24px lineHeight)
-- Changed `paddingHorizontal: 14` → `paddingHorizontal: 16`
-- Added `textAlignVertical: 'center'` for Android
+### New: ErrorBoundary Component
+- Created `ErrorBoundary.tsx` with retry capability for crash recovery
+- Created `SilentErrorBoundary` variant for optional UI sections
+- Branded error UI matching Apex OS design system
 
-### Login Screen Redesign (Premium Dark UI)
-- Redesigned `SignInScreen.tsx` with Apex OS brand aesthetic
-- Added **APEX OS** branding header with teal accent color (#63E6BE)
-- Added tagline "Your AI wellness operating system"
-- Implemented staggered fade-in animations using `react-native-reanimated`
-- Applied design tokens for premium spacing (28px, 40px, 56px)
-- Used `palette.canvas` (#0F1218) deep dark background
+### Navigation Protection
+- Wrapped `RootNavigator` with ErrorBoundary (catches all navigation errors)
+- Wrapped `AuthStack`, `OnboardingStack`, `MainStack` individually
+- Any render error now shows recovery UI instead of crashing app
 
-**Files Modified/Deleted (9):**
-- `client/src/providers/AppLockProvider.tsx` — DELETED
-- `client/src/components/AuthenticationGate.tsx` — DELETED
-- `client/src/components/BiometricLockScreen.tsx` — DELETED
-- `client/src/screens/auth/BiometricSetupScreen.tsx` — DELETED
-- `client/src/navigation/MainStack.tsx` — Removed lock wrapping
-- `client/src/screens/auth/index.ts` — Updated exports
-- `client/src/components/FormInput.tsx` — Fixed padding
-- `client/src/screens/auth/SignInScreen.tsx` — Premium redesign
-- `client/src/App.test.tsx` — Cleaned up mocks
+### Auth Race Condition Fix
+- Added try/catch around `getIdToken()` in `useRecoveryScore.ts`
+- Prevents crash if auth token fetch fails during session restore
 
-**Commit:** `6882306` — Remove Face ID loop bug and redesign login screen
+### SVG Stability Fix
+- Replaced `ApexLogo` SVG in `ApexLoadingIndicator` with PNG image
+- Eliminates potential SVG rendering issues on web
 
-**Result:** 🎯 Face ID loop fixed, login screen beautiful with premium dark UI!
+### MagicMomentScreen Improvements
+- Added 15-second timeout for `completeOnboarding()` API call
+- API failure is now non-critical (continues with local update)
+- Always resets `submitting` state on error (no stuck loading)
+
+### HomeScreen Protection
+- Wrapped recovery score section with `SilentErrorBoundary`
+- Component errors in score cards won't crash entire screen
+
+**Files Created (1):**
+- `client/src/components/ErrorBoundary.tsx` — Error boundary with retry
+
+**Files Modified (7):**
+- `client/src/providers/AuthProvider.tsx` — Non-blocking push setup
+- `client/src/navigation/RootNavigator.tsx` — ErrorBoundary wrapping
+- `client/src/hooks/useRecoveryScore.ts` — Auth race condition fix
+- `client/src/components/ui/ApexLoadingIndicator.tsx` — PNG instead of SVG
+- `client/src/screens/onboarding/MagicMomentScreen.tsx` — Better error handling
+- `client/src/screens/HomeScreen.tsx` — SilentErrorBoundary protection
+- `client/src/components/ui/ApexLogo.tsx` — New SVG component (kept for reference)
+
+**Commit:** `aa6b290` — Fix post-login crash and add defensive error handling
+
+**Verification:** Playwright MCP testing confirmed:
+- App loads directly to HomeScreen without hanging
+- Auth state transitions: `loading` → `authenticated` in ~1 second
+- No console errors, only expected web platform warnings
+- All navigation works correctly
+
+**Result:** App no longer crashes/hangs after login. Full error protection in place.
 
 ---
 
 ## Previous Session
 
-**Date:** December 19, 2025 (Session 74)
+**Date:** December 19, 2025 (Session 75)
+**Focus:** Face ID Loop Fix & Login Screen Redesign
+
+**Accomplished:**
+- Removed ALL app lock features (biometrics + PIN) to fix Face ID loop bug
+- Fixed FormInput padding to prevent text cutoff
+- Redesigned SignInScreen with premium dark UI and animations
+
+**Commit:** `6882306`
+
+---
+
+## Session 74 (December 19, 2025)
+
 **Focus:** Gemini 3 Flash Migration — AI Model Upgrade
 
 **Accomplished:**
@@ -115,40 +143,27 @@
 
 ---
 
-## Session 73 (December 19, 2025)
-
-**Focus:** Onboarding Flow Fixes from TestFlight Testing
-
-**Accomplished:**
-- Fixed Face ID loop bug (race condition in AppLockProvider)
-- Branding update: Wellness OS → Apex OS across all screens
-- Wearable layout redesign: full-width horizontal cards
-- New HealthDataSyncScreen for Apple Health/Health Connect step
-
-**Commit:** `86437f3`
-
----
-
 ## Next Session Priority
 
-### Session 76 Focus: TestFlight Build & Full Testing
+### Session 77 Focus: TestFlight Build & User Testing
 
-All major bugs fixed and UI polished. Time for comprehensive testing and TestFlight release:
+All crash bugs fixed. Ready for comprehensive TestFlight testing:
 
 **Immediate:**
-- Build new TestFlight release with all Session 73-75 fixes
-- Full onboarding flow test (new users + existing users)
-- Test AI features with Gemini 3 Flash (chat, nudges, synthesis)
+- Build new TestFlight release with Session 73-76 fixes
+- Full regression test on real iOS device
+- Verify AI features with Gemini 3 Flash
 
 **TestFlight Testing Checklist:**
-1. ✅ Face ID loop fixed — app lock features removed entirely
-2. ✅ Login screen beautiful — premium dark UI with animations
-3. ✅ Text fields work — no more text cutoff
-4. ✅ Wearable selection readable — full-width horizontal cards
-5. ✅ Health sync step exists — Apple Health/Health Connect
-6. ✅ App name shows "Apex OS" — branding consistent
-7. 🔲 Chat responses use Gemini 3 Flash — verify quality improvement
-8. 🔲 Nudge generation working — RAG with 768-dim embeddings
+1. Post-login crash fixed — app loads to HomeScreen
+2. Face ID loop fixed — app lock features removed entirely
+3. Login screen beautiful — premium dark UI with animations
+4. Text fields work — no more text cutoff
+5. Wearable selection readable — full-width horizontal cards
+6. Health sync step exists — Apple Health/Health Connect
+7. App name shows "Apex OS" — branding consistent
+8. Chat responses use Gemini 3 Flash — verify quality improvement
+9. Nudge generation working — RAG with 768-dim embeddings
 
 **Future Auth Features (Deferred):**
 - Sign in with Apple
@@ -216,7 +231,7 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ## Active Blockers
 
-✅ **No active blockers.**
+**No active blockers.**
 
 ---
 
@@ -224,15 +239,15 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 1 | Theme Foundation (palette, typography, tokens) | ✅ Session 66 |
-| 2 | Core UI Components (Card, Button, ProgressBar) | ✅ Session 66 |
-| 3 | Protocol Icons (SVG geometric icons) | ✅ Session 66 |
-| 4 | Screen Refactoring (Home, Insights, Profile, Chat) | ✅ Session 67 |
-| 5 | Navigation & Chrome (BottomTabs, TopNav, haptics) | ✅ Session 68 |
-| 6 | Logo Integration (Splash, ActivityIndicator replacement) | ✅ Session 68 |
-| 7 | Polish & Micro-Delights (celebrations, animations) | ✅ Session 68 |
+| 1 | Theme Foundation (palette, typography, tokens) | Session 66 |
+| 2 | Core UI Components (Card, Button, ProgressBar) | Session 66 |
+| 3 | Protocol Icons (SVG geometric icons) | Session 66 |
+| 4 | Screen Refactoring (Home, Insights, Profile, Chat) | Session 67 |
+| 5 | Navigation & Chrome (BottomTabs, TopNav, haptics) | Session 68 |
+| 6 | Logo Integration (Splash, ActivityIndicator replacement) | Session 68 |
+| 7 | Polish & Micro-Delights (celebrations, animations) | Session 68 |
 
-**🎉 Design System Refactor: 7/7 phases complete (100%)**
+**Design System Refactor: 7/7 phases complete (100%)**
 
 ---
 
@@ -240,17 +255,17 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 | Session | Component | Status |
 |---------|-----------|--------|
-| 1 | Database Migrations + Types | ✅ Complete (5 tables, 3 type files) |
-| 2 | HealthKit Integration (iOS) | ✅ Complete (expo-healthkit-observer module + UI) |
-| 3 | Recovery Score Engine | ✅ Complete (weighted algorithm, 84 tests, Dashboard UI) |
-| 4 | Wake Detection | ✅ Complete (26 tests, full server+client pipeline) |
-| 5 | Calendar Integration | ✅ Complete (50 tests, full-stack, privacy-first) |
-| 6 | Real-time Sync (Firestore) | ✅ Complete (14 files, swipe gestures, offline queue) |
-| 7 | Reasoning UX (Edge Case Badges + Confidence) | ✅ Complete (12 files, badges, 5-factor breakdown) |
-| 8 | Lite Mode (no-wearable fallback) | ✅ Complete (Session 49) — Check-in Score, 55 tests |
-| 9 | Health Connect (Android) | ✅ Complete (Session 50) — Cross-platform parity achieved |
-| 10 | Integration Testing | ✅ Complete (Session 51) — 89 integration + 32 E2E tests |
-| 11 | Cloud Wearables (Oura, Garmin) | 🔲 Deferred — On-device sync covers most users |
+| 1 | Database Migrations + Types | Complete (5 tables, 3 type files) |
+| 2 | HealthKit Integration (iOS) | Complete (expo-healthkit-observer module + UI) |
+| 3 | Recovery Score Engine | Complete (weighted algorithm, 84 tests, Dashboard UI) |
+| 4 | Wake Detection | Complete (26 tests, full server+client pipeline) |
+| 5 | Calendar Integration | Complete (50 tests, full-stack, privacy-first) |
+| 6 | Real-time Sync (Firestore) | Complete (14 files, swipe gestures, offline queue) |
+| 7 | Reasoning UX (Edge Case Badges + Confidence) | Complete (12 files, badges, 5-factor breakdown) |
+| 8 | Lite Mode (no-wearable fallback) | Complete (Session 49) — Check-in Score, 55 tests |
+| 9 | Health Connect (Android) | Complete (Session 50) — Cross-platform parity achieved |
+| 10 | Integration Testing | Complete (Session 51) — 89 integration + 32 E2E tests |
+| 11 | Cloud Wearables (Oura, Garmin) | Deferred — On-device sync covers most users |
 
 **Phase 3 Status: 10/11 sessions complete (91%) — MVP READY FOR ROLLOUT**
 
@@ -260,19 +275,19 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 | Session | Component | Status |
 |---------|-----------|--------|
-| 1-3 | Memory Layer | ✅ Complete |
-| 4 | Confidence Scoring | ✅ Complete |
-| 5-6 | Suppression Engine | ✅ Complete (9 rules, 52 tests) |
-| 7 | Safety & Compliance | ✅ Complete (18+ keywords, 93 tests) |
-| 8 | Weekly Synthesis Part 1 | ✅ Complete (aggregation, correlations, 51 tests) |
-| 9 | Weekly Synthesis Part 2 | ✅ Complete (narrative gen, push, scheduler, 10 tests) |
-| 10 | MVD Detector | ✅ Complete (4 triggers, 50 tests, calendar deferred to Phase 3) |
-| 11 | Outcome Correlation | ✅ Complete (API + Dashboard UI, 8 files) |
-| 12 | AI Processing Animation + Why Engine | ✅ Complete (shimmer animation, whyEngine, 36 tests) |
-| 13 | Reasoning Transparency UI | ✅ Complete (NudgeCard + 4-panel expansion) |
+| 1-3 | Memory Layer | Complete |
+| 4 | Confidence Scoring | Complete |
+| 5-6 | Suppression Engine | Complete (9 rules, 52 tests) |
+| 7 | Safety & Compliance | Complete (18+ keywords, 93 tests) |
+| 8 | Weekly Synthesis Part 1 | Complete (aggregation, correlations, 51 tests) |
+| 9 | Weekly Synthesis Part 2 | Complete (narrative gen, push, scheduler, 10 tests) |
+| 10 | MVD Detector | Complete (4 triggers, 50 tests, calendar deferred to Phase 3) |
+| 11 | Outcome Correlation | Complete (API + Dashboard UI, 8 files) |
+| 12 | AI Processing Animation + Why Engine | Complete (shimmer animation, whyEngine, 36 tests) |
+| 13 | Reasoning Transparency UI | Complete (NudgeCard + 4-panel expansion) |
 
-**🎉 Phase 2: 13/13 sessions complete (100%)**
+**Phase 2: 13/13 sessions complete (100%)**
 
 ---
 
-*Last Updated: December 19, 2025 (Session 75 complete - Face ID loop fix, FormInput text cutoff fix, Login screen redesign with premium dark UI)*
+*Last Updated: December 19, 2025 (Session 76 complete - Post-login crash fix, ErrorBoundary protection, auth race condition fixes)*
