@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Image, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,6 +9,9 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { palette } from '../../theme/palette';
+
+// Use PNG image instead of SVG for better stability
+const chevronLogo = require('../../../assets/Logo/chevron-only.png');
 
 interface ApexLoadingIndicatorProps {
   /** Size of the logo in pixels (default: 48) */
@@ -70,11 +73,8 @@ export function ApexLoadingIndicator({
         ]}
       >
         <Image
-          source={require('../../../assets/Logo/chevron-only.png')}
-          style={{
-            width: size,
-            height: size,
-          }}
+          source={chevronLogo}
+          style={{ width: size, height: size }}
           resizeMode="contain"
         />
       </Animated.View>

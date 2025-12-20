@@ -242,6 +242,16 @@ class MorningAnchorService {
                 isMvdApprovedNudge: false,
             });
             const suppressionResult = (0, suppression_1.evaluateSuppression)(suppressionContext);
+            // Session 72: Log suppression decision for analytics
+            void (0, suppression_1.logSuppressionResult)({
+                firebaseUid: userId, // MorningAnchor uses Firebase UID directly
+                nudgeId: `morning_anchor_${Date.now()}_${userId.substring(0, 8)}`,
+                nudgeType: 'morning_anchor',
+                nudgePriority: 'CRITICAL',
+                protocolId: bestProtocol.id,
+                result: suppressionResult,
+                context: suppressionContext,
+            });
             if (!suppressionResult.shouldDeliver) {
                 // Log suppression but still allow if exempted
                 console.log(`[MorningAnchor] Suppression check: ${suppressionResult.reason}`);

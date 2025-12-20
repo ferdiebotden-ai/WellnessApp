@@ -25,6 +25,7 @@ const recovery_1 = require("./recovery");
 const manualCheckIn_1 = require("./manualCheckIn");
 const protocolPersonalized_1 = require("./protocolPersonalized");
 const protocolEnrollment_1 = require("./protocolEnrollment");
+const weeklySynthesisApi_1 = require("./weeklySynthesisApi");
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)({ origin: true }));
@@ -44,6 +45,7 @@ app.post('/api/users/me/export', privacy_1.requestUserDataExport);
 app.get('/api/users/me/privacy', privacy_1.getPrivacyDashboardData);
 app.get('/api/users/me/monetization', monetization_1.getMonetizationStatus);
 app.get('/api/users/me/correlations', correlations_1.getUserCorrelations);
+app.get('/api/users/me/weekly-synthesis', weeklySynthesisApi_1.getLatestWeeklySynthesis);
 // Feature routes
 app.post('/api/chat', chat_1.postChat);
 app.post('/api/onboarding/complete', onboarding_1.completeOnboarding);

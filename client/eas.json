@@ -6,17 +6,53 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyB8pjnp9sS8AmyjpNqH9pyIB-hvYIAZs0A",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "wellness-os-app.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "wellness-os-app",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "wellness-os-app.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "26324650924",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:26324650924:web:fdad2bbada4dbd0fbe8809",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-26324650924.us-central1.run.app"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyB8pjnp9sS8AmyjpNqH9pyIB-hvYIAZs0A",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "wellness-os-app.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "wellness-os-app",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "wellness-os-app.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "26324650924",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:26324650924:web:fdad2bbada4dbd0fbe8809",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-26324650924.us-central1.run.app"
+      }
     },
     "testflight": {
       "distribution": "store",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyB8pjnp9sS8AmyjpNqH9pyIB-hvYIAZs0A",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "wellness-os-app.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "wellness-os-app",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "wellness-os-app.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "26324650924",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:26324650924:web:fdad2bbada4dbd0fbe8809",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-26324650924.us-central1.run.app"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyB8pjnp9sS8AmyjpNqH9pyIB-hvYIAZs0A",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "wellness-os-app.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "wellness-os-app",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "wellness-os-app.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "26324650924",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:26324650924:web:fdad2bbada4dbd0fbe8809",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-26324650924.us-central1.run.app"
+      }
     }
   },
   "submit": {

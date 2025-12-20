@@ -6,6 +6,7 @@
  * Uses ExponentPushToken format for cross-platform delivery (iOS/Android).
  *
  * Reference: https://docs.expo.dev/push-notifications/sending-notifications/
+ * Session 72: Added delivery logging for analytics
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendPushNotification = sendPushNotification;
@@ -13,6 +14,31 @@ exports.sendPushToUser = sendPushToUser;
 exports.notifySynthesisReady = notifySynthesisReady;
 const supabaseClient_1 = require("../supabaseClient");
 const EXPO_PUSH_API = 'https://exp.host/--/api/v2/push/send';
+/**
+ * Log push notification result to push_notification_log table
+ * Session 72: OPUS45 Brief Gap #4 - Push Notification Tracking
+ */
+async function logPushResult(params) {
+    const supabase = (0, supabaseClient_1.getServiceClient)();
+    try {
+        await supabase.from('push_notification_log').insert({
+            firebase_uid: params.firebaseUid,
+            token_suffix: params.tokenSuffix,
+            device_type: params.deviceType,
+            notification_type: params.notificationType,
+            title: params.title,
+            body_preview: params.body.substring(0, 100),
+            success: params.success,
+            ticket_id: params.ticketId,
+            error_message: params.errorMessage,
+            error_code: params.errorCode,
+            nudge_log_id: params.nudgeLogId,
+        });
+    }
+    catch (err) {
+        console.error('[PushService] Failed to log push result:', err);
+    }
+}
 /**
  * Send a single push notification via Expo Push API
  *
@@ -72,18 +98,19 @@ async function sendPushNotification(expoPushToken, title, body, data) {
 /**
  * Send push notifications to all active tokens for a user
  *
- * @param userId - User UUID
+ * @param userId - User UUID (Firebase UID)
  * @param title - Notification title
  * @param body - Notification body text
  * @param data - Optional custom data payload
+ * @param options - Optional logging configuration
  * @returns Promise with count of successful deliveries
  */
-async function sendPushToUser(userId, title, body, data) {
+async function sendPushToUser(userId, title, body, data, options) {
     const supabase = (0, supabaseClient_1.getServiceClient)();
-    // Get all active push tokens for user
+    // Get all active push tokens for user (Session 72: include device_type for logging)
     const { data: tokens, error } = await supabase
         .from('user_push_tokens')
-        .select('expo_push_token')
+        .select('expo_push_token, device_type')
         .eq('user_id', userId)
         .eq('is_active', true);
     if (error) {
@@ -97,8 +124,23 @@ async function sendPushToUser(userId, title, body, data) {
     let sent = 0;
     let failed = 0;
     // Send to each token
-    for (const { expo_push_token } of tokens) {
+    for (const { expo_push_token, device_type } of tokens) {
         const result = await sendPushNotification(expo_push_token, title, body, data);
+        // Session 72: Log push result for analytics
+        const tokenSuffix = expo_push_token.slice(-8);
+        void logPushResult({
+            firebaseUid: userId,
+            tokenSuffix,
+            deviceType: device_type ?? undefined,
+            notificationType: options?.notificationType ?? data?.type ?? 'unknown',
+            title,
+            body,
+            success: result.success,
+            ticketId: result.ticketId,
+            errorMessage: result.error,
+            errorCode: result.errorCode,
+            nudgeLogId: options?.nudgeLogId,
+        });
         if (result.success) {
             sent++;
         }
@@ -120,11 +162,11 @@ async function sendPushToUser(userId, title, body, data) {
 /**
  * Send weekly synthesis notification to a user
  *
- * @param userId - User UUID
+ * @param userId - User UUID (Firebase UID)
  * @param synthesisId - ID of the generated synthesis
  * @returns Promise<boolean> indicating if at least one notification was sent
  */
 async function notifySynthesisReady(userId, synthesisId) {
-    const result = await sendPushToUser(userId, 'Your Weekly Brief is Ready', 'See how your week measured up and what to focus on next.', { type: 'weekly_synthesis', id: synthesisId });
+    const result = await sendPushToUser(userId, 'Your Weekly Brief is Ready', 'See how your week measured up and what to focus on next.', { type: 'weekly_synthesis', id: synthesisId }, { notificationType: 'synthesis' });
     return result.sent > 0;
 }

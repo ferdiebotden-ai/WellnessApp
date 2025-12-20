@@ -6,6 +6,7 @@ import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { LiteModeScoreCard } from '../components/LiteModeScoreCard';
 import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
 import { ChatModal } from '../components/ChatModal';
+import { SilentErrorBoundary } from '../components/ErrorBoundary';
 // New Home Screen components (Session 57)
 import { HomeHeader } from '../components/home/HomeHeader';
 import { TodaysFocusCard } from '../components/home/TodaysFocusCard';
@@ -315,21 +316,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {/* 2. Recovery Score Hero */}
         <View style={styles.section}>
-          {isLiteMode ? (
-            <LiteModeScoreCard
-              data={checkInData}
-              loading={loadingRecovery}
-              onCheckIn={() => {
-                handleWakeConfirm();
-              }}
-            />
-          ) : (
-            <RecoveryScoreCard
-              data={recoveryData}
-              baselineStatus={baselineStatus}
-              loading={loadingRecovery}
-            />
-          )}
+          <SilentErrorBoundary>
+            {isLiteMode ? (
+              <LiteModeScoreCard
+                data={checkInData}
+                loading={loadingRecovery}
+                onCheckIn={() => {
+                  handleWakeConfirm();
+                }}
+              />
+            ) : (
+              <RecoveryScoreCard
+                data={recoveryData}
+                baselineStatus={baselineStatus}
+                loading={loadingRecovery}
+              />
+            )}
+          </SilentErrorBoundary>
         </View>
 
         {/* 3. Today's Focus (One Big Thing) */}

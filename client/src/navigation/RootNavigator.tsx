@@ -5,6 +5,7 @@ import { SplashScreen } from '../screens/SplashScreen';
 import { AuthStackNavigator } from './AuthStack';
 import { OnboardingStackNavigator } from './OnboardingStack';
 import { MainStackContent } from './MainStack';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { palette } from '../theme/palette';
 
 /**
@@ -91,21 +92,25 @@ export const RootNavigator: React.FC = () => {
   }
 
   return (
-    <NavigationContainer theme={navigationTheme} linking={linking}>
-      {state === 'unauthenticated' ? (
-        <AuthStackNavigator />
-      ) : onboardingStatus === 'pending' ? (
-        <>
-          {console.log('📋 Showing OnboardingStack')}
-          <OnboardingStackNavigator />
-        </>
-      ) : (
-        <>
-          {console.log('🏠 Showing MainStack')}
-          <MainStackContent />
-        </>
-      )}
-    </NavigationContainer>
+    <ErrorBoundary name="RootNavigator">
+      <NavigationContainer theme={navigationTheme} linking={linking}>
+        {state === 'unauthenticated' ? (
+          <ErrorBoundary name="AuthStack">
+            <AuthStackNavigator />
+          </ErrorBoundary>
+        ) : onboardingStatus === 'pending' ? (
+          <ErrorBoundary name="OnboardingStack">
+            {console.log('📋 Showing OnboardingStack')}
+            <OnboardingStackNavigator />
+          </ErrorBoundary>
+        ) : (
+          <ErrorBoundary name="MainStack">
+            {console.log('🏠 Showing MainStack')}
+            <MainStackContent />
+          </ErrorBoundary>
+        )}
+      </NavigationContainer>
+    </ErrorBoundary>
   );
 };
 

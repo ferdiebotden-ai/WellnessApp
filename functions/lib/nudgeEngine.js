@@ -89,9 +89,10 @@ const generateAdaptiveNudges = async (_event, _context) => {
     // Process each user (limit to 50 for MVP batch)
     const userIds = Array.from(userEnrollments.keys()).slice(0, 50);
     // Fetch profiles (including preferences for suppression engine)
+    // Session 72: Added firebase_uid for delivery logging
     const { data: profilesData, error: profilesError } = await supabase
         .from('users')
-        .select('id, display_name, healthMetrics, primary_goal, preferences')
+        .select('id, firebase_uid, display_name, healthMetrics, primary_goal, preferences')
         .in('id', userIds);
     if (profilesError)
         throw new Error(profilesError.message);
@@ -206,6 +207,17 @@ const generateAdaptiveNudges = async (_event, _context) => {
             isMvdApprovedNudge: (0, mvd_1.isProtocolApprovedForMVD)(bestMatch.protocol.id, mvdType),
         });
         const suppressionResult = (0, suppression_1.evaluateSuppression)(suppressionContext);
+        // Session 72: Log suppression decision for analytics
+        const firebaseUid = profile.firebase_uid || userId; // Fallback to userId if firebase_uid unavailable
+        void (0, suppression_1.logSuppressionResult)({
+            firebaseUid,
+            nudgeId: `nudge_${Date.now()}_${userId.substring(0, 8)}`,
+            nudgeType: 'protocol',
+            nudgePriority: 'STANDARD',
+            protocolId: bestMatch.protocol.id,
+            result: suppressionResult,
+            context: suppressionContext,
+        });
         if (!suppressionResult.shouldDeliver) {
             // Nudge was suppressed - log to audit and skip this user
             await supabase.from('ai_audit_log').insert({

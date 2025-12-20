@@ -5,6 +5,7 @@
  * Uses ExponentPushToken format for cross-platform delivery (iOS/Android).
  *
  * Reference: https://docs.expo.dev/push-notifications/sending-notifications/
+ * Session 72: Added delivery logging for analytics
  */
 /**
  * Expo Push Message format
@@ -51,20 +52,24 @@ export declare function sendPushNotification(expoPushToken: string, title: strin
 /**
  * Send push notifications to all active tokens for a user
  *
- * @param userId - User UUID
+ * @param userId - User UUID (Firebase UID)
  * @param title - Notification title
  * @param body - Notification body text
  * @param data - Optional custom data payload
+ * @param options - Optional logging configuration
  * @returns Promise with count of successful deliveries
  */
-export declare function sendPushToUser(userId: string, title: string, body: string, data?: Record<string, unknown>): Promise<{
+export declare function sendPushToUser(userId: string, title: string, body: string, data?: Record<string, unknown>, options?: {
+    notificationType?: string;
+    nudgeLogId?: string;
+}): Promise<{
     sent: number;
     failed: number;
 }>;
 /**
  * Send weekly synthesis notification to a user
  *
- * @param userId - User UUID
+ * @param userId - User UUID (Firebase UID)
  * @param synthesisId - ID of the generated synthesis
  * @returns Promise<boolean> indicating if at least one notification was sent
  */

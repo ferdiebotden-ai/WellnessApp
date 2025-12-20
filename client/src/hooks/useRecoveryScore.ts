@@ -90,7 +90,14 @@ async function apiRequest<T>(path: string): Promise<T> {
     throw new Error('User is not authenticated');
   }
 
-  const token = await currentUser.getIdToken();
+  // Get auth token with proper error handling
+  let token: string;
+  try {
+    token = await currentUser.getIdToken();
+  } catch (authError) {
+    console.warn('[useRecoveryScore] Failed to get auth token:', authError);
+    throw new Error('Authentication not ready - please try again');
+  }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: 'GET',
@@ -305,6 +312,14 @@ export function useRecoveryScore(userId?: string): UseRecoveryScoreResult {
   const [checkInData, setCheckInData] = useState<CheckInResult | null>(null);
 
   const fetchRecoveryScore = useCallback(async () => {
+    // Guard: Ensure user is authenticated before making API call
+    const currentUser = firebaseAuth.currentUser;
+    if (!currentUser) {
+      console.log('[useRecoveryScore] No authenticated user, skipping fetch');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);

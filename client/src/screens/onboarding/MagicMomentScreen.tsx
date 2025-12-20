@@ -147,7 +147,8 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
     try {
       const primaryModuleId = GOAL_TO_MODULE_MAP[selectedGoal];
 
-      await completeOnboarding({
+      // Backend call with timeout protection
+      const onboardingPromise = completeOnboarding({
         primary_goal: selectedGoal,
         wearable_source: wearableSource ?? null,
         health_platform: healthPlatform ?? null,
@@ -155,7 +156,20 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
         biometrics: biometrics ?? null,
       });
 
-      // Track analytics
+      // 15 second timeout for API call
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), 15000)
+      );
+
+      try {
+        await Promise.race([onboardingPromise, timeoutPromise]);
+      } catch (apiError) {
+        // API failed but continue with local onboarding update
+        // This is non-critical - user profile can sync later
+        console.warn('⚠️ completeOnboarding API failed (continuing):', apiError);
+      }
+
+      // Track analytics (non-blocking)
       void analytics.trackOnboardingComplete({
         primaryModuleId,
         goal: selectedGoal,
@@ -165,13 +179,17 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
       });
 
       // Mark onboarding complete - RootNavigator will show MainStack
+      // This is the critical call - must succeed for navigation to work
       await updateOnboarding(true);
     } catch (err) {
+      // Always reset submitting state on error
+      setSubmitting(false);
+
       const message =
         err instanceof Error ? err.message : 'Failed to complete setup';
       Alert.alert('Something went wrong', message, [
         { text: 'Try again', onPress: () => void handleStart() },
-        { text: 'Cancel', style: 'cancel', onPress: () => setSubmitting(false) },
+        { text: 'Cancel', style: 'cancel' },
       ]);
     }
   }, [selectedGoal, biometrics, wearableSource, healthPlatform, updateOnboarding]);

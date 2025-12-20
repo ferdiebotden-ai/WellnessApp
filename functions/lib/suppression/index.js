@@ -11,7 +11,7 @@
  * Reference: PHASE_II_IMPLEMENTATION_PLAN.md - Component 3
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseQuietHour = exports.getUserLocalHour = exports.buildSuppressionContext = exports.evaluateSuppression = exports.getRuleById = exports.SUPPRESSION_RULES = exports.RULE_IDS = exports.SUPPRESSION_CONFIG = void 0;
+exports.logSuppressionResult = exports.parseQuietHour = exports.getUserLocalHour = exports.buildSuppressionContext = exports.evaluateSuppression = exports.getRuleById = exports.SUPPRESSION_RULES = exports.RULE_IDS = exports.SUPPRESSION_CONFIG = void 0;
 // Constants
 var types_1 = require("./types");
 Object.defineProperty(exports, "SUPPRESSION_CONFIG", { enumerable: true, get: function () { return types_1.SUPPRESSION_CONFIG; } });
@@ -26,3 +26,4 @@ Object.defineProperty(exports, "evaluateSuppression", { enumerable: true, get: f
 Object.defineProperty(exports, "buildSuppressionContext", { enumerable: true, get: function () { return suppressionEngine_1.buildSuppressionContext; } });
 Object.defineProperty(exports, "getUserLocalHour", { enumerable: true, get: function () { return suppressionEngine_1.getUserLocalHour; } });
 Object.defineProperty(exports, "parseQuietHour", { enumerable: true, get: function () { return suppressionEngine_1.parseQuietHour; } });
+Object.defineProperty(exports, "logSuppressionResult", { enumerable: true, get: function () { return suppressionEngine_1.logSuppressionResult; } });

@@ -116,14 +116,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             console.warn('⚠️ Failed to sync user to Supabase on session restore:', syncError);
           }
 
-          // Register for push notifications after successful auth sync
-          try {
-            const pushResult = await setupPushNotifications();
-            console.log(`✅ Push: ${pushResult ? 'registered' : 'skipped (web/simulator)'}`);
-          } catch (pushError) {
-            // Non-critical - app works without push notifications
-            console.warn('⚠️ Push setup failed:', pushError);
-          }
+          // Register for push notifications (non-blocking - don't delay auth)
+          // This is fire-and-forget since push is non-critical
+          void (async () => {
+            try {
+              const pushResult = await Promise.race([
+                setupPushNotifications(),
+                new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 5000)) // 5s timeout
+              ]);
+              console.log(`✅ Push: ${pushResult ? 'registered' : 'skipped (web/simulator/timeout)'}`);
+            } catch (pushError) {
+              console.warn('⚠️ Push setup failed:', pushError);
+            }
+          })();
 
           await refreshUserProfile(firebaseUser);
           setState('authenticated');

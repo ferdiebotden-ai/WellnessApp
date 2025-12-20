@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -87,16 +88,24 @@ const styles = StyleSheet.create({
   input: {
     fontFamily: fontFamily.regular,
     fontSize: 16,
-    lineHeight: 24,
     color: palette.textPrimary,
     backgroundColor: palette.elevated,
     borderWidth: 1,
     borderColor: palette.subtle,
     borderRadius: tokens.radius.md,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: tokens.touch.preferred,
-    textAlignVertical: 'center',
+    height: tokens.touch.preferred,
+    ...Platform.select({
+      ios: {
+        // iOS auto-centers single-line text when using fixed height
+        paddingVertical: 0,
+      },
+      android: {
+        textAlignVertical: 'center',
+        includeFontPadding: false,
+        paddingVertical: 0,
+      },
+    }),
   },
 
   inputFocused: {

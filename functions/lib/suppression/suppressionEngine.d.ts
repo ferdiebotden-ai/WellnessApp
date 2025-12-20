@@ -83,3 +83,20 @@ export declare function getUserLocalHour(utcDate: Date, timezone?: string): numb
  * @returns Hour number (0-23) or undefined if invalid
  */
 export declare function parseQuietHour(timeString?: string): number | undefined;
+/**
+ * Log suppression result to nudge_delivery_log table for analytics
+ *
+ * @param params - Parameters for the log entry
+ * @returns Promise resolving to the log entry ID, or null on failure
+ *
+ * Session 72: OPUS45 Brief Gap #3 - Nudge Delivery Logging
+ */
+export declare function logSuppressionResult(params: {
+    firebaseUid: string;
+    nudgeId?: string;
+    nudgeType?: string;
+    nudgePriority: NudgePriority;
+    protocolId?: string;
+    result: SuppressionResult;
+    context: SuppressionContext;
+}): Promise<string | null>;

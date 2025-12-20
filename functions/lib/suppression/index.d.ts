@@ -12,4 +12,4 @@
 export type { NudgePriority, SuppressionCheckResult, SuppressionContext, SuppressionRule, SuppressionResult, } from './types';
 export { SUPPRESSION_CONFIG, RULE_IDS } from './types';
 export { SUPPRESSION_RULES, getRuleById } from './rules';
-export { evaluateSuppression, buildSuppressionContext, getUserLocalHour, parseQuietHour, } from './suppressionEngine';
+export { evaluateSuppression, buildSuppressionContext, getUserLocalHour, parseQuietHour, logSuppressionResult, } from './suppressionEngine';

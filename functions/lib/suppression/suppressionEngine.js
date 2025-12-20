@@ -19,8 +19,10 @@ exports.evaluateSuppression = evaluateSuppression;
 exports.buildSuppressionContext = buildSuppressionContext;
 exports.getUserLocalHour = getUserLocalHour;
 exports.parseQuietHour = parseQuietHour;
+exports.logSuppressionResult = logSuppressionResult;
 const types_1 = require("./types");
 const rules_1 = require("./rules");
+const supabaseClient_1 = require("../supabaseClient");
 /**
  * Evaluate all suppression rules for a nudge
  *
@@ -148,4 +150,56 @@ function parseQuietHour(timeString) {
         return undefined;
     const hour = parseInt(match[1], 10);
     return hour >= 0 && hour <= 23 ? hour : undefined;
+}
+/**
+ * Log suppression result to nudge_delivery_log table for analytics
+ *
+ * @param params - Parameters for the log entry
+ * @returns Promise resolving to the log entry ID, or null on failure
+ *
+ * Session 72: OPUS45 Brief Gap #3 - Nudge Delivery Logging
+ */
+async function logSuppressionResult(params) {
+    const supabase = (0, supabaseClient_1.getServiceClient)();
+    // Build context snapshot (sanitized for storage)
+    const contextSnapshot = {
+        nudgesDeliveredToday: params.context.nudgesDeliveredToday,
+        userLocalHour: params.context.userLocalHour,
+        dismissalsToday: params.context.dismissalsToday,
+        meetingHoursToday: params.context.meetingHoursToday,
+        recoveryScore: params.context.recoveryScore,
+        currentStreak: params.context.currentStreak,
+        mvdActive: params.context.mvdActive,
+        isMorningAnchor: params.context.isMorningAnchor,
+        confidenceScore: params.context.confidenceScore,
+    };
+    try {
+        const { data, error } = await supabase
+            .from('nudge_delivery_log')
+            .insert({
+            firebase_uid: params.firebaseUid,
+            nudge_id: params.nudgeId,
+            nudge_type: params.nudgeType,
+            nudge_priority: params.nudgePriority,
+            protocol_id: params.protocolId,
+            should_deliver: params.result.shouldDeliver,
+            suppressed_by: params.result.suppressedBy,
+            suppression_reason: params.result.reason,
+            rules_checked: params.result.rulesChecked,
+            was_overridden: params.result.wasOverridden ?? false,
+            overridden_rule: params.result.overriddenRule,
+            context_snapshot: contextSnapshot,
+        })
+            .select('id')
+            .single();
+        if (error) {
+            console.error('[SuppressionEngine] Failed to log suppression result:', error);
+            return null;
+        }
+        return data?.id ?? null;
+    }
+    catch (err) {
+        console.error('[SuppressionEngine] Exception logging suppression result:', err);
+        return null;
+    }
 }
