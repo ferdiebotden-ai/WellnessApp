@@ -90,13 +90,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <Text style={styles.retryText}>Try Again</Text>
             </TouchableOpacity>
 
-            {__DEV__ && this.state.error && (
+            {/* TEMPORARY: Show error in production for debugging - remove after fix */}
+            {this.state.error && (
               <ScrollView style={styles.debugContainer}>
-                <Text style={styles.debugTitle}>Debug Info:</Text>
+                <Text style={styles.debugTitle}>Error Details:</Text>
                 <Text style={styles.debugText}>{this.state.error.toString()}</Text>
+                <Text style={styles.debugText}>
+                  {this.state.error.message}
+                </Text>
                 {this.state.errorInfo?.componentStack && (
                   <Text style={styles.debugText}>
-                    {this.state.errorInfo.componentStack}
+                    {this.state.errorInfo.componentStack.slice(0, 500)}
                   </Text>
                 )}
               </ScrollView>
@@ -207,7 +211,7 @@ const styles = StyleSheet.create({
   debugText: {
     fontFamily: 'monospace',
     fontSize: 10,
-    color: palette.textTertiary,
+    color: palette.textMuted,
     lineHeight: 14,
   },
 });
