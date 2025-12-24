@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 81 (complete) |
-| **Progress** | Focus area UX fixed + light protocol consolidation complete |
+| **Session** | 82 (complete) |
+| **Progress** | AI chat button consolidation + UX simplification |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,56 +52,65 @@
 
 ## Last Session
 
-**Date:** December 24, 2025 (Session 81)
+**Date:** December 24, 2025 (Session 82)
+**Focus:** AI Chat Button Consolidation
+
+**Context:** User reported redundant buttons on HomeScreen — both an "AI" button in the TopNavigationBar AND a 💬 chat button in the HomeHeader, plus a redundant profile avatar.
+
+**Problem:**
+1. Two ways to access AI chat on HomeScreen (confusing UX)
+2. HomeHeader's chat button bypassed monetization/feature flag checks
+3. Duplicate ChatModal instances (global + local)
+4. Profile avatar redundant with bottom tab navigation
+
+**Solution:**
+Consolidated to single persistent AI button in TopNavigationBar (already available across all screens).
+
+**Changes Made:**
+
+### 1. Simplified HomeHeader.tsx
+- Removed chat button (💬) and profile avatar
+- Removed `onChatPress` and `onProfilePress` props
+- Removed haptic handlers and Pressable imports
+- Reduced from 179 → 78 lines
+
+### 2. Cleaned HomeScreen.tsx
+- Removed local ChatModal and `chatOpen` state
+- Removed `handleChatPress` and `handleProfilePress` callbacks
+- Removed unused imports (ChatModal, useNavigation, Pressable)
+- Reduced by 15 lines
+
+**UX Benefits:**
+- Single, consistent AI chat entry point
+- Proper monetization/feature flag checks enforced
+- Cleaner visual hierarchy (greeting + date only in header)
+- Users access profile via bottom tabs (standard pattern)
+
+**Files Modified (2):**
+- `client/src/components/home/HomeHeader.tsx` — Simplified to greeting + date only
+- `client/src/screens/HomeScreen.tsx` — Removed duplicate ChatModal
+
+**Commits:**
+- `79b03af` — Remove redundant AI chat button and profile avatar from HomeHeader
+
+---
+
+## Session 81 (Previous)
+
+**Date:** December 24, 2025
 **Focus:** Focus Area UX & Light Protocol Consolidation
 
 **Context:** User reported two UX issues:
 1. Selecting a focus area (e.g., "Better Sleep") doesn't load related protocols
 2. Morning Light appears as multiple separate protocols in search
 
-**Root Causes Found:**
-1. Server GOAL_TO_MODULE_MAP used wrong module IDs (`sleep_foundations` instead of `mod_sleep`)
-2. No code to enroll users in starter protocols after module enrollment
-3. Light protocol migration (20251210120000) targeted wrong protocol ID
-
 **Solution:**
+- Fixed GOAL_TO_MODULE_MAP with correct module IDs
+- Added StarterProtocolSelectionScreen to onboarding
+- Added protocol enrollment to backend
+- Fixed light protocol implementation methods
 
-### 1. Fixed GOAL_TO_MODULE_MAP (functions/src/onboarding.ts)
-```typescript
-// Before (wrong IDs)
-better_sleep: 'sleep_foundations'
-// After (correct IDs)
-better_sleep: 'mod_sleep'
-```
-
-### 2. Added StarterProtocolSelectionScreen
-- New onboarding screen between GoalSelection and BiometricProfile
-- Shows 3 starter protocols per module with toggle switches
-- Users choose which protocols to add (not auto-enroll all)
-- Passes selectedProtocolIds through entire onboarding flow
-
-### 3. Added Protocol Enrollment to Backend
-- `completeOnboarding()` now accepts `selected_protocol_ids` array
-- Creates `user_protocol_enrollment` records for selected protocols
-- Uses correct default times based on protocol category
-
-### 4. Fixed Light Protocol Implementation Methods
-- Created migration targeting correct IDs (`protocol_1_morning_light`, `protocol_2_evening_light`)
-- Added 3 implementation methods to each: outdoor sunlight, light box, light bar
-- Fixed fallback protocol IDs in client api.ts
-
-**Files Modified (13):**
-- `functions/src/onboarding.ts` — GOAL_TO_MODULE_MAP + protocol enrollment
-- `functions/src/protocolEnrollment.ts` — Export getDefaultTimeForProtocol
-- `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx` — NEW
-- `client/src/navigation/OnboardingStack.tsx` — Add new screen
-- `client/src/types/onboarding.ts` — StarterProtocol type
-- `client/src/services/api.ts` — fetchStarterProtocols + fixed fallback IDs
-- `client/src/screens/onboarding/*.tsx` — Pass selectedProtocolIds through flow
-- `supabase/migrations/20251224100000_*.sql` — Light protocol implementation_methods
-
-**Commits:**
-- `504ba07` — Add protocol selection to onboarding and fix light protocol implementation methods
+**Commits:** `504ba07`
 
 ---
 
@@ -188,7 +197,7 @@ better_sleep: 'mod_sleep'
 
 ## Next Session Priority
 
-### Session 82 Focus: Deploy Backend + Test Onboarding Flow
+### Session 83 Focus: Deploy Backend + Test Onboarding Flow
 
 Backend changes need deployment. Then test complete onboarding flow with new protocol selection screen.
 
@@ -196,7 +205,7 @@ Backend changes need deployment. Then test complete onboarding flow with new pro
 1. Deploy Cloud Functions to apply onboarding.ts changes
 2. Test complete onboarding journey:
    - Sign up with new account
-   - Goal selection → StarterProtocolSelection (NEW)
+   - Goal selection → StarterProtocolSelection
    - Toggle protocols on/off
    - Complete biometrics, wearable, health sync
    - Verify protocols appear on home screen after completion
@@ -212,9 +221,10 @@ GoalSelection → StarterProtocolSelection → BiometricProfile → WearableConn
 
 **TestFlight Testing Checklist:**
 1. Account deletion works — synchronous deletion deployed
-2. Onboarding shows protocol selection — NEW StarterProtocolSelectionScreen
+2. Onboarding shows protocol selection — StarterProtocolSelectionScreen
 3. Protocols enroll correctly — Backend changes need deployment
 4. Light protocols consolidated — 3 implementation methods per protocol
+5. AI chat accessible via single TopNavigationBar button (Session 82)
 
 **Future Work:**
 - Backend endpoint for fetching starter protocols from database
@@ -340,4 +350,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 24, 2025 (Session 81 complete - Focus area UX fixed + light protocol consolidation)*
+*Last Updated: December 24, 2025 (Session 82 complete - AI chat button consolidation)*
