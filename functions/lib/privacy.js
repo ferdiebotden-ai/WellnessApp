@@ -74,16 +74,31 @@ const requestUserDeletion = async (req, res) => {
         return;
     }
     try {
-        const { uid, email } = await (0, users_1.authenticateRequest)(req);
-        const config = (0, config_1.getConfig)();
-        const privacyConfig = (0, config_1.getPrivacyConfig)();
-        const message = {
-            userId: uid,
-            email: email ?? null,
-            requestedAt: new Date().toISOString(),
-        };
-        await getPubSubClient().topic(privacyConfig.deletionTopic).publishMessage({ json: message });
-        res.status(202).json({ accepted: true });
+        const { uid } = await (0, users_1.authenticateRequest)(req);
+        // Perform synchronous deletion (no Pub/Sub required)
+        // Delete from Supabase first (respects foreign key constraints)
+        await purgeSupabaseData(uid);
+        // Delete from Firestore
+        const firebaseApp = (0, firebaseAdmin_1.getFirebaseApp)();
+        const firestore = firebaseApp.firestore();
+        await purgeFirestoreData(firestore, uid);
+        // Delete from Firebase Auth
+        try {
+            await firebaseApp.auth().deleteUser(uid);
+        }
+        catch (authError) {
+            // User may already be deleted from Auth - that's fine
+            if (typeof authError === 'object' &&
+                authError !== null &&
+                'code' in authError &&
+                authError.code === 'auth/user-not-found') {
+                // Ignore - user already removed from Auth
+            }
+            else {
+                throw authError;
+            }
+        }
+        res.status(200).json({ deleted: true });
     }
     catch (error) {
         const { status, message } = buildErrorResponse(error);
