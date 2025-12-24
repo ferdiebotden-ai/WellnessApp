@@ -41,6 +41,26 @@ function readEnv(name: RequiredEnv): string {
   return value;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function readEnvWithRetry(name: RequiredEnv, maxRetries = 3): Promise<string> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const value = process.env[name];
+    if (value) {
+      return value;
+    }
+
+    if (attempt < maxRetries) {
+      console.warn(`[Config] ${name} not available, retry ${attempt}/${maxRetries}...`);
+      await sleep(100 * attempt);
+    }
+  }
+
+  throw new Error(`${name} must be set (not found after ${maxRetries} retries)`);
+}
+
 function normalizePrivateKey(key: string): string {
   return key.replace(/\\n/g, '\n');
 }
@@ -65,6 +85,34 @@ export function getConfig(): ServiceConfig {
       revenuecatWebhookSecret: readEnv('REVENUECAT_WEBHOOK_SECRET'),
     };
   }
+  return cachedConfig;
+}
+
+/**
+ * Async version of getConfig with retry logic for Cloud Run cold start scenarios.
+ * Call this on server startup to pre-warm the config cache.
+ */
+export async function getConfigAsync(): Promise<ServiceConfig> {
+  if (cachedConfig) {
+    return cachedConfig;
+  }
+
+  cachedConfig = {
+    firebaseProjectId: await readEnvWithRetry('FIREBASE_PROJECT_ID'),
+    firebaseClientEmail: await readEnvWithRetry('FIREBASE_CLIENT_EMAIL'),
+    firebasePrivateKey: normalizePrivateKey(await readEnvWithRetry('FIREBASE_PRIVATE_KEY')),
+    supabaseUrl: await readEnvWithRetry('SUPABASE_URL'),
+    supabaseAnonKey: await readEnvWithRetry('SUPABASE_ANON_KEY'),
+    supabaseServiceRoleKey: await readEnvWithRetry('SUPABASE_SERVICE_ROLE_KEY'),
+    supabaseJwtSecret: await readEnvWithRetry('SUPABASE_JWT_SECRET'),
+    defaultTrialDays: Number.parseInt(process.env.DEFAULT_TRIAL_DAYS ?? '14', 10),
+    pineconeApiKey: await readEnvWithRetry('PINECONE_API_KEY'),
+    pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? 'wellness-protocols',
+    privacyExportUrlTtlHours: Number.parseInt(process.env.PRIVACY_EXPORT_URL_TTL_HOURS ?? '72', 10),
+    revenuecatWebhookSecret: await readEnvWithRetry('REVENUECAT_WEBHOOK_SECRET'),
+  };
+
+  console.log('[Config] Configuration loaded successfully');
   return cachedConfig;
 }
 
