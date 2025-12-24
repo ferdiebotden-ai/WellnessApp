@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { getServiceClient } from './supabaseClient';
 import { authenticateRequest } from './users';
+import { getDefaultTimeForProtocol } from './protocolEnrollment';
 
 type PrimaryGoal = 'better_sleep' | 'more_energy' | 'sharper_focus' | 'faster_recovery';
 type WearableSource = 'oura' | 'whoop' | 'apple_health' | 'google_fit' | 'garmin';
@@ -21,14 +22,19 @@ interface OnboardingCompleteRequest {
   wearable_source?: WearableSource | null;
   primary_module_id?: string;
   biometrics?: BiometricProfileData | null;
+  /** Protocol IDs user selected during onboarding to enroll in */
+  selected_protocol_ids?: string[];
 }
 
-/** Maps primary goals to their corresponding module IDs */
+/**
+ * Maps primary goals to their corresponding module IDs.
+ * Module IDs must match public.modules table: mod_sleep, mod_morning_routine, mod_focus_productivity
+ */
 const GOAL_TO_MODULE_MAP: Record<PrimaryGoal, string> = {
-  better_sleep: 'sleep_foundations',
-  more_energy: 'metabolic_reset',
-  sharper_focus: 'metabolic_reset',
-  faster_recovery: 'stress_resilience',
+  better_sleep: 'mod_sleep',
+  more_energy: 'mod_morning_routine',
+  sharper_focus: 'mod_focus_productivity',
+  faster_recovery: 'mod_sleep', // Recovery starts with sleep optimization
 };
 
 interface ModuleEnrollmentInsert {
@@ -203,7 +209,45 @@ export async function completeOnboarding(req: Request, res: Response): Promise<v
       }
     }
 
-    // 6. Return success with all relevant data
+    // 6. Enroll user in selected starter protocols
+    let enrolledProtocolCount = 0;
+    if (body.selected_protocol_ids && body.selected_protocol_ids.length > 0) {
+      // Fetch protocol details to get category for default time calculation
+      const { data: protocols } = await serviceClient
+        .from('protocols')
+        .select('id, category')
+        .in('id', body.selected_protocol_ids);
+
+      const protocolMap = new Map(protocols?.map(p => [p.id, p]) ?? []);
+      const now = new Date().toISOString();
+
+      const protocolEnrollments = body.selected_protocol_ids.map(protocolId => {
+        const protocol = protocolMap.get(protocolId);
+        const defaultTime = getDefaultTimeForProtocol(protocolId, protocol?.category ?? 'Foundation');
+
+        return {
+          user_id: user.id,
+          protocol_id: protocolId,
+          module_id: primaryModuleId,
+          default_time_utc: defaultTime,
+          is_active: true,
+          enrolled_at: now,
+        };
+      });
+
+      const { error: protocolEnrollmentError } = await serviceClient
+        .from('user_protocol_enrollment')
+        .upsert(protocolEnrollments, { onConflict: 'user_id,protocol_id' });
+
+      if (protocolEnrollmentError) {
+        // Log but don't fail onboarding for protocol enrollment errors
+        console.error('Protocol enrollment error:', protocolEnrollmentError);
+      } else {
+        enrolledProtocolCount = protocolEnrollments.length;
+      }
+    }
+
+    // 7. Return success with all relevant data
     res.status(200).json({
       success: true,
       trial_start_date: user.trial_start_date,
@@ -212,7 +256,8 @@ export async function completeOnboarding(req: Request, res: Response): Promise<v
       primary_goal: body.primary_goal,
       wearable_source: wearableSource,
       has_biometrics: !!(biometrics?.birthDate || biometrics?.biologicalSex || biometrics?.heightCm || biometrics?.weightKg),
-      timezone: biometrics?.timezone ?? 'UTC'
+      timezone: biometrics?.timezone ?? 'UTC',
+      enrolled_protocol_count: enrolledProtocolCount,
     });
 
   } catch (error) {

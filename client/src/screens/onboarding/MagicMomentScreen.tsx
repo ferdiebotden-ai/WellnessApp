@@ -129,7 +129,7 @@ function estimateRecoveryScore(
 export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
   route,
 }) => {
-  const { selectedGoal, biometrics, wearableSource, healthPlatform } = route.params;
+  const { selectedGoal, selectedProtocolIds, biometrics, wearableSource, healthPlatform } = route.params;
   const [submitting, setSubmitting] = useState(false);
   const updateOnboarding = useUpdateOnboarding();
 
@@ -154,6 +154,7 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
         health_platform: healthPlatform ?? null,
         primary_module_id: primaryModuleId,
         biometrics: biometrics ?? null,
+        selected_protocol_ids: selectedProtocolIds ?? [],
       });
 
       // 15 second timeout for API call
@@ -192,7 +193,7 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
         { text: 'Cancel', style: 'cancel' },
       ]);
     }
-  }, [selectedGoal, biometrics, wearableSource, healthPlatform, updateOnboarding]);
+  }, [selectedGoal, selectedProtocolIds, biometrics, wearableSource, healthPlatform, updateOnboarding]);
 
   if (submitting) {
     return (

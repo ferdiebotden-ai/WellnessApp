@@ -43,6 +43,17 @@ export interface BiometricProfileData {
   timezone: string;
 }
 
+/** Starter protocol data for onboarding selection */
+export interface StarterProtocol {
+  id: string;
+  name: string;
+  short_name: string;
+  summary: string;
+  category: string;
+  /** Default scheduled time in HH:MM format */
+  default_time: string;
+}
+
 /** Onboarding completion payload */
 export interface OnboardingCompletePayload {
   primary_goal: PrimaryGoal;
@@ -52,6 +63,8 @@ export interface OnboardingCompletePayload {
   primary_module_id?: string;
   /** Biometric profile data */
   biometrics?: BiometricProfileData | null;
+  /** Protocol IDs user selected during onboarding to enroll in */
+  selected_protocol_ids?: string[];
 }
 
 /** Goal → Module mapping for enrollment

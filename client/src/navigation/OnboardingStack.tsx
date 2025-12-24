@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   AICoachIntroScreen,
   GoalSelectionScreen,
+  StarterProtocolSelectionScreen,
   BiometricProfileScreen,
   WearableConnectionScreen,
   HealthDataSyncScreen,
@@ -19,15 +20,22 @@ import type {
 export type OnboardingStackParamList = {
   AICoachIntro: undefined;
   GoalSelection: undefined;
-  BiometricProfile: { selectedGoal: PrimaryGoal };
-  WearableConnection: { selectedGoal: PrimaryGoal; biometrics?: BiometricProfileData };
+  StarterProtocolSelection: { selectedGoal: PrimaryGoal };
+  BiometricProfile: { selectedGoal: PrimaryGoal; selectedProtocolIds?: string[] };
+  WearableConnection: {
+    selectedGoal: PrimaryGoal;
+    selectedProtocolIds?: string[];
+    biometrics?: BiometricProfileData;
+  };
   HealthDataSync: {
     selectedGoal: PrimaryGoal;
+    selectedProtocolIds?: string[];
     biometrics?: BiometricProfileData;
     wearableSource?: WearableSource | null;
   };
   MagicMoment: {
     selectedGoal: PrimaryGoal;
+    selectedProtocolIds?: string[];
     biometrics?: BiometricProfileData;
     wearableSource?: WearableSource | null;
     healthPlatform?: HealthPlatform | null;
@@ -62,6 +70,11 @@ export const OnboardingStackNavigator: React.FC = () => {
       <Stack.Screen
         name="GoalSelection"
         component={GoalSelectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="StarterProtocolSelection"
+        component={StarterProtocolSelectionScreen}
         options={{ animation: 'slide_from_right' }}
       />
       <Stack.Screen

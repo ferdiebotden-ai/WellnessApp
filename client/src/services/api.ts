@@ -4,7 +4,7 @@ import type { MonetizationStatus } from '../types/monetization';
 import type { CorrelationsResponse } from '../types/correlations';
 import type { UserPreferences, UserProfile } from '../types/user';
 import type { WearableSyncPayload } from './wearables/aggregators';
-import type { OnboardingCompletePayload } from '../types/onboarding';
+import type { OnboardingCompletePayload, StarterProtocol } from '../types/onboarding';
 import type { ProtocolDetail, PersonalizedProtocolResponse } from '../types/protocol';
 import { DEFAULT_USER_PROTOCOL_DATA, DEFAULT_CONFIDENCE_RESULT } from '../types/protocol';
 
@@ -170,11 +170,13 @@ export const completeOnboarding = async (payload: OnboardingCompletePayload) => 
       wearable_source: string | null;
       has_biometrics: boolean;
       timezone: string;
+      enrolled_protocol_count: number;
     }>('/api/onboarding/complete', 'POST', {
       primary_goal: payload.primary_goal,
       wearable_source: payload.wearable_source ?? null,
       primary_module_id: payload.primary_module_id,
       biometrics: biometricsPayload,
+      selected_protocol_ids: payload.selected_protocol_ids ?? [],
     });
   } catch (error) {
     console.warn('Backend API unavailable, simulating onboarding completion.', error);
@@ -190,7 +192,45 @@ export const completeOnboarding = async (payload: OnboardingCompletePayload) => 
       wearable_source: payload.wearable_source ?? null,
       has_biometrics: !!payload.biometrics,
       timezone: payload.biometrics?.timezone ?? 'UTC',
+      enrolled_protocol_count: payload.selected_protocol_ids?.length ?? 0,
     };
+  }
+};
+
+/**
+ * Fetches starter protocols for a given module.
+ * Used during onboarding to show users which protocols they can add.
+ * @param moduleId Module ID to fetch starter protocols for
+ * @returns Array of starter protocols with schedule suggestions
+ */
+export const fetchStarterProtocols = async (moduleId: string): Promise<StarterProtocol[]> => {
+  try {
+    return await request<StarterProtocol[]>(
+      `/api/modules/${moduleId}/starter-protocols`,
+      'GET'
+    );
+  } catch (error) {
+    console.warn('Starter protocols API unavailable, using fallback data', error);
+    // Fallback starter protocols based on module
+    // IDs match database: protocol_1_morning_light, protocol_2_evening_light, etc.
+    const fallbackProtocols: Record<string, StarterProtocol[]> = {
+      mod_sleep: [
+        { id: 'protocol_1_morning_light', name: 'Morning Light Exposure', short_name: 'Morning Light', summary: 'Get 10-30 min of outdoor light within 60 min of waking', category: 'Foundation', default_time: '07:00' },
+        { id: 'protocol_2_evening_light', name: 'Evening Light Management', short_name: 'Evening Light', summary: 'Dim lights and minimize blue light 2-3h before sleep', category: 'Foundation', default_time: '21:00' },
+        { id: 'protocol_10_nsdr', name: 'NSDR Session', short_name: 'NSDR', summary: 'Non-Sleep Deep Rest to enhance recovery and reduce stress', category: 'Recovery', default_time: '13:00' },
+      ],
+      mod_morning_routine: [
+        { id: 'protocol_1_morning_light', name: 'Morning Light Exposure', short_name: 'Morning Light', summary: 'Get 10-30 min of outdoor light within 60 min of waking', category: 'Foundation', default_time: '07:00' },
+        { id: 'protocol_4_hydration', name: 'Hydration & Electrolytes', short_name: 'Hydration', summary: '16-32 oz water with electrolytes within 30 min of waking', category: 'Foundation', default_time: '07:15' },
+        { id: 'protocol_6_morning_movement', name: 'Morning Movement', short_name: 'Movement', summary: 'Light Zone 2 movement within 30-90 min of waking', category: 'Performance', default_time: '07:30' },
+      ],
+      mod_focus_productivity: [
+        { id: 'protocol_5_caffeine_timing', name: 'Caffeine Timing & Cutoff', short_name: 'Caffeine', summary: 'Delay caffeine 90-120 min post-wake, cutoff 8-10h before bed', category: 'Performance', default_time: '09:00' },
+        { id: 'protocol_11_breathwork', name: 'Breathwork & HRV Regulation', short_name: 'Breathwork', summary: 'Controlled breathing to rebalance autonomic tone', category: 'Recovery', default_time: '13:00' },
+        { id: 'protocol_16_focus', name: 'Focus & Information Diet', short_name: 'Deep Work', summary: 'Structured deep work blocks with notification batching', category: 'Optimization', default_time: '10:00' },
+      ],
+    };
+    return fallbackProtocols[moduleId] ?? [];
   }
 };
 

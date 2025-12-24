@@ -58,7 +58,7 @@ function resolveError(error: unknown): { status: number; message: string } {
  * - Wind down, sleep prep → 21:00
  * - Others → 12:00
  */
-function getDefaultTimeForProtocol(protocolId: string, category: string): string {
+export function getDefaultTimeForProtocol(protocolId: string, category: string): string {
   const id = protocolId.toLowerCase();
 
   // Morning protocols

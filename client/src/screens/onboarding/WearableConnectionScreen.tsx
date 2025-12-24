@@ -29,7 +29,7 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
   route,
   navigation,
 }) => {
-  const { selectedGoal, biometrics } = route.params;
+  const { selectedGoal, selectedProtocolIds, biometrics } = route.params;
   const [selectedWearable, setSelectedWearable] = useState<WearableSource | null>(null);
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,11 +44,12 @@ export const WearableConnectionScreen: React.FC<WearableConnectionScreenProps> =
     (wearableSource: WearableSource | null) => {
       navigation.navigate('HealthDataSync', {
         selectedGoal: selectedGoal as PrimaryGoal,
+        selectedProtocolIds,
         biometrics: biometrics ?? undefined,
         wearableSource,
       });
     },
-    [navigation, selectedGoal, biometrics]
+    [navigation, selectedGoal, selectedProtocolIds, biometrics]
   );
 
   const handleSelectWearable = useCallback(
