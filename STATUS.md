@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 83 (complete) |
-| **Progress** | AI Coach button redesign + persistent chat history |
+| **Session** | 84 (complete) |
+| **Progress** | Multi-goal onboarding + Protocol UX overhaul |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,55 +52,94 @@
 
 ## Last Session
 
-**Date:** December 24, 2025 (Session 83)
+**Date:** December 24, 2025 (Session 84)
+**Focus:** Multi-Goal Onboarding + Protocol UX Overhaul
+
+**Context:** User reported: "When I click a module under the protocols screen, nothing happens. It doesn't ask me what I want to add." Also wanted multiple focus area selection during onboarding.
+
+**Root Causes Identified:**
+1. ProtocolsScreen was a dead-end leaf screen (no navigation)
+2. BottomTabs architecture didn't allow drill-down to protocols
+3. Missing API endpoints for fetching module protocols
+4. Single-goal limitation in onboarding flow
+
+**Solution:**
+Comprehensive 5-phase overhaul of protocol selection UX and onboarding flow.
+
+**Changes Made:**
+
+### Phase 1: Backend Endpoints
+- Created `functions/src/starterProtocols.ts` with two endpoints:
+  - `GET /api/modules/:moduleId/starter-protocols` — Returns protocols with `is_starter_protocol=true`
+  - `GET /api/modules/:moduleId/protocols` — Returns all protocols for a module
+- Registered routes in `functions/src/api.ts`
+
+### Phase 2: Protocols Tab Navigation
+- Created `client/src/navigation/ProtocolsStack.tsx` — Stack navigator with 3 screens
+- Updated `client/src/navigation/BottomTabs.tsx` — Protocols tab now uses stack navigator
+- Created `client/src/screens/ModuleListScreen.tsx` — Shows modules with "View protocols" action
+
+### Phase 3: Module Protocols Screen
+- Created `client/src/screens/ModuleProtocolsScreen.tsx`
+  - Displays protocols grouped by "Recommended" (starters) and "All Protocols"
+  - Toggle to enroll/unenroll protocols
+  - Toggle to set module as primary
+- Added `fetchModuleProtocols` to `client/src/services/api.ts`
+
+### Phase 4: Multi-Goal Onboarding
+- Updated `client/src/types/onboarding.ts`:
+  - Added `GOAL_TO_MODULES_MAP` for multi-goal → modules mapping
+  - Added `getModulesForGoals()` and `getPrimaryModuleForGoals()` helpers
+- Updated `client/src/components/GoalCard.tsx` — Added `multiSelect` prop
+- Rewrote `client/src/screens/onboarding/GoalSelectionScreen.tsx`:
+  - Multi-select using `Set<PrimaryGoal>` instead of single selection
+  - Added "Continue" button instead of auto-advance
+  - Shows selection count summary
+- Rewrote `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx`:
+  - Uses `SectionList` to group protocols by module
+  - Fetches protocols for all selected modules in parallel
+  - Shows section headers when multiple modules present
+- Updated all remaining onboarding screens to use `selectedGoals: PrimaryGoal[]`:
+  - `BiometricProfileScreen.tsx`
+  - `WearableConnectionScreen.tsx`
+  - `HealthDataSyncScreen.tsx`
+  - `MagicMomentScreen.tsx`
+- Updated `client/src/navigation/OnboardingStack.tsx` — All params now use `selectedGoals` array
+
+**Files Modified (17):**
+- `functions/src/starterProtocols.ts` — **NEW** API endpoints
+- `functions/src/api.ts` — Registered new routes
+- `client/src/navigation/ProtocolsStack.tsx` — **NEW** stack navigator
+- `client/src/navigation/BottomTabs.tsx` — Uses ProtocolsStackNavigator
+- `client/src/navigation/OnboardingStack.tsx` — Multi-goal params
+- `client/src/screens/ModuleListScreen.tsx` — **NEW** module selection screen
+- `client/src/screens/ModuleProtocolsScreen.tsx` — **NEW** protocol enrollment screen
+- `client/src/services/api.ts` — Added fetchModuleProtocols
+- `client/src/types/onboarding.ts` — Multi-goal types and helpers
+- `client/src/components/GoalCard.tsx` — multiSelect prop
+- `client/src/screens/onboarding/GoalSelectionScreen.tsx` — Multi-select UI
+- `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx` — Grouped display
+- `client/src/screens/onboarding/BiometricProfileScreen.tsx` — selectedGoals array
+- `client/src/screens/onboarding/WearableConnectionScreen.tsx` — selectedGoals array
+- `client/src/screens/onboarding/HealthDataSyncScreen.tsx` — selectedGoals array
+- `client/src/screens/onboarding/MagicMomentScreen.tsx` — selectedGoals array
+
+**Commits:**
+- `229159f` — Multi-goal onboarding + Protocol UX overhaul
+
+---
+
+## Session 83 (Previous)
+
+**Date:** December 24, 2025
 **Focus:** AI Coach Button Redesign + Persistent Chat History
 
-**Context:** User requested two improvements to AI chat:
-1. Redesign AI button to better represent "AI Coach" personalized experience
-2. Enable chat history persistence so users can continue previous conversations
+**Context:** User requested redesigned AI button and persistent chat history.
 
 **Solution:**
 Redesigned button with teal branding and implemented full chat history persistence with "New Chat" functionality.
 
-**Changes Made:**
-
-### 1. Backend: Chat History Endpoint
-- Added `getChatHistory` endpoint to `functions/src/chat.ts`
-- Returns most recent conversation with up to 20 messages
-- Registered route: `GET /api/chat/history`
-- Backend deployed to Cloud Run (revision `api-00278-wt6`)
-
-### 2. Client API Layer
-- Added `fetchChatHistory` function to `client/src/services/api.ts`
-- Added `ChatHistoryMessage` and `ChatHistoryResponse` types
-
-### 3. Persistent Conversation Hook
-- Created `client/src/hooks/useChatConversation.ts`
-- Persists `conversationId` to AsyncStorage
-- Manages message state with `loadHistory()`, `startNewChat()`, `addMessage()`
-
-### 4. ChatModal Updates
-- Integrated `useChatConversation` hook
-- Added "New Chat" button in header
-- Shows loading state while fetching history
-- Messages persist between modal open/close
-
-### 5. AI Coach Button Redesign
-- Text: "AI" → "AI Coach"
-- Color: Secondary (blue) → Primary (teal #63E6BE)
-- Added WCAG-compliant 44px touch target
-- Updated accessibility label
-
-**Files Modified (6):**
-- `functions/src/chat.ts` — Added getChatHistory endpoint
-- `functions/src/api.ts` — Registered history route
-- `client/src/services/api.ts` — Added fetchChatHistory function
-- `client/src/hooks/useChatConversation.ts` — **NEW** persistent hook
-- `client/src/components/ChatModal.tsx` — History loading + New Chat button
-- `client/src/components/TopNavigationBar.tsx` — Button redesign
-
-**Commits:**
-- `0b894ac` — Add AI Coach button redesign + persistent chat history
+**Commits:** `0b894ac`
 
 ---
 
@@ -220,42 +259,53 @@ Consolidated to single persistent AI button in TopNavigationBar (already availab
 
 ## Next Session Priority
 
-### Session 84 Focus: Test AI Coach + Onboarding Flow
+### Session 85 Focus: Test Multi-Goal Onboarding + Protocol UX
 
-Test AI Coach chat history persistence and complete onboarding flow.
+Test the new multi-goal onboarding flow and protocol selection UX.
 
-**Immediate:**
-1. Test AI Coach improvements:
-   - Tap "AI Coach" button (now teal, 44px touch target)
-   - Send a message → verify conversation created
-   - Close and reopen modal → verify messages reload
-   - Tap "New Chat" → verify starts fresh conversation
-2. Test complete onboarding journey:
-   - Sign up with new account
-   - Goal selection → StarterProtocolSelection
+**Immediate Testing:**
+1. Test multi-goal onboarding:
+   - Create new account
+   - Select multiple goals (e.g., "Better Sleep" + "More Energy")
+   - Verify StarterProtocolSelectionScreen shows protocols grouped by module
+   - Verify section headers appear when multiple modules selected
    - Toggle protocols on/off
-   - Complete biometrics, wearable, health sync
-   - Verify protocols appear on home screen after completion
-3. Test search for "Morning Light" — should return ONE protocol with 3 implementation methods
+   - Complete onboarding flow
+   - Verify selected protocols appear on home screen
+
+2. Test Protocols tab navigation:
+   - Go to Protocols tab
+   - Tap on a module card
+   - Verify navigation to ModuleProtocolsScreen
+   - Verify "Recommended" and "All Protocols" sections
+   - Toggle enrollment on a protocol
+   - Verify protocol appears/disappears from home screen
+
+3. Test existing functionality still works:
+   - AI Coach button + chat history persistence
+   - Account deletion
+   - Search for "Morning Light" → should return ONE protocol
 
 **Onboarding Flow (Updated):**
 ```
-GoalSelection → StarterProtocolSelection → BiometricProfile → WearableConnection → HealthDataSync → MagicMoment → Home
+GoalSelection (multi-select) → StarterProtocolSelection (grouped by module) → BiometricProfile → WearableConnection → HealthDataSync → MagicMoment → Home
 ```
 
-**Backend Endpoint Needed:**
-- `/api/modules/:moduleId/starter-protocols` — Currently uses fallback; implement when needed
+**Protocols Tab Flow (New):**
+```
+ModuleListScreen → ModuleProtocolsScreen (enroll/unenroll) → ProtocolDetailScreen
+```
+
+**API Endpoints (New):**
+- `GET /api/modules/:moduleId/starter-protocols` — Starter protocols only
+- `GET /api/modules/:moduleId/protocols` — All protocols for a module
 
 **TestFlight Testing Checklist:**
-1. Account deletion works — synchronous deletion deployed
-2. Onboarding shows protocol selection — StarterProtocolSelectionScreen
-3. Protocols enroll correctly — Backend changes need deployment
-4. Light protocols consolidated — 3 implementation methods per protocol
-5. AI chat accessible via single TopNavigationBar button (Session 82)
-
-**Future Work:**
-- Backend endpoint for fetching starter protocols from database
-- Pinecone reindexing to prevent duplicate search results
+1. Multi-goal selection works — Select 2+ goals
+2. Protocols grouped by module — Section headers appear
+3. Protocol enrollment works — Via ModuleProtocolsScreen toggles
+4. Onboarding completes — All selected protocols enrolled
+5. Protocols tab navigation — Module → Protocol list → Enroll
 
 ---
 
@@ -377,4 +427,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 24, 2025 (Session 83 complete - AI Coach button redesign + chat history)*
+*Last Updated: December 24, 2025 (Session 84 complete - Multi-goal onboarding + Protocol UX overhaul)*
