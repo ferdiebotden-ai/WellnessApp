@@ -1,18 +1,22 @@
 import { VertexAI, HarmCategory, HarmBlockThreshold } from '@google-cloud/vertexai';
 
 /**
- * Vertex AI client wrapper for Gemini 2.5 Flash
+ * Vertex AI client wrapper for Gemini 3 Flash
  * Provides completion and embedding generation for wellness coaching
  *
- * Model: gemini-2.5-flash (GA - Generally Available)
- * - Stable production model available in us-central1
- * - Low latency and cost efficiency
- * - Strong reasoning capabilities for wellness coaching
+ * Completion Model: gemini-3-flash-preview (Global endpoint required)
+ * - Released Dec 17, 2025
+ * - +3x better reasoning on complex benchmarks
+ * - Supports thinking_level parameter for reasoning control
+ *
+ * Embedding Model: text-embedding-005 (us-central1)
+ * - 768-dimensional vectors for semantic search
  */
 
 const PROJECT_ID = 'wellness-os-app';
-const LOCATION = 'us-central1';
-const COMPLETION_MODEL = 'gemini-2.5-flash';
+const COMPLETION_LOCATION = 'global';  // Gemini 3 Flash requires global
+const EMBEDDING_LOCATION = 'us-central1';  // Embeddings available in regional
+const COMPLETION_MODEL = 'gemini-3-flash-preview';
 const EMBEDDING_MODEL = 'text-embedding-005';
 
 // Initialize Vertex AI client lazily
@@ -21,9 +25,9 @@ let vertexAI: VertexAI | null = null;
 function getVertexAI(): VertexAI {
   if (!vertexAI) {
     vertexAI = new VertexAI({
-  project: PROJECT_ID,
-  location: LOCATION,
-});
+      project: PROJECT_ID,
+      location: COMPLETION_LOCATION,
+    });
   }
   return vertexAI;
 }
@@ -49,7 +53,7 @@ const safetySettings = [
 ];
 
 /**
- * Generate a text completion using Gemini 2.5 Flash (GA)
+ * Generate a text completion using Gemini 3 Flash
  * @param systemPrompt System-level instructions for the model
  * @param userPrompt User's query or context
  * @param temperature Controls randomness (0-1, default 0.7)
@@ -65,7 +69,7 @@ export async function generateCompletion(
     safetySettings,
     generationConfig: {
       temperature,
-      maxOutputTokens: 512,  // Reduced to enforce ~150-200 word responses (PRD 6.2)
+      maxOutputTokens: 2048,  // Allow complete responses; system prompt guides conciseness
       topP: 0.95,
     },
   });
@@ -105,8 +109,8 @@ export async function generateCompletion(
  * @returns Embedding vector (768-dimensional array)
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // Vertex AI REST API endpoint for embeddings
-  const endpoint = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/${EMBEDDING_MODEL}:predict`;
+  // Vertex AI REST API endpoint for embeddings (uses regional endpoint)
+  const endpoint = `https://${EMBEDDING_LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${EMBEDDING_LOCATION}/publishers/google/models/${EMBEDDING_MODEL}:predict`;
 
   // Get access token using Application Default Credentials
   // This works automatically in Cloud Functions with the service account

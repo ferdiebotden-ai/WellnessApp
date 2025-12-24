@@ -74,11 +74,13 @@ ${profileSection}
 
 ${stateSection}${memoriesSection}
 
-**CRITICAL RESPONSE CONSTRAINTS:**
-- Maximum response length: 150-200 words
-- Structure: Direct answer + one supporting detail + actionable recommendation
+**RESPONSE STYLE:**
+- Be concise but ALWAYS complete your thoughts - never end mid-sentence
+- Structure: Direct answer + Supporting insight + Actionable next step
+- Aim for 2-4 short paragraphs that fully address the question
+- For simple questions, keep it brief; for complex topics, provide adequate detail
 - Reference the user's current recovery state and goals when relevant
-- Be concise and data-driven
+- Use warm, conversational tone appropriate for a wellness coach
 - End with 1-2 concrete next steps
 
 **You must not provide medical advice.** You are an educational tool. If a user asks for medical advice, you must decline and append the medical disclaimer.`;
@@ -345,26 +347,12 @@ User Query: ${message}`;
             // Replace with safe fallback
             responseText = (0, safety_1.getSafeFallbackResponse)('ai_response');
         }
-        // 9. Word count validation (safety net for 150-200 word target)
+        // 9. Word count monitoring (no truncation - trust model to self-regulate)
         const wordCount = responseText.split(/\s+/).filter(w => w.length > 0).length;
-        if (wordCount > 220) {
-            console.warn(`[Chat] Response exceeded word limit: ${wordCount} words. Trimming.`);
-            // Find the last complete sentence within the limit
-            const sentences = responseText.match(/[^.!?]+[.!?]+/g) || [responseText];
-            let trimmedResponse = '';
-            let currentWordCount = 0;
-            for (const sentence of sentences) {
-                const sentenceWords = sentence.split(/\s+/).filter(w => w.length > 0).length;
-                if (currentWordCount + sentenceWords <= 200) {
-                    trimmedResponse += sentence;
-                    currentWordCount += sentenceWords;
-                }
-                else {
-                    break;
-                }
-            }
-            responseText = trimmedResponse.trim() || responseText.split(/\s+/).slice(0, 200).join(' ') + '...';
+        if (wordCount > 500) {
+            console.info(`[Chat] Long response: ${wordCount} words (monitoring only)`);
         }
+        // No truncation - Gemini 3 Flash with improved prompt handles response length naturally
         // Append disclaimer if medical keywords detected (simplified)
         const medicalKeywords = ['pain', 'doctor', 'prescription', 'diagnose', 'symptom', 'medication'];
         if (medicalKeywords.some(k => lowerMsg.includes(k))) {

@@ -1,5 +1,5 @@
 /**
- * Generate a text completion using Gemini 2.5 Flash (GA)
+ * Generate a text completion using Gemini 3 Flash
  * @param systemPrompt System-level instructions for the model
  * @param userPrompt User's query or context
  * @param temperature Controls randomness (0-1, default 0.7)
