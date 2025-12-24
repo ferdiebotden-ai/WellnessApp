@@ -50,6 +50,8 @@ export function useChatConversation(): UseChatConversationResult {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  // Flag to indicate user explicitly started a new chat - skip auto-loading history
+  const [isNewChatMode, setIsNewChatMode] = useState(false);
 
   // Load stored conversation ID on mount
   useEffect(() => {
@@ -72,6 +74,12 @@ export function useChatConversation(): UseChatConversationResult {
   // Load chat history from API
   const loadHistory = useCallback(async () => {
     if (!initialized) return;
+
+    // Skip loading if user explicitly started a new chat
+    if (isNewChatMode) {
+      console.log('[useChatConversation] Skipping history load - new chat mode');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -105,9 +113,9 @@ export function useChatConversation(): UseChatConversationResult {
     } finally {
       setLoading(false);
     }
-  }, [initialized, conversationId]);
+  }, [initialized, conversationId, isNewChatMode]);
 
-  // Start a new chat - clears everything
+  // Start a new chat - clears everything and sets new chat mode
   const startNewChat = useCallback(async () => {
     try {
       await AsyncStorage.removeItem(CONVERSATION_ID_KEY);
@@ -115,6 +123,7 @@ export function useChatConversation(): UseChatConversationResult {
       console.warn('[useChatConversation] Failed to clear stored conversation ID:', err);
     }
 
+    setIsNewChatMode(true); // Prevent auto-loading of old history
     setConversationIdState(null);
     setMessages([]);
     setError(null);
@@ -128,6 +137,7 @@ export function useChatConversation(): UseChatConversationResult {
   // Update conversation ID (and persist to storage)
   const setConversationId = useCallback(async (id: string) => {
     setConversationIdState(id);
+    setIsNewChatMode(false); // Clear new chat mode once we have a conversation
     try {
       await AsyncStorage.setItem(CONVERSATION_ID_KEY, id);
     } catch (err) {

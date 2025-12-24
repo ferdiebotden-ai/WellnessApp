@@ -203,17 +203,15 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
   },
   newChatButton: {
-    paddingVertical: tokens.spacing.xs,
-    paddingHorizontal: tokens.spacing.sm,
-    borderRadius: tokens.radius.md,
-    backgroundColor: palette.surface,
-    borderWidth: 1,
-    borderColor: palette.border,
+    paddingVertical: tokens.spacing.sm,
+    paddingHorizontal: tokens.spacing.md,
+    borderRadius: tokens.radius.full,
+    backgroundColor: palette.primary,
   },
   newChatText: {
     ...typography.caption,
-    color: palette.textSecondary,
-    fontWeight: '600',
+    color: palette.canvas,
+    fontWeight: '700',
   },
   closeText: {
     ...typography.body,
