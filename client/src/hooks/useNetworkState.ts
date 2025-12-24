@@ -36,6 +36,11 @@ function useWebNetworkState(): NetworkState {
   }));
 
   useEffect(() => {
+    // Skip web-specific logic on native platforms
+    if (Platform.OS !== 'web') {
+      return;
+    }
+
     if (typeof window === 'undefined' || typeof navigator === 'undefined') {
       return;
     }
