@@ -4,12 +4,12 @@ exports.generateCompletion = generateCompletion;
 exports.generateEmbedding = generateEmbedding;
 exports.getCompletionModelName = getCompletionModelName;
 exports.getEmbeddingModelName = getEmbeddingModelName;
-const vertexai_1 = require("@google-cloud/vertexai");
+const genai_1 = require("@google/genai");
 /**
  * Vertex AI client wrapper for Gemini 3 Flash
- * Provides completion and embedding generation for wellness coaching
+ * Uses the @google/genai SDK (recommended for Gemini 2.0+)
  *
- * Completion Model: gemini-3-flash-preview (Global endpoint required)
+ * Completion Model: gemini-3-flash-preview (Global endpoint)
  * - Released Dec 17, 2025
  * - +3x better reasoning on complex benchmarks
  * - Supports thinking_level parameter for reasoning control
@@ -18,38 +18,33 @@ const vertexai_1 = require("@google-cloud/vertexai");
  * - 768-dimensional vectors for semantic search
  */
 const PROJECT_ID = 'wellness-os-app';
-const COMPLETION_LOCATION = 'global'; // Gemini 3 Flash requires global
-const EMBEDDING_LOCATION = 'us-central1'; // Embeddings available in regional
+// Initialize Google Gen AI client for Vertex AI with global location
+// The @google/genai SDK correctly handles global endpoint URLs
+const ai = new genai_1.GoogleGenAI({
+    vertexai: true,
+    project: PROJECT_ID,
+    location: 'global',
+});
 const COMPLETION_MODEL = 'gemini-3-flash-preview';
 const EMBEDDING_MODEL = 'text-embedding-005';
-// Initialize Vertex AI client lazily
-let vertexAI = null;
-function getVertexAI() {
-    if (!vertexAI) {
-        vertexAI = new vertexai_1.VertexAI({
-            project: PROJECT_ID,
-            location: COMPLETION_LOCATION,
-        });
-    }
-    return vertexAI;
-}
+const EMBEDDING_LOCATION = 'us-central1';
 // Safety settings for wellness coaching context
 const safetySettings = [
     {
-        category: vertexai_1.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold: vertexai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        category: genai_1.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: genai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     },
     {
-        category: vertexai_1.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: vertexai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        category: genai_1.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: genai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     },
     {
-        category: vertexai_1.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold: vertexai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        category: genai_1.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: genai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     },
     {
-        category: vertexai_1.HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold: vertexai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        category: genai_1.HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: genai_1.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     },
 ];
 /**
@@ -60,35 +55,24 @@ const safetySettings = [
  * @returns Generated text response
  */
 async function generateCompletion(systemPrompt, userPrompt, temperature = 0.7) {
-    const generativeModel = getVertexAI().getGenerativeModel({
+    const response = await ai.models.generateContent({
         model: COMPLETION_MODEL,
-        safetySettings,
-        generationConfig: {
+        contents: userPrompt,
+        config: {
+            systemInstruction: systemPrompt,
             temperature,
-            maxOutputTokens: 2048, // Allow complete responses; system prompt guides conciseness
+            maxOutputTokens: 2048,
             topP: 0.95,
+            safetySettings,
+            thinkingConfig: {
+                thinkingBudget: 1024, // Low thinking budget for faster responses
+            },
         },
     });
-    // Combine system and user prompts for Gemini
-    // Gemini doesn't have separate system role, so we prepend system instructions
-    const combinedPrompt = `${systemPrompt}\n\n${userPrompt}`;
-    const request = {
-        contents: [{ role: 'user', parts: [{ text: combinedPrompt }] }],
-    };
-    const response = await generativeModel.generateContent(request);
-    const candidates = response.response?.candidates;
-    if (!candidates || candidates.length === 0) {
-        throw new Error('Vertex AI response did not include any candidates');
+    if (!response.text) {
+        throw new Error('Gemini 3 Flash did not return text content');
     }
-    const content = candidates[0].content;
-    if (!content?.parts || content.parts.length === 0) {
-        throw new Error('Vertex AI response candidate did not include content parts');
-    }
-    const textPart = content.parts.find((part) => part.text);
-    if (!textPart || !textPart.text) {
-        throw new Error('Vertex AI response did not include text content');
-    }
-    return textPart.text;
+    return response.text;
 }
 /**
  * Generate an embedding vector for semantic search
