@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 82 (complete) |
-| **Progress** | AI chat button consolidation + UX simplification |
+| **Session** | 83 (complete) |
+| **Progress** | AI Coach button redesign + persistent chat history |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,46 +52,69 @@
 
 ## Last Session
 
-**Date:** December 24, 2025 (Session 82)
+**Date:** December 24, 2025 (Session 83)
+**Focus:** AI Coach Button Redesign + Persistent Chat History
+
+**Context:** User requested two improvements to AI chat:
+1. Redesign AI button to better represent "AI Coach" personalized experience
+2. Enable chat history persistence so users can continue previous conversations
+
+**Solution:**
+Redesigned button with teal branding and implemented full chat history persistence with "New Chat" functionality.
+
+**Changes Made:**
+
+### 1. Backend: Chat History Endpoint
+- Added `getChatHistory` endpoint to `functions/src/chat.ts`
+- Returns most recent conversation with up to 20 messages
+- Registered route: `GET /api/chat/history`
+- Backend deployed to Cloud Run (revision `api-00278-wt6`)
+
+### 2. Client API Layer
+- Added `fetchChatHistory` function to `client/src/services/api.ts`
+- Added `ChatHistoryMessage` and `ChatHistoryResponse` types
+
+### 3. Persistent Conversation Hook
+- Created `client/src/hooks/useChatConversation.ts`
+- Persists `conversationId` to AsyncStorage
+- Manages message state with `loadHistory()`, `startNewChat()`, `addMessage()`
+
+### 4. ChatModal Updates
+- Integrated `useChatConversation` hook
+- Added "New Chat" button in header
+- Shows loading state while fetching history
+- Messages persist between modal open/close
+
+### 5. AI Coach Button Redesign
+- Text: "AI" → "AI Coach"
+- Color: Secondary (blue) → Primary (teal #63E6BE)
+- Added WCAG-compliant 44px touch target
+- Updated accessibility label
+
+**Files Modified (6):**
+- `functions/src/chat.ts` — Added getChatHistory endpoint
+- `functions/src/api.ts` — Registered history route
+- `client/src/services/api.ts` — Added fetchChatHistory function
+- `client/src/hooks/useChatConversation.ts` — **NEW** persistent hook
+- `client/src/components/ChatModal.tsx` — History loading + New Chat button
+- `client/src/components/TopNavigationBar.tsx` — Button redesign
+
+**Commits:**
+- `0b894ac` — Add AI Coach button redesign + persistent chat history
+
+---
+
+## Session 82 (Previous)
+
+**Date:** December 24, 2025
 **Focus:** AI Chat Button Consolidation
 
 **Context:** User reported redundant buttons on HomeScreen — both an "AI" button in the TopNavigationBar AND a 💬 chat button in the HomeHeader, plus a redundant profile avatar.
 
-**Problem:**
-1. Two ways to access AI chat on HomeScreen (confusing UX)
-2. HomeHeader's chat button bypassed monetization/feature flag checks
-3. Duplicate ChatModal instances (global + local)
-4. Profile avatar redundant with bottom tab navigation
-
 **Solution:**
 Consolidated to single persistent AI button in TopNavigationBar (already available across all screens).
 
-**Changes Made:**
-
-### 1. Simplified HomeHeader.tsx
-- Removed chat button (💬) and profile avatar
-- Removed `onChatPress` and `onProfilePress` props
-- Removed haptic handlers and Pressable imports
-- Reduced from 179 → 78 lines
-
-### 2. Cleaned HomeScreen.tsx
-- Removed local ChatModal and `chatOpen` state
-- Removed `handleChatPress` and `handleProfilePress` callbacks
-- Removed unused imports (ChatModal, useNavigation, Pressable)
-- Reduced by 15 lines
-
-**UX Benefits:**
-- Single, consistent AI chat entry point
-- Proper monetization/feature flag checks enforced
-- Cleaner visual hierarchy (greeting + date only in header)
-- Users access profile via bottom tabs (standard pattern)
-
-**Files Modified (2):**
-- `client/src/components/home/HomeHeader.tsx` — Simplified to greeting + date only
-- `client/src/screens/HomeScreen.tsx` — Removed duplicate ChatModal
-
-**Commits:**
-- `79b03af` — Remove redundant AI chat button and profile avatar from HomeHeader
+**Commits:** `79b03af`
 
 ---
 
@@ -197,12 +220,16 @@ Consolidated to single persistent AI button in TopNavigationBar (already availab
 
 ## Next Session Priority
 
-### Session 83 Focus: Deploy Backend + Test Onboarding Flow
+### Session 84 Focus: Test AI Coach + Onboarding Flow
 
-Backend changes need deployment. Then test complete onboarding flow with new protocol selection screen.
+Test AI Coach chat history persistence and complete onboarding flow.
 
 **Immediate:**
-1. Deploy Cloud Functions to apply onboarding.ts changes
+1. Test AI Coach improvements:
+   - Tap "AI Coach" button (now teal, 44px touch target)
+   - Send a message → verify conversation created
+   - Close and reopen modal → verify messages reload
+   - Tap "New Chat" → verify starts fresh conversation
 2. Test complete onboarding journey:
    - Sign up with new account
    - Goal selection → StarterProtocolSelection
@@ -350,4 +377,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 24, 2025 (Session 82 complete - AI chat button consolidation)*
+*Last Updated: December 24, 2025 (Session 83 complete - AI Coach button redesign + chat history)*
