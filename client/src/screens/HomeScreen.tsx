@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { LiteModeScoreCard } from '../components/LiteModeScoreCard';
 import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
@@ -69,6 +69,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     error: enrolledError,
     refresh: refreshEnrolledProtocols,
   } = useEnrolledProtocols();
+
+  // Refresh enrolled protocols when screen comes into focus
+  // This ensures new enrollments from ProtocolBrowser are displayed
+  useFocusEffect(
+    useCallback(() => {
+      refreshEnrolledProtocols();
+    }, [refreshEnrolledProtocols])
+  );
 
   // Track protocols currently being updated (for swipe actions)
   const [updatingProtocolIds, setUpdatingProtocolIds] = useState<Set<string>>(new Set());

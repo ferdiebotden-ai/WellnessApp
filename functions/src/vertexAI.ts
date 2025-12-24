@@ -1,19 +1,18 @@
 import { VertexAI, HarmCategory, HarmBlockThreshold } from '@google-cloud/vertexai';
 
 /**
- * Vertex AI client wrapper for Gemini 3 Flash
+ * Vertex AI client wrapper for Gemini 2.5 Flash
  * Provides completion and embedding generation for wellness coaching
  *
- * Model: gemini-3-flash-preview (Released Dec 17, 2025)
- * - +3x better reasoning on complex benchmarks
- * - 78% on SWE-Bench (vs 54% for 2.5 Flash)
- * - 90.4% on GPQA Diamond (PhD-level reasoning)
- * - Improved multimodal capabilities
+ * Model: gemini-2.5-flash (GA - Generally Available)
+ * - Stable production model available in us-central1
+ * - Low latency and cost efficiency
+ * - Strong reasoning capabilities for wellness coaching
  */
 
 const PROJECT_ID = 'wellness-os-app';
 const LOCATION = 'us-central1';
-const COMPLETION_MODEL = 'gemini-3-flash-preview';
+const COMPLETION_MODEL = 'gemini-2.5-flash';
 const EMBEDDING_MODEL = 'text-embedding-005';
 
 // Initialize Vertex AI client lazily
@@ -50,7 +49,7 @@ const safetySettings = [
 ];
 
 /**
- * Generate a text completion using Gemini 2.5 Flash
+ * Generate a text completion using Gemini 2.5 Flash (GA)
  * @param systemPrompt System-level instructions for the model
  * @param userPrompt User's query or context
  * @param temperature Controls randomness (0-1, default 0.7)
