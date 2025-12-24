@@ -1,10 +1,13 @@
 /**
  * StarterProtocolSelectionScreen
  *
- * Shows starter protocols for the user's selected goal/module.
+ * Shows starter protocols for the user's selected goals/modules.
  * User can toggle which protocols to add to their schedule.
+ * Protocols are grouped by module when multiple goals are selected.
  *
  * Flow: GoalSelection → StarterProtocolSelection → BiometricProfile → ...
+ *
+ * Session 83: Multi-goal support
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -13,6 +16,7 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  SectionList,
   StyleSheet,
   Switch,
   Text,
@@ -22,7 +26,12 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { palette } from '../../theme/palette';
-import { GOAL_TO_MODULE_MAP, type StarterProtocol } from '../../types/onboarding';
+import { tokens } from '../../theme/tokens';
+import {
+  getModulesForGoals,
+  getPrimaryModuleForGoals,
+  type StarterProtocol,
+} from '../../types/onboarding';
 import { fetchStarterProtocols } from '../../services/api';
 import type { OnboardingStackParamList } from '../../navigation/OnboardingStack';
 
@@ -61,7 +70,7 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
     const [hours, minutes] = time.split(':').map(Number);
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    return `${displayHours}:${minutes?.toString().padStart(2, '0') ?? '00'} ${ampm}`;
   };
 
   return (
@@ -120,24 +129,53 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
   );
 };
 
+// Module ID to display name mapping
+const MODULE_DISPLAY_NAMES: Record<string, string> = {
+  mod_sleep: 'Sleep Optimization',
+  mod_morning_routine: 'Morning Routine',
+  mod_focus_productivity: 'Focus & Productivity',
+};
+
+interface ProtocolSection {
+  title: string;
+  data: StarterProtocol[];
+}
+
 export const StarterProtocolSelectionScreen: React.FC<StarterProtocolSelectionScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { selectedGoal } = route.params;
-  const moduleId = GOAL_TO_MODULE_MAP[selectedGoal];
+  const { selectedGoals } = route.params;
+  const moduleIds = getModulesForGoals(selectedGoals);
 
-  const [protocols, setProtocols] = useState<StarterProtocol[]>([]);
+  const [sections, setSections] = useState<ProtocolSection[]>([]);
   const [selectedProtocolIds, setSelectedProtocolIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadProtocols = async () => {
       try {
-        const starterProtocols = await fetchStarterProtocols(moduleId);
-        setProtocols(starterProtocols);
+        // Fetch protocols for all modules in parallel
+        const results = await Promise.all(
+          moduleIds.map(async (moduleId) => {
+            const protocols = await fetchStarterProtocols(moduleId);
+            return { moduleId, protocols };
+          })
+        );
+
+        // Build sections
+        const newSections: ProtocolSection[] = results
+          .filter((r) => r.protocols.length > 0)
+          .map((r) => ({
+            title: MODULE_DISPLAY_NAMES[r.moduleId] || r.moduleId,
+            data: r.protocols,
+          }));
+
+        setSections(newSections);
+
         // Default: all protocols selected
-        setSelectedProtocolIds(new Set(starterProtocols.map((p) => p.id)));
+        const allProtocolIds = results.flatMap((r) => r.protocols.map((p) => p.id));
+        setSelectedProtocolIds(new Set(allProtocolIds));
       } catch (error) {
         console.error('Failed to load starter protocols:', error);
       } finally {
@@ -146,7 +184,7 @@ export const StarterProtocolSelectionScreen: React.FC<StarterProtocolSelectionSc
     };
 
     loadProtocols();
-  }, [moduleId]);
+  }, [moduleIds]);
 
   const handleToggleProtocol = useCallback((protocolId: string) => {
     setSelectedProtocolIds((prev) => {
@@ -162,52 +200,75 @@ export const StarterProtocolSelectionScreen: React.FC<StarterProtocolSelectionSc
 
   const handleContinue = useCallback(() => {
     navigation.navigate('BiometricProfile', {
-      selectedGoal,
+      selectedGoals,
       selectedProtocolIds: Array.from(selectedProtocolIds),
     });
-  }, [navigation, selectedGoal, selectedProtocolIds]);
+  }, [navigation, selectedGoals, selectedProtocolIds]);
 
   const selectedCount = selectedProtocolIds.size;
-  const totalCount = protocols.length;
+  const totalCount = sections.reduce((acc, s) => acc + s.data.length, 0);
+  const showSectionHeaders = sections.length > 1;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={palette.primary} />
+          <Text style={styles.loadingText}>Loading protocols...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-      >
-        <Animated.View
-          entering={FadeInDown.duration(600).delay(100)}
-          style={styles.header}
-        >
-          <Text style={styles.title}>Recommended Protocols</Text>
-          <Text style={styles.subtitle}>
-            These protocols are designed for your goal. Toggle off any you'd like to skip.
-          </Text>
-        </Animated.View>
-
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={palette.primary} />
-            <Text style={styles.loadingText}>Loading protocols...</Text>
-          </View>
-        ) : (
-          <View style={styles.protocolsContainer}>
-            {protocols.map((protocol, index) => (
-              <Animated.View
-                key={protocol.id}
-                entering={FadeInDown.duration(500).delay(200 + index * 100)}
-              >
-                <ProtocolCard
-                  protocol={protocol}
-                  isSelected={selectedProtocolIds.has(protocol.id)}
-                  onToggle={handleToggleProtocol}
-                />
-              </Animated.View>
-            ))}
-          </View>
+        stickySectionHeadersEnabled={false}
+        ListHeaderComponent={
+          <Animated.View
+            entering={FadeInDown.duration(600).delay(100)}
+            style={styles.header}
+          >
+            <Text style={styles.title}>Recommended Protocols</Text>
+            <Text style={styles.subtitle}>
+              {selectedGoals.length > 1
+                ? "Based on your goals, we've curated these protocols. Toggle off any you'd like to skip."
+                : "These protocols are designed for your goal. Toggle off any you'd like to skip."}
+            </Text>
+          </Animated.View>
+        }
+        renderSectionHeader={({ section }) =>
+          showSectionHeaders ? (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
+          ) : null
+        }
+        renderItem={({ item, index }) => (
+          <Animated.View
+            entering={FadeInDown.duration(500).delay(200 + index * 50)}
+          >
+            <ProtocolCard
+              protocol={item}
+              isSelected={selectedProtocolIds.has(item.id)}
+              onToggle={handleToggleProtocol}
+            />
+          </Animated.View>
         )}
-      </ScrollView>
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="document-outline" size={48} color={palette.textMuted} />
+            <Text style={styles.emptyTitle}>No Protocols Available</Text>
+            <Text style={styles.emptyMessage}>
+              We're still building protocols for these focus areas.
+            </Text>
+          </View>
+        }
+      />
 
       <View style={styles.footer}>
         <Text style={styles.selectionCount}>
@@ -256,17 +317,25 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   loadingContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 14,
     color: palette.textMuted,
   },
-  protocolsContainer: {
-    gap: 12,
+  sectionHeader: {
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: palette.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   protocolCard: {
     flexDirection: 'row',
@@ -274,6 +343,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderRadius: 16,
     padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: palette.elevated,
   },
@@ -330,6 +400,21 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     lineHeight: 20,
   },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: palette.textPrimary,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: palette.textSecondary,
+    textAlign: 'center',
+  },
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -353,7 +438,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: palette.primary,
-    borderRadius: 14,
+    borderRadius: tokens.radius.lg,
     paddingVertical: 16,
     gap: 8,
   },

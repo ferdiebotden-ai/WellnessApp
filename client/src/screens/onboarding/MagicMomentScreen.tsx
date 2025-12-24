@@ -37,7 +37,7 @@ import type {
   WearableSource,
   HealthPlatform,
 } from '../../types/onboarding';
-import { GOAL_TO_MODULE_MAP } from '../../types/onboarding';
+import { GOAL_TO_MODULE_MAP, getPrimaryModuleForGoals } from '../../types/onboarding';
 import { completeOnboarding } from '../../services/api';
 import { useUpdateOnboarding } from '../../providers/AuthProvider';
 import analytics from '../../services/AnalyticsService';
@@ -129,7 +129,8 @@ function estimateRecoveryScore(
 export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
   route,
 }) => {
-  const { selectedGoal, selectedProtocolIds, biometrics, wearableSource, healthPlatform } = route.params;
+  const { selectedGoals, selectedProtocolIds, biometrics, wearableSource, healthPlatform } = route.params;
+  const primaryGoal = selectedGoals[0]; // Use first goal as primary for display
   const [submitting, setSubmitting] = useState(false);
   const updateOnboarding = useUpdateOnboarding();
 
@@ -138,18 +139,18 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
   const recoveryColor = getRecoveryColor(estimatedScore);
 
   // Get starter protocol for this goal
-  const starterProtocol = GOAL_TO_STARTER_PROTOCOL[selectedGoal];
+  const starterProtocol = GOAL_TO_STARTER_PROTOCOL[primaryGoal];
 
   const handleStart = useCallback(async () => {
     setSubmitting(true);
     void haptic.medium();
 
     try {
-      const primaryModuleId = GOAL_TO_MODULE_MAP[selectedGoal];
+      const primaryModuleId = getPrimaryModuleForGoals(selectedGoals);
 
       // Backend call with timeout protection
       const onboardingPromise = completeOnboarding({
-        primary_goal: selectedGoal,
+        primary_goal: primaryGoal,
         wearable_source: wearableSource ?? null,
         health_platform: healthPlatform ?? null,
         primary_module_id: primaryModuleId,
@@ -173,7 +174,7 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
       // Track analytics (non-blocking)
       void analytics.trackOnboardingComplete({
         primaryModuleId,
-        goal: selectedGoal,
+        goal: primaryGoal,
         wearable: wearableSource ?? 'skipped',
         healthPlatform: healthPlatform ?? 'skipped',
         hasBiometrics: !!biometrics?.birthDate || !!biometrics?.biologicalSex,
@@ -193,7 +194,7 @@ export const MagicMomentScreen: React.FC<MagicMomentScreenProps> = ({
         { text: 'Cancel', style: 'cancel' },
       ]);
     }
-  }, [selectedGoal, selectedProtocolIds, biometrics, wearableSource, healthPlatform, updateOnboarding]);
+  }, [selectedGoals, primaryGoal, selectedProtocolIds, biometrics, wearableSource, healthPlatform, updateOnboarding]);
 
   if (submitting) {
     return (

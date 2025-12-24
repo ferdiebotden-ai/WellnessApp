@@ -116,7 +116,7 @@ export const HealthDataSyncScreen: React.FC<HealthDataSyncScreenProps> = ({
   route,
   navigation,
 }) => {
-  const { selectedGoal, selectedProtocolIds, biometrics, wearableSource } = route.params;
+  const { selectedGoals, selectedProtocolIds, biometrics, wearableSource } = route.params;
 
   // Filter to show only the platform for the current OS
   const currentPlatform = useMemo(() => {
@@ -127,14 +127,14 @@ export const HealthDataSyncScreen: React.FC<HealthDataSyncScreenProps> = ({
   const navigateToMagicMoment = useCallback(
     (healthPlatform: HealthPlatform | null) => {
       navigation.navigate('MagicMoment', {
-        selectedGoal: selectedGoal as PrimaryGoal,
+        selectedGoals,
         selectedProtocolIds,
         biometrics: biometrics ?? undefined,
         wearableSource: wearableSource ?? null,
         healthPlatform,
       });
     },
-    [navigation, selectedGoal, selectedProtocolIds, biometrics, wearableSource]
+    [navigation, selectedGoals, selectedProtocolIds, biometrics, wearableSource]
   );
 
   const handleConnect = useCallback(

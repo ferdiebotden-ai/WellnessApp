@@ -1,5 +1,17 @@
 import { Request, Response } from 'express';
 /**
+ * Determines the default schedule time based on protocol ID/name patterns.
+ * Returns time in HH:MM format (UTC).
+ *
+ * Logic:
+ * - Morning light, foundation protocols → 07:00
+ * - Exercise, cold exposure → 10:00
+ * - Breathwork, meditation → 13:00
+ * - Wind down, sleep prep → 21:00
+ * - Others → 12:00
+ */
+export declare function getDefaultTimeForProtocol(protocolId: string, category: string): string;
+/**
  * POST /api/protocols/:id/enroll
  *
  * Adds a protocol to the user's daily schedule with intelligent default timing.

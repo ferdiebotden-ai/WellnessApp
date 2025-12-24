@@ -17,6 +17,7 @@ const onboarding_1 = require("./onboarding");
 const monetization_1 = require("./monetization");
 const correlations_1 = require("./correlations");
 const modules_1 = require("./modules");
+const starterProtocols_1 = require("./starterProtocols");
 const pushTokens_1 = require("./pushTokens");
 const mvdApi_1 = require("./mvd/mvdApi");
 const wakeEvents_1 = require("./wakeEvents");
@@ -48,6 +49,7 @@ app.get('/api/users/me/correlations', correlations_1.getUserCorrelations);
 app.get('/api/users/me/weekly-synthesis', weeklySynthesisApi_1.getLatestWeeklySynthesis);
 // Feature routes
 app.post('/api/chat', chat_1.postChat);
+app.get('/api/chat/history', chat_1.getChatHistory);
 app.post('/api/onboarding/complete', onboarding_1.completeOnboarding);
 app.post('/api/waitlist', waitlist_1.joinWaitlist);
 app.post('/api/wearables/sync', wearablesSync_1.syncWearableData);
@@ -58,6 +60,8 @@ app.delete('/api/protocols/:id/enroll', protocolEnrollment_1.unenrollProtocol);
 app.get('/api/user/enrolled-protocols', protocolEnrollment_1.getEnrolledProtocols);
 app.get('/api/modules', modules_1.getModules);
 app.patch('/api/modules/enrollment', modules_1.updatePrimaryModule);
+app.get('/api/modules/:moduleId/starter-protocols', starterProtocols_1.getStarterProtocols);
+app.get('/api/modules/:moduleId/protocols', starterProtocols_1.getModuleProtocols);
 // Push notification routes
 app.post('/api/push-tokens', pushTokens_1.registerPushToken);
 app.delete('/api/push-tokens', pushTokens_1.deactivatePushTokens);

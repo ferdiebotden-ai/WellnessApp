@@ -78,6 +78,40 @@ export const GOAL_TO_MODULE_MAP: Record<PrimaryGoal, string> = {
   faster_recovery: 'mod_sleep', // Recovery starts with sleep optimization
 };
 
+/**
+ * Multi-goal → Modules mapping
+ * Each goal maps to primary + related modules for comprehensive protocol coverage.
+ * Used when user selects multiple goals during onboarding.
+ */
+export const GOAL_TO_MODULES_MAP: Record<PrimaryGoal, string[]> = {
+  better_sleep: ['mod_sleep', 'mod_morning_routine'],
+  more_energy: ['mod_morning_routine', 'mod_focus_productivity'],
+  sharper_focus: ['mod_focus_productivity', 'mod_morning_routine'],
+  faster_recovery: ['mod_sleep', 'mod_focus_productivity'],
+};
+
+/**
+ * Get unique module IDs for an array of goals.
+ * Deduplicates modules when multiple goals share the same module.
+ */
+export function getModulesForGoals(goals: PrimaryGoal[]): string[] {
+  const moduleSet = new Set<string>();
+  goals.forEach((goal) => {
+    const modules = GOAL_TO_MODULES_MAP[goal];
+    modules.forEach((m) => moduleSet.add(m));
+  });
+  return Array.from(moduleSet);
+}
+
+/**
+ * Get the primary module for an array of goals.
+ * Returns the first goal's primary module.
+ */
+export function getPrimaryModuleForGoals(goals: PrimaryGoal[]): string {
+  if (goals.length === 0) return 'mod_sleep';
+  return GOAL_TO_MODULE_MAP[goals[0]];
+}
+
 /** Available goals for onboarding */
 export const ONBOARDING_GOALS: OnboardingGoal[] = [
   {

@@ -30,7 +30,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { HomeStackNavigator } from './HomeStack';
-import { ProtocolsScreen } from '../screens/ProtocolsScreen';
+import { ProtocolsStackNavigator } from './ProtocolsStack';
 import { InsightsScreen } from '../screens/InsightsScreen';
 import { ProfileStackNavigator } from './ProfileStack';
 import { palette } from '../theme/palette';
@@ -225,7 +225,7 @@ export const BottomTabs: React.FC = () => (
     }}
   >
     <Tab.Screen name="Home" component={HomeStackNavigator} />
-    <Tab.Screen name="Protocols" component={ProtocolsScreen} />
+    <Tab.Screen name="Protocols" component={ProtocolsStackNavigator} />
     <Tab.Screen name="Insights" component={InsightsScreen} />
     <Tab.Screen name="Profile" component={ProfileStackNavigator} />
   </Tab.Navigator>

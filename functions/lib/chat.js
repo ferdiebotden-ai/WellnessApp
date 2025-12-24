@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postChat = void 0;
+exports.getChatHistory = exports.postChat = void 0;
 const users_1 = require("./users");
 const firestore_1 = require("firebase-admin/firestore");
 const firebaseAdmin_1 = require("./firebaseAdmin");
@@ -401,3 +401,62 @@ User Query: ${message}`;
     }
 };
 exports.postChat = postChat;
+/**
+ * GET /api/chat/history
+ *
+ * Fetches the user's most recent conversation history.
+ * Returns the most recent conversation with up to 20 messages.
+ *
+ * Query params:
+ * - conversationId (optional): Specific conversation to fetch
+ * - limit (optional): Max messages to return (default: 20, max: 50)
+ *
+ * @returns {
+ *   conversationId: string | null,
+ *   messages: Array<{role: 'user' | 'assistant', content: string}>
+ * }
+ */
+const getChatHistory = async (req, res) => {
+    if (req.method !== 'GET') {
+        res.status(405).json({ error: 'Method Not Allowed' });
+        return;
+    }
+    try {
+        const { uid } = await (0, users_1.authenticateRequest)(req);
+        const { conversationId, limit: limitParam } = req.query;
+        const limit = Math.min(parseInt(limitParam) || 20, 50);
+        const firestore = (0, firestore_1.getFirestore)((0, firebaseAdmin_1.getFirebaseApp)());
+        // If conversationId provided, use it; otherwise find most recent
+        let convId = conversationId;
+        if (!convId) {
+            // Get most recent conversation by updated_at
+            const conversationsRef = firestore
+                .collection('users')
+                .doc(uid)
+                .collection('conversations')
+                .orderBy('updated_at', 'desc')
+                .limit(1);
+            const snapshot = await conversationsRef.get();
+            if (snapshot.empty) {
+                // No conversations yet - return empty
+                res.status(200).json({ conversationId: null, messages: [] });
+                return;
+            }
+            convId = snapshot.docs[0].id;
+        }
+        // Fetch messages from the conversation
+        const messages = await getRecentMessages(firestore, uid, convId, limit);
+        res.status(200).json({
+            conversationId: convId,
+            messages: messages.map(m => ({
+                role: m.role,
+                content: m.content,
+            })),
+        });
+    }
+    catch (error) {
+        console.error('[Chat History] Error:', error);
+        res.status(500).json({ error: 'Failed to fetch chat history' });
+    }
+};
+exports.getChatHistory = getChatHistory;

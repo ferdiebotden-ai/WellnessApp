@@ -20,21 +20,21 @@ import type {
 export type OnboardingStackParamList = {
   AICoachIntro: undefined;
   GoalSelection: undefined;
-  StarterProtocolSelection: { selectedGoal: PrimaryGoal };
-  BiometricProfile: { selectedGoal: PrimaryGoal; selectedProtocolIds?: string[] };
+  StarterProtocolSelection: { selectedGoals: PrimaryGoal[] };
+  BiometricProfile: { selectedGoals: PrimaryGoal[]; selectedProtocolIds?: string[] };
   WearableConnection: {
-    selectedGoal: PrimaryGoal;
+    selectedGoals: PrimaryGoal[];
     selectedProtocolIds?: string[];
     biometrics?: BiometricProfileData;
   };
   HealthDataSync: {
-    selectedGoal: PrimaryGoal;
+    selectedGoals: PrimaryGoal[];
     selectedProtocolIds?: string[];
     biometrics?: BiometricProfileData;
     wearableSource?: WearableSource | null;
   };
   MagicMoment: {
-    selectedGoal: PrimaryGoal;
+    selectedGoals: PrimaryGoal[];
     selectedProtocolIds?: string[];
     biometrics?: BiometricProfileData;
     wearableSource?: WearableSource | null;

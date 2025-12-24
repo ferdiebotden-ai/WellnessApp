@@ -3,12 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.completeOnboarding = completeOnboarding;
 const supabaseClient_1 = require("./supabaseClient");
 const users_1 = require("./users");
-/** Maps primary goals to their corresponding module IDs */
+const protocolEnrollment_1 = require("./protocolEnrollment");
+/**
+ * Maps primary goals to their corresponding module IDs.
+ * Module IDs must match public.modules table: mod_sleep, mod_morning_routine, mod_focus_productivity
+ */
 const GOAL_TO_MODULE_MAP = {
-    better_sleep: 'sleep_foundations',
-    more_energy: 'metabolic_reset',
-    sharper_focus: 'metabolic_reset',
-    faster_recovery: 'stress_resilience',
+    better_sleep: 'mod_sleep',
+    more_energy: 'mod_morning_routine',
+    sharper_focus: 'mod_focus_productivity',
+    faster_recovery: 'mod_sleep', // Recovery starts with sleep optimization
 };
 function resolveError(error) {
     if (typeof error === 'object' && error !== null) {
@@ -147,7 +151,40 @@ async function completeOnboarding(req, res) {
                 throw enrollmentError;
             }
         }
-        // 6. Return success with all relevant data
+        // 6. Enroll user in selected starter protocols
+        let enrolledProtocolCount = 0;
+        if (body.selected_protocol_ids && body.selected_protocol_ids.length > 0) {
+            // Fetch protocol details to get category for default time calculation
+            const { data: protocols } = await serviceClient
+                .from('protocols')
+                .select('id, category')
+                .in('id', body.selected_protocol_ids);
+            const protocolMap = new Map(protocols?.map(p => [p.id, p]) ?? []);
+            const now = new Date().toISOString();
+            const protocolEnrollments = body.selected_protocol_ids.map(protocolId => {
+                const protocol = protocolMap.get(protocolId);
+                const defaultTime = (0, protocolEnrollment_1.getDefaultTimeForProtocol)(protocolId, protocol?.category ?? 'Foundation');
+                return {
+                    user_id: user.id,
+                    protocol_id: protocolId,
+                    module_id: primaryModuleId,
+                    default_time_utc: defaultTime,
+                    is_active: true,
+                    enrolled_at: now,
+                };
+            });
+            const { error: protocolEnrollmentError } = await serviceClient
+                .from('user_protocol_enrollment')
+                .upsert(protocolEnrollments, { onConflict: 'user_id,protocol_id' });
+            if (protocolEnrollmentError) {
+                // Log but don't fail onboarding for protocol enrollment errors
+                console.error('Protocol enrollment error:', protocolEnrollmentError);
+            }
+            else {
+                enrolledProtocolCount = protocolEnrollments.length;
+            }
+        }
+        // 7. Return success with all relevant data
         res.status(200).json({
             success: true,
             trial_start_date: user.trial_start_date,
@@ -156,7 +193,8 @@ async function completeOnboarding(req, res) {
             primary_goal: body.primary_goal,
             wearable_source: wearableSource,
             has_biometrics: !!(biometrics?.birthDate || biometrics?.biologicalSex || biometrics?.heightCm || biometrics?.weightKg),
-            timezone: biometrics?.timezone ?? 'UTC'
+            timezone: biometrics?.timezone ?? 'UTC',
+            enrolled_protocol_count: enrolledProtocolCount,
         });
     }
     catch (error) {

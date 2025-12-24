@@ -15,9 +15,11 @@ interface GoalCardProps {
   goal: OnboardingGoal;
   selected: boolean;
   onSelect: (goalId: string) => void;
+  /** When true, behaves as checkbox (multi-select); otherwise radio (single-select) */
+  multiSelect?: boolean;
 }
 
-export const GoalCard: React.FC<GoalCardProps> = ({ goal, selected, onSelect }) => {
+export const GoalCard: React.FC<GoalCardProps> = ({ goal, selected, onSelect, multiSelect = false }) => {
   const scale = useSharedValue(1);
   const borderProgress = useSharedValue(selected ? 1 : 0);
 
@@ -49,8 +51,8 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal, selected, onSelect }) 
 
   return (
     <AnimatedPressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      accessibilityRole={multiSelect ? 'checkbox' : 'radio'}
+      accessibilityState={{ checked: selected, selected }}
       accessibilityLabel={`${goal.label}: ${goal.description}`}
       onPress={() => onSelect(goal.id)}
       onPressIn={handlePressIn}

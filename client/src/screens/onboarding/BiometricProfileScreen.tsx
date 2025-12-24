@@ -44,7 +44,7 @@ export const BiometricProfileScreen: React.FC<BiometricProfileScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { selectedGoal, selectedProtocolIds } = route.params;
+  const { selectedGoals, selectedProtocolIds } = route.params;
 
   // Auto-detect timezone using expo-localization getCalendars API
   const detectedTimezone = useMemo(() => {
@@ -163,13 +163,13 @@ export const BiometricProfileScreen: React.FC<BiometricProfileScreenProps> = ({
     };
 
     navigation.navigate('WearableConnection', {
-      selectedGoal: selectedGoal as PrimaryGoal,
+      selectedGoals,
       selectedProtocolIds,
       biometrics: biometricData,
     });
   }, [
     navigation,
-    selectedGoal,
+    selectedGoals,
     selectedProtocolIds,
     birthDate,
     biologicalSex,
