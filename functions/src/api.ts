@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { createUser, getCurrentUser, updateCurrentUser } from './users';
-import { postChat } from './chat';
+import { postChat, getChatHistory } from './chat';
 import { joinWaitlist } from './waitlist';
 import { syncWearableData } from './wearablesSync';
 import { searchProtocols } from './protocolSearch';
@@ -11,6 +11,7 @@ import { completeOnboarding } from './onboarding';
 import { getMonetizationStatus } from './monetization';
 import { getUserCorrelations } from './correlations';
 import { getModules, updatePrimaryModule } from './modules';
+import { getStarterProtocols, getModuleProtocols } from './starterProtocols';
 import { registerPushToken, deactivatePushTokens } from './pushTokens';
 import {
   activateMVDManually,
@@ -58,6 +59,7 @@ app.get('/api/users/me/weekly-synthesis', getLatestWeeklySynthesis);
 
 // Feature routes
 app.post('/api/chat', postChat);
+app.get('/api/chat/history', getChatHistory);
 app.post('/api/onboarding/complete', completeOnboarding);
 app.post('/api/waitlist', joinWaitlist);
 app.post('/api/wearables/sync', syncWearableData);
@@ -68,6 +70,8 @@ app.delete('/api/protocols/:id/enroll', unenrollProtocol);
 app.get('/api/user/enrolled-protocols', getEnrolledProtocols);
 app.get('/api/modules', getModules);
 app.patch('/api/modules/enrollment', updatePrimaryModule);
+app.get('/api/modules/:moduleId/starter-protocols', getStarterProtocols);
+app.get('/api/modules/:moduleId/protocols', getModuleProtocols);
 
 // Push notification routes
 app.post('/api/push-tokens', registerPushToken);

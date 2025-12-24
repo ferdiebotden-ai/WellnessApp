@@ -15,6 +15,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
+import { tokens } from '../theme/tokens';
 import { createShadow } from '../utils/shadows';
 import { haptic } from '../utils/haptics';
 
@@ -41,7 +42,7 @@ export const TopNavigationBar: React.FC<Props> = ({ title, subtitle, onAiCoachPr
           style={styles.aiCoachButton}
           onPress={() => {
             haptic.light();
-            console.log('[TopNavigationBar] AI button clicked');
+            console.log('[TopNavigationBar] AI Coach button clicked');
             if (onAiCoachPress) {
               onAiCoachPress();
             } else {
@@ -49,10 +50,10 @@ export const TopNavigationBar: React.FC<Props> = ({ title, subtitle, onAiCoachPr
             }
           }}
           accessibilityRole="button"
-          accessibilityLabel="Open AI coach"
+          accessibilityLabel="Open AI Coach chat assistant"
           testID="ai-coach-button"
         >
-          <Text style={styles.aiCoachText}>AI</Text>
+          <Text style={styles.aiCoachText}>AI Coach</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -83,15 +84,18 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   aiCoachButton: {
-    backgroundColor: palette.secondary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 999,
+    backgroundColor: palette.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: tokens.radius.full,
+    minHeight: tokens.touch.min,
+    justifyContent: 'center',
+    alignItems: 'center',
     ...createShadow('md'),
   },
   aiCoachText: {
-    ...typography.subheading,
-    color: palette.textPrimary,
-    letterSpacing: 1,
+    ...typography.button,
+    color: palette.canvas,
+    letterSpacing: 0.5,
   },
 });

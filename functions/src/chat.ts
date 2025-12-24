@@ -510,3 +510,69 @@ User Query: ${message}`;
   }
 };
 
+/**
+ * GET /api/chat/history
+ *
+ * Fetches the user's most recent conversation history.
+ * Returns the most recent conversation with up to 20 messages.
+ *
+ * Query params:
+ * - conversationId (optional): Specific conversation to fetch
+ * - limit (optional): Max messages to return (default: 20, max: 50)
+ *
+ * @returns {
+ *   conversationId: string | null,
+ *   messages: Array<{role: 'user' | 'assistant', content: string}>
+ * }
+ */
+export const getChatHistory = async (req: Request, res: Response): Promise<void> => {
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'Method Not Allowed' });
+    return;
+  }
+
+  try {
+    const { uid } = await authenticateRequest(req);
+    const { conversationId, limit: limitParam } = req.query;
+    const limit = Math.min(parseInt(limitParam as string) || 20, 50);
+
+    const firestore = getFirestore(getFirebaseApp());
+
+    // If conversationId provided, use it; otherwise find most recent
+    let convId = conversationId as string | undefined;
+
+    if (!convId) {
+      // Get most recent conversation by updated_at
+      const conversationsRef = firestore
+        .collection('users')
+        .doc(uid)
+        .collection('conversations')
+        .orderBy('updated_at', 'desc')
+        .limit(1);
+
+      const snapshot = await conversationsRef.get();
+      if (snapshot.empty) {
+        // No conversations yet - return empty
+        res.status(200).json({ conversationId: null, messages: [] });
+        return;
+      }
+      convId = snapshot.docs[0].id;
+    }
+
+    // Fetch messages from the conversation
+    const messages = await getRecentMessages(firestore, uid, convId, limit);
+
+    res.status(200).json({
+      conversationId: convId,
+      messages: messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      })),
+    });
+
+  } catch (error) {
+    console.error('[Chat History] Error:', error);
+    res.status(500).json({ error: 'Failed to fetch chat history' });
+  }
+};
+

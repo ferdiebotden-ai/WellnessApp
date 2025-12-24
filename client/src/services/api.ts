@@ -235,6 +235,47 @@ export const fetchStarterProtocols = async (moduleId: string): Promise<StarterPr
 };
 
 /**
+ * Protocol data returned from the module protocols endpoint.
+ * Includes all protocol details plus module-specific metadata.
+ */
+export interface ModuleProtocol {
+  id: string;
+  name: string;
+  short_name: string;
+  summary: string;
+  category: string;
+  evidence_level?: string;
+  duration_minutes?: number;
+  implementation_methods?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    icon?: string;
+  }>;
+  is_starter_protocol: boolean;
+  tier_required: string;
+  default_time: string;
+}
+
+/**
+ * Fetches all protocols for a given module.
+ * Used in ModuleProtocolsScreen to show available protocols.
+ * @param moduleId Module ID to fetch protocols for
+ * @returns Array of protocols with their metadata
+ */
+export const fetchModuleProtocols = async (moduleId: string): Promise<ModuleProtocol[]> => {
+  try {
+    return await request<ModuleProtocol[]>(
+      `/api/modules/${moduleId}/protocols`,
+      'GET'
+    );
+  } catch (error) {
+    console.warn('Module protocols API unavailable, using empty array', error);
+    return [];
+  }
+};
+
+/**
  * Submits a waitlist entry for premium tiers.
  * @param email Email address for follow-up communication.
  * @param tierInterestedIn Tier the user wants access to.
@@ -289,6 +330,49 @@ export const sendChatQuery = (message: string, conversationId?: string) =>
     message,
     conversationId,
   });
+
+/**
+ * Chat history message from a conversation.
+ */
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/**
+ * Response from the chat history endpoint.
+ */
+export interface ChatHistoryResponse {
+  conversationId: string | null;
+  messages: ChatHistoryMessage[];
+}
+
+/**
+ * Fetches chat history for the current user.
+ * Returns the most recent conversation if no conversationId is provided.
+ *
+ * @param conversationId Optional specific conversation to fetch
+ * @param limit Max messages to return (default 20)
+ * @returns Conversation ID and message history
+ */
+export const fetchChatHistory = async (
+  conversationId?: string,
+  limit: number = 20
+): Promise<ChatHistoryResponse> => {
+  try {
+    const params = new URLSearchParams();
+    if (conversationId) params.set('conversationId', conversationId);
+    if (limit !== 20) params.set('limit', limit.toString());
+
+    const queryString = params.toString();
+    const path = `/api/chat/history${queryString ? `?${queryString}` : ''}`;
+
+    return await request<ChatHistoryResponse>(path, 'GET');
+  } catch (error) {
+    console.warn('[fetchChatHistory] Failed:', error);
+    return { conversationId: null, messages: [] };
+  }
+};
 
 /**
  * Protocol search result from RAG-powered semantic search.
