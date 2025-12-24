@@ -1,11 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { LiteModeScoreCard } from '../components/LiteModeScoreCard';
 import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
-import { ChatModal } from '../components/ChatModal';
 import { SilentErrorBoundary } from '../components/ErrorBoundary';
 // New Home Screen components (Session 57)
 import { HomeHeader } from '../components/home/HomeHeader';
@@ -80,9 +79,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   // Track protocols currently being updated (for swipe actions)
   const [updatingProtocolIds, setUpdatingProtocolIds] = useState<Set<string>>(new Set());
-
-  // AI Chat modal state
-  const [chatOpen, setChatOpen] = useState(false);
 
   // Get user's first name for greeting
   const userName = firebaseAuth.currentUser?.displayName?.split(' ')[0] || undefined;
@@ -203,16 +199,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     [filteredEnrolledModules]
   );
 
-  // Session 57: Navigation callbacks
-  const handleProfilePress = useCallback(() => {
-    // Navigate to Profile tab
-    navigation.getParent()?.navigate('Profile');
-  }, [navigation]);
-
-  const handleChatPress = useCallback(() => {
-    setChatOpen(true);
-  }, []);
-
   // Session 58: Navigate to Protocol Detail
   const handleTaskPress = useCallback(
     (task: DashboardTask) => {
@@ -315,12 +301,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     <View style={styles.root} testID="home-screen">
       <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContent} testID="home-scroll-view">
-        {/* 1. Header with greeting, date, and actions */}
-        <HomeHeader
-          userName={userName}
-          onProfilePress={handleProfilePress}
-          onChatPress={handleChatPress}
-        />
+        {/* 1. Header with greeting and date */}
+        <HomeHeader userName={userName} />
 
         {/* 2. Recovery Score Hero */}
         <View style={styles.section}>
@@ -413,11 +395,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onDismiss={handleWakeDismiss}
       />
 
-      {/* AI Coach Chat Modal */}
-      <ChatModal
-        visible={chatOpen}
-        onClose={() => setChatOpen(false)}
-      />
     </View>
   );
 };
