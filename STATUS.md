@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 80 (complete) |
-| **Progress** | Account deletion fixed (synchronous), ready for onboarding testing |
+| **Session** | 81 (complete) |
+| **Progress** | Focus area UX fixed + light protocol consolidation complete |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,7 +52,62 @@
 
 ## Last Session
 
-**Date:** December 24, 2025 (Session 80)
+**Date:** December 24, 2025 (Session 81)
+**Focus:** Focus Area UX & Light Protocol Consolidation
+
+**Context:** User reported two UX issues:
+1. Selecting a focus area (e.g., "Better Sleep") doesn't load related protocols
+2. Morning Light appears as multiple separate protocols in search
+
+**Root Causes Found:**
+1. Server GOAL_TO_MODULE_MAP used wrong module IDs (`sleep_foundations` instead of `mod_sleep`)
+2. No code to enroll users in starter protocols after module enrollment
+3. Light protocol migration (20251210120000) targeted wrong protocol ID
+
+**Solution:**
+
+### 1. Fixed GOAL_TO_MODULE_MAP (functions/src/onboarding.ts)
+```typescript
+// Before (wrong IDs)
+better_sleep: 'sleep_foundations'
+// After (correct IDs)
+better_sleep: 'mod_sleep'
+```
+
+### 2. Added StarterProtocolSelectionScreen
+- New onboarding screen between GoalSelection and BiometricProfile
+- Shows 3 starter protocols per module with toggle switches
+- Users choose which protocols to add (not auto-enroll all)
+- Passes selectedProtocolIds through entire onboarding flow
+
+### 3. Added Protocol Enrollment to Backend
+- `completeOnboarding()` now accepts `selected_protocol_ids` array
+- Creates `user_protocol_enrollment` records for selected protocols
+- Uses correct default times based on protocol category
+
+### 4. Fixed Light Protocol Implementation Methods
+- Created migration targeting correct IDs (`protocol_1_morning_light`, `protocol_2_evening_light`)
+- Added 3 implementation methods to each: outdoor sunlight, light box, light bar
+- Fixed fallback protocol IDs in client api.ts
+
+**Files Modified (13):**
+- `functions/src/onboarding.ts` — GOAL_TO_MODULE_MAP + protocol enrollment
+- `functions/src/protocolEnrollment.ts` — Export getDefaultTimeForProtocol
+- `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx` — NEW
+- `client/src/navigation/OnboardingStack.tsx` — Add new screen
+- `client/src/types/onboarding.ts` — StarterProtocol type
+- `client/src/services/api.ts` — fetchStarterProtocols + fixed fallback IDs
+- `client/src/screens/onboarding/*.tsx` — Pass selectedProtocolIds through flow
+- `supabase/migrations/20251224100000_*.sql` — Light protocol implementation_methods
+
+**Commits:**
+- `504ba07` — Add protocol selection to onboarding and fix light protocol implementation methods
+
+---
+
+## Session 80 (Previous)
+
+**Date:** December 24, 2025
 **Focus:** Fix Account Deletion for User Testing
 
 **Context:** User trying to delete test account via Privacy Dashboard to test onboarding flow. DELETE /api/users/me returned 500: "PRIVACY_EXPORT_TOPIC must be set to enable privacy workflows"
@@ -62,22 +117,11 @@
 **Solution:** Changed account deletion from async (Pub/Sub) to synchronous (direct deletion).
 
 **Accomplished:**
-
-### Fixed Account Deletion (functions/src/privacy.ts)
 - Modified `requestUserDeletion` to delete directly instead of publishing to Pub/Sub
-- Reuses existing `purgeSupabaseData()` and `purgeFirestoreData()` functions
 - Deletes from Supabase → Firestore → Firebase Auth in correct order
 - Returns 200 `{deleted: true}` instead of 202 `{accepted: true}`
-- No longer requires `PRIVACY_EXPORT_TOPIC` or `PRIVACY_DELETION_TOPIC` env vars
 
-**Files Modified (1):**
-- `functions/src/privacy.ts` — Synchronous deletion implementation
-
-**Commits:**
-- `47c9a2f` — Fix account deletion to use synchronous deletion
-
-**Deployments:**
-- `api-00267-nnj` — Synchronous deletion fix
+**Commits:** `47c9a2f`
 
 ---
 
@@ -144,32 +188,37 @@
 
 ## Next Session Priority
 
-### Session 81 Focus: Onboarding Flow Testing
+### Session 82 Focus: Deploy Backend + Test Onboarding Flow
 
-Account deletion now works. User can delete test accounts and test the complete onboarding flow.
+Backend changes need deployment. Then test complete onboarding flow with new protocol selection screen.
 
 **Immediate:**
-1. Delete test account via Privacy Dashboard
+1. Deploy Cloud Functions to apply onboarding.ts changes
 2. Test complete onboarding journey:
    - Sign up with new account
-   - Wearable selection
-   - Module selection
-   - Home screen first experience
-3. Note any UX issues for iteration
+   - Goal selection → StarterProtocolSelection (NEW)
+   - Toggle protocols on/off
+   - Complete biometrics, wearable, health sync
+   - Verify protocols appear on home screen after completion
+3. Test search for "Morning Light" — should return ONE protocol with 3 implementation methods
+
+**Onboarding Flow (Updated):**
+```
+GoalSelection → StarterProtocolSelection → BiometricProfile → WearableConnection → HealthDataSync → MagicMoment → Home
+```
+
+**Backend Endpoint Needed:**
+- `/api/modules/:moduleId/starter-protocols` — Currently uses fallback; implement when needed
 
 **TestFlight Testing Checklist:**
 1. Account deletion works — synchronous deletion deployed
-2. Chat works with Gemini 3 Flash — improved reasoning quality
-3. Follow-up messages maintain context — cold start fix working
-4. Post-login crash fixed — defensive guards in place
-5. Login screen beautiful — premium dark UI with animations
-6. Wearable selection readable — full-width horizontal cards
-7. Individual sections fail gracefully — SilentErrorBoundary protection
+2. Onboarding shows protocol selection — NEW StarterProtocolSelectionScreen
+3. Protocols enroll correctly — Backend changes need deployment
+4. Light protocols consolidated — 3 implementation methods per protocol
 
-**Future Auth Features (Deferred):**
-- Sign in with Apple
-- Sign in with Google
-- Face ID/Touch ID (proper implementation after OAuth)
+**Future Work:**
+- Backend endpoint for fetching starter protocols from database
+- Pinecone reindexing to prevent duplicate search results
 
 ---
 
@@ -291,4 +340,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 24, 2025 (Session 80 complete - Account deletion fixed for user testing)*
+*Last Updated: December 24, 2025 (Session 81 complete - Focus area UX fixed + light protocol consolidation)*
