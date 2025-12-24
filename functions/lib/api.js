@@ -27,10 +27,31 @@ const manualCheckIn_1 = require("./manualCheckIn");
 const protocolPersonalized_1 = require("./protocolPersonalized");
 const protocolEnrollment_1 = require("./protocolEnrollment");
 const weeklySynthesisApi_1 = require("./weeklySynthesisApi");
+const config_1 = require("./config");
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)({ origin: true }));
 app.use(express_1.default.json());
+// Pre-warm config on first request (handles Cloud Run cold start race condition)
+// Cloud Functions Framework bypasses server.ts startup, so we need to ensure
+// getConfigAsync() with retry logic runs before any route handlers.
+let configReady = false;
+app.use(async (req, res, next) => {
+    if (!configReady) {
+        try {
+            console.log('[API] Pre-warming configuration on first request...');
+            await (0, config_1.getConfigAsync)();
+            configReady = true;
+            console.log('[API] Configuration ready');
+        }
+        catch (error) {
+            console.error('[API] Config pre-warm failed:', error);
+            res.status(500).json({ error: 'Service initializing, please retry' });
+            return;
+        }
+    }
+    next();
+});
 // Health check endpoint for Cloud Run
 app.get('/', (req, res) => {
     res.status(200).json({ status: 'ok', service: 'wellness-api' });

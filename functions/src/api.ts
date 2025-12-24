@@ -32,12 +32,33 @@ import { submitManualCheckIn, getTodayCheckIn } from './manualCheckIn';
 import { getPersonalizedProtocol } from './protocolPersonalized';
 import { enrollProtocol, unenrollProtocol, getEnrolledProtocols } from './protocolEnrollment';
 import { getLatestWeeklySynthesis } from './weeklySynthesisApi';
+import { getConfigAsync } from './config';
 
 const app = express();
 
 // Middleware
 app.use(cors({ origin: true }));
 app.use(express.json());
+
+// Pre-warm config on first request (handles Cloud Run cold start race condition)
+// Cloud Functions Framework bypasses server.ts startup, so we need to ensure
+// getConfigAsync() with retry logic runs before any route handlers.
+let configReady = false;
+app.use(async (req, res, next) => {
+  if (!configReady) {
+    try {
+      console.log('[API] Pre-warming configuration on first request...');
+      await getConfigAsync();
+      configReady = true;
+      console.log('[API] Configuration ready');
+    } catch (error) {
+      console.error('[API] Config pre-warm failed:', error);
+      res.status(500).json({ error: 'Service initializing, please retry' });
+      return;
+    }
+  }
+  next();
+});
 
 // Health check endpoint for Cloud Run
 app.get('/', (req, res) => {
