@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 86 (complete) |
-| **Progress** | Protocol UI/UX Redesign |
+| **Session** | 87 (complete) |
+| **Progress** | HomeScreen Cleanup + QuickSheet Scroll Fix |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,70 +52,63 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 86)
-**Focus:** Protocol UI/UX Redesign
+**Date:** December 26, 2025 (Session 87)
+**Focus:** HomeScreen Redundancy Cleanup + QuickSheet Scroll Fix
 
-**Context:** User requested comprehensive UI/UX review and redesign of the protocols implementation based on competitive research from Oura, WHOOP, Noom, and Headspace apps.
+**Context:** User testing in Session 86 identified UX issues documented in `SESSION_87_FIXES.md`. This session addresses Issues 1 & 2.
 
-**Problem:**
-1. "Protocols" tab naming confusing — shows Focus Areas/Modules first
-2. "The Why" (scientific backing) hidden by default, hard to access
-3. Home screen protocol management needed improvement
-4. AI Coach disconnected from protocols — no context-aware integration
+**Problems Fixed:**
+
+### Issue 1: HomeScreen Redundancy
+- TodaysFocusCard showed "All caught up!" while MyScheduleSection showed protocols below
+- Contradictory messaging when nothing due NOW but protocols scheduled for later
+- Two overlapping sections diluted PRD's "One Big Thing" philosophy
+
+### Issue 2: ProtocolQuickSheet Scroll
+- Content couldn't scroll properly due to fixed height constraints
+- Sheet couldn't expand beyond 70% height
+- No visual scroll indicator
 
 **Solution:**
-Comprehensive Protocol UI/UX redesign with progressive disclosure, bottom sheet quick view, and AI Coach integration.
 
-**Changes Made:**
+### Issue 1: Consolidate Protocol Sections
+- Removed TodaysFocusCard component from HomeScreen
+- Removed useTodaysFocus hook (no longer needed)
+- Renamed "MY SCHEDULE" → "TODAY'S PROTOCOLS" in MyScheduleSection
+- Single source of truth for protocols with visual highlighting on due-now protocols
 
-### Phase 1: Tab & Header Updates
-- Renamed "Protocols" tab to "Programs" for clearer hierarchy
-- Updated ModuleListScreen header: "Your Programs" with subtitle
-- Changed tab icon to "layers" for visual clarity
+### Issue 2: Fix QuickSheet Scrolling
+- Removed minHeight constraint for content-driven sizing
+- Increased maxHeight from 70% to 90% for better content viewing
+- Added flexGrow: 1 to scrollContentInner for proper scroll behavior
+- Enabled scroll indicator (showsVerticalScrollIndicator)
+- Added bounces for iOS-native scroll feel
 
-### Phase 2: Progressive Disclosure (Why This?)
-- Added expandable "Why this?" chip to `ScheduledProtocolCard`
-- Updated `TodaysFocusCard` "Why this?" button to pill style with icon
-- Created `ProtocolBrowseCard` with inline expandable "Why this works"
-
-### Phase 3: Protocol Quick Sheet
-- Created `ProtocolQuickSheet.tsx` — 60% height scrollable bottom sheet
-  - Protocol hero section with icon, name, category
-  - "What to Do" section with bullet instructions
-  - Expandable "Why This Works" and "Your Progress" sections
-  - "View Full Details" link
-  - Action buttons: "Mark Complete" + "Ask AI Coach"
-
-### Phase 4: AI Coach Context Integration
-- Added `ChatContext` interface to ChatModal
-- Added suggested questions UI for protocols:
-  - "Why is this recommended for me?"
-  - "When is the best time to do this?"
-  - "How will this affect my sleep or HRV?"
-- Added "Ask AI Coach" button to ProtocolDetailScreen footer
-- Integrated ChatModal with protocol context in HomeScreen
-
-### Phase 5: Segmented Control
-- Added segmented control to ModuleProtocolsScreen
-  - "Recommended" | "All" toggle with count badges
-  - Animated segment switching with haptic feedback
-
-**Files Created (2):**
-- `client/src/components/protocol/ProtocolQuickSheet.tsx`
-- `client/src/components/protocol/ProtocolBrowseCard.tsx`
-
-**Files Modified (8):**
-- `client/src/navigation/BottomTabs.tsx` — "Programs" tab rename + icon
-- `client/src/screens/ModuleListScreen.tsx` — "Your Programs" header
-- `client/src/components/home/ScheduledProtocolCard.tsx` — "Why this?" chip
-- `client/src/components/home/TodaysFocusCard.tsx` — Pill-style "Why this?" button
-- `client/src/components/ChatModal.tsx` — Context support + suggested questions
-- `client/src/screens/HomeScreen.tsx` — ProtocolQuickSheet + ChatModal integration
-- `client/src/screens/ProtocolDetailScreen.tsx` — "Ask AI Coach" footer button
-- `client/src/screens/ModuleProtocolsScreen.tsx` — Segmented control + ProtocolBrowseCard
+**Files Modified (3):**
+- `client/src/screens/HomeScreen.tsx` — Remove TodaysFocusCard, update comments
+- `client/src/components/home/MyScheduleSection.tsx` — Rename to "TODAY'S PROTOCOLS"
+- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Fix scroll constraints
 
 **Commit:**
-- `a3182d8` — Session 86: Protocol UI/UX Redesign
+- `2f77f2a` — Session 87: Fix HomeScreen redundancy + ProtocolQuickSheet scroll
+
+---
+
+## Session 86 (Previous)
+
+**Date:** December 26, 2025
+**Focus:** Protocol UI/UX Redesign
+
+**Context:** Comprehensive UI/UX review and redesign of protocols implementation.
+
+**Key Deliverables:**
+- Renamed "Protocols" tab to "Programs"
+- Created ProtocolQuickSheet bottom sheet
+- Created ProtocolBrowseCard with inline "Why this works"
+- Added ChatModal context support for AI Coach
+- Added segmented control to ModuleProtocolsScreen
+
+**Commits:** `a3182d8`
 
 ---
 
@@ -157,47 +150,33 @@ Comprehensive Protocol UI/UX redesign with progressive disclosure, bottom sheet 
 
 ## Next Session Priority
 
-### Session 87 Focus: Test Protocol UI/UX Changes + Visual Polish
+### Session 88 Focus: AI Coach Context Fix + Health Empty States
 
-Test the Protocol UI/UX redesign and verify all interactions work correctly.
+Address Issues 3 & 4 from `SESSION_87_FIXES.md`.
 
-**Immediate Testing:**
-1. Test "Programs" Tab:
-   - Navigate to Programs tab (formerly Protocols)
-   - Verify "Your Programs" header displays
-   - Verify module cards display correctly
+**Issue 3: AI Coach Context Not Working (High Priority)**
+- Opening AI Coach from ProtocolQuickSheet shows blank chat
+- Context banner with protocol name not appearing
+- Suggested questions not appearing
+- Root cause: `initialContext` prop may not be passed to ChatModal
 
-2. Test Protocol Quick Sheet:
-   - Tap any scheduled protocol on HomeScreen
-   - Verify 60% height bottom sheet appears
-   - Test "What to Do" section
-   - Expand/collapse "Why This Works"
-   - Test "Mark Complete" button
-   - Test "Ask AI Coach" button → opens ChatModal with context
+**Fix Tasks:**
+1. Verify ChatModal in HomeScreen has `initialContext={chatContext}` prop
+2. Debug with console.log to trace prop passing
+3. Check for race condition (modal opening before context set)
+4. Test: Open AI Coach → verify context banner + suggested questions appear
 
-3. Test AI Coach Context:
-   - Open AI Coach from protocol quick sheet
-   - Verify protocol name shown in context banner
-   - Verify suggested questions appear
-   - Tap suggested question → fills input
-   - Send question → verify context is included
+**Issue 4: Health Tab Placeholder Data (Medium Priority)**
+- Health tab shows mock/placeholder data when no real data exists
+- Undermines trust with users (PRD emphasis on trust-building)
 
-4. Test Segmented Control:
-   - Go to Programs → tap any module
-   - Verify "Recommended | All" toggle appears
-   - Switch between segments
-   - Verify protocol count badges update
+**Fix Tasks:**
+1. Review `useHealthHistory.ts` mock data logic
+2. Add `isEmpty` return value when no real data
+3. Create `HealthEmptyState` component with "Connect Apple Health" CTA
+4. Update HealthDashboardScreen to show empty state when appropriate
 
-5. Test "Why this?" Chips:
-   - On HomeScreen, find ScheduledProtocolCard
-   - Tap "Why this?" chip
-   - Verify summary expands/collapses
-   - On TodaysFocusCard, verify pill-style button works
-
-**New Components to Test:**
-- `ProtocolQuickSheet` — Bottom sheet quick view
-- `ProtocolBrowseCard` — Card with inline "Why this works"
-- `ChatModal` — Context-aware AI Coach
+**Reference:** See `SESSION_87_FIXES.md` for detailed root cause analysis
 
 **Known Pre-existing TypeScript Issues (Non-blocking):**
 - `ProtocolDetailScreen.tsx:620` — ViewStyle array type
