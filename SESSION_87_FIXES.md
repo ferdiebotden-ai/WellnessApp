@@ -1,221 +1,311 @@
 # Session 87+ Fixes — Protocol UI/UX Issues
 
 > User feedback from Session 86 testing. Each section is a discrete fix that can be tackled in sequence.
+> Updated with root cause analysis from code review.
 
 ---
 
 ## Priority Order
 
-| # | Issue | Severity | Est. Effort |
-|---|-------|----------|-------------|
-| 1 | HomeScreen redundancy cleanup | High | Medium |
-| 2 | ProtocolQuickSheet scroll/expand fix | High | Medium |
-| 3 | AI Coach pre-filled question | Medium | Low |
-| 4 | Health tab placeholder data handling | Medium | Low |
-| 5 | Apple Health settings UX + module error | High | High |
+| # | Issue | Severity | Est. Effort | Root Cause |
+|---|-------|----------|-------------|------------|
+| 1 | HomeScreen redundancy cleanup | High | Medium | Architecture issue |
+| 2 | ProtocolQuickSheet scroll/expand fix | High | Medium | Implementation bug |
+| 3 | AI Coach context not working | High | Medium | Props not passed correctly |
+| 4 | Health tab placeholder data handling | Medium | Low | Dev mock data showing |
+| 5 | Apple Health settings UX + module error | High | High | Native module linking |
 
 ---
 
 ## Issue 1: HomeScreen Redundancy Cleanup
 
-**Problem:**
-HomeScreen currently shows THREE protocol-related sections:
-1. "All Caught Up" (TodaysFocusCard empty state)
-2. "Today's Schedule" section
-3. "My Schedule" section
+### Problem
+HomeScreen shows contradictory protocol sections:
+1. **TodaysFocusCard** → Shows "TODAY'S FOCUS" with priority protocol OR "All Caught Up" when empty
+2. **MyScheduleSection** → Shows "MY SCHEDULE" with all enrolled protocols
 
-This is redundant and confusing.
+**The UX Conflict:**
+When TodaysFocusCard shows "All Caught Up" (no protocol due NOW), but MyScheduleSection shows protocols scheduled for later — the messaging is contradictory. User sees "All caught up!" but also sees a list of protocols below.
 
-**Expected Behavior:**
-HomeScreen should have clear, non-redundant sections:
-1. **Today's Health Summary** (QuickHealthStats) — Already exists
-2. **Today's Protocols** — Single unified section for scheduled protocols
-3. **Weekly Progress** — Already exists and is good
+### Root Cause Analysis
+From `HomeScreen.tsx`:
+- Line 404-407: `TodaysFocusCard` renders unconditionally
+- Line 428-431: `MyScheduleSection` renders unconditionally
+- These serve overlapping purposes
 
-**Files to Review:**
+From `MyScheduleSection.tsx`:
+- Line 42: Title is "MY SCHEDULE" (not "Today's Schedule")
+- Shows ALL enrolled protocols regardless of time
+
+**There is NO "Today's Schedule" section** — user may have been referring to TodaysFocusCard as "Today's Schedule".
+
+### PRD Alignment
+The PRD references Headspace/Oura's "Today" tab with **ONE focal point** ("One Big Thing" philosophy). Having two sections dilutes this.
+
+### Recommended Solution
+
+**Option A: Remove TodaysFocusCard entirely (Recommended)**
+- Rename MyScheduleSection to "Today's Protocols"
+- Add smart sorting: protocols due NOW highlighted at top
+- Single source of truth for protocols
+
+**Option B: Conditional TodaysFocusCard**
+- Only show TodaysFocusCard when a protocol is actively due NOW
+- Hide it entirely when nothing is due (no "All Caught Up" message)
+- MyScheduleSection shows everything else
+
+### Files to Modify
 - `client/src/screens/HomeScreen.tsx`
+- `client/src/components/home/MyScheduleSection.tsx`
+- `client/src/components/home/TodaysFocusCard.tsx` (possibly remove)
 
-**Tasks:**
-- [ ] Audit all protocol-related sections on HomeScreen
-- [ ] Remove "My Schedule" if redundant with "Today's Schedule"
-- [ ] Rename "Today's Schedule" to "Today's Protocols" for clarity
-- [ ] Ensure TodaysFocusCard "All Caught Up" only shows when NO protocols scheduled
-- [ ] Verify each section has distinct purpose and no overlap
-- [ ] Test empty states for each section
+### Tasks
+- [ ] Decide: Option A (remove TodaysFocusCard) or Option B (conditional)
+- [ ] If Option A: Remove TodaysFocusCard from HomeScreen
+- [ ] Rename "MY SCHEDULE" to "TODAY'S PROTOCOLS"
+- [ ] Ensure protocols due NOW are visually highlighted (already done with pulsing border)
+- [ ] Test empty state: when no protocols enrolled at all
+- [ ] Verify no contradictory messaging
 
-**Acceptance Criteria:**
+### Acceptance Criteria
 - Only ONE section shows scheduled protocols
-- Clear visual hierarchy: Health → Protocols → Progress
-- No duplicate information displayed
+- No "All Caught Up" message when protocols exist for later
+- Clear visual hierarchy: Health Summary → Today's Protocols → Weekly Progress
 
 ---
 
 ## Issue 2: ProtocolQuickSheet Scroll/Expand Fix
 
-**Problem:**
+### Problem
 When tapping a protocol card on HomeScreen, the ProtocolQuickSheet bottom sheet:
 - Cannot scroll content (text gets cut off)
 - Cannot be pulled/dragged to full screen height
 - Content is not fully readable
 
-**Expected Behavior:**
-- Sheet should be scrollable when content exceeds visible area
-- Sheet should be draggable (pull up to expand, pull down to dismiss)
-- All content should be readable
+### Root Cause Analysis
+From `ProtocolQuickSheet.tsx`:
+- Uses basic `Modal` with `transparent` + manual overlay
+- ScrollView exists but may not have proper flex constraints
+- No gesture handling for drag-to-expand
+- Static height: `maxHeight: '70%', minHeight: '60%'`
 
-**Files to Modify:**
-- `client/src/components/protocol/ProtocolQuickSheet.tsx`
-
-**Tasks:**
-- [ ] Verify ScrollView is properly configured with `flex: 1`
-- [ ] Add gesture handling for drag-to-expand (consider `react-native-gesture-handler` or `@gorhom/bottom-sheet`)
-- [ ] Test with protocols that have long summaries
-- [ ] Ensure "What to Do" and "Why This Works" sections fully expand
-- [ ] Add visual indicator that content is scrollable (fade gradient at bottom?)
-
-**Implementation Options:**
-
-**Option A: Fix current Modal-based approach**
+**The ScrollView configuration (lines 137-141):**
 ```tsx
-// Ensure ScrollView can scroll
 <ScrollView
-  style={{ flex: 1 }}
-  contentContainerStyle={{ flexGrow: 1 }}
-  showsVerticalScrollIndicator={true}
-  bounces={true}
+  style={styles.scrollContent}
+  contentContainerStyle={styles.scrollContentInner}
+  showsVerticalScrollIndicator={false}
 >
 ```
 
-**Option B: Replace with proper bottom sheet library**
-Consider using `@gorhom/bottom-sheet` which handles:
-- Snap points (60%, 90%, 100%)
-- Gesture-based dragging
-- Keyboard avoidance
-- Backdrop press to dismiss
+**Potential Issues:**
+1. `styles.scrollContent` may not have `flex: 1`
+2. Parent container constraints may prevent scrolling
+3. `TouchableWithoutFeedback` wrapper may intercept scroll gestures
 
-**Acceptance Criteria:**
-- All protocol content is readable
-- User can scroll through long content
-- User can drag sheet to expand/collapse
-- Sheet dismisses on backdrop tap or swipe down
+### Recommended Solution
+
+**Option A: Fix Current Implementation (Quick)**
+```tsx
+// Ensure proper flex configuration
+scrollContent: {
+  flex: 1,
+  maxHeight: '100%', // Allow full expansion
+},
+scrollContentInner: {
+  flexGrow: 1,
+  paddingBottom: 20, // Space for last item
+},
+```
+
+**Option B: Replace with @gorhom/bottom-sheet (Better UX)**
+```bash
+npm install @gorhom/bottom-sheet react-native-reanimated react-native-gesture-handler
+```
+
+Benefits:
+- Snap points (60%, 90%, 100%)
+- Native gesture handling
+- iOS-native feel (matches PRD's Oura aesthetic)
+- Keyboard avoidance built-in
+
+### Files to Modify
+- `client/src/components/protocol/ProtocolQuickSheet.tsx`
+
+### Tasks
+- [ ] Test current ScrollView with verbose content
+- [ ] If scrolling broken: Fix flex constraints (Option A)
+- [ ] If drag-to-expand needed: Implement @gorhom/bottom-sheet (Option B)
+- [ ] Add visual scroll indicator (scrollbar or fade gradient)
+- [ ] Test with longest protocol summary in database
+- [ ] Ensure backdrop tap dismisses sheet
+
+### Acceptance Criteria
+- All protocol content is readable (scroll works)
+- User can drag sheet to expand toward full screen
+- User can drag sheet down to dismiss
+- Sheet dismisses on backdrop tap
 
 ---
 
-## Issue 3: AI Coach Pre-filled Question
+## Issue 3: AI Coach Context Not Working
 
-**Problem:**
-When clicking "Ask AI Coach" from a protocol context, the input field is empty. User has to manually type a question about the protocol.
+### Problem
+When clicking "Ask AI Coach" from ProtocolQuickSheet:
+- Chat modal opens but is **completely blank/default**
+- No protocol context banner appears
+- No suggested questions appear
+- Input is empty (expected: should show context + suggestions)
 
-**Expected Behavior:**
-Input should be pre-filled with a contextual question like:
-- "Tell me more about Evening Light Management"
-- "Why is Morning Light Exposure recommended for me?"
+**Expected Behavior (what was designed):**
+- Context banner: "Discussing: {protocolName}"
+- Suggested questions: "Why is this recommended?", "When should I do this?", etc.
+- Tap suggestion → fills input
+- User can also type custom question
 
-**Files to Modify:**
-- `client/src/components/ChatModal.tsx`
-- `client/src/components/protocol/ProtocolQuickSheet.tsx`
-- `client/src/screens/HomeScreen.tsx`
+### Root Cause Analysis
 
-**Tasks:**
-- [ ] Add `initialQuestion` prop to ChatModal
-- [ ] When opening from protocol context, pass pre-filled question
-- [ ] Format: "Tell me more about {protocolName}"
-- [ ] Ensure cursor is at end of pre-filled text
-- [ ] User can edit or clear the pre-filled question
+**In ChatModal.tsx (lines 159-197):**
+The context features ARE implemented:
+- `initialContext?.protocolName` shows context banner
+- `PROTOCOL_QUESTIONS` array has suggested questions
+- `handleSuggestedQuestion` fills input on tap
 
-**Implementation:**
-
+**The Bug is in HomeScreen.tsx:**
+Looking at `handleAskAICoach` (line 268-280):
 ```tsx
-// ChatModal.tsx - Add to Props interface
-interface Props {
-  visible: boolean;
-  onClose: () => void;
-  initialContext?: ChatContext;
-  initialQuestion?: string; // NEW
-}
-
-// In ChatModalContent
-useEffect(() => {
-  if (visible && initialQuestion && !hasUsedContext) {
-    setInput(initialQuestion);
-  }
-}, [visible, initialQuestion]);
-
-// When opening from ProtocolQuickSheet
-onAskAICoach={() => {
-  setChatContext({
-    type: 'protocol',
-    protocolId: protocol.protocol.id,
-    protocolName: protocol.protocol.name,
-  });
-  setInitialQuestion(`Tell me more about ${protocol.protocol.name}`);
-  setShowChatModal(true);
-}}
+const handleAskAICoach = useCallback(
+  (protocol: ScheduledProtocol) => {
+    setChatContext({
+      type: 'protocol',
+      protocolId: protocol.protocol.id,
+      protocolName: protocol.protocol.name,
+    });
+    setShowChatModal(true);
+  },
+  []
+);
 ```
 
-**Acceptance Criteria:**
-- Opening AI Coach from protocol pre-fills relevant question
-- User can modify or send the pre-filled question
-- Suggested questions still appear below input
+**And ChatModal rendering (likely around line 450+):**
+Need to verify that `initialContext={chatContext}` is being passed to ChatModal.
+
+**Likely Issues:**
+1. `chatContext` state not being passed to ChatModal as `initialContext` prop
+2. OR ChatModal rendered before `setChatContext` completes (race condition)
+3. OR `initialContext` prop name mismatch
+
+### Files to Modify
+- `client/src/screens/HomeScreen.tsx` — Verify ChatModal props
+- `client/src/components/ChatModal.tsx` — Verify prop handling
+
+### Debugging Steps
+```tsx
+// Add console.log to verify context is passed
+// In HomeScreen.tsx ChatModal render:
+<ChatModal
+  visible={showChatModal}
+  onClose={() => setShowChatModal(false)}
+  initialContext={chatContext} // <-- Is this line present?
+/>
+
+// In ChatModal.tsx:
+console.log('ChatModal initialContext:', initialContext);
+```
+
+### Tasks
+- [ ] Verify ChatModal in HomeScreen has `initialContext={chatContext}` prop
+- [ ] Add console.log to debug prop passing
+- [ ] If race condition: use `useEffect` to open modal after context is set
+- [ ] Test: Open AI Coach from protocol → verify context banner appears
+- [ ] Test: Verify suggested questions appear
+- [ ] Test: Tap suggested question → verify input is filled
+
+### Implementation Fix (if prop not passed)
+```tsx
+// In HomeScreen.tsx, find ChatModal render and ensure:
+<ChatModal
+  visible={showChatModal}
+  onClose={handleCloseChatModal}
+  initialContext={chatContext}  // THIS MUST BE PRESENT
+/>
+```
+
+### Acceptance Criteria
+- Opening AI Coach from protocol shows context banner with protocol name
+- Suggested questions appear below input
+- Tapping suggested question fills the input
+- User can send question with protocol context
 
 ---
 
 ## Issue 4: Health Tab Placeholder Data
 
-**Problem:**
+### Problem
 Health tab shows data even when no real health data exists. Currently displays mock/placeholder values instead of empty states.
 
-**Expected Behavior:**
-- If no wearable connected OR no health data: Show empty state with CTA to connect
-- If wearable connected but no data yet: Show "Waiting for data..." state
-- Only show metrics when real data exists
+### Root Cause Analysis
+From `useHealthHistory.ts` (Session 85):
+- Contains mock data generator for development
+- Returns fake data when real API data unavailable
+- No flag to distinguish mock vs real data
 
-**Files to Review:**
-- `client/src/screens/HealthDashboardScreen.tsx`
-- `client/src/hooks/useHealthHistory.ts`
-- `client/src/components/health/*.tsx`
+**This was intentional for development** but should not appear in production/testing.
 
-**Tasks:**
-- [ ] Review `useHealthHistory.ts` — currently returns mock data
-- [ ] Add check for real data vs mock data
-- [ ] Create empty state component for Health Dashboard
-- [ ] Show "Connect a wearable" CTA when no integration
-- [ ] Show "No data yet" when integration exists but no readings
-- [ ] Remove or flag mock data generator for production
+### PRD Alignment
+The PRD emphasizes "trust-building" with users. Showing fake data undermines trust and provides no value.
 
-**Implementation:**
-
+### Recommended Solution
 ```tsx
 // useHealthHistory.ts
 const useHealthHistory = (days: number) => {
-  const { data, loading } = useHealthData();
+  const { data, loading, error } = useHealthData();
 
-  // Check if we have real data
-  const hasRealData = data && data.length > 0 && !data[0].isMock;
+  // In production, don't show mock data
+  const hasRealData = data && data.length > 0;
 
   return {
     data: hasRealData ? data : null,
     loading,
-    isEmpty: !hasRealData,
+    error,
+    isEmpty: !hasRealData && !loading,
   };
 };
 
 // HealthDashboardScreen.tsx
 if (isEmpty) {
-  return <HealthEmptyState onConnectWearable={navigateToSettings} />;
+  return (
+    <HealthEmptyState
+      onConnectWearable={() => navigation.navigate('WearableSettings')}
+    />
+  );
 }
 ```
 
-**Acceptance Criteria:**
-- No fake data shown to users
-- Clear empty state when no health data
-- CTA to connect wearable/health source
+### Files to Modify
+- `client/src/hooks/useHealthHistory.ts`
+- `client/src/screens/HealthDashboardScreen.tsx`
+- Create: `client/src/components/health/HealthEmptyState.tsx`
+
+### Tasks
+- [ ] Review `useHealthHistory.ts` mock data logic
+- [ ] Add `isEmpty` return value when no real data
+- [ ] Create `HealthEmptyState` component with CTA
+- [ ] Update `HealthDashboardScreen` to show empty state
+- [ ] Remove or conditionally disable mock data generator
+- [ ] Test with no wearable connected
+
+### Acceptance Criteria
+- No fake/mock data shown to users
+- Clear empty state: "Connect Apple Health to see your metrics"
+- CTA button navigates to wearable/health settings
+- Real data displays correctly when available
 
 ---
 
 ## Issue 5: Apple Health Settings UX + Module Error
 
-**Problem:**
+### Problem
 Two related issues:
 
 ### 5A: Settings UX
@@ -227,92 +317,128 @@ On physical iPhone with Expo Dev build:
 
 This error appears despite being on a physical iPhone.
 
-**Root Cause (5B):**
-Likely one of:
-1. Native module not included in dev build
-2. HealthKit entitlement missing from dev build
-3. Module detection logic incorrect
-4. Expo dev client doesn't include native health modules
+### Root Cause Analysis (5B)
 
-**Files to Review:**
-- `client/src/screens/settings/WearableSettingsScreen.tsx`
-- `client/src/services/wearables/healthkit.ts` or similar
+**This is a native module linking issue.** Possible causes:
+
+1. **Expo Go limitation:** Expo Go doesn't include HealthKit native modules
+2. **EAS Dev Build missing entitlements:** Build profile may not include HealthKit capability
+3. **Module detection logic incorrect:** Code assumes "no module" = "simulator" but it's actually "dev build without native module"
+
+**The error message is misleading** — it says "physical iPhone required" when the real issue is the native module isn't linked.
+
+### Files to Review
 - `client/app.json` — HealthKit entitlements
-- `client/ios/` — Native module configuration
+- `client/eas.json` — Build configuration
+- `client/src/services/wearables/healthkit.ts` — Module detection logic
+- `client/src/screens/settings/WearableSettingsScreen.tsx` — Error display
 
-**Tasks:**
+### Tasks
 
-### 5A: Settings UX
-- [ ] Add "Apple Health" as separate card in Data Integrations (not under Wearables)
+#### 5A: Settings UX
+- [ ] Add "Apple Health" as separate card in Profile → Data section
 - [ ] OR rename "Wearables" to "Health & Wearables"
-- [ ] Create dedicated `HealthIntegrationScreen.tsx` if needed
-- [ ] Clear labeling: "Apple Health" for iOS, "Health Connect" for Android
+- [ ] Ensure clear labeling: "Apple Health" (iOS) / "Health Connect" (Android)
 
-### 5B: Module Error
-- [ ] Check if `expo-health` or custom health module is in dependencies
-- [ ] Verify `app.json` has HealthKit entitlements:
+#### 5B: Module Error
+- [ ] Check `app.json` for HealthKit entitlements:
   ```json
   "ios": {
     "entitlements": {
       "com.apple.developer.healthkit": true,
       "com.apple.developer.healthkit.background-delivery": true
+    },
+    "infoPlist": {
+      "NSHealthShareUsageDescription": "...",
+      "NSHealthUpdateUsageDescription": "..."
     }
   }
   ```
-- [ ] Check if EAS build config includes health capabilities
-- [ ] Review module detection logic — may need to check differently in dev builds
-- [ ] Test: `expo prebuild` then build natively vs Expo Go
+- [ ] Check `eas.json` build profile includes health capabilities
+- [ ] Review module detection — improve error message accuracy
+- [ ] Test with `expo prebuild && npx pod-install` then Xcode build
+- [ ] If using Expo Dev Client, ensure native modules are included
 
-**Debugging Steps:**
+### Debugging Commands
 ```bash
-# Check if health module is installed
+# Check health module installation
 npm ls | grep health
+npx expo install expo-health  # If missing
 
 # Check app.json entitlements
-cat app.json | grep -A5 healthkit
+grep -A10 "healthkit" app.json
 
-# Check if native modules built
-ls ios/Pods | grep Health
+# Check if native build has HealthKit
+ls ios/*.xcworkspace  # Should exist after prebuild
 ```
 
-**Acceptance Criteria:**
+### Acceptance Criteria
 - Apple Health has clear, findable settings entry
-- Physical iPhone can connect to Apple Health
-- Error messages are accurate and actionable
+- Physical iPhone can successfully connect to Apple Health
+- Error messages are accurate ("Native module not available in this build")
+- Works in EAS Development Build on physical device
 
 ---
 
 ## Session Execution Order
 
 ### Session 87: HomeScreen Cleanup + QuickSheet Fix
-Focus: Issues 1 & 2
-- Remove redundant protocol sections
-- Fix ProtocolQuickSheet scrolling
+**Focus:** Issues 1 & 2 (High priority, Medium effort)
 
-### Session 88: AI Coach + Health Empty States
-Focus: Issues 3 & 4
-- Pre-fill AI Coach questions
-- Handle empty health data properly
+Tasks:
+1. Decide on HomeScreen architecture (Option A or B)
+2. Remove/modify TodaysFocusCard
+3. Rename "MY SCHEDULE" → "TODAY'S PROTOCOLS"
+4. Fix ProtocolQuickSheet ScrollView
+5. Test both changes end-to-end
+
+### Session 88: AI Coach Context Fix + Health Empty States
+**Focus:** Issues 3 & 4 (High/Medium priority, Medium/Low effort)
+
+Tasks:
+1. Debug ChatModal prop passing
+2. Fix context/suggested questions display
+3. Create HealthEmptyState component
+4. Remove mock data from production flow
 
 ### Session 89: Apple Health Integration Fix
-Focus: Issue 5
-- Settings UX improvement
-- Debug native module error
-- May require EAS build testing
+**Focus:** Issue 5 (High priority, High effort)
+
+Tasks:
+1. Review app.json and eas.json configuration
+2. Improve Settings UX for health integrations
+3. Fix native module detection logic
+4. Test with EAS Development Build
+5. May require native Xcode build for full testing
 
 ---
 
 ## Testing Checklist
 
 After all fixes:
-- [ ] HomeScreen shows single, clear protocol section
+- [ ] HomeScreen shows single, clear protocol section (no "All Caught Up" + protocols conflict)
 - [ ] ProtocolQuickSheet scrolls and can be expanded
-- [ ] AI Coach opens with pre-filled question from protocol
-- [ ] Health tab shows empty state when no data
-- [ ] Apple Health connects on physical iPhone
+- [ ] AI Coach opens with context banner and suggested questions from protocol
+- [ ] Health tab shows empty state when no real data
+- [ ] Apple Health connects successfully on physical iPhone
 - [ ] Settings clearly show health integration options
 
 ---
 
+## Code References
+
+| File | Line | Purpose |
+|------|------|---------|
+| `HomeScreen.tsx` | 404-407 | TodaysFocusCard render |
+| `HomeScreen.tsx` | 428-431 | MyScheduleSection render |
+| `HomeScreen.tsx` | 268-280 | handleAskAICoach |
+| `HomeScreen.tsx` | ~450+ | ChatModal render (verify props) |
+| `ProtocolQuickSheet.tsx` | 137-141 | ScrollView configuration |
+| `ChatModal.tsx` | 159-197 | Context banner + suggested questions |
+| `useHealthHistory.ts` | - | Mock data generator |
+
+---
+
 *Created: December 26, 2025 (Post-Session 86)*
+*Updated: December 26, 2025 (Added root cause analysis)*
 *Status: Ready for implementation*
