@@ -128,22 +128,6 @@
 
 ---
 
-## Session 87 (Previous)
-
-**Date:** December 26, 2025
-**Focus:** HomeScreen Redundancy Cleanup + QuickSheet Scroll Fix
-
-**Context:** User testing in Session 86 identified UX issues documented in `SESSION_87_FIXES.md`. This session addresses Issues 1 & 2.
-
-**Solution:**
-- Removed TodaysFocusCard (conflicted with MyScheduleSection)
-- Renamed "MY SCHEDULE" → "TODAY'S PROTOCOLS"
-- Fixed ProtocolQuickSheet scroll constraints
-
-**Commit:** `2f77f2a`
-
----
-
 ## Next Session Priority
 
 ### Session 91 Focus: TBD
