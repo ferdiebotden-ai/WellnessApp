@@ -32,6 +32,7 @@ import { submitManualCheckIn, getTodayCheckIn } from './manualCheckIn';
 import { getPersonalizedProtocol } from './protocolPersonalized';
 import { enrollProtocol, unenrollProtocol, getEnrolledProtocols } from './protocolEnrollment';
 import { getLatestWeeklySynthesis } from './weeklySynthesisApi';
+import { getHealthHistory } from './healthHistory';
 import { getConfigAsync } from './config';
 
 const app = express();
@@ -117,6 +118,9 @@ app.get('/api/calendar/recent', getRecentCalendarMetrics);
 
 // Recovery score routes (Phase 3 Session 8)
 app.get('/api/recovery', getRecoveryScore);
+
+// Health history routes (Session 85)
+app.get('/api/health/history', getHealthHistory);
 
 // Manual check-in routes for Lite Mode (Phase 3 Session 8)
 app.post('/api/manual-check-in', submitManualCheckIn);
