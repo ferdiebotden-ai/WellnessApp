@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 89 (complete) |
-| **Progress** | Apple Health Settings UX + Module Error Fix |
+| **Session** | 90 (complete) |
+| **Progress** | Protocol Data Fix + AI Coach UX Enhancement |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,40 +52,60 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 89)
-**Focus:** Apple Health Settings UX + Module Error Fix
+**Date:** December 26, 2025 (Session 90)
+**Focus:** Protocol Data Fix + AI Coach UX Enhancement
 
-**Context:** Addresses Issue 5 from `SESSION_87_FIXES.md`.
+**Context:** User testing revealed Programs tab showing "No Protocols Available" despite seeded data, and AI Coach suggestion chips needed UX enhancement.
 
 **Problems Fixed:**
 
-### Issue 5A: Settings UX — Health Integration Buried
-**Root Cause:** Apple Health integration was buried under "Wearable Settings" in Data Integrations card. Users expected a dedicated "Apple Health" option.
+### Issue 1: Protocol Data Not Loading
+**Root Cause:** Protocol ID mismatch between migration file (`protocol_*` format) and seed file (`proto_*` format). The `module_protocol_map` table referenced `proto_*` IDs that didn't exist in the `protocols` table, causing JOIN queries to return empty results.
 
 **Solution:**
-- Added new dedicated health card to ProfileScreen after "Biometric Profile"
-- Platform-specific labels: "Apple Health" (iOS) / "Health Connect" (Android)
-- Status badge shows connection state (Connected/Not Connected/Unavailable)
-- CTA button navigates to WearableSettingsScreen
-- Kept "Wearable Settings" in Data Integrations for future cloud wearables (Oura, WHOOP)
+- Created migration `20251227000000_fix_module_protocol_map_ids.sql`
+- Deletes orphaned rows referencing non-existent protocols
+- Inserts correct mappings using `protocol_*` IDs
+- Updates `starter_protocols` arrays in modules table
+- Applied migration with `supabase db push`
 
-### Issue 5B: Module Error — Misleading Error Message
-**Root Cause:** Error message said "A physical iPhone is required" but appeared on physical iPhones when using Expo Go or EAS builds without proper native module linking. No way to distinguish simulator vs module_missing vs device_unsupported.
+### Issue 2: Silent API Failures
+**Root Cause:** `fetchModuleProtocols` returned empty array on failure instead of throwing, making it impossible for UI to show meaningful error states.
 
 **Solution:**
-- Added `UnavailableReason` type: `'simulator' | 'module_missing' | 'device_unsupported' | 'unknown'`
-- Added `expo-device` import for simulator detection (check before module import)
-- Separate try/catch for dynamic module import to detect module_missing
-- Context-specific error messages in WearableSettingsScreen:
-  - Simulator: "HealthKit requires a physical iPhone. Simulators cannot access health data."
-  - Module missing: "HealthKit is not available in this app build. If using Expo Go, please build with EAS instead."
-  - Device unsupported: "HealthKit is not supported on this device (requires iOS 8+)."
+- Changed `api.ts` to throw on failure with actionable error message
+- Added error state + retry UI to `ModuleProtocolsScreen.tsx`
+- Error card with icon, message, and "Try Again" button
 
-**Files Modified (4):**
-- `client/src/hooks/useHealthKit.ts` — Add `UnavailableReason` type, state, and detection logic
-- `client/src/hooks/useWearableHealth.ts` — Expose `unavailableReason` in unified interface
-- `client/src/screens/settings/WearableSettingsScreen.tsx` — Context-specific error messages
-- `client/src/screens/ProfileScreen.tsx` — Add health card with platform labels + HealthStatusBadge
+### Issue 3: AI Coach Preview Questions UX
+**Root Cause:** Horizontal chip layout was cramped, questions appeared truncated, and tapping only filled input (required manual send).
+
+**Solution:**
+- Created new `SuggestionCard` component with vertical card layout
+- Icon + question title + description + arrow chevron
+- Auto-sends question immediately on tap
+- Full question visible in chat bubble after send
+- Removed old horizontal ScrollView chips
+
+**Files Modified (4) + Created (2):**
+- `supabase/migrations/20251227000000_fix_module_protocol_map_ids.sql` — NEW: Fix protocol ID mappings
+- `client/src/components/chat/SuggestionCard.tsx` — NEW: Vertical suggestion card component
+- `client/src/services/api.ts` — Improved error handling
+- `client/src/screens/ModuleProtocolsScreen.tsx` — Error UI with retry
+- `client/src/components/ChatModal.tsx` — Vertical layout + auto-send
+
+**Commit:** `8e7e200`
+
+---
+
+## Session 89 (Previous)
+
+**Date:** December 26, 2025
+**Focus:** Apple Health Settings UX + Module Error Fix
+
+**Solution:**
+- Added dedicated health card to ProfileScreen
+- Context-specific error messages for simulator/module_missing/device_unsupported
 
 **Commit:** `b88f927`
 
@@ -126,15 +146,16 @@
 
 ## Next Session Priority
 
-### Session 90 Focus: TBD
+### Session 91 Focus: TBD
 
 All issues from `SESSION_87_FIXES.md` have been addressed (Issues 1-5 complete).
+Session 90 addressed protocol data issues and AI Coach UX enhancement.
 
 **Potential Focus Areas:**
-- User testing and feedback collection
+- User testing and feedback collection on iOS device
 - EAS Development Build testing on physical iPhone
 - Performance optimization
-- Additional polish items from user testing
+- Today's Protocols card data validation (verify protocol info displays correctly)
 
 **Known Pre-existing TypeScript Issues (Non-blocking):**
 - `ProtocolDetailScreen.tsx:620` — ViewStyle array type
@@ -261,4 +282,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 26, 2025 (Session 89 closed - Apple Health settings UX + module error fix)*
+*Last Updated: December 26, 2025 (Session 90 closed - Protocol data fix + AI Coach UX enhancement)*
