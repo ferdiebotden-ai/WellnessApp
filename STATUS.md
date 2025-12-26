@@ -87,6 +87,8 @@
 - `client/src/screens/settings/WearableSettingsScreen.tsx` — Context-specific error messages
 - `client/src/screens/ProfileScreen.tsx` — Add health card with platform labels + HealthStatusBadge
 
+**Commit:** `b88f927`
+
 ---
 
 ## Session 88 (Previous)
@@ -119,24 +121,6 @@
 - Fixed ProtocolQuickSheet scroll constraints
 
 **Commit:** `2f77f2a`
-
----
-
-## Session 86 (Previous)
-
-**Date:** December 26, 2025
-**Focus:** Protocol UI/UX Redesign
-
-**Context:** Comprehensive UI/UX review and redesign of protocols implementation.
-
-**Key Deliverables:**
-- Renamed "Protocols" tab to "Programs"
-- Created ProtocolQuickSheet bottom sheet
-- Created ProtocolBrowseCard with inline "Why this works"
-- Added ChatModal context support for AI Coach
-- Added segmented control to ModuleProtocolsScreen
-
-**Commits:** `a3182d8`
 
 ---
 
