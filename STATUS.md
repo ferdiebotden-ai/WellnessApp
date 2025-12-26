@@ -124,42 +124,6 @@
 
 ---
 
-## Session 85 (Previous)
-
-**Date:** December 26, 2025
-**Focus:** Health Dashboard + Full Health Data Visualization
-
-**Context:** Health data collected via HealthKit/Health Connect but not surfaced in UI.
-
-**Solution:** Comprehensive Health Dashboard with full data visualization, replacing Insights tab.
-
-**Key Deliverables:**
-- Created Health Dashboard with steps, sleep, HRV, RHR cards
-- Added QuickHealthStats row to HomeScreen
-- Created trend charts (7d/30d) for health metrics
-- Added step goal setting to BiometricSettingsScreen
-- Created GET /api/health/history endpoint
-
-**Commits:** `e0db311`, `10ecdee`, `6885c8e`, `584797c`
-
----
-
-## Session 84 (Previous)
-
-**Date:** December 24, 2025
-**Focus:** Multi-Goal Onboarding + Protocol UX Overhaul
-
-**Context:** User reported: "When I click a module under the protocols screen, nothing happens."
-
-**Solution:**
-- Created stack navigator for Protocols tab with ModuleListScreen → ModuleProtocolsScreen flow
-- Implemented multi-goal selection in onboarding with SectionList grouped by module
-- Created backend endpoints for module protocols
-
-**Commits:** `229159f`
-
----
-
 ## Next Session Priority
 
 ### Session 89 Focus: Apple Health Settings UX + Module Error
@@ -309,4 +273,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 26, 2025 (Session 86 closed - Protocol UI/UX Redesign requires testing)*
+*Last Updated: December 26, 2025 (Session 88 closed - AI Coach context + Health empty state)*
