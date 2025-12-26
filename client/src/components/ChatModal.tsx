@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Modal, View, Text, TextInput, Pressable, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator, ScrollView } from 'react-native';
+import { Modal, View, Text, TextInput, Pressable, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { tokens } from '../theme/tokens';
@@ -8,6 +9,7 @@ import { sendChatQuery } from '../services/api';
 import { AIThinkingState } from './AIThinkingState';
 import { haptic } from '../utils/haptics';
 import { useChatConversation, ChatMessage } from '../hooks/useChatConversation';
+import { SuggestionCard } from './chat/SuggestionCard';
 
 /**
  * Context for AI Coach when opened from a specific protocol or insight.
@@ -26,11 +28,23 @@ interface Props {
   initialContext?: ChatContext;
 }
 
-// Suggested questions based on context
-const PROTOCOL_QUESTIONS = [
-  'Why is this recommended for me?',
-  'When is the best time to do this?',
-  'How will this affect my sleep or HRV?',
+// Enhanced suggested questions with descriptions and icons
+const PROTOCOL_QUESTIONS_ENHANCED = [
+  {
+    question: 'Why is this recommended for me?',
+    description: 'Learn how this protocol aligns with your goals',
+    icon: 'bulb-outline' as const,
+  },
+  {
+    question: 'When is the best time to do this?',
+    description: 'Get personalized timing suggestions',
+    icon: 'time-outline' as const,
+  },
+  {
+    question: 'How will this affect my sleep or HRV?',
+    description: 'Understand the expected physiological impact',
+    icon: 'pulse-outline' as const,
+  },
 ];
 
 // Inner component that uses SafeAreaInsets - must be inside SafeAreaProvider
@@ -63,15 +77,47 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
     }
   }, [visible, loadHistory]);
 
-  // Handle suggested question tap
-  const handleSuggestedQuestion = useCallback((question: string) => {
-    if (initialContext?.protocolName) {
-      setInput(`Regarding ${initialContext.protocolName}: ${question}`);
-      setHasUsedContext(true);
-    } else {
-      setInput(question);
+  // Handle suggested question tap - auto-sends the question
+  const handleSuggestedQuestion = useCallback(async (question: string) => {
+    if (sending) return;
+
+    // Build full question with context
+    const fullQuestion = initialContext?.protocolName
+      ? `Regarding ${initialContext.protocolName}: ${question}`
+      : question;
+
+    // Haptic feedback
+    void haptic.light();
+    Keyboard.dismiss();
+
+    // Add user message immediately so user sees what was sent
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: fullQuestion };
+    addMessage(userMsg);
+    setHasUsedContext(true);
+    setSending(true);
+
+    // Dismiss context banner and suggestions after sending
+    setContextDismissed(true);
+
+    try {
+      const { response, conversationId: newConvId } = await sendChatQuery(
+        fullQuestion,
+        conversationId ?? undefined,
+        initialContext
+      );
+      setConversationId(newConvId);
+      const aiMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'assistant', content: response };
+      addMessage(aiMsg);
+    } catch (error) {
+      console.error('Chat error:', error);
+      void haptic.error();
+      const errorMessage = error instanceof Error ? error.message : 'Sorry, I encountered an error. Please try again.';
+      const errorMsg: ChatMessage = { id: Date.now().toString(), role: 'assistant', content: errorMessage };
+      addMessage(errorMsg);
+    } finally {
+      setSending(false);
     }
-  }, [initialContext]);
+  }, [sending, initialContext, conversationId, addMessage, setConversationId]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -173,6 +219,7 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
               initialContext?.protocolName && !contextDismissed ? (
                 <View style={styles.contextHeader}>
                   <View style={styles.contextBanner}>
+                    <Ionicons name="chatbubble-ellipses" size={16} color={palette.primary} />
                     <Text style={styles.contextLabel}>Discussing:</Text>
                     <Text style={styles.contextName}>{initialContext.protocolName}</Text>
                   </View>
@@ -180,8 +227,21 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
                     <>
                       <Text style={styles.emptyTitle}>Ask about {initialContext.protocolName}</Text>
                       <Text style={styles.emptyText}>
-                        Get personalized insights about this protocol, timing, or how it fits your goals.
+                        Tap a question to get started, or type your own below.
                       </Text>
+                      {/* Vertical Suggestion Cards */}
+                      <View style={styles.suggestionsVertical}>
+                        {PROTOCOL_QUESTIONS_ENHANCED.map((item, index) => (
+                          <SuggestionCard
+                            key={index}
+                            question={item.question}
+                            description={item.description}
+                            icon={item.icon}
+                            onPress={() => handleSuggestedQuestion(item.question)}
+                            disabled={sending}
+                          />
+                        ))}
+                      </View>
                     </>
                   )}
                 </View>
@@ -202,30 +262,6 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
               ) : null
             }
           />
-        )}
-
-        {/* Floating Suggestions - show when context present and not dismissed */}
-        {initialContext?.type === 'protocol' && !contextDismissed && (
-          <View style={styles.suggestionsRow}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.suggestionsContent}
-            >
-              {PROTOCOL_QUESTIONS.map((question, index) => (
-                <Pressable
-                  key={index}
-                  style={({ pressed }) => [
-                    styles.suggestionChip,
-                    pressed && styles.suggestionChipPressed,
-                  ]}
-                  onPress={() => handleSuggestedQuestion(question)}
-                >
-                  <Text style={styles.suggestionChipText}>{question}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
         )}
 
         <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -406,12 +442,19 @@ const styles = StyleSheet.create({
   },
   // Context Banner
   contextBanner: {
+    flexDirection: 'row',
     backgroundColor: `${palette.primary}15`,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
     marginBottom: tokens.spacing.lg,
     alignItems: 'center',
+    gap: 8,
+  },
+  // Vertical Suggestion Cards Container
+  suggestionsVertical: {
+    marginTop: tokens.spacing.lg,
+    width: '100%',
   },
   contextLabel: {
     ...typography.caption,
@@ -427,34 +470,6 @@ const styles = StyleSheet.create({
   contextHeader: {
     alignItems: 'center',
     paddingTop: tokens.spacing.lg,
-  },
-  // Floating Suggestion Chips
-  suggestionsRow: {
-    borderTopWidth: 1,
-    borderTopColor: palette.border,
-    backgroundColor: palette.elevated,
-    paddingVertical: 10,
-  },
-  suggestionsContent: {
-    paddingHorizontal: tokens.spacing.md,
-    gap: 8,
-    flexDirection: 'row',
-  },
-  suggestionChip: {
-    backgroundColor: palette.surface,
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-  },
-  suggestionChipPressed: {
-    backgroundColor: palette.elevated,
-    borderColor: palette.primary,
-  },
-  suggestionChipText: {
-    ...typography.caption,
-    color: palette.textSecondary,
   },
   thinkingContainer: {
     alignSelf: 'flex-start',

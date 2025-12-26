@@ -55,6 +55,7 @@ export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [updatingProtocolId, setUpdatingProtocolId] = useState<string | null>(null);
   const [selectedSegment, setSelectedSegment] = useState<'recommended' | 'all'>('recommended');
 
@@ -63,6 +64,7 @@ export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
 
   // Load protocols and enrollment status
   const loadData = useCallback(async () => {
+    setError(null);
     try {
       const [moduleProtocols, enrolled] = await Promise.all([
         fetchModuleProtocols(moduleId),
@@ -71,9 +73,10 @@ export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
 
       setProtocols(moduleProtocols);
       setEnrolledIds(new Set(enrolled.map((e) => e.protocol_id)));
-    } catch (error) {
-      console.error('Failed to load module protocols:', error);
-      Alert.alert('Error', 'Failed to load protocols. Please try again.');
+    } catch (err) {
+      console.error('Failed to load module protocols:', err);
+      const message = err instanceof Error ? err.message : 'Failed to load protocols. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -168,6 +171,25 @@ export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
       <View style={styles.loadingContainer}>
         <ApexLoadingIndicator size={48} />
         <Text style={styles.loadingText}>Loading protocols...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.errorCard}>
+          <Ionicons name="cloud-offline" size={48} color={palette.error} />
+          <Text style={styles.errorTitle}>Unable to Load Protocols</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]}
+            onPress={loadData}
+          >
+            <Ionicons name="refresh" size={18} color={palette.primary} />
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -354,6 +376,57 @@ const styles = StyleSheet.create({
     marginTop: 16,
     ...typography.body,
     color: palette.textSecondary,
+  },
+
+  // Error State
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.background,
+    padding: 24,
+  },
+  errorCard: {
+    alignItems: 'center',
+    backgroundColor: palette.surface,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: palette.border,
+    padding: 32,
+    maxWidth: 320,
+    width: '100%',
+  },
+  errorTitle: {
+    ...typography.heading,
+    color: palette.textPrimary,
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    ...typography.body,
+    color: palette.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: palette.elevated,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: palette.primary,
+    gap: 8,
+  },
+  retryButtonPressed: {
+    backgroundColor: palette.surface,
+  },
+  retryButtonText: {
+    ...typography.body,
+    color: palette.primary,
+    fontWeight: '600',
   },
 
   // Module Header

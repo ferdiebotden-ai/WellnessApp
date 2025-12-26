@@ -262,16 +262,19 @@ export interface ModuleProtocol {
  * Used in ModuleProtocolsScreen to show available protocols.
  * @param moduleId Module ID to fetch protocols for
  * @returns Array of protocols with their metadata
+ * @throws Error if the API call fails (so UI can show error state)
  */
 export const fetchModuleProtocols = async (moduleId: string): Promise<ModuleProtocol[]> => {
   try {
-    return await request<ModuleProtocol[]>(
+    const result = await request<ModuleProtocol[]>(
       `/api/modules/${moduleId}/protocols`,
       'GET'
     );
+    return result ?? [];
   } catch (error) {
-    console.warn('Module protocols API unavailable, using empty array', error);
-    return [];
+    console.error('[fetchModuleProtocols] Failed to load protocols:', error);
+    // Re-throw so UI can show error state with retry option
+    throw new Error('Unable to load protocols. Please check your connection and try again.');
   }
 };
 
