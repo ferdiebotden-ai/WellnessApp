@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 90 (complete) |
-| **Progress** | Protocol Data Fix + AI Coach UX Enhancement |
+| **Session** | 91 (complete) |
+| **Progress** | Protocol UI/UX Comprehensive Fixes |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,47 +52,65 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 90)
-**Focus:** Protocol Data Fix + AI Coach UX Enhancement
+**Date:** December 26, 2025 (Session 91)
+**Focus:** Protocol UI/UX Comprehensive Fixes
 
-**Context:** User testing revealed Programs tab showing "No Protocols Available" despite seeded data, and AI Coach suggestion chips needed UX enhancement.
+**Context:** User testing revealed multiple UI/UX issues with protocol cards, quick sheet, timer, and AI Coach.
 
 **Problems Fixed:**
 
-### Issue 1: Protocol Data Not Loading
-**Root Cause:** Protocol ID mismatch between migration file (`protocol_*` format) and seed file (`proto_*` format). The `module_protocol_map` table referenced `proto_*` IDs that didn't exist in the `protocols` table, causing JOIN queries to return empty results.
+### Issue 1: "Why This Works" Truncation in ProtocolBrowseCard
+**Root Cause:** Hardcoded 80px height animation and `numberOfLines={3}` truncated content.
 
 **Solution:**
-- Created migration `20251227000000_fix_module_protocol_map_ids.sql`
-- Deletes orphaned rows referencing non-existent protocols
-- Inserts correct mappings using `protocol_*` IDs
-- Updates `starter_protocols` arrays in modules table
-- Applied migration with `supabase db push`
+- Added dynamic content height measurement with `onLayout`
+- Removed fixed height interpolation
+- Removed numberOfLines limit
+- Full "Why this works" text now displays when expanded
 
-### Issue 2: Silent API Failures
-**Root Cause:** `fetchModuleProtocols` returned empty array on failure instead of throwing, making it impossible for UI to show meaningful error states.
-
-**Solution:**
-- Changed `api.ts` to throw on failure with actionable error message
-- Added error state + retry UI to `ModuleProtocolsScreen.tsx`
-- Error card with icon, message, and "Try Again" button
-
-### Issue 3: AI Coach Preview Questions UX
-**Root Cause:** Horizontal chip layout was cramped, questions appeared truncated, and tapping only filled input (required manual send).
+### Issue 2: RECOMMENDED Badge Overlapping
+**Root Cause:** Absolute positioning at `top: 12, right: 12` overlapped with Switch control.
 
 **Solution:**
-- Created new `SuggestionCard` component with vertical card layout
-- Icon + question title + description + arrow chevron
-- Auto-sends question immediately on tap
-- Full question visible in chat bubble after send
-- Removed old horizontal ScrollView chips
+- Repositioned badge to `top: -6, right: 70` to clear the toggle switch
 
-**Files Modified (4) + Created (2):**
-- `supabase/migrations/20251227000000_fix_module_protocol_map_ids.sql` — NEW: Fix protocol ID mappings
-- `client/src/components/chat/SuggestionCard.tsx` — NEW: Vertical suggestion card component
-- `client/src/services/api.ts` — Improved error handling
-- `client/src/screens/ModuleProtocolsScreen.tsx` — Error UI with retry
-- `client/src/components/ChatModal.tsx` — Vertical layout + auto-send
+### Issue 3: Timer Removal from ProtocolDetailScreen
+**User Request:** Timer was unwanted, should be removed entirely.
+
+**Solution:**
+- Removed timer state, useEffect, and ref
+- Removed timer card UI display
+- Removed durationSeconds from completion logging
+- Simplified completion modal props
+
+### Issue 4: Mark Complete UX Enhancement
+**Root Cause:** Tapping "Mark Complete" navigated to ProtocolDetailScreen instead of completing inline.
+
+**Solution:**
+- Inline completion with `enqueueProtocolLog()` directly
+- Success animation overlay with checkmark
+- Haptic feedback on success/error
+- Auto-dismiss quick sheet after 1.5s success display
+
+**Files Modified (4):**
+- `client/src/components/protocol/ProtocolBrowseCard.tsx` — Dynamic expand height, badge repositioned
+- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Success overlay, completionSuccess prop
+- `client/src/screens/HomeScreen.tsx` — Inline completion, success state handling
+- `client/src/screens/ProtocolDetailScreen.tsx` — Timer code removed entirely
+
+**Commit:** `9b0915b`
+
+---
+
+## Session 90 (Previous)
+
+**Date:** December 26, 2025
+**Focus:** Protocol Data Fix + AI Coach UX Enhancement
+
+**Solution:**
+- Fixed protocol ID mismatch in module_protocol_map
+- Added error UI with retry to ModuleProtocolsScreen
+- Created SuggestionCard component for AI Coach
 
 **Commit:** `8e7e200`
 
@@ -130,19 +148,23 @@
 
 ## Next Session Priority
 
-### Session 91 Focus: TBD
+### Session 92 Focus: User Testing & Validation
 
-All issues from `SESSION_87_FIXES.md` have been addressed (Issues 1-5 complete).
-Session 90 addressed protocol data issues and AI Coach UX enhancement.
+Session 91 addressed all remaining protocol UI/UX issues from user feedback.
 
 **Potential Focus Areas:**
 - User testing and feedback collection on iOS device
 - EAS Development Build testing on physical iPhone
+- Verify all Session 91 fixes work as expected:
+  - "Why This Works" expands fully
+  - RECOMMENDED badge doesn't overlap
+  - Timer is gone from protocol details
+  - Mark Complete shows success animation and dismisses
+  - AI Coach prefilled questions appear
 - Performance optimization
-- Today's Protocols card data validation (verify protocol info displays correctly)
 
 **Known Pre-existing TypeScript Issues (Non-blocking):**
-- `ProtocolDetailScreen.tsx:620` — ViewStyle array type
+- `ProtocolDetailScreen.tsx:568` — ViewStyle array type
 - `firebase.ts` — Firestore null handling
 - Test files — Mock type mismatches
 
