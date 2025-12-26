@@ -5,6 +5,7 @@ import { PrivacyDashboardScreen } from '../screens/PrivacyDashboardScreen';
 import { WearableSettingsScreen } from '../screens/settings/WearableSettingsScreen';
 import { CalendarSettingsScreen } from '../screens/settings/CalendarSettingsScreen';
 import { BiometricSettingsScreen } from '../screens/settings/BiometricSettingsScreen';
+import { InsightsScreen } from '../screens/InsightsScreen';
 import { palette } from '../theme/palette';
 
 export type ProfileStackParamList = {
@@ -13,6 +14,7 @@ export type ProfileStackParamList = {
   WearableSettings: undefined;
   CalendarSettings: undefined;
   BiometricSettings: undefined;
+  WeeklyInsights: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -49,6 +51,11 @@ export const ProfileStackNavigator: React.FC = () => (
       name="BiometricSettings"
       component={BiometricSettingsScreen}
       options={{ title: 'Biometric Profile' }}
+    />
+    <Stack.Screen
+      name="WeeklyInsights"
+      component={InsightsScreen}
+      options={{ title: 'Weekly Insights' }}
     />
   </Stack.Navigator>
 );

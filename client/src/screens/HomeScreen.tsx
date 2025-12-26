@@ -288,8 +288,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 
   const handleSynthesisPress = useCallback(() => {
-    // Navigate to Insights tab (Weekly Synthesis)
-    navigation.getParent()?.navigate('Insights');
+    // Navigate to Profile tab, then to Weekly Insights screen
+    navigation.getParent()?.navigate('Profile', { screen: 'WeeklyInsights' });
   }, [navigation]);
 
   const handleFocusStart = useCallback(

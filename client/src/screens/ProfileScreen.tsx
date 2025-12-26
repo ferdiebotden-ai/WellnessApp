@@ -111,6 +111,11 @@ export const ProfileScreen: React.FC = () => {
     navigation.navigate('BiometricSettings');
   }, [navigation]);
 
+  const handleWeeklyInsightsPress = useCallback(() => {
+    void haptic.light();
+    navigation.navigate('WeeklyInsights');
+  }, [navigation]);
+
   // Session 71: MVD toggle handler
   const handleMVDToggle = useCallback(async (value: boolean) => {
     try {
@@ -334,6 +339,20 @@ export const ProfileScreen: React.FC = () => {
           onPress={handleBiometricSettingsPress}
           style={styles.buttonSpacing}
           testID="open-biometric-settings"
+        />
+      </Card>
+
+      <Card>
+        <Text style={styles.cardTitle}>Weekly Insights</Text>
+        <Text style={styles.cardBody}>
+          AI-generated analysis of your weekly patterns, progress, and personalized recommendations.
+        </Text>
+        <PrimaryButton
+          title="View Weekly Insights"
+          variant="secondary"
+          onPress={handleWeeklyInsightsPress}
+          style={styles.buttonSpacing}
+          testID="open-weekly-insights"
         />
       </Card>
 
