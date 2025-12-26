@@ -294,15 +294,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const handleQuickSheetAskAI = useCallback(
     (protocol: ScheduledProtocol) => {
-      // Close quick sheet and open chat with protocol context
-      setShowQuickSheet(false);
-      setChatContext({
+      // Session 92: Set context BEFORE closing sheet and opening modal
+      // to ensure proper state timing
+      const context: ChatContext = {
         type: 'protocol',
         protocolId: protocol.protocol_id,
         protocolName: protocol.protocol.name,
         mechanism: protocol.protocol.summary,
+      };
+      setChatContext(context);
+
+      // Use requestAnimationFrame to ensure context state is committed
+      // before modal opens, preventing race condition
+      requestAnimationFrame(() => {
+        setShowQuickSheet(false);
+        setShowChatModal(true);
       });
-      setShowChatModal(true);
     },
     []
   );

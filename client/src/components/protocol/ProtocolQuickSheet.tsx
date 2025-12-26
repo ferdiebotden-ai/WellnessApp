@@ -1,29 +1,32 @@
 /**
  * ProtocolQuickSheet
  *
- * A 60% height bottom sheet for quick protocol viewing and actions.
+ * A draggable bottom sheet for quick protocol viewing and actions.
  * Shows protocol info, "Why This Works", and action buttons.
  * Provides progressive disclosure: glance -> expand -> full detail.
  *
  * Session 86: Protocol UI/UX Redesign
+ * Session 92: Upgraded to @gorhom/bottom-sheet for native drag gestures
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
-  Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
-  TouchableWithoutFeedback,
-  ScrollView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+  BottomSheetBackdropProps,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
-import { tokens } from '../../theme/tokens';
 import type { ScheduledProtocol } from '../../hooks/useEnrolledProtocols';
 import { getProtocolIcon, getProtocolEmoji } from '../../utils/protocolIcons';
 
@@ -99,6 +102,45 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
   isCompleting = false,
   completionSuccess = false,
 }) => {
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // Snap points: 60% default, 90% expanded
+  const snapPoints = useMemo(() => ['60%', '90%'], []);
+
+  // Control sheet visibility based on prop
+  useEffect(() => {
+    if (visible && protocol) {
+      bottomSheetRef.current?.snapToIndex(0);
+    } else {
+      bottomSheetRef.current?.close();
+    }
+  }, [visible, protocol]);
+
+  // Handle sheet close
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  // Render backdrop with tap-to-close
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.6}
+        pressBehavior="close"
+      />
+    ),
+    []
+  );
+
+  // Don't render anything if no protocol
   if (!protocol) return null;
 
   const { name, category, summary, duration_minutes } = protocol.protocol;
@@ -115,199 +157,177 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
     : [];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={onClose}
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={-1}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
+      backgroundStyle={styles.sheetBackground}
+      handleIndicatorStyle={styles.handleIndicator}
+      onChange={handleSheetChange}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <View style={styles.sheet}>
-              {/* Session 91: Success Overlay */}
-              {completionSuccess && (
-                <View style={styles.successOverlay}>
-                  <View style={styles.successIconContainer}>
-                    <Ionicons name="checkmark-circle" size={72} color={palette.success} />
-                  </View>
-                  <Text style={styles.successText}>Protocol Complete!</Text>
-                </View>
-              )}
-
-              {/* Handle */}
-              <View style={styles.handle} />
-
-              {/* Header with close button */}
-              <View style={styles.header}>
-                <Pressable onPress={onClose} style={styles.closeButton}>
-                  <Ionicons name="close" size={24} color={palette.textSecondary} />
-                </Pressable>
-              </View>
-
-              {/* Scrollable Content - Session 87: Added scroll indicator for better UX */}
-              <ScrollView
-                style={styles.scrollContent}
-                contentContainerStyle={styles.scrollContentInner}
-                showsVerticalScrollIndicator={true}
-                indicatorStyle="white"
-                bounces={true}
-                alwaysBounceVertical={true}
-              >
-                {/* Protocol Hero */}
-                <View style={styles.heroSection}>
-                  <View style={[styles.iconContainer, { backgroundColor: `${categoryColor}15` }]}>
-                    {IconComponent ? (
-                      <IconComponent size={32} color={categoryColor} />
-                    ) : (
-                      <Text style={styles.iconEmoji}>{emoji}</Text>
-                    )}
-                  </View>
-                  <Text style={styles.protocolName}>{name}</Text>
-                  <View style={styles.metaRow}>
-                    <View style={[styles.categoryBadge, { backgroundColor: `${categoryColor}20` }]}>
-                      <Text style={[styles.categoryText, { color: categoryColor }]}>
-                        {category?.toUpperCase() || 'PROTOCOL'}
-                      </Text>
-                    </View>
-                    {duration_minutes && (
-                      <Text style={styles.duration}>{duration_minutes} min</Text>
-                    )}
-                    {protocol.isDueNow && (
-                      <View style={styles.nowBadge}>
-                        <Text style={styles.nowBadgeText}>NOW</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* What to Do - Always visible */}
-                <View style={styles.whatToDoSection}>
-                  <View style={styles.whatToDoHeader}>
-                    <Ionicons name="list-outline" size={18} color={palette.primary} />
-                    <Text style={styles.whatToDoTitle}>WHAT TO DO</Text>
-                  </View>
-                  <View style={styles.instructionsList}>
-                    {instructions.length > 0 ? (
-                      instructions.map((instruction, index) => (
-                        <View key={index} style={styles.instructionItem}>
-                          <Text style={styles.bulletPoint}>•</Text>
-                          <Text style={styles.instructionText}>{instruction}</Text>
-                        </View>
-                      ))
-                    ) : (
-                      <Text style={styles.instructionText}>
-                        Complete this protocol according to your preferences.
-                      </Text>
-                    )}
-                  </View>
-                </View>
-
-                {/* Why This Works - Expandable */}
-                <ExpandableSection
-                  title="Why This Works"
-                  icon="bulb-outline"
-                  defaultExpanded
-                >
-                  <Text style={styles.contentText}>
-                    {summary || 'Evidence-based protocol designed to optimize your wellness.'}
-                  </Text>
-                  <Text style={styles.citationHint}>
-                    Tap "View Full Details" for research citations
-                  </Text>
-                </ExpandableSection>
-
-                {/* Your Progress - Expandable */}
-                <ExpandableSection
-                  title="Your Progress"
-                  icon="bar-chart-outline"
-                >
-                  <View style={styles.progressStats}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statValue}>-</Text>
-                      <Text style={styles.statLabel}>This Week</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statValue}>-</Text>
-                      <Text style={styles.statLabel}>Total</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statValue}>-</Text>
-                      <Text style={styles.statLabel}>Streak</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.progressHint}>
-                    Complete this protocol to start tracking your progress
-                  </Text>
-                </ExpandableSection>
-
-                {/* View Full Details Link */}
-                <Pressable
-                  style={styles.viewDetailsLink}
-                  onPress={() => onViewFullDetails(protocol)}
-                >
-                  <Text style={styles.viewDetailsText}>View Full Details</Text>
-                  <Ionicons name="arrow-forward" size={16} color={palette.primary} />
-                </Pressable>
-              </ScrollView>
-
-              {/* Action Buttons - Fixed at bottom */}
-              <View style={styles.actionsContainer}>
-                {/* Mark Complete Button */}
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.primaryButton,
-                    pressed && styles.buttonPressed,
-                    isCompleting && styles.buttonDisabled,
-                  ]}
-                  onPress={() => onMarkComplete(protocol)}
-                  disabled={isCompleting}
-                >
-                  {isCompleting ? (
-                    <ActivityIndicator size="small" color={palette.background} />
-                  ) : (
-                    <>
-                      <Ionicons name="checkmark-circle" size={20} color={palette.background} />
-                      <Text style={styles.primaryButtonText}>Mark Complete</Text>
-                    </>
-                  )}
-                </Pressable>
-
-                {/* Ask AI Coach Button */}
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.secondaryButton,
-                    pressed && styles.buttonPressed,
-                  ]}
-                  onPress={() => onAskAICoach(protocol)}
-                >
-                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={palette.primary} />
-                  <Text style={styles.secondaryButtonText}>Ask AI Coach</Text>
-                </Pressable>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
+      {/* Session 91: Success Overlay */}
+      {completionSuccess && (
+        <View style={styles.successOverlay}>
+          <View style={styles.successIconContainer}>
+            <Ionicons name="checkmark-circle" size={72} color={palette.success} />
+          </View>
+          <Text style={styles.successText}>Protocol Complete!</Text>
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      )}
+
+      {/* Scrollable Content */}
+      <BottomSheetScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+      >
+        {/* Protocol Hero */}
+        <View style={styles.heroSection}>
+          <View style={[styles.iconContainer, { backgroundColor: `${categoryColor}15` }]}>
+            {IconComponent ? (
+              <IconComponent size={32} color={categoryColor} />
+            ) : (
+              <Text style={styles.iconEmoji}>{emoji}</Text>
+            )}
+          </View>
+          <Text style={styles.protocolName}>{name}</Text>
+          <View style={styles.metaRow}>
+            <View style={[styles.categoryBadge, { backgroundColor: `${categoryColor}20` }]}>
+              <Text style={[styles.categoryText, { color: categoryColor }]}>
+                {category?.toUpperCase() || 'PROTOCOL'}
+              </Text>
+            </View>
+            {duration_minutes && (
+              <Text style={styles.duration}>{duration_minutes} min</Text>
+            )}
+            {protocol.isDueNow && (
+              <View style={styles.nowBadge}>
+                <Text style={styles.nowBadgeText}>NOW</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* What to Do - Always visible */}
+        <View style={styles.whatToDoSection}>
+          <View style={styles.whatToDoHeader}>
+            <Ionicons name="list-outline" size={18} color={palette.primary} />
+            <Text style={styles.whatToDoTitle}>WHAT TO DO</Text>
+          </View>
+          <View style={styles.instructionsList}>
+            {instructions.length > 0 ? (
+              instructions.map((instruction, index) => (
+                <View key={index} style={styles.instructionItem}>
+                  <Text style={styles.bulletPoint}>•</Text>
+                  <Text style={styles.instructionText}>{instruction}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.instructionText}>
+                Complete this protocol according to your preferences.
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Why This Works - Expandable */}
+        <ExpandableSection
+          title="Why This Works"
+          icon="bulb-outline"
+          defaultExpanded
+        >
+          <Text style={styles.contentText}>
+            {summary || 'Evidence-based protocol designed to optimize your wellness.'}
+          </Text>
+          <Text style={styles.citationHint}>
+            Tap "View Full Details" for research citations
+          </Text>
+        </ExpandableSection>
+
+        {/* Your Progress - Expandable */}
+        <ExpandableSection
+          title="Your Progress"
+          icon="bar-chart-outline"
+        >
+          <View style={styles.progressStats}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>-</Text>
+              <Text style={styles.statLabel}>This Week</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>-</Text>
+              <Text style={styles.statLabel}>Total</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>-</Text>
+              <Text style={styles.statLabel}>Streak</Text>
+            </View>
+          </View>
+          <Text style={styles.progressHint}>
+            Complete this protocol to start tracking your progress
+          </Text>
+        </ExpandableSection>
+
+        {/* View Full Details Link */}
+        <Pressable
+          style={styles.viewDetailsLink}
+          onPress={() => onViewFullDetails(protocol)}
+        >
+          <Text style={styles.viewDetailsText}>View Full Details</Text>
+          <Ionicons name="arrow-forward" size={16} color={palette.primary} />
+        </Pressable>
+      </BottomSheetScrollView>
+
+      {/* Action Buttons - Fixed at bottom */}
+      <View style={styles.actionsContainer}>
+        {/* Mark Complete Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryButton,
+            pressed && styles.buttonPressed,
+            isCompleting && styles.buttonDisabled,
+          ]}
+          onPress={() => onMarkComplete(protocol)}
+          disabled={isCompleting}
+        >
+          {isCompleting ? (
+            <ActivityIndicator size="small" color={palette.background} />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle" size={20} color={palette.background} />
+              <Text style={styles.primaryButtonText}>Mark Complete</Text>
+            </>
+          )}
+        </Pressable>
+
+        {/* Ask AI Coach Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => onAskAICoach(protocol)}
+        >
+          <Ionicons name="chatbubble-ellipses-outline" size={18} color={palette.primary} />
+          <Text style={styles.secondaryButtonText}>Ask AI Coach</Text>
+        </Pressable>
+      </View>
+    </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
+  // Sheet Background
+  sheetBackground: {
     backgroundColor: palette.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingTop: 12,
-    maxHeight: '90%',
-    // Session 87: Removed minHeight to allow content to determine sheet size
-    // Content-driven height provides better UX for varying protocol lengths
+  },
+  handleIndicator: {
+    backgroundColor: palette.border,
+    width: 40,
+    height: 4,
   },
 
   // Session 91: Success Overlay
@@ -335,34 +355,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
 
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: palette.border,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 8,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  closeButton: {
-    padding: 4,
-  },
-
-  // Scroll Content - Session 87: Fixed flex constraints for proper scrolling
+  // Scroll Content
   scrollContent: {
-    flex: 1,
-  },
-  scrollContentInner: {
-    flexGrow: 1,
     paddingHorizontal: 20,
-    paddingBottom: 24, // Extra padding for scroll end
+    paddingTop: 8,
+    paddingBottom: 24,
   },
 
   // Hero Section

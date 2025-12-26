@@ -73,9 +73,12 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
       loadHistory();
       // Reset context tracking when modal opens
       setHasUsedContext(false);
-      setContextDismissed(false);
+      // Session 92: Only reset contextDismissed if there's new protocol context
+      if (initialContext?.protocolName) {
+        setContextDismissed(false);
+      }
     }
-  }, [visible, loadHistory]);
+  }, [visible, loadHistory, initialContext?.protocolName]);
 
   // Handle suggested question tap - auto-sends the question
   const handleSuggestedQuestion = useCallback(async (question: string) => {
@@ -215,13 +218,24 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
               </View>
             )}
             ListHeaderComponent={
-              // Context banner shows at TOP regardless of message count
+              // Session 92: Context banner shows regardless of message count
+              // User can dismiss it manually with the X button
               initialContext?.protocolName && !contextDismissed ? (
                 <View style={styles.contextHeader}>
                   <View style={styles.contextBanner}>
-                    <Ionicons name="chatbubble-ellipses" size={16} color={palette.primary} />
-                    <Text style={styles.contextLabel}>Discussing:</Text>
-                    <Text style={styles.contextName}>{initialContext.protocolName}</Text>
+                    <View style={styles.contextBannerContent}>
+                      <Ionicons name="chatbubble-ellipses" size={16} color={palette.primary} />
+                      <Text style={styles.contextLabel}>Discussing:</Text>
+                      <Text style={styles.contextName} numberOfLines={1}>{initialContext.protocolName}</Text>
+                    </View>
+                    {/* Dismiss button */}
+                    <Pressable
+                      onPress={() => setContextDismissed(true)}
+                      hitSlop={8}
+                      style={styles.contextDismissButton}
+                    >
+                      <Ionicons name="close-circle" size={18} color={palette.textMuted} />
+                    </Pressable>
                   </View>
                   {messages.length === 0 && (
                     <>
@@ -440,7 +454,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  // Context Banner
+  // Context Banner - Session 92: Updated to include dismiss button
   contextBanner: {
     flexDirection: 'row',
     backgroundColor: `${palette.primary}15`,
@@ -449,7 +463,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: tokens.spacing.lg,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  contextBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
+    flex: 1,
+  },
+  contextDismissButton: {
+    marginLeft: 8,
+    padding: 2,
   },
   // Vertical Suggestion Cards Container
   suggestionsVertical: {

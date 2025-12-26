@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 91 (complete) |
-| **Progress** | Protocol UI/UX Comprehensive Fixes |
+| **Session** | 92 (in progress) |
+| **Progress** | Protocol Quick Sheet Upgrade |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,7 +52,64 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 91)
+**Date:** December 26, 2025 (Session 92)
+**Focus:** Protocol Quick Sheet Upgrade & Bug Fixes
+
+**Context:** User testing revealed the protocol quick sheet wasn't working properly - only buttons visible, Mark Complete showing errors, AI Coach missing context.
+
+**Problems Fixed:**
+
+### Issue 1: Quick Sheet Content Not Visible
+**Root Cause:** Basic Modal with incorrect flex constraints caused ScrollView content to not render.
+
+**Solution:**
+- Upgraded to `@gorhom/bottom-sheet` for native-feeling drag gestures
+- Added GestureHandlerRootView wrapper in App.tsx
+- Snap points: 60% (default) and 90% (expanded)
+- Swipe down to dismiss, tap backdrop to close
+
+### Issue 2: Mark Complete Error
+**Root Cause:** `protocolLogs.ts` rejected null moduleId — passing empty string still failed validation.
+
+**Solution:**
+- Changed validation to only require `protocolId`
+- Added `normalizedModuleId` fallback to 'general' for protocols without modules
+
+### Issue 3: AI Coach Missing Context
+**Root Cause:** State timing issue — context set AFTER modal opened due to async state updates.
+
+**Solution:**
+- Set context BEFORE closing quick sheet and opening modal
+- Used `requestAnimationFrame` to ensure state commits before modal opens
+- Context banner now persists when conversation history exists
+- Added dismiss (X) button to context banner
+
+### Issue 4: UX Upgrade
+**User Request:** Native draggable bottom sheet like Oura/Headspace.
+
+**Solution:**
+- Implemented `@gorhom/bottom-sheet` with:
+  - Snap points (60%, 90%)
+  - Pan down to close
+  - Backdrop tap to dismiss
+  - Native gesture handling
+
+**Files Modified (5):**
+- `client/src/App.tsx` — GestureHandlerRootView wrapper
+- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Full rewrite with BottomSheet
+- `client/src/screens/HomeScreen.tsx` — Fixed AI Coach context timing
+- `client/src/services/protocolLogs.ts` — Made moduleId optional
+- `client/src/components/ChatModal.tsx` — Context banner improvements
+
+**Dependencies Added:**
+- `@gorhom/bottom-sheet@^5.2.8`
+- `react-native-gesture-handler@^2.16.1`
+
+---
+
+## Session 91 (Previous)
+
+**Date:** December 26, 2025
 **Focus:** Protocol UI/UX Comprehensive Fixes
 
 **Context:** User testing revealed multiple UI/UX issues with protocol cards, quick sheet, timer, and AI Coach.
@@ -91,12 +148,6 @@
 - Success animation overlay with checkmark
 - Haptic feedback on success/error
 - Auto-dismiss quick sheet after 1.5s success display
-
-**Files Modified (4):**
-- `client/src/components/protocol/ProtocolBrowseCard.tsx` — Dynamic expand height, badge repositioned
-- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Success overlay, completionSuccess prop
-- `client/src/screens/HomeScreen.tsx` — Inline completion, success state handling
-- `client/src/screens/ProtocolDetailScreen.tsx` — Timer code removed entirely
 
 **Commit:** `9b0915b`
 

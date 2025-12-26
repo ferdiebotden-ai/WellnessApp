@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { StatusBar, View, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -98,16 +99,18 @@ export const App: React.FC = () => {
   }
 
   return (
-    <SafeAreaProvider>
-      <FeatureFlagsProvider>
-        <AuthProvider>
-          <View style={styles.container} onLayout={onLayoutRootView}>
-            <StatusBar barStyle="light-content" backgroundColor={palette.background} />
-            <RootNavigator />
-          </View>
-        </AuthProvider>
-      </FeatureFlagsProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaProvider>
+        <FeatureFlagsProvider>
+          <AuthProvider>
+            <View style={styles.container} onLayout={onLayoutRootView}>
+              <StatusBar barStyle="light-content" backgroundColor={palette.background} />
+              <RootNavigator />
+            </View>
+          </AuthProvider>
+        </FeatureFlagsProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 

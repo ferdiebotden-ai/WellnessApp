@@ -44,9 +44,13 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
     durationSeconds,
   } = payload;
 
-  if (!protocolId || !moduleId) {
-    throw new Error('protocolId and moduleId are required');
+  if (!protocolId) {
+    throw new Error('protocolId is required');
   }
+
+  // moduleId can be null for protocols not assigned to a specific module
+  // Use 'general' as fallback to satisfy downstream requirements
+  const normalizedModuleId = moduleId || 'general';
 
   const queueRef = collection(getFirebaseDb(), LOG_COLLECTION, currentUser.uid, 'entries');
   const normalizedMetadata = metadata && typeof metadata === 'object' ? metadata : {};
@@ -58,7 +62,7 @@ export const enqueueProtocolLog = async (payload: ProtocolLogPayload): Promise<s
   const document = {
     userId: currentUser.uid,
     protocolId,
-    moduleId,
+    moduleId: normalizedModuleId,
     enrollmentId: enrollmentId ?? null,
     source,
     status: 'completed',
