@@ -9,17 +9,37 @@ import { AIThinkingState } from './AIThinkingState';
 import { haptic } from '../utils/haptics';
 import { useChatConversation, ChatMessage } from '../hooks/useChatConversation';
 
+/**
+ * Context for AI Coach when opened from a specific protocol or insight.
+ */
+export interface ChatContext {
+  type: 'protocol' | 'insight' | 'general';
+  protocolId?: string;
+  protocolName?: string;
+  mechanism?: string;
+}
+
 interface Props {
   visible: boolean;
   onClose: () => void;
+  /** Optional context when opening from a protocol or insight */
+  initialContext?: ChatContext;
 }
 
+// Suggested questions based on context
+const PROTOCOL_QUESTIONS = [
+  'Why is this recommended for me?',
+  'When is the best time to do this?',
+  'How will this affect my sleep or HRV?',
+];
+
 // Inner component that uses SafeAreaInsets - must be inside SafeAreaProvider
-const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
+const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext }) => {
   const insets = useSafeAreaInsets();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const [hasUsedContext, setHasUsedContext] = useState(false);
 
   // Use persistent conversation hook
   const {
@@ -36,8 +56,20 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
   useEffect(() => {
     if (visible) {
       loadHistory();
+      // Reset context tracking when modal opens
+      setHasUsedContext(false);
     }
   }, [visible, loadHistory]);
+
+  // Handle suggested question tap
+  const handleSuggestedQuestion = useCallback((question: string) => {
+    if (initialContext?.protocolName) {
+      setInput(`Regarding ${initialContext.protocolName}: ${question}`);
+      setHasUsedContext(true);
+    } else {
+      setInput(question);
+    }
+  }, [initialContext]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -126,8 +158,43 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
             )}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyTitle}>Welcome to AI Coach</Text>
-                <Text style={styles.emptyText}>Ask me anything about wellness, sleep optimization, stress management, or your health protocols.</Text>
+                {/* Context Header */}
+                {initialContext?.protocolName && !hasUsedContext && (
+                  <View style={styles.contextBanner}>
+                    <Text style={styles.contextLabel}>Discussing:</Text>
+                    <Text style={styles.contextName}>{initialContext.protocolName}</Text>
+                  </View>
+                )}
+
+                <Text style={styles.emptyTitle}>
+                  {initialContext?.protocolName
+                    ? `Ask about ${initialContext.protocolName}`
+                    : 'Welcome to AI Coach'}
+                </Text>
+                <Text style={styles.emptyText}>
+                  {initialContext?.protocolName
+                    ? 'Get personalized insights about this protocol, timing, or how it fits your goals.'
+                    : 'Ask me anything about wellness, sleep optimization, stress management, or your health protocols.'}
+                </Text>
+
+                {/* Suggested Questions */}
+                {initialContext?.type === 'protocol' && !hasUsedContext && (
+                  <View style={styles.suggestedContainer}>
+                    <Text style={styles.suggestedLabel}>Suggested questions:</Text>
+                    {PROTOCOL_QUESTIONS.map((question, index) => (
+                      <Pressable
+                        key={index}
+                        style={({ pressed }) => [
+                          styles.suggestedButton,
+                          pressed && styles.suggestedButtonPressed,
+                        ]}
+                        onPress={() => handleSuggestedQuestion(question)}
+                      >
+                        <Text style={styles.suggestedButtonText}>{question}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </View>
             }
             ListFooterComponent={
@@ -166,11 +233,11 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose }) => {
 };
 
 // Wrapper component that provides SafeAreaProvider context for the Modal
-export const ChatModal: React.FC<Props> = ({ visible, onClose }) => {
+export const ChatModal: React.FC<Props> = ({ visible, onClose, initialContext }) => {
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <SafeAreaProvider>
-        <ChatModalContent visible={visible} onClose={onClose} />
+        <ChatModalContent visible={visible} onClose={onClose} initialContext={initialContext} />
       </SafeAreaProvider>
     </Modal>
   );
@@ -315,6 +382,54 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  // Context Banner
+  contextBanner: {
+    backgroundColor: `${palette.primary}15`,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginBottom: tokens.spacing.lg,
+    alignItems: 'center',
+  },
+  contextLabel: {
+    ...typography.caption,
+    color: palette.textSecondary,
+    marginBottom: 2,
+  },
+  contextName: {
+    ...typography.subheading,
+    color: palette.primary,
+    fontSize: 15,
+  },
+  // Suggested Questions
+  suggestedContainer: {
+    marginTop: tokens.spacing.xl,
+    width: '100%',
+  },
+  suggestedLabel: {
+    ...typography.caption,
+    color: palette.textMuted,
+    marginBottom: tokens.spacing.sm,
+    textAlign: 'center',
+  },
+  suggestedButton: {
+    backgroundColor: palette.surface,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: tokens.spacing.sm,
+  },
+  suggestedButtonPressed: {
+    backgroundColor: palette.elevated,
+    borderColor: palette.primary,
+  },
+  suggestedButtonText: {
+    ...typography.body,
+    color: palette.textPrimary,
+    textAlign: 'center',
   },
   thinkingContainer: {
     alignSelf: 'flex-start',

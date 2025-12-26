@@ -148,9 +148,9 @@ export const ModuleListScreen: React.FC<ModuleListScreenProps> = ({ navigation }
     >
       {/* Header Section */}
       <View style={styles.headerSection}>
-        <Text style={styles.heading}>Focus Areas</Text>
+        <Text style={styles.heading}>Your Programs</Text>
         <Text style={styles.subtitle}>
-          Browse modules to discover evidence-based protocols for each wellness domain.
+          Evidence-based protocols organized by wellness goal.
         </Text>
       </View>
 

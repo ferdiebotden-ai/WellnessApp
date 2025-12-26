@@ -61,9 +61,9 @@ const TAB_CONFIG: Record<TabName, TabConfig> = {
     label: 'Home',
   },
   Protocols: {
-    icon: 'grid-outline',
-    iconFocused: 'grid',
-    label: 'Protocols',
+    icon: 'layers-outline',
+    iconFocused: 'layers',
+    label: 'Programs',
   },
   Health: {
     icon: 'fitness-outline',

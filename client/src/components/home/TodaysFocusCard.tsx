@@ -15,6 +15,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -157,18 +158,31 @@ export const TodaysFocusCard: React.FC<Props> = ({
         </Text>
       )}
 
-      {/* Why? Link (if expansion data exists) */}
+      {/* Why? Pill Button (if expansion data exists) */}
       {hasExpansion && (
         <Pressable
           onPress={toggleExpand}
-          style={styles.whyButton}
+          style={({ pressed }) => [
+            styles.whyPill,
+            pressed && styles.whyPillPressed,
+          ]}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={isExpanded ? 'Hide details' : 'Show why'}
         >
+          <Ionicons
+            name="bulb-outline"
+            size={16}
+            color={palette.primary}
+          />
           <Text style={styles.whyText}>
             {isExpanded ? 'Hide Details' : 'Why this?'}
           </Text>
+          <Ionicons
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={palette.textMuted}
+          />
         </Pressable>
       )}
 
@@ -295,16 +309,26 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: tokens.spacing.sm,
   },
-  whyButton: {
+  whyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${palette.primary}15`,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
     marginTop: tokens.spacing.xs,
     marginBottom: tokens.spacing.md,
     alignSelf: 'flex-start',
+    gap: 6,
+  },
+  whyPillPressed: {
+    backgroundColor: `${palette.primary}25`,
   },
   whyText: {
     ...typography.body,
     color: palette.primary,
     fontWeight: '600',
-    textDecorationLine: 'underline',
+    fontSize: 14,
   },
   hiddenMeasure: {
     position: 'absolute',

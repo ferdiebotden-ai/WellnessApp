@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
 import { tokens } from '../../theme/tokens';
@@ -40,7 +41,13 @@ export const ScheduledProtocolCard: React.FC<ScheduledProtocolCardProps> = ({
   testID,
 }) => {
   const { isDueNow, isUpcoming, minutesUntil, localTime } = protocol;
-  const { name, category, duration_minutes } = protocol.protocol;
+  const { name, category, duration_minutes, summary } = protocol.protocol;
+  const [showWhy, setShowWhy] = useState(false);
+
+  // Truncate summary for chip display (first sentence or ~60 chars)
+  const whySnippet = summary
+    ? summary.split('.')[0].substring(0, 80) + (summary.length > 80 ? '...' : '')
+    : null;
 
   // Get protocol icon - derive slug from name
   const protocolSlug = name.toLowerCase().replace(/\s+/g, '_');
@@ -135,6 +142,32 @@ export const ScheduledProtocolCard: React.FC<ScheduledProtocolCardProps> = ({
                   {category ? category.charAt(0).toUpperCase() + category.slice(1) : 'Protocol'}
                 </Text>
               </View>
+
+              {/* Why Chip - Progressive Disclosure */}
+              {whySnippet && (
+                <Pressable
+                  style={styles.whyChip}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setShowWhy(!showWhy);
+                  }}
+                  hitSlop={4}
+                >
+                  <Ionicons
+                    name="bulb-outline"
+                    size={14}
+                    color={palette.primary}
+                  />
+                  <Text style={styles.whyChipText}>
+                    {showWhy ? whySnippet : 'Why this?'}
+                  </Text>
+                  <Ionicons
+                    name={showWhy ? 'chevron-up' : 'chevron-down'}
+                    size={12}
+                    color={palette.textMuted}
+                  />
+                </Pressable>
+              )}
             </View>
 
             {/* Chevron */}
@@ -251,6 +284,25 @@ const styles = StyleSheet.create({
   categoryText: {
     ...typography.caption,
     color: palette.textMuted,
+  },
+  // Why Chip - Progressive Disclosure
+  whyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${palette.primary}10`,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: tokens.spacing.sm,
+    gap: 6,
+    alignSelf: 'flex-start',
+  },
+  whyChipText: {
+    ...typography.caption,
+    color: palette.primary,
+    fontWeight: '500',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   chevron: {
     fontSize: 24,

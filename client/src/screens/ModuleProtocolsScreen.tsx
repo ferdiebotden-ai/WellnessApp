@@ -19,7 +19,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -37,6 +36,7 @@ import {
 } from '../services/api';
 import { useModules } from '../hooks/useModules';
 import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
+import { ProtocolBrowseCard } from '../components/protocol/ProtocolBrowseCard';
 import { haptic } from '../utils/haptics';
 import type { ProtocolsStackParamList } from '../navigation/ProtocolsStack';
 
@@ -44,112 +44,6 @@ type ModuleProtocolsScreenProps = NativeStackScreenProps<
   ProtocolsStackParamList,
   'ModuleProtocols'
 >;
-
-interface ProtocolCardProps {
-  protocol: ModuleProtocol;
-  isEnrolled: boolean;
-  isUpdating: boolean;
-  onToggle: (protocolId: string, enroll: boolean) => void;
-  onPress: () => void;
-}
-
-const ProtocolCard: React.FC<ProtocolCardProps> = ({
-  protocol,
-  isEnrolled,
-  isUpdating,
-  onToggle,
-  onPress,
-}) => {
-  const getCategoryIcon = (category: string): keyof typeof Ionicons.glyphMap => {
-    switch (category) {
-      case 'Foundation':
-        return 'sunny-outline';
-      case 'Performance':
-        return 'flash-outline';
-      case 'Recovery':
-        return 'moon-outline';
-      case 'Optimization':
-        return 'trending-up-outline';
-      case 'Meta':
-        return 'bulb-outline';
-      default:
-        return 'ellipse-outline';
-    }
-  };
-
-  const formatTime = (time: string): string => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes?.toString().padStart(2, '0') ?? '00'} ${ampm}`;
-  };
-
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.protocolCard,
-        isEnrolled && styles.protocolCardEnrolled,
-        pressed && styles.protocolCardPressed,
-      ]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${protocol.name}${isEnrolled ? ', enrolled' : ''}`}
-      accessibilityHint="Tap to view details"
-    >
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <View style={styles.iconContainer}>
-            <Ionicons
-              name={getCategoryIcon(protocol.category)}
-              size={20}
-              color={isEnrolled ? palette.primary : palette.textMuted}
-            />
-          </View>
-          <View style={styles.cardTitleSection}>
-            <Text
-              style={[styles.protocolName, isEnrolled && styles.protocolNameEnrolled]}
-              numberOfLines={1}
-            >
-              {protocol.short_name}
-            </Text>
-            <View style={styles.metaRow}>
-              <Text style={styles.timeText}>{formatTime(protocol.default_time)}</Text>
-              <Text style={styles.categoryText}>{protocol.category}</Text>
-              {protocol.duration_minutes && (
-                <Text style={styles.durationText}>{protocol.duration_minutes}m</Text>
-              )}
-            </View>
-          </View>
-        </View>
-
-        <Text style={styles.protocolSummary} numberOfLines={2}>
-          {protocol.summary}
-        </Text>
-
-        {/* Starter Badge */}
-        {protocol.is_starter_protocol && (
-          <View style={styles.starterBadge}>
-            <Text style={styles.starterBadgeText}>RECOMMENDED</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.enrollSection}>
-        {isUpdating ? (
-          <ActivityIndicator size="small" color={palette.primary} />
-        ) : (
-          <Switch
-            value={isEnrolled}
-            onValueChange={(value) => onToggle(protocol.id, value)}
-            trackColor={{ false: palette.surface, true: `${palette.primary}40` }}
-            thumbColor={isEnrolled ? palette.primary : palette.textMuted}
-            ios_backgroundColor={palette.surface}
-          />
-        )}
-      </View>
-    </Pressable>
-  );
-};
 
 export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
   navigation,
@@ -162,6 +56,7 @@ export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingProtocolId, setUpdatingProtocolId] = useState<string | null>(null);
+  const [selectedSegment, setSelectedSegment] = useState<'recommended' | 'all'>('recommended');
 
   const { primaryModuleId, selectPrimaryModule, isUpdating: isPrimaryUpdating } = useModules();
   const isPrimary = primaryModuleId === moduleId;
@@ -256,6 +151,18 @@ export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
   const starterProtocols = protocols.filter((p) => p.is_starter_protocol);
   const otherProtocols = protocols.filter((p) => !p.is_starter_protocol);
 
+  // Determine which protocols to display based on segment
+  const displayedProtocols = selectedSegment === 'recommended'
+    ? starterProtocols
+    : protocols; // 'all' shows everything
+
+  const hasRecommended = starterProtocols.length > 0;
+
+  const handleSegmentChange = useCallback((segment: 'recommended' | 'all') => {
+    void haptic.light();
+    setSelectedSegment(segment);
+  }, []);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -307,53 +214,102 @@ export const ModuleProtocolsScreen: React.FC<ModuleProtocolsScreenProps> = ({
         </Pressable>
       </View>
 
-      {/* Starter Protocols Section */}
-      {starterProtocols.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recommended Protocols</Text>
-            <Text style={styles.sectionSubtitle}>
-              Start with these for best results
+      {/* Segmented Control */}
+      {hasRecommended && (
+        <View style={styles.segmentedControl}>
+          <Pressable
+            style={[
+              styles.segment,
+              selectedSegment === 'recommended' && styles.segmentActive,
+            ]}
+            onPress={() => handleSegmentChange('recommended')}
+          >
+            <Ionicons
+              name="star"
+              size={14}
+              color={selectedSegment === 'recommended' ? palette.background : palette.textMuted}
+            />
+            <Text
+              style={[
+                styles.segmentText,
+                selectedSegment === 'recommended' && styles.segmentTextActive,
+              ]}
+            >
+              Recommended
             </Text>
-          </View>
-          <View style={styles.protocolList}>
-            {starterProtocols.map((protocol) => (
-              <ProtocolCard
-                key={protocol.id}
-                protocol={protocol}
-                isEnrolled={enrolledIds.has(protocol.id)}
-                isUpdating={updatingProtocolId === protocol.id}
-                onToggle={handleToggleEnrollment}
-                onPress={() => handleProtocolPress(protocol)}
-              />
-            ))}
-          </View>
+            <View style={[
+              styles.countBadge,
+              selectedSegment === 'recommended' && styles.countBadgeActive,
+            ]}>
+              <Text style={[
+                styles.countText,
+                selectedSegment === 'recommended' && styles.countTextActive,
+              ]}>
+                {starterProtocols.length}
+              </Text>
+            </View>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.segment,
+              selectedSegment === 'all' && styles.segmentActive,
+            ]}
+            onPress={() => handleSegmentChange('all')}
+          >
+            <Ionicons
+              name="list"
+              size={14}
+              color={selectedSegment === 'all' ? palette.background : palette.textMuted}
+            />
+            <Text
+              style={[
+                styles.segmentText,
+                selectedSegment === 'all' && styles.segmentTextActive,
+              ]}
+            >
+              All
+            </Text>
+            <View style={[
+              styles.countBadge,
+              selectedSegment === 'all' && styles.countBadgeActive,
+            ]}>
+              <Text style={[
+                styles.countText,
+                selectedSegment === 'all' && styles.countTextActive,
+              ]}>
+                {protocols.length}
+              </Text>
+            </View>
+          </Pressable>
         </View>
       )}
 
-      {/* Other Protocols Section */}
-      {otherProtocols.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>All Protocols</Text>
-            <Text style={styles.sectionSubtitle}>
-              Browse all available protocols
-            </Text>
-          </View>
-          <View style={styles.protocolList}>
-            {otherProtocols.map((protocol) => (
-              <ProtocolCard
-                key={protocol.id}
-                protocol={protocol}
-                isEnrolled={enrolledIds.has(protocol.id)}
-                isUpdating={updatingProtocolId === protocol.id}
-                onToggle={handleToggleEnrollment}
-                onPress={() => handleProtocolPress(protocol)}
-              />
-            ))}
-          </View>
-        </View>
-      )}
+      {/* Section Header */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
+          {selectedSegment === 'recommended' ? 'Recommended Protocols' : 'All Protocols'}
+        </Text>
+        <Text style={styles.sectionSubtitle}>
+          {selectedSegment === 'recommended'
+            ? 'Start with these for best results'
+            : 'Browse all available protocols'
+          }
+        </Text>
+      </View>
+
+      {/* Protocol List */}
+      <View style={styles.protocolList}>
+        {displayedProtocols.map((protocol) => (
+          <ProtocolBrowseCard
+            key={protocol.id}
+            protocol={protocol}
+            isEnrolled={enrolledIds.has(protocol.id)}
+            isUpdating={updatingProtocolId === protocol.id}
+            onToggle={handleToggleEnrollment}
+            onPress={() => handleProtocolPress(protocol)}
+          />
+        ))}
+      </View>
 
       {/* Empty State */}
       {protocols.length === 0 && (
@@ -434,10 +390,58 @@ const styles = StyleSheet.create({
     color: palette.success,
   },
 
-  // Section
-  section: {
-    marginBottom: 24,
+  // Segmented Control
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: palette.surface,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: palette.border,
   },
+  segment: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 6,
+  },
+  segmentActive: {
+    backgroundColor: palette.primary,
+  },
+  segmentText: {
+    ...typography.caption,
+    color: palette.textSecondary,
+    fontWeight: '600',
+  },
+  segmentTextActive: {
+    color: palette.background,
+  },
+  countBadge: {
+    backgroundColor: palette.elevated,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 22,
+    alignItems: 'center',
+  },
+  countBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  countText: {
+    ...typography.caption,
+    color: palette.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  countTextActive: {
+    color: palette.background,
+  },
+
+  // Section
   sectionHeader: {
     marginBottom: 12,
   },
@@ -452,97 +456,6 @@ const styles = StyleSheet.create({
   },
   protocolList: {
     gap: 12,
-  },
-
-  // Protocol Card
-  protocolCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: palette.border,
-  },
-  protocolCardEnrolled: {
-    borderColor: palette.primary,
-    backgroundColor: `${palette.primary}08`,
-  },
-  protocolCardPressed: {
-    backgroundColor: palette.elevated,
-    transform: [{ scale: 0.98 }],
-  },
-  cardContent: {
-    flex: 1,
-    marginRight: 12,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: palette.elevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  cardTitleSection: {
-    flex: 1,
-  },
-  protocolName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: palette.textPrimary,
-    marginBottom: 2,
-  },
-  protocolNameEnrolled: {
-    color: palette.primary,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  timeText: {
-    fontSize: 12,
-    color: palette.textMuted,
-    fontWeight: '500',
-  },
-  categoryText: {
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  durationText: {
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  protocolSummary: {
-    fontSize: 14,
-    color: palette.textSecondary,
-    lineHeight: 20,
-  },
-  starterBadge: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-    backgroundColor: `${palette.primary}20`,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  starterBadgeText: {
-    ...typography.caption,
-    color: palette.primary,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  enrollSection: {
-    width: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   // Empty State

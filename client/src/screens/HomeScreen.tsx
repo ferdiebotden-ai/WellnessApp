@@ -13,6 +13,9 @@ import { DayTimeline } from '../components/home/DayTimeline';
 import { WeeklyProgressCard } from '../components/home/WeeklyProgressCard';
 import { MyScheduleSection } from '../components/home/MyScheduleSection';
 import { QuickHealthStats } from '../components/health';
+// Session 86: Protocol Quick Sheet and AI Coach integration
+import { ProtocolQuickSheet } from '../components/protocol/ProtocolQuickSheet';
+import { ChatModal, ChatContext } from '../components/ChatModal';
 import type { ManualCheckInInput } from '../types/checkIn';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -84,6 +87,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   // Track protocols currently being updated (for swipe actions)
   const [updatingProtocolIds, setUpdatingProtocolIds] = useState<Set<string>>(new Set());
+
+  // Session 86: Quick Sheet and AI Coach state
+  const [quickSheetProtocol, setQuickSheetProtocol] = useState<ScheduledProtocol | null>(null);
+  const [showQuickSheet, setShowQuickSheet] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatContext, setChatContext] = useState<ChatContext | undefined>(undefined);
+  const [isCompletingProtocol, setIsCompletingProtocol] = useState(false);
 
   // Get user's first name for greeting
   const userName = firebaseAuth.currentUser?.displayName?.split(' ')[0] || undefined;
@@ -225,9 +235,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.navigate('ProtocolBrowser');
   }, [navigation]);
 
-  // Session 64: Handle tap on scheduled protocol card
+  // Session 64/86: Handle tap on scheduled protocol card - now opens quick sheet
   const handleScheduledProtocolPress = useCallback(
     (protocol: ScheduledProtocol) => {
+      setQuickSheetProtocol(protocol);
+      setShowQuickSheet(true);
+    },
+    []
+  );
+
+  // Session 86: Quick Sheet action handlers
+  const handleQuickSheetClose = useCallback(() => {
+    setShowQuickSheet(false);
+    setQuickSheetProtocol(null);
+  }, []);
+
+  const handleQuickSheetComplete = useCallback(
+    async (protocol: ScheduledProtocol) => {
+      // Navigate to ProtocolDetail to show completion modal
+      setShowQuickSheet(false);
       navigation.navigate('ProtocolDetail', {
         protocolId: protocol.protocol_id,
         protocolName: protocol.protocol.name,
@@ -237,6 +263,40 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     [navigation]
   );
+
+  const handleQuickSheetAskAI = useCallback(
+    (protocol: ScheduledProtocol) => {
+      // Close quick sheet and open chat with protocol context
+      setShowQuickSheet(false);
+      setChatContext({
+        type: 'protocol',
+        protocolId: protocol.protocol_id,
+        protocolName: protocol.protocol.name,
+        mechanism: protocol.protocol.summary,
+      });
+      setShowChatModal(true);
+    },
+    []
+  );
+
+  const handleQuickSheetViewDetails = useCallback(
+    (protocol: ScheduledProtocol) => {
+      // Close quick sheet and navigate to full detail screen
+      setShowQuickSheet(false);
+      navigation.navigate('ProtocolDetail', {
+        protocolId: protocol.protocol_id,
+        protocolName: protocol.protocol.name,
+        moduleId: protocol.module_id || undefined,
+        source: 'schedule',
+      });
+    },
+    [navigation]
+  );
+
+  const handleChatModalClose = useCallback(() => {
+    setShowChatModal(false);
+    setChatContext(undefined);
+  }, []);
 
   // Session 65: Handle swipe-right to start protocol (same as tap)
   const handleProtocolStart = useCallback(
@@ -409,6 +469,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onCheckInComplete={handleCheckInComplete}
         onLater={handleWakeLater}
         onDismiss={handleWakeDismiss}
+      />
+
+      {/* Session 86: Protocol Quick Sheet */}
+      <ProtocolQuickSheet
+        visible={showQuickSheet}
+        protocol={quickSheetProtocol}
+        onClose={handleQuickSheetClose}
+        onMarkComplete={handleQuickSheetComplete}
+        onAskAICoach={handleQuickSheetAskAI}
+        onViewFullDetails={handleQuickSheetViewDetails}
+        isCompleting={isCompletingProtocol}
+      />
+
+      {/* Session 86: AI Coach Modal with Protocol Context */}
+      <ChatModal
+        visible={showChatModal}
+        onClose={handleChatModalClose}
+        initialContext={chatContext}
       />
 
     </View>

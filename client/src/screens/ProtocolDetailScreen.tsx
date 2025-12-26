@@ -32,6 +32,8 @@ import { enqueueProtocolLog } from '../services/protocolLogs';
 import { CompletionModal } from '../components/protocol/CompletionModal';
 import { ProtocolHeroIcon } from '../components/protocol/ProtocolHeroIcon';
 import { PrimaryButton } from '../components/PrimaryButton';
+// Session 86: AI Coach integration
+import { ChatModal, ChatContext } from '../components/ChatModal';
 import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
 import { Card } from '../components/ui/Card';
 import { palette } from '../theme/palette';
@@ -263,6 +265,9 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
   const [logError, setLogError] = useState<string | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
+  // Session 86: AI Coach modal state
+  const [showChatModal, setShowChatModal] = useState(false);
+
   // Session 61: Timer state for duration tracking
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
@@ -323,6 +328,20 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
     const stars = Math.round(avg);
     return '★'.repeat(stars) + '☆'.repeat(5 - stars);
   };
+
+  // Session 86: Handle Ask AI Coach button
+  const handleAskAICoach = useCallback(() => {
+    haptic.light();
+    setShowChatModal(true);
+  }, []);
+
+  // Build chat context for AI Coach
+  const chatContext: ChatContext = useMemo(() => ({
+    type: 'protocol',
+    protocolId,
+    protocolName: displayName,
+    mechanism: protocol?.mechanism_description || (typeof protocol?.description === 'string' ? protocol.description : undefined),
+  }), [protocolId, displayName, protocol?.mechanism_description, protocol?.description]);
 
   // Show the completion modal when button is pressed (Session 61: stop timer)
   const handleMarkComplete = useCallback(() => {
@@ -592,14 +611,27 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
 
       {/* Sticky Footer */}
       <View style={styles.footer}>
-        <PrimaryButton
-          title={logStatus === 'success' ? '✓ Logged' : 'Mark as Complete'}
-          onPress={handleMarkComplete}
-          loading={logStatus === 'pending'}
-          disabled={!moduleId || logStatus === 'pending' || logStatus === 'success'}
-          style={logStatus === 'success' ? styles.primaryButtonSuccess : undefined}
-          testID="log-complete-button"
-        />
+        <View style={styles.footerButtons}>
+          <PrimaryButton
+            title={logStatus === 'success' ? '✓ Logged' : 'Mark as Complete'}
+            onPress={handleMarkComplete}
+            loading={logStatus === 'pending'}
+            disabled={!moduleId || logStatus === 'pending' || logStatus === 'success'}
+            style={[styles.footerButtonMain, logStatus === 'success' ? styles.primaryButtonSuccess : undefined]}
+            testID="log-complete-button"
+          />
+          <Pressable
+            style={({ pressed }) => [
+              styles.askCoachButton,
+              pressed && styles.askCoachButtonPressed,
+            ]}
+            onPress={handleAskAICoach}
+            testID="ask-ai-coach-button"
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color={palette.primary} />
+            <Text style={styles.askCoachText}>Ask AI</Text>
+          </Pressable>
+        </View>
         {!moduleId && (
           <Text style={styles.footerHint}>
             Select a module to enable logging
@@ -607,6 +639,13 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
         )}
         {logError && <Text style={styles.logErrorText}>{logError}</Text>}
       </View>
+
+      {/* Session 86: AI Coach Modal */}
+      <ChatModal
+        visible={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        initialContext={chatContext}
+      />
     </View>
   );
 };
@@ -945,6 +984,35 @@ const styles = StyleSheet.create({
     borderTopColor: palette.border,
     backgroundColor: palette.surface,
     gap: 8,
+  },
+  footerButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  footerButtonMain: {
+    flex: 1,
+  },
+  askCoachButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${palette.primary}15`,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: palette.primary,
+    gap: 6,
+    minWidth: 90,
+  },
+  askCoachButtonPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
+  askCoachText: {
+    ...typography.subheading,
+    color: palette.primary,
+    fontSize: 14,
   },
   footerHint: {
     ...typography.caption,
