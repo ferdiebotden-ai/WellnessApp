@@ -29,6 +29,8 @@ import { useWeeklyProgress, useMockWeeklyProgress } from '../hooks/useWeeklyProg
 import { useEnrolledProtocols, ScheduledProtocol } from '../hooks/useEnrolledProtocols';
 import { useTodayMetrics } from '../hooks/useTodayMetrics';
 import { unenrollFromProtocol } from '../services/api';
+import { enqueueProtocolLog } from '../services/protocolLogs';
+import { haptic } from '../utils/haptics';
 import type { DashboardTask, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
 import type { HomeStackParamList } from '../navigation/HomeStack';
@@ -90,6 +92,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatContext, setChatContext] = useState<ChatContext | undefined>(undefined);
   const [isCompletingProtocol, setIsCompletingProtocol] = useState(false);
+  const [completionSuccess, setCompletionSuccess] = useState(false);
 
   // Get user's first name for greeting
   const userName = firebaseAuth.currentUser?.displayName?.split(' ')[0] || undefined;
@@ -248,16 +251,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const handleQuickSheetComplete = useCallback(
     async (protocol: ScheduledProtocol) => {
-      // Navigate to ProtocolDetail to show completion modal
-      setShowQuickSheet(false);
-      navigation.navigate('ProtocolDetail', {
-        protocolId: protocol.protocol_id,
-        protocolName: protocol.protocol.name,
-        moduleId: protocol.module_id || undefined,
-        source: 'schedule',
-      });
+      // Session 91: Inline completion with success animation
+      setIsCompletingProtocol(true);
+      setCompletionSuccess(false);
+
+      try {
+        await enqueueProtocolLog({
+          protocolId: protocol.protocol_id,
+          moduleId: protocol.module_id || '',
+          source: 'schedule',
+          metadata: {
+            protocolName: protocol.protocol.name,
+          },
+        });
+
+        // Success! Show checkmark animation
+        void haptic.success();
+        setCompletionSuccess(true);
+
+        // Refresh enrolled protocols to update UI
+        refreshEnrolledProtocols();
+
+        // Wait for user to see the success animation, then close
+        setTimeout(() => {
+          setShowQuickSheet(false);
+          setQuickSheetProtocol(null);
+          setIsCompletingProtocol(false);
+          setCompletionSuccess(false);
+        }, 1500);
+      } catch (error) {
+        void haptic.error();
+        setIsCompletingProtocol(false);
+        Alert.alert(
+          'Unable to Complete',
+          error instanceof Error ? error.message : 'Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
     },
-    [navigation]
+    [refreshEnrolledProtocols]
   );
 
   const handleQuickSheetAskAI = useCallback(
@@ -459,6 +491,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onAskAICoach={handleQuickSheetAskAI}
         onViewFullDetails={handleQuickSheetViewDetails}
         isCompleting={isCompletingProtocol}
+        completionSuccess={completionSuccess}
       />
 
       {/* Session 86: AI Coach Modal with Protocol Context */}

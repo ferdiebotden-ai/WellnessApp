@@ -35,6 +35,8 @@ interface Props {
   onAskAICoach: (protocol: ScheduledProtocol) => void;
   onViewFullDetails: (protocol: ScheduledProtocol) => void;
   isCompleting?: boolean;
+  /** Session 91: Show success state after completion */
+  completionSuccess?: boolean;
 }
 
 /**
@@ -95,6 +97,7 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
   onAskAICoach,
   onViewFullDetails,
   isCompleting = false,
+  completionSuccess = false,
 }) => {
   if (!protocol) return null;
 
@@ -123,6 +126,16 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
         <View style={styles.overlay}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View style={styles.sheet}>
+              {/* Session 91: Success Overlay */}
+              {completionSuccess && (
+                <View style={styles.successOverlay}>
+                  <View style={styles.successIconContainer}>
+                    <Ionicons name="checkmark-circle" size={72} color={palette.success} />
+                  </View>
+                  <Text style={styles.successText}>Protocol Complete!</Text>
+                </View>
+              )}
+
               {/* Handle */}
               <View style={styles.handle} />
 
@@ -296,6 +309,32 @@ const styles = StyleSheet.create({
     // Session 87: Removed minHeight to allow content to determine sheet size
     // Content-driven height provides better UX for varying protocol lengths
   },
+
+  // Session 91: Success Overlay
+  successOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: palette.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+    gap: 16,
+  },
+  successIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: `${palette.success}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successText: {
+    ...typography.heading,
+    color: palette.success,
+    fontSize: 20,
+  },
+
   handle: {
     width: 40,
     height: 4,

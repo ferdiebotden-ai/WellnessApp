@@ -10,7 +10,7 @@
  * @session 58
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   LayoutChangeEvent,
   Linking,
@@ -268,34 +268,6 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
   // Session 86: AI Coach modal state
   const [showChatModal, setShowChatModal] = useState(false);
 
-  // Session 61: Timer state for duration tracking
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [isTimerRunning, setIsTimerRunning] = useState(true);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Start timer on mount, stop on unmount
-  useEffect(() => {
-    if (isTimerRunning) {
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-      }, 1000);
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [isTimerRunning]);
-
-  // Format time as MM:SS
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   // Parsed content
   const bullets = useMemo(() => parseDescription(protocol?.description), [protocol?.description]);
   const citations = protocol?.citations ?? [];
@@ -343,23 +315,17 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
     mechanism: protocol?.mechanism_description || (typeof protocol?.description === 'string' ? protocol.description : undefined),
   }), [protocolId, displayName, protocol?.mechanism_description, protocol?.description]);
 
-  // Show the completion modal when button is pressed (Session 61: stop timer)
+  // Show the completion modal when button is pressed
   const handleMarkComplete = useCallback(() => {
     if (!protocolId || !moduleId) {
       setLogStatus('error');
       setLogError('Module context missing.');
       return;
     }
-    // Stop the timer when user marks complete
-    setIsTimerRunning(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
     setShowCompletionModal(true);
   }, [protocolId, moduleId]);
 
-  // Called when user completes the modal with rating/notes (Session 61: includes duration)
+  // Called when user completes the modal with rating/notes
   const handleLogComplete = useCallback(async (
     difficultyRating: number | null,
     notes: string | null
@@ -378,7 +344,6 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
         progressTarget,
         difficultyRating: difficultyRating ?? undefined,
         notes: notes ?? undefined,
-        durationSeconds: elapsedSeconds > 0 ? elapsedSeconds : undefined,
         metadata: {
           protocolName: displayName,
         },
@@ -388,7 +353,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
       setLogStatus('error');
       setLogError(logErr instanceof Error ? logErr.message : 'Unable to log protocol right now.');
     }
-  }, [protocolId, moduleId, enrollmentId, source, progressTarget, displayName, elapsedSeconds]);
+  }, [protocolId, moduleId, enrollmentId, source, progressTarget, displayName]);
 
   // Called when user skips the modal (logs without rating)
   const handleSkipModal = useCallback(() => {
@@ -420,22 +385,6 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
           <Text accessibilityRole="header" style={styles.title}>
             {displayName}
           </Text>
-        </View>
-
-        {/* Session 61: Active Timer Display */}
-        <View style={styles.timerCard}>
-          <View style={styles.timerIconContainer}>
-            <Text style={styles.timerIcon}>{isTimerRunning ? '⏱️' : '✓'}</Text>
-          </View>
-          <View style={styles.timerContent}>
-            <Text style={styles.timerLabel}>
-              {isTimerRunning ? 'Time Elapsed' : 'Duration'}
-            </Text>
-            <Text style={styles.timerValue}>{formatTime(elapsedSeconds)}</Text>
-          </View>
-          {isTimerRunning && (
-            <View style={styles.timerPulse} />
-          )}
         </View>
 
         {/* Loading State */}
@@ -603,7 +552,6 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
       <CompletionModal
         visible={showCompletionModal}
         protocolName={displayName}
-        durationSeconds={elapsedSeconds}
         onComplete={handleLogComplete}
         onSkip={handleSkipModal}
         onCancel={handleCancelModal}
@@ -678,56 +626,6 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
     fontSize: 28,
     textAlign: 'center',
-  },
-
-  // Session 61: Timer Card
-  timerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: palette.elevated,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: palette.primary,
-    gap: 12,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  timerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${palette.primary}20`,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timerIcon: {
-    fontSize: 20,
-  },
-  timerContent: {
-    flex: 1,
-    gap: 2,
-  },
-  timerLabel: {
-    ...typography.caption,
-    color: palette.textSecondary,
-    letterSpacing: 0.5,
-  },
-  timerValue: {
-    fontFamily: fontFamily.monoBold,
-    fontSize: 24,
-    fontWeight: '700',
-    color: palette.primary,
-    letterSpacing: 2,
-  },
-  timerPulse: {
-    position: 'absolute',
-    right: 16,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: palette.primary,
   },
 
   // Category Badge

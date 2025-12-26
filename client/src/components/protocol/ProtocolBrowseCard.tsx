@@ -85,6 +85,7 @@ export const ProtocolBrowseCard: React.FC<Props> = ({
   onPress,
 }) => {
   const [isWhyExpanded, setIsWhyExpanded] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
   const expandAnimation = useSharedValue(0);
 
   const categoryColor = CATEGORY_COLORS[protocol.category?.toLowerCase()] || palette.primary;
@@ -98,8 +99,19 @@ export const ProtocolBrowseCard: React.FC<Props> = ({
     });
   }, [isWhyExpanded, expandAnimation]);
 
+  // Measure content height for smooth animation
+  const handleContentLayout = useCallback((event: { nativeEvent: { layout: { height: number } } }) => {
+    const { height } = event.nativeEvent.layout;
+    if (height > 0 && contentHeight === 0) {
+      setContentHeight(height);
+    }
+  }, [contentHeight]);
+
+  // Dynamic height animation based on measured content
   const expandStyle = useAnimatedStyle(() => ({
-    height: interpolate(expandAnimation.value, [0, 1], [0, 80]),
+    height: contentHeight > 0
+      ? interpolate(expandAnimation.value, [0, 1], [0, contentHeight + 40]) // +40 for padding/margins
+      : expandAnimation.value > 0 ? 'auto' : 0,
     opacity: expandAnimation.value,
     overflow: 'hidden' as const,
   }));
@@ -193,13 +205,15 @@ export const ProtocolBrowseCard: React.FC<Props> = ({
 
       {/* Expanded Why Content */}
       <Animated.View style={[styles.whyContent, expandStyle]}>
-        <View style={styles.whyDivider} />
-        <Text style={styles.whyText} numberOfLines={3}>
-          {protocol.summary || 'Evidence-based protocol designed to optimize your wellness.'}
-        </Text>
-        <Text style={styles.citationHint}>
-          Tap card for research citations
-        </Text>
+        <View onLayout={handleContentLayout}>
+          <View style={styles.whyDivider} />
+          <Text style={styles.whyText}>
+            {protocol.summary || 'Evidence-based protocol designed to optimize your wellness.'}
+          </Text>
+          <Text style={styles.citationHint}>
+            Tap card for research citations
+          </Text>
+        </View>
       </Animated.View>
 
       {/* Starter Badge */}
@@ -348,11 +362,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
 
-  // Starter Badge
+  // Starter Badge - positioned to avoid switch overlap
   starterBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: -6,
+    right: 70, // Clear of the switch (52px) plus margin
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: `${palette.primary}20`,
