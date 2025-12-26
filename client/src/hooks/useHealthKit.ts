@@ -41,6 +41,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Device from 'expo-device';
 
 // Import types - the actual module will only load on iOS
 import type {
@@ -52,6 +53,9 @@ import type {
 // Storage keys
 const STORAGE_KEY_BACKGROUND_ENABLED = 'healthkit_background_enabled';
 const STORAGE_KEY_LAST_SYNC = 'healthkit_last_sync';
+
+// Session 89: Unavailable reason tracking for better error messages
+export type UnavailableReason = 'simulator' | 'module_missing' | 'device_unsupported' | 'unknown';
 
 // Types for the hook
 export interface UseHealthKitReturn {
@@ -79,6 +83,8 @@ export interface UseHealthKitReturn {
   latestReadings: HealthKitReading[];
   /** Error message if any operation failed */
   error: string | null;
+  /** Session 89: Why HealthKit is unavailable (for accurate error messages) */
+  unavailableReason: UnavailableReason | null;
 }
 
 /**
@@ -95,6 +101,7 @@ export function useHealthKit(): UseHealthKitReturn {
   const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
   const [latestReadings, setLatestReadings] = useState<HealthKitReading[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [unavailableReason, setUnavailableReason] = useState<UnavailableReason | null>(null);
 
   // Refs for module and subscription
   const moduleRef = useRef<typeof import('../../../modules/expo-healthkit-observer/src') | null>(null);
@@ -110,14 +117,35 @@ export function useHealthKit(): UseHealthKitReturn {
 
     const initialize = async () => {
       try {
-        // Dynamically import the module
-        const ExpoHealthKitObserver = await import('../../../modules/expo-healthkit-observer/src');
-        moduleRef.current = ExpoHealthKitObserver;
+        // Session 89: Check if running in simulator BEFORE trying to import native module
+        if (!Device.isDevice) {
+          console.log('[useHealthKit] Running in simulator - HealthKit unavailable');
+          setIsAvailable(false);
+          setStatus('unavailable');
+          setUnavailableReason('simulator');
+          setIsLoading(false);
+          return;
+        }
+
+        // Dynamically import the module - may fail in Expo Go or builds without native module
+        let ExpoHealthKitObserver;
+        try {
+          ExpoHealthKitObserver = await import('../../../modules/expo-healthkit-observer/src');
+          moduleRef.current = ExpoHealthKitObserver;
+        } catch (importError) {
+          console.warn('[useHealthKit] Failed to import native module:', importError);
+          setIsAvailable(false);
+          setStatus('unavailable');
+          setUnavailableReason('module_missing');
+          setIsLoading(false);
+          return;
+        }
 
         // Check availability (with defensive guard)
         if (typeof ExpoHealthKitObserver.isAvailable !== 'function') {
           console.warn('[useHealthKit] isAvailable method not found on module');
           setStatus('unavailable');
+          setUnavailableReason('module_missing');
           setIsLoading(false);
           return;
         }
@@ -126,6 +154,7 @@ export function useHealthKit(): UseHealthKitReturn {
 
         if (!available) {
           setStatus('unavailable');
+          setUnavailableReason('device_unsupported');
           setIsLoading(false);
           return;
         }
@@ -165,6 +194,7 @@ export function useHealthKit(): UseHealthKitReturn {
       } catch (err) {
         console.error('[useHealthKit] Failed to initialize:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize HealthKit');
+        setUnavailableReason('unknown');
         setIsLoading(false);
       }
     };
@@ -317,6 +347,7 @@ export function useHealthKit(): UseHealthKitReturn {
     syncNow,
     isSyncing,
     lastSyncAt,
+    unavailableReason,
     latestReadings,
     error,
   };

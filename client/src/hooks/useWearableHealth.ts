@@ -37,7 +37,7 @@
 
 import { Platform } from 'react-native';
 
-import { useHealthKit, UseHealthKitReturn } from './useHealthKit';
+import { useHealthKit, UseHealthKitReturn, UnavailableReason } from './useHealthKit';
 import { useHealthConnect, UseHealthConnectReturn } from './useHealthConnect';
 import type { HealthKitReading } from '../../../modules/expo-healthkit-observer/src/types';
 import type { HealthConnectReading } from '../types/healthConnect';
@@ -92,6 +92,8 @@ export interface UseWearableHealthReturn {
   latestReadings: UnifiedHealthReading[];
   /** Error message if any operation failed */
   error: string | null;
+  /** Session 89: Why health data is unavailable (for accurate error messages) */
+  unavailableReason: UnavailableReason | null;
 
   // iOS-specific (available when platform === 'ios')
   /** Enable background delivery (iOS only) */
@@ -122,6 +124,7 @@ function useUnavailableHealth(): UseWearableHealthReturn {
     lastSyncAt: null,
     latestReadings: [],
     error: null,
+    unavailableReason: null,
   };
 }
 
@@ -144,6 +147,7 @@ function adaptHealthKit(hook: UseHealthKitReturn): UseWearableHealthReturn {
     lastSyncAt: hook.lastSyncAt,
     latestReadings: hook.latestReadings,
     error: hook.error,
+    unavailableReason: hook.unavailableReason,
     // iOS-specific features
     enableBackgroundDelivery: hook.enableBackgroundDelivery,
     disableBackgroundDelivery: hook.disableBackgroundDelivery,
@@ -168,6 +172,7 @@ function adaptHealthConnect(
     lastSyncAt: hook.lastSyncAt,
     latestReadings: hook.latestReadings,
     error: hook.error,
+    unavailableReason: null, // Android uses different error handling
     // No background delivery on Android (foreground-only for MVP)
   };
 }

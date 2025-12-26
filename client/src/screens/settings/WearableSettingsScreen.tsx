@@ -94,6 +94,7 @@ export const WearableSettingsScreen: React.FC = () => {
     isSyncing,
     lastSyncAt,
     error,
+    unavailableReason,
   } = useWearableHealth();
 
   const providerName = getProviderName();
@@ -225,9 +226,25 @@ export const WearableSettingsScreen: React.FC = () => {
         'Active Calories Burned',
       ];
 
-  const unavailableMessage = platform === 'ios'
-    ? 'HealthKit is not available on this device. A physical iPhone is required for health data integration.'
-    : 'Health Connect is not available on this device. Please install Health Connect from the Play Store.';
+  // Session 89: Improved error messages based on unavailableReason
+  const getUnavailableMessage = (): string => {
+    if (platform === 'ios') {
+      switch (unavailableReason) {
+        case 'simulator':
+          return 'HealthKit requires a physical iPhone. Simulators cannot access health data.';
+        case 'module_missing':
+          return 'HealthKit is not available in this app build. If using Expo Go, please build with EAS instead.';
+        case 'device_unsupported':
+          return 'HealthKit is not supported on this device (requires iOS 8+).';
+        default:
+          return 'HealthKit is not available on this device.';
+      }
+    } else {
+      return 'Health Connect is not available on this device. Please install Health Connect from the Play Store.';
+    }
+  };
+
+  const unavailableMessage = getUnavailableMessage();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>

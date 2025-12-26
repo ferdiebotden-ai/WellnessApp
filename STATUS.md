@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 88 (complete) |
-| **Progress** | AI Coach Context Fix + Health Empty State |
+| **Session** | 89 (complete) |
+| **Progress** | Apple Health Settings UX + Module Error Fix |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,41 +52,57 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 88)
+**Date:** December 26, 2025 (Session 89)
+**Focus:** Apple Health Settings UX + Module Error Fix
+
+**Context:** Addresses Issue 5 from `SESSION_87_FIXES.md`.
+
+**Problems Fixed:**
+
+### Issue 5A: Settings UX — Health Integration Buried
+**Root Cause:** Apple Health integration was buried under "Wearable Settings" in Data Integrations card. Users expected a dedicated "Apple Health" option.
+
+**Solution:**
+- Added new dedicated health card to ProfileScreen after "Biometric Profile"
+- Platform-specific labels: "Apple Health" (iOS) / "Health Connect" (Android)
+- Status badge shows connection state (Connected/Not Connected/Unavailable)
+- CTA button navigates to WearableSettingsScreen
+- Kept "Wearable Settings" in Data Integrations for future cloud wearables (Oura, WHOOP)
+
+### Issue 5B: Module Error — Misleading Error Message
+**Root Cause:** Error message said "A physical iPhone is required" but appeared on physical iPhones when using Expo Go or EAS builds without proper native module linking. No way to distinguish simulator vs module_missing vs device_unsupported.
+
+**Solution:**
+- Added `UnavailableReason` type: `'simulator' | 'module_missing' | 'device_unsupported' | 'unknown'`
+- Added `expo-device` import for simulator detection (check before module import)
+- Separate try/catch for dynamic module import to detect module_missing
+- Context-specific error messages in WearableSettingsScreen:
+  - Simulator: "HealthKit requires a physical iPhone. Simulators cannot access health data."
+  - Module missing: "HealthKit is not available in this app build. If using Expo Go, please build with EAS instead."
+  - Device unsupported: "HealthKit is not supported on this device (requires iOS 8+)."
+
+**Files Modified (4):**
+- `client/src/hooks/useHealthKit.ts` — Add `UnavailableReason` type, state, and detection logic
+- `client/src/hooks/useWearableHealth.ts` — Expose `unavailableReason` in unified interface
+- `client/src/screens/settings/WearableSettingsScreen.tsx` — Context-specific error messages
+- `client/src/screens/ProfileScreen.tsx` — Add health card with platform labels + HealthStatusBadge
+
+---
+
+## Session 88 (Previous)
+
+**Date:** December 26, 2025
 **Focus:** AI Coach Context Fix + Health Empty State
 
 **Context:** Addresses Issues 3 & 4 from `SESSION_87_FIXES.md`.
 
-**Problems Fixed:**
-
-### Issue 3: AI Coach Context Not Working
-**Root Cause:** Context banner and suggested questions were inside `ListEmptyComponent`, which only renders when no chat history exists. Users with existing conversations never saw protocol context.
-
 **Solution:**
-- Moved context banner to `ListHeaderComponent` — shows regardless of message count
-- Added floating suggestion chips (horizontal scroll) above input area
-- Added `contextDismissed` state to hide banner after first message
-- Updated `sendChatQuery` API to pass protocol context to backend
-- Backend now receives `protocolId`, `protocolName`, `mechanism` for better AI responses
-
-### Issue 4: Health Tab Placeholder Data
-**Root Cause:** `useHealthHistory` hook had `useMockData = true` default, showing fake data even when no real health data existed.
-
-**Solution:**
+- Moved context banner to `ListHeaderComponent`
+- Added floating suggestion chips above input
+- Created `HealthEmptyState` component
 - Changed `useMockData` default to `false`
-- Added `isEmpty` flag to hook return value
-- Removed mock data fallback on API error
-- Created `HealthEmptyState` component with professional design
-- Added CTA button to navigate to Wearable Settings
-- Shows empty state when both today metrics and history are empty
 
-**Files Modified (6):**
-- `client/src/services/api.ts` — Add context parameter to sendChatQuery
-- `client/src/components/ChatModal.tsx` — ListHeaderComponent, floating suggestions, backend context passing
-- `client/src/hooks/useHealthHistory.ts` — Change default, add isEmpty, remove mock fallback
-- `client/src/components/health/HealthEmptyState.tsx` — **New file**
-- `client/src/components/health/index.ts` — Export HealthEmptyState
-- `client/src/screens/HealthDashboardScreen.tsx` — Handle empty state
+**Commit:** `48d0c93`
 
 ---
 
@@ -126,27 +142,15 @@
 
 ## Next Session Priority
 
-### Session 89 Focus: Apple Health Settings UX + Module Error
+### Session 90 Focus: TBD
 
-Address Issue 5 from `SESSION_87_FIXES.md`.
+All issues from `SESSION_87_FIXES.md` have been addressed (Issues 1-5 complete).
 
-**Issue 5A: Settings UX**
-- Apple Health integration is buried under "Wearables" settings
-- Users expect a dedicated "Health" or "Apple Health" option
-
-**Issue 5B: Module Not Found Error**
-- On physical iPhone with Expo Dev build: "Healthcare is not available on this device"
-- Error message is misleading — actual issue is native module not linked
-- May be Expo Go limitation or EAS Dev Build missing entitlements
-
-**Fix Tasks:**
-1. Review `app.json` for HealthKit entitlements
-2. Check `eas.json` build profile includes health capabilities
-3. Improve module detection error messages
-4. Add "Apple Health" as separate card in Profile → Data section
-5. Test with EAS Development Build on physical device
-
-**Reference:** See `SESSION_87_FIXES.md` for detailed root cause analysis
+**Potential Focus Areas:**
+- User testing and feedback collection
+- EAS Development Build testing on physical iPhone
+- Performance optimization
+- Additional polish items from user testing
 
 **Known Pre-existing TypeScript Issues (Non-blocking):**
 - `ProtocolDetailScreen.tsx:620` — ViewStyle array type
@@ -273,4 +277,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 26, 2025 (Session 88 closed - AI Coach context + Health empty state)*
+*Last Updated: December 26, 2025 (Session 89 closed - Apple Health settings UX + module error fix)*

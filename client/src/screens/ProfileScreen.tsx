@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { fetchCurrentUser, updateUserPreferences, getMVDStatus, activateMVD, deactivateMVD, type MVDStatus } from '../services/api';
@@ -13,6 +13,7 @@ import { Card } from '../components/ui/Card';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
 import { haptic } from '../utils/haptics';
+import { useWearableHealth } from '../hooks/useWearableHealth';
 import type { ProfileStackParamList } from '../navigation/ProfileStack';
 
 /** Format time string "HH:MM" to display format "10:00 PM" */
@@ -28,6 +29,51 @@ const formatTimeDisplay = (time: string): string => {
 const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
   const hours = i.toString().padStart(2, '0');
   return { value: `${hours}:00`, label: formatTimeDisplay(`${hours}:00`) };
+});
+
+/** Session 89: Health status badge for the new health card */
+const HealthStatusBadge: React.FC<{ status: 'connected' | 'disconnected' | 'unavailable' }> = ({
+  status,
+}) => {
+  const colors = {
+    connected: palette.success,
+    disconnected: palette.accent,
+    unavailable: palette.textMuted,
+  };
+
+  const labels = {
+    connected: 'Connected',
+    disconnected: 'Not Connected',
+    unavailable: 'Unavailable',
+  };
+
+  return (
+    <View style={healthBadgeStyles.statusBadge}>
+      <View style={[healthBadgeStyles.statusDot, { backgroundColor: colors[status] }]} />
+      <Text style={[healthBadgeStyles.statusText, { color: colors[status] }]}>{labels[status]}</Text>
+    </View>
+  );
+};
+
+const healthBadgeStyles = StyleSheet.create({
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: palette.elevated,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  statusText: {
+    ...typography.caption,
+    fontWeight: '600',
+  },
 });
 
 export const ProfileScreen: React.FC = () => {
@@ -49,6 +95,20 @@ export const ProfileScreen: React.FC = () => {
   const [mvdStatus, setMvdStatus] = useState<MVDStatus | null>(null);
   const [isLoadingMVD, setIsLoadingMVD] = useState(true);
   const [isUpdatingMVD, setIsUpdatingMVD] = useState(false);
+
+  // Session 89: Health integration status for new health card
+  const { isAvailable: healthIsAvailable, status: healthAuthStatus, isLoading: healthIsLoading } = useWearableHealth();
+  const healthStatus: 'connected' | 'disconnected' | 'unavailable' = !healthIsAvailable
+    ? 'unavailable'
+    : healthAuthStatus === 'authorized'
+    ? 'connected'
+    : 'disconnected';
+
+  // Session 89: Health settings navigation handler
+  const handleHealthSettingsPress = useCallback(() => {
+    void haptic.light();
+    navigation.navigate('WearableSettings');
+  }, [navigation]);
 
   useEffect(() => {
     const loadUserPreferences = async () => {
@@ -342,6 +402,28 @@ export const ProfileScreen: React.FC = () => {
         />
       </Card>
 
+      {/* Session 89: Dedicated Health Integration Card */}
+      <Card>
+        <View style={styles.healthCardHeader}>
+          <Text style={styles.cardTitle}>
+            {Platform.OS === 'ios' ? 'Apple Health' : 'Health Connect'}
+          </Text>
+          {!healthIsLoading && <HealthStatusBadge status={healthStatus} />}
+        </View>
+        <Text style={styles.cardBody}>
+          {Platform.OS === 'ios'
+            ? 'Sync sleep, HRV, and activity data from your Apple Watch.'
+            : 'Sync sleep, HRV, and activity data from Health Connect sources.'}
+        </Text>
+        <PrimaryButton
+          title={healthStatus === 'connected' ? 'Manage Connection' : 'Connect'}
+          variant={healthStatus === 'connected' ? 'secondary' : 'primary'}
+          onPress={handleHealthSettingsPress}
+          style={styles.buttonSpacing}
+          testID="open-health-settings"
+        />
+      </Card>
+
       <Card>
         <Text style={styles.cardTitle}>Weekly Insights</Text>
         <Text style={styles.cardBody}>
@@ -582,6 +664,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     ...typography.subheading,
     color: palette.textPrimary,
+  },
+  // Session 89: Health card header with status badge
+  healthCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: tokens.spacing.xs,
   },
   cardBody: {
     ...typography.body,
