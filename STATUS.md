@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 85 (complete) |
-| **Progress** | Health Dashboard + Full Health Data Visualization |
+| **Session** | 86 (complete) |
+| **Progress** | Protocol UI/UX Redesign |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,92 +52,90 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 85)
-**Focus:** Health Dashboard + Full Health Data Visualization
+**Date:** December 26, 2025 (Session 86)
+**Focus:** Protocol UI/UX Redesign
 
-**Context:** User discovered that Apple Health and Android Health Connect integrations were complete and working on the backend, but the collected health data (steps, sleep details, HRV, RHR) was NOT being displayed to users. Only the composite recovery score was shown.
+**Context:** User requested comprehensive UI/UX review and redesign of the protocols implementation based on competitive research from Oura, WHOOP, Noom, and Headspace apps.
 
 **Problem:**
-Health data is collected via HealthKit/Health Connect but not surfaced in UI. Users have no visibility into steps, sleep stages, HRV trends, etc.
+1. "Protocols" tab naming confusing — shows Focus Areas/Modules first
+2. "The Why" (scientific backing) hidden by default, hard to access
+3. Home screen protocol management needed improvement
+4. AI Coach disconnected from protocols — no context-aware integration
 
 **Solution:**
-Comprehensive Health Dashboard with full data visualization, replacing the Insights tab with a dedicated Health tab.
+Comprehensive Protocol UI/UX redesign with progressive disclosure, bottom sheet quick view, and AI Coach integration.
 
 **Changes Made:**
 
-### Phase 1: Reusable UI Components
-- Created `CircularProgress.tsx` — Animated circular progress ring (Reanimated)
-- Created `TrendChart.tsx` — Line/area chart for 7/30 day trends (react-native-svg)
+### Phase 1: Tab & Header Updates
+- Renamed "Protocols" tab to "Programs" for clearer hierarchy
+- Updated ModuleListScreen header: "Your Programs" with subtitle
+- Changed tab icon to "layers" for visual clarity
 
-### Phase 2: Health Dashboard Components
-- Created `StepsProgressCard.tsx` — Apple Watch-style step counter with ring
-- Created `SleepSummaryCard.tsx` — Sleep duration, efficiency display
-- Created `SleepStagesBar.tsx` — Horizontal stage breakdown (Deep/REM/Light/Awake)
-- Created `MetricCard.tsx` — Generic card with mini sparkline (HRVMetricCard, RHRMetricCard)
-- Created `QuickHealthStats.tsx` — Horizontal mini-metrics for HomeScreen
-- Created `components/health/index.ts` — Central exports
+### Phase 2: Progressive Disclosure (Why This?)
+- Added expandable "Why this?" chip to `ScheduledProtocolCard`
+- Updated `TodaysFocusCard` "Why this?" button to pill style with icon
+- Created `ProtocolBrowseCard` with inline expandable "Why this works"
 
-### Phase 3: Data Hooks
-- Created `useHealthHistory.ts` — Historical health data for trend charts
-  - Supports 7/14/30 day ranges
-  - Mock data generator (Phase 4 ready for real API)
-  - getMetricData() transformer for charts
+### Phase 3: Protocol Quick Sheet
+- Created `ProtocolQuickSheet.tsx` — 60% height scrollable bottom sheet
+  - Protocol hero section with icon, name, category
+  - "What to Do" section with bullet instructions
+  - Expandable "Why This Works" and "Your Progress" sections
+  - "View Full Details" link
+  - Action buttons: "Mark Complete" + "Ask AI Coach"
 
-### Phase 4: Health Dashboard Screen
-- Created `HealthDashboardScreen.tsx` — Main health dashboard
-  - Steps progress card with circular ring
-  - Sleep summary with stages breakdown
-  - HRV and RHR cards with sparklines
-  - 7d/30d trend charts for Sleep, HRV, Steps
-  - Data source attribution (Apple Health / Health Connect)
+### Phase 4: AI Coach Context Integration
+- Added `ChatContext` interface to ChatModal
+- Added suggested questions UI for protocols:
+  - "Why is this recommended for me?"
+  - "When is the best time to do this?"
+  - "How will this affect my sleep or HRV?"
+- Added "Ask AI Coach" button to ProtocolDetailScreen footer
+- Integrated ChatModal with protocol context in HomeScreen
 
-### Phase 5: Navigation Updates
-- Replaced Insights tab with Health tab in BottomTabs.tsx
-- Added QuickHealthStats row to HomeScreen (between Recovery Score and Today's Focus)
-- Added WeeklyInsights screen to ProfileStack
-- Added "Weekly Insights" card to ProfileScreen
-- Updated HomeScreen synthesis navigation to Profile → WeeklyInsights
+### Phase 5: Segmented Control
+- Added segmented control to ModuleProtocolsScreen
+  - "Recommended" | "All" toggle with count badges
+  - Animated segment switching with haptic feedback
 
-### Phase 6: Backend API
-- Created `healthHistory.ts` with `GET /api/health/history?days=7|14|30`
-- Registered route in api.ts
-- Returns historical data from daily_metrics table
+**Files Created (2):**
+- `client/src/components/protocol/ProtocolQuickSheet.tsx`
+- `client/src/components/protocol/ProtocolBrowseCard.tsx`
 
-### Phase 7: Step Goal Configuration
-- Added step_goal setting to BiometricSettingsScreen
-  - Preset options: 5,000 / 7,500 / 10,000 / 12,500 / 15,000
-  - Default: 10,000 steps
-- Added step_goal to UserProfile type
-- Created database migration for step_goal column
+**Files Modified (8):**
+- `client/src/navigation/BottomTabs.tsx` — "Programs" tab rename + icon
+- `client/src/screens/ModuleListScreen.tsx` — "Your Programs" header
+- `client/src/components/home/ScheduledProtocolCard.tsx` — "Why this?" chip
+- `client/src/components/home/TodaysFocusCard.tsx` — Pill-style "Why this?" button
+- `client/src/components/ChatModal.tsx` — Context support + suggested questions
+- `client/src/screens/HomeScreen.tsx` — ProtocolQuickSheet + ChatModal integration
+- `client/src/screens/ProtocolDetailScreen.tsx` — "Ask AI Coach" footer button
+- `client/src/screens/ModuleProtocolsScreen.tsx` — Segmented control + ProtocolBrowseCard
 
-**Files Created (12):**
-- `client/src/components/ui/CircularProgress.tsx`
-- `client/src/components/health/TrendChart.tsx`
-- `client/src/components/health/StepsProgressCard.tsx`
-- `client/src/components/health/SleepSummaryCard.tsx`
-- `client/src/components/health/SleepStagesBar.tsx`
-- `client/src/components/health/MetricCard.tsx`
-- `client/src/components/health/QuickHealthStats.tsx`
-- `client/src/components/health/index.ts`
-- `client/src/hooks/useHealthHistory.ts`
-- `client/src/screens/HealthDashboardScreen.tsx`
-- `functions/src/healthHistory.ts`
-- `supabase/migrations/20251226000000_add_step_goal.sql`
+**Commit:**
+- `a3182d8` — Session 86: Protocol UI/UX Redesign
 
-**Files Modified (6):**
-- `client/src/navigation/BottomTabs.tsx` — Health tab replaces Insights
-- `client/src/screens/HomeScreen.tsx` — QuickHealthStats + synthesis nav fix
-- `client/src/navigation/ProfileStack.tsx` — WeeklyInsights route
-- `client/src/screens/ProfileScreen.tsx` — Weekly Insights card
-- `client/src/screens/settings/BiometricSettingsScreen.tsx` — Step goal setting
-- `client/src/types/user.ts` — step_goal property
-- `functions/src/api.ts` — Health history route
+---
 
-**Commits:**
-- `e0db311` — Add Health Dashboard with full health data visualization
-- `10ecdee` — Add GET /api/health/history endpoint for trend charts
-- `6885c8e` — Add step goal setting to BiometricSettingsScreen
-- `584797c` — Move Weekly Synthesis to Profile section
+## Session 85 (Previous)
+
+**Date:** December 26, 2025
+**Focus:** Health Dashboard + Full Health Data Visualization
+
+**Context:** Health data collected via HealthKit/Health Connect but not surfaced in UI.
+
+**Solution:** Comprehensive Health Dashboard with full data visualization, replacing Insights tab.
+
+**Key Deliverables:**
+- Created Health Dashboard with steps, sleep, HRV, RHR cards
+- Added QuickHealthStats row to HomeScreen
+- Created trend charts (7d/30d) for health metrics
+- Added step goal setting to BiometricSettingsScreen
+- Created GET /api/health/history endpoint
+
+**Commits:** `e0db311`, `10ecdee`, `6885c8e`, `584797c`
 
 ---
 
@@ -162,179 +160,60 @@ Comprehensive Health Dashboard with full data visualization, replacing the Insig
 **Date:** December 24, 2025
 **Focus:** AI Coach Button Redesign + Persistent Chat History
 
-**Context:** User requested redesigned AI button and persistent chat history.
-
-**Solution:**
-Redesigned button with teal branding and implemented full chat history persistence with "New Chat" functionality.
+**Solution:** Redesigned button with teal branding and implemented full chat history persistence.
 
 **Commits:** `0b894ac`
 
 ---
 
-## Session 82 (Previous)
-
-**Date:** December 24, 2025
-**Focus:** AI Chat Button Consolidation
-
-**Context:** User reported redundant buttons on HomeScreen — both an "AI" button in the TopNavigationBar AND a 💬 chat button in the HomeHeader, plus a redundant profile avatar.
-
-**Solution:**
-Consolidated to single persistent AI button in TopNavigationBar (already available across all screens).
-
-**Commits:** `79b03af`
-
----
-
-## Session 81 (Previous)
-
-**Date:** December 24, 2025
-**Focus:** Focus Area UX & Light Protocol Consolidation
-
-**Context:** User reported two UX issues:
-1. Selecting a focus area (e.g., "Better Sleep") doesn't load related protocols
-2. Morning Light appears as multiple separate protocols in search
-
-**Solution:**
-- Fixed GOAL_TO_MODULE_MAP with correct module IDs
-- Added StarterProtocolSelectionScreen to onboarding
-- Added protocol enrollment to backend
-- Fixed light protocol implementation methods
-
-**Commits:** `504ba07`
-
----
-
-## Session 80 (Previous)
-
-**Date:** December 24, 2025
-**Focus:** Fix Account Deletion for User Testing
-
-**Context:** User trying to delete test account via Privacy Dashboard to test onboarding flow. DELETE /api/users/me returned 500: "PRIVACY_EXPORT_TOPIC must be set to enable privacy workflows"
-
-**Root Cause:** Privacy workflow required Pub/Sub infrastructure (topics, bucket) that wasn't configured. The async pattern was overkill for current scale.
-
-**Solution:** Changed account deletion from async (Pub/Sub) to synchronous (direct deletion).
-
-**Accomplished:**
-- Modified `requestUserDeletion` to delete directly instead of publishing to Pub/Sub
-- Deletes from Supabase → Firestore → Firebase Auth in correct order
-- Returns 200 `{deleted: true}` instead of 202 `{accepted: true}`
-
-**Commits:** `47c9a2f`
-
----
-
-## Session 79 (Previous)
-
-**Date:** December 24, 2025
-**Focus:** Gemini 3 Flash Migration + Cloud Run Cold Start Fix
-
-**Context:** User testing chat feature. First message worked but follow-up messages failed.
-
-**Accomplished:**
-- Migrated from `@google-cloud/vertexai` to `@google/genai` SDK
-- Fixed Cloud Run cold start race with `getConfigAsync()` + pre-warm
-
-**Commits:** `cb8ecad`, `de04331`
-
----
-
-## Session 78
-
-**Date:** December 20, 2025
-**Focus:** Fix "TypeError: undefined is not a function" crash + Setup Development Build
-
-**Context:** User reported continued crash after login on TestFlight showing "TypeError: undefined is not a function" in HomeScreen/MainStack.
-
-**Root Cause:** Native module methods called without verifying they exist. Optional chaining `?.` only guards against null objects, not missing methods.
-
-**Accomplished:**
-- Added `typeof` checks to 5 native module files (HealthKitWakeDetector, ExpoHealthKitObserver, useWakeDetection, useHealthKit, HealthConnectWakeDetector)
-- Installed `expo-dev-client` for development builds
-
-**Commits:** `83eb39a`, `8191e39`
-
----
-
-## Session 77
-
-**Date:** December 20, 2025
-**Focus:** Comprehensive Defensive Error Handling for TestFlight Stability
-
-**Accomplished:**
-- useDashboardData.ts — Response validation, Array.isArray() checks
-- useRecoveryScore.ts — Auth timing protection, null handling
-- api.ts — Debug logging for API_BASE_URL
-- HomeScreen.tsx — Wrapped sections with SilentErrorBoundary
-
-**Commit:** `55e9973`
-
----
-
-## Session 76
-
-**Date:** December 19, 2025
-**Focus:** Post-Login Crash Fix & Error Boundary Protection
-
-**Accomplished:**
-- Made push notifications non-blocking with fire-and-forget pattern
-- Created `ErrorBoundary.tsx` with retry capability
-- Wrapped all navigation stacks with ErrorBoundary protection
-
-**Commit:** `aa6b290`
-
----
-
 ## Next Session Priority
 
-### Session 86 Focus: Test Health Dashboard + Deploy
+### Session 87 Focus: Test Protocol UI/UX Changes + Visual Polish
 
-Test the new Health Dashboard and verify data flows correctly.
+Test the Protocol UI/UX redesign and verify all interactions work correctly.
 
 **Immediate Testing:**
-1. Test Health Dashboard:
-   - Navigate to Health tab
-   - Verify steps progress card displays correctly
-   - Verify sleep summary with stages breakdown
-   - Verify HRV and RHR cards with sparklines
-   - Toggle between 7d and 30d trend views
-   - Pull-to-refresh works
+1. Test "Programs" Tab:
+   - Navigate to Programs tab (formerly Protocols)
+   - Verify "Your Programs" header displays
+   - Verify module cards display correctly
 
-2. Test QuickHealthStats on HomeScreen:
-   - Verify mini-metrics row appears below Recovery Score
-   - Tap any metric → navigates to Health tab
-   - Loading states display correctly
+2. Test Protocol Quick Sheet:
+   - Tap any scheduled protocol on HomeScreen
+   - Verify 60% height bottom sheet appears
+   - Test "What to Do" section
+   - Expand/collapse "Why This Works"
+   - Test "Mark Complete" button
+   - Test "Ask AI Coach" button → opens ChatModal with context
 
-3. Test Weekly Insights in Profile:
-   - Go to Profile tab
-   - Tap "View Weekly Insights" card
-   - Verify InsightsScreen loads correctly
-   - Verify navigation back works
+3. Test AI Coach Context:
+   - Open AI Coach from protocol quick sheet
+   - Verify protocol name shown in context banner
+   - Verify suggested questions appear
+   - Tap suggested question → fills input
+   - Send question → verify context is included
 
-4. Test Step Goal Setting:
-   - Go to Profile → Biometric Profile
-   - Find "Daily Step Goal" section
-   - Select different goals (5k, 7.5k, 10k, etc.)
-   - Save changes
-   - Verify step goal updates in Health Dashboard
+4. Test Segmented Control:
+   - Go to Programs → tap any module
+   - Verify "Recommended | All" toggle appears
+   - Switch between segments
+   - Verify protocol count badges update
 
-**Navigation Flow (Updated):**
-```
-Home Tab → Health Tab (new)
-        → Profile Tab → Weekly Insights (moved from Insights tab)
-```
+5. Test "Why this?" Chips:
+   - On HomeScreen, find ScheduledProtocolCard
+   - Tap "Why this?" chip
+   - Verify summary expands/collapses
+   - On TodaysFocusCard, verify pill-style button works
 
-**Deployment:**
-1. Apply database migration: `supabase db push`
-2. Deploy functions: `gcloud run deploy api ...`
-3. Build and submit to TestFlight
+**New Components to Test:**
+- `ProtocolQuickSheet` — Bottom sheet quick view
+- `ProtocolBrowseCard` — Card with inline "Why this works"
+- `ChatModal` — Context-aware AI Coach
 
-**Health Dashboard Components:**
-- `StepsProgressCard` — Circular progress ring with goal
-- `SleepSummaryCard` — Duration + efficiency + stages
-- `HRVMetricCard` / `RHRMetricCard` — Metric with sparkline
-- `TrendChart` — 7d/30d line charts for Sleep, HRV, Steps
-- `QuickHealthStats` — Mini-metrics row on HomeScreen
+**Known Pre-existing TypeScript Issues (Non-blocking):**
+- `ProtocolDetailScreen.tsx:620` — ViewStyle array type
+- `firebase.ts` — Firestore null handling
+- Test files — Mock type mismatches
 
 ---
 
@@ -456,4 +335,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 24, 2025 (Session 84 complete - Multi-goal onboarding + Protocol UX overhaul)*
+*Last Updated: December 26, 2025 (Session 86 complete - Protocol UI/UX Redesign)*
