@@ -28,7 +28,9 @@ import {
   RHRMetricCard,
   TrendChart,
   chartColors,
+  HealthEmptyState,
 } from '../components/health';
+import { useNavigation, NavigationProp, ParamListBase } from '@react-navigation/native';
 import { palette } from '../theme/palette';
 import { typography, fontFamily } from '../theme/typography';
 import { tokens } from '../theme/tokens';
@@ -40,19 +42,21 @@ type ChartRange = 7 | 30;
 
 export function HealthDashboardScreen(): React.ReactElement {
   const userId = firebaseAuth.currentUser?.uid ?? null;
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
 
   // Today's metrics from Firestore (real-time)
   const { metrics, loading: loadingToday, error: todayError } = useTodayMetrics(userId);
 
-  // Historical data for charts
+  // Historical data for charts (no mock data - show empty state if no real data)
   const [chartRange, setChartRange] = useState<ChartRange>(7);
   const {
     data: historyData,
     loading: loadingHistory,
     error: historyError,
+    isEmpty: isHistoryEmpty,
     refresh: refreshHistory,
     getMetricData,
-  } = useHealthHistory({ days: chartRange, useMockData: true });
+  } = useHealthHistory({ days: chartRange });
 
   // Refresh handler
   const [refreshing, setRefreshing] = useState(false);
@@ -116,6 +120,23 @@ export function HealthDashboardScreen(): React.ReactElement {
   // Loading state
   const isLoading = loadingToday || loadingHistory;
 
+  // Check if today's metrics are empty (no real data from wearables)
+  const isTodayEmpty = !metrics || (
+    metrics.steps === null &&
+    metrics.sleep.durationHours === null &&
+    metrics.hrv.avg === null &&
+    metrics.rhr.avg === null
+  );
+
+  // Show empty state when both today and history are empty
+  const showEmptyState = !loadingToday && !loadingHistory && isTodayEmpty && isHistoryEmpty;
+
+  // Handler for connecting wearables
+  const handleConnectWearable = useCallback(() => {
+    // Navigate to Profile tab, then to WearableSettings
+    navigation.getParent()?.navigate('Profile', { screen: 'WearableSettings' });
+  }, [navigation]);
+
   // Last sync info
   const lastSyncTime = useMemo(() => {
     if (!metrics?.lastSyncedAt) return null;
@@ -130,6 +151,19 @@ export function HealthDashboardScreen(): React.ReactElement {
     if (diffHours < 24) return `${diffHours}h ago`;
     return date.toLocaleDateString();
   }, [metrics?.lastSyncedAt]);
+
+  // Show empty state when no health data is available
+  if (showEmptyState) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor={palette.canvas} />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Health</Text>
+        </View>
+        <HealthEmptyState onConnectWearable={handleConnectWearable} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>

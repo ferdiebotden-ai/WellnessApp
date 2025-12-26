@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 87 (complete) |
-| **Progress** | HomeScreen Cleanup + QuickSheet Scroll Fix |
+| **Session** | 88 (complete) |
+| **Progress** | AI Coach Context Fix + Health Empty State |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,45 +52,57 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 87)
+**Date:** December 26, 2025 (Session 88)
+**Focus:** AI Coach Context Fix + Health Empty State
+
+**Context:** Addresses Issues 3 & 4 from `SESSION_87_FIXES.md`.
+
+**Problems Fixed:**
+
+### Issue 3: AI Coach Context Not Working
+**Root Cause:** Context banner and suggested questions were inside `ListEmptyComponent`, which only renders when no chat history exists. Users with existing conversations never saw protocol context.
+
+**Solution:**
+- Moved context banner to `ListHeaderComponent` — shows regardless of message count
+- Added floating suggestion chips (horizontal scroll) above input area
+- Added `contextDismissed` state to hide banner after first message
+- Updated `sendChatQuery` API to pass protocol context to backend
+- Backend now receives `protocolId`, `protocolName`, `mechanism` for better AI responses
+
+### Issue 4: Health Tab Placeholder Data
+**Root Cause:** `useHealthHistory` hook had `useMockData = true` default, showing fake data even when no real health data existed.
+
+**Solution:**
+- Changed `useMockData` default to `false`
+- Added `isEmpty` flag to hook return value
+- Removed mock data fallback on API error
+- Created `HealthEmptyState` component with professional design
+- Added CTA button to navigate to Wearable Settings
+- Shows empty state when both today metrics and history are empty
+
+**Files Modified (6):**
+- `client/src/services/api.ts` — Add context parameter to sendChatQuery
+- `client/src/components/ChatModal.tsx` — ListHeaderComponent, floating suggestions, backend context passing
+- `client/src/hooks/useHealthHistory.ts` — Change default, add isEmpty, remove mock fallback
+- `client/src/components/health/HealthEmptyState.tsx` — **New file**
+- `client/src/components/health/index.ts` — Export HealthEmptyState
+- `client/src/screens/HealthDashboardScreen.tsx` — Handle empty state
+
+---
+
+## Session 87 (Previous)
+
+**Date:** December 26, 2025
 **Focus:** HomeScreen Redundancy Cleanup + QuickSheet Scroll Fix
 
 **Context:** User testing in Session 86 identified UX issues documented in `SESSION_87_FIXES.md`. This session addresses Issues 1 & 2.
 
-**Problems Fixed:**
-
-### Issue 1: HomeScreen Redundancy
-- TodaysFocusCard showed "All caught up!" while MyScheduleSection showed protocols below
-- Contradictory messaging when nothing due NOW but protocols scheduled for later
-- Two overlapping sections diluted PRD's "One Big Thing" philosophy
-
-### Issue 2: ProtocolQuickSheet Scroll
-- Content couldn't scroll properly due to fixed height constraints
-- Sheet couldn't expand beyond 70% height
-- No visual scroll indicator
-
 **Solution:**
+- Removed TodaysFocusCard (conflicted with MyScheduleSection)
+- Renamed "MY SCHEDULE" → "TODAY'S PROTOCOLS"
+- Fixed ProtocolQuickSheet scroll constraints
 
-### Issue 1: Consolidate Protocol Sections
-- Removed TodaysFocusCard component from HomeScreen
-- Removed useTodaysFocus hook (no longer needed)
-- Renamed "MY SCHEDULE" → "TODAY'S PROTOCOLS" in MyScheduleSection
-- Single source of truth for protocols with visual highlighting on due-now protocols
-
-### Issue 2: Fix QuickSheet Scrolling
-- Removed minHeight constraint for content-driven sizing
-- Increased maxHeight from 70% to 90% for better content viewing
-- Added flexGrow: 1 to scrollContentInner for proper scroll behavior
-- Enabled scroll indicator (showsVerticalScrollIndicator)
-- Added bounces for iOS-native scroll feel
-
-**Files Modified (3):**
-- `client/src/screens/HomeScreen.tsx` — Remove TodaysFocusCard, update comments
-- `client/src/components/home/MyScheduleSection.tsx` — Rename to "TODAY'S PROTOCOLS"
-- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Fix scroll constraints
-
-**Commit:**
-- `2f77f2a` — Session 87: Fix HomeScreen redundancy + ProtocolQuickSheet scroll
+**Commit:** `2f77f2a`
 
 ---
 
@@ -150,31 +162,25 @@
 
 ## Next Session Priority
 
-### Session 88 Focus: AI Coach Context Fix + Health Empty States
+### Session 89 Focus: Apple Health Settings UX + Module Error
 
-Address Issues 3 & 4 from `SESSION_87_FIXES.md`.
+Address Issue 5 from `SESSION_87_FIXES.md`.
 
-**Issue 3: AI Coach Context Not Working (High Priority)**
-- Opening AI Coach from ProtocolQuickSheet shows blank chat
-- Context banner with protocol name not appearing
-- Suggested questions not appearing
-- Root cause: `initialContext` prop may not be passed to ChatModal
+**Issue 5A: Settings UX**
+- Apple Health integration is buried under "Wearables" settings
+- Users expect a dedicated "Health" or "Apple Health" option
 
-**Fix Tasks:**
-1. Verify ChatModal in HomeScreen has `initialContext={chatContext}` prop
-2. Debug with console.log to trace prop passing
-3. Check for race condition (modal opening before context set)
-4. Test: Open AI Coach → verify context banner + suggested questions appear
-
-**Issue 4: Health Tab Placeholder Data (Medium Priority)**
-- Health tab shows mock/placeholder data when no real data exists
-- Undermines trust with users (PRD emphasis on trust-building)
+**Issue 5B: Module Not Found Error**
+- On physical iPhone with Expo Dev build: "Healthcare is not available on this device"
+- Error message is misleading — actual issue is native module not linked
+- May be Expo Go limitation or EAS Dev Build missing entitlements
 
 **Fix Tasks:**
-1. Review `useHealthHistory.ts` mock data logic
-2. Add `isEmpty` return value when no real data
-3. Create `HealthEmptyState` component with "Connect Apple Health" CTA
-4. Update HealthDashboardScreen to show empty state when appropriate
+1. Review `app.json` for HealthKit entitlements
+2. Check `eas.json` build profile includes health capabilities
+3. Improve module detection error messages
+4. Add "Apple Health" as separate card in Profile → Data section
+5. Test with EAS Development Build on physical device
 
 **Reference:** See `SESSION_87_FIXES.md` for detailed root cause analysis
 

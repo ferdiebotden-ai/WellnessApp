@@ -325,10 +325,31 @@ export const requestUserDataExport = () => request<{ accepted: boolean }>('/api/
 
 export const requestAccountDeletion = () => request<{ accepted: boolean }>('/api/users/me', 'DELETE');
 
-export const sendChatQuery = (message: string, conversationId?: string) =>
+/**
+ * Context for AI Coach when asking about a specific protocol.
+ */
+export interface ChatQueryContext {
+  type: 'protocol' | 'insight' | 'general';
+  protocolId?: string;
+  protocolName?: string;
+  mechanism?: string;
+}
+
+/**
+ * Sends a chat query to the AI Coach.
+ * @param message User's message
+ * @param conversationId Optional conversation ID for continuing a conversation
+ * @param context Optional protocol context for better AI responses
+ */
+export const sendChatQuery = (
+  message: string,
+  conversationId?: string,
+  context?: ChatQueryContext
+) =>
   request<{ response: string; conversationId: string; citations: string[] }>('/api/chat', 'POST', {
     message,
     conversationId,
+    context,
   });
 
 /**

@@ -11,8 +11,8 @@
 |---|-------|----------|-------------|------------|--------|
 | 1 | HomeScreen redundancy cleanup | High | Medium | Architecture issue | ✅ DONE (Session 87) |
 | 2 | ProtocolQuickSheet scroll/expand fix | High | Medium | Implementation bug | ✅ DONE (Session 87) |
-| 3 | AI Coach context not working | High | Medium | Props not passed correctly | 🔄 Session 88 |
-| 4 | Health tab placeholder data handling | Medium | Low | Dev mock data showing | 🔄 Session 88 |
+| 3 | AI Coach context not working | High | Medium | ListEmptyComponent bug | ✅ DONE (Session 88) |
+| 4 | Health tab placeholder data handling | Medium | Low | useMockData=true default | ✅ DONE (Session 88) |
 | 5 | Apple Health settings UX + module error | High | High | Native module linking | 📅 Session 89 |
 
 ---

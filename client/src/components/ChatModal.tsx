@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Modal, View, Text, TextInput, Pressable, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, Pressable, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -40,6 +40,7 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [hasUsedContext, setHasUsedContext] = useState(false);
+  const [contextDismissed, setContextDismissed] = useState(false);
 
   // Use persistent conversation hook
   const {
@@ -58,6 +59,7 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
       loadHistory();
       // Reset context tracking when modal opens
       setHasUsedContext(false);
+      setContextDismissed(false);
     }
   }, [visible, loadHistory]);
 
@@ -97,8 +99,18 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
     setInput('');
     setSending(true);
 
+    // Dismiss context banner after first message with context
+    const shouldSendContext = !contextDismissed && initialContext?.protocolName;
+    if (shouldSendContext) {
+      setContextDismissed(true);
+    }
+
     try {
-      const { response, conversationId: newConvId } = await sendChatQuery(userMsg.content, conversationId ?? undefined);
+      const { response, conversationId: newConvId } = await sendChatQuery(
+        userMsg.content,
+        conversationId ?? undefined,
+        shouldSendContext ? initialContext : undefined
+      );
       setConversationId(newConvId);
       const aiMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'assistant', content: response };
       addMessage(aiMsg);
@@ -111,7 +123,7 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
     } finally {
       setSending(false);
     }
-  }, [input, sending, conversationId, addMessage, setConversationId]);
+  }, [input, sending, conversationId, addMessage, setConversationId, contextDismissed, initialContext]);
 
   const handleClose = useCallback(() => {
     void haptic.light();
@@ -156,46 +168,31 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
                 <Text style={[styles.messageText, item.role === 'user' ? styles.userText : styles.aiText]}>{item.content}</Text>
               </View>
             )}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                {/* Context Header */}
-                {initialContext?.protocolName && !hasUsedContext && (
+            ListHeaderComponent={
+              // Context banner shows at TOP regardless of message count
+              initialContext?.protocolName && !contextDismissed ? (
+                <View style={styles.contextHeader}>
                   <View style={styles.contextBanner}>
                     <Text style={styles.contextLabel}>Discussing:</Text>
                     <Text style={styles.contextName}>{initialContext.protocolName}</Text>
                   </View>
-                )}
-
-                <Text style={styles.emptyTitle}>
-                  {initialContext?.protocolName
-                    ? `Ask about ${initialContext.protocolName}`
-                    : 'Welcome to AI Coach'}
-                </Text>
-                <Text style={styles.emptyText}>
-                  {initialContext?.protocolName
-                    ? 'Get personalized insights about this protocol, timing, or how it fits your goals.'
-                    : 'Ask me anything about wellness, sleep optimization, stress management, or your health protocols.'}
-                </Text>
-
-                {/* Suggested Questions */}
-                {initialContext?.type === 'protocol' && !hasUsedContext && (
-                  <View style={styles.suggestedContainer}>
-                    <Text style={styles.suggestedLabel}>Suggested questions:</Text>
-                    {PROTOCOL_QUESTIONS.map((question, index) => (
-                      <Pressable
-                        key={index}
-                        style={({ pressed }) => [
-                          styles.suggestedButton,
-                          pressed && styles.suggestedButtonPressed,
-                        ]}
-                        onPress={() => handleSuggestedQuestion(question)}
-                      >
-                        <Text style={styles.suggestedButtonText}>{question}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-              </View>
+                  {messages.length === 0 && (
+                    <>
+                      <Text style={styles.emptyTitle}>Ask about {initialContext.protocolName}</Text>
+                      <Text style={styles.emptyText}>
+                        Get personalized insights about this protocol, timing, or how it fits your goals.
+                      </Text>
+                    </>
+                  )}
+                </View>
+              ) : messages.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyTitle}>Welcome to AI Coach</Text>
+                  <Text style={styles.emptyText}>
+                    Ask me anything about wellness, sleep optimization, stress management, or your health protocols.
+                  </Text>
+                </View>
+              ) : null
             }
             ListFooterComponent={
               sending ? (
@@ -205,6 +202,30 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
               ) : null
             }
           />
+        )}
+
+        {/* Floating Suggestions - show when context present and not dismissed */}
+        {initialContext?.type === 'protocol' && !contextDismissed && (
+          <View style={styles.suggestionsRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.suggestionsContent}
+            >
+              {PROTOCOL_QUESTIONS.map((question, index) => (
+                <Pressable
+                  key={index}
+                  style={({ pressed }) => [
+                    styles.suggestionChip,
+                    pressed && styles.suggestionChipPressed,
+                  ]}
+                  onPress={() => handleSuggestedQuestion(question)}
+                >
+                  <Text style={styles.suggestionChipText}>{question}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
         )}
 
         <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -402,34 +423,38 @@ const styles = StyleSheet.create({
     color: palette.primary,
     fontSize: 15,
   },
-  // Suggested Questions
-  suggestedContainer: {
-    marginTop: tokens.spacing.xl,
-    width: '100%',
+  // Context Header (wraps banner + empty text when context present)
+  contextHeader: {
+    alignItems: 'center',
+    paddingTop: tokens.spacing.lg,
   },
-  suggestedLabel: {
-    ...typography.caption,
-    color: palette.textMuted,
-    marginBottom: tokens.spacing.sm,
-    textAlign: 'center',
+  // Floating Suggestion Chips
+  suggestionsRow: {
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+    backgroundColor: palette.elevated,
+    paddingVertical: 10,
   },
-  suggestedButton: {
+  suggestionsContent: {
+    paddingHorizontal: tokens.spacing.md,
+    gap: 8,
+    flexDirection: 'row',
+  },
+  suggestionChip: {
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.border,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: tokens.spacing.sm,
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
   },
-  suggestedButtonPressed: {
+  suggestionChipPressed: {
     backgroundColor: palette.elevated,
     borderColor: palette.primary,
   },
-  suggestedButtonText: {
-    ...typography.body,
-    color: palette.textPrimary,
-    textAlign: 'center',
+  suggestionChipText: {
+    ...typography.caption,
+    color: palette.textSecondary,
   },
   thinkingContainer: {
     alignSelf: 'flex-start',

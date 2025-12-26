@@ -59,6 +59,8 @@ export interface UseHealthHistoryReturn {
   loading: boolean;
   /** Error message if any */
   error: string | null;
+  /** True when no real data exists and not loading */
+  isEmpty: boolean;
   /** Refresh data */
   refresh: () => Promise<void>;
   /** Transform data for specific metric chart */
@@ -147,7 +149,7 @@ function generateMockData(days: number): HealthHistoryResponse {
 // =============================================================================
 
 export function useHealthHistory(options: UseHealthHistoryOptions = {}): UseHealthHistoryReturn {
-  const { days = 7, useMockData = true } = options;
+  const { days = 7, useMockData = false } = options;  // Changed from true to false
   const userId = firebaseAuth.currentUser?.uid ?? null;
 
   const [data, setData] = useState<HealthHistoryResponse | null>(null);
@@ -192,9 +194,7 @@ export function useHealthHistory(options: UseHealthHistoryOptions = {}): UseHeal
     } catch (err) {
       console.error('[useHealthHistory] Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch health history');
-      // Fall back to mock data on error
-      const mockData = generateMockData(days);
-      setData(mockData);
+      setData(null);  // Don't fall back to mock data - show empty state instead
     } finally {
       setLoading(false);
     }
@@ -242,10 +242,25 @@ export function useHealthHistory(options: UseHealthHistoryOptions = {}): UseHeal
     });
   }, [data]);
 
+  // Determine if data is empty (no real data available)
+  const isEmpty = useMemo(() => {
+    if (loading) return false;
+    if (!data?.days || data.days.length === 0) return true;
+    // Check if all values are null (no real data from wearables)
+    const hasAnyData = data.days.some(day =>
+      day.steps !== null ||
+      day.sleep.durationHours !== null ||
+      day.hrv.avg !== null ||
+      day.rhr.avg !== null
+    );
+    return !hasAnyData;
+  }, [data, loading]);
+
   return {
     data,
     loading,
     error,
+    isEmpty,
     refresh: fetchData,
     getMetricData,
   };

@@ -23,3 +23,6 @@ export type { TrendChartProps, ChartDataPoint } from './TrendChart';
 
 export { QuickHealthStats } from './QuickHealthStats';
 export type { QuickHealthStatsProps } from './QuickHealthStats';
+
+export { HealthEmptyState } from './HealthEmptyState';
+export type { HealthEmptyStateProps } from './HealthEmptyState';
