@@ -12,6 +12,7 @@ import { TodaysFocusCard } from '../components/home/TodaysFocusCard';
 import { DayTimeline } from '../components/home/DayTimeline';
 import { WeeklyProgressCard } from '../components/home/WeeklyProgressCard';
 import { MyScheduleSection } from '../components/home/MyScheduleSection';
+import { QuickHealthStats } from '../components/health';
 import type { ManualCheckInInput } from '../types/checkIn';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -23,6 +24,7 @@ import { useNudgeActions } from '../hooks/useNudgeActions';
 import { useTodaysFocus } from '../hooks/useTodaysFocus';
 import { useWeeklyProgress, useMockWeeklyProgress } from '../hooks/useWeeklyProgress';
 import { useEnrolledProtocols, ScheduledProtocol } from '../hooks/useEnrolledProtocols';
+import { useTodayMetrics } from '../hooks/useTodayMetrics';
 import { unenrollFromProtocol } from '../services/api';
 import type { DashboardTask, ModuleEnrollment } from '../types/dashboard';
 import { firebaseAuth } from '../services/firebase';
@@ -47,6 +49,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   } = useRecoveryScore(userId ?? undefined);
   const { requestProModuleAccess } = useMonetization();
   const { isModuleEnabled } = useFeatureFlags();
+
+  // Session 85: Today's health metrics for QuickHealthStats
+  const { metrics: healthMetrics, loading: loadingHealthMetrics } = useTodayMetrics(userId);
 
   // Session 57: Today's Focus (One Big Thing)
   const { focus, isMVD } = useTodaysFocus({
@@ -324,6 +329,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             )}
           </SilentErrorBoundary>
         </View>
+
+        {/* 2.5. Quick Health Stats - Session 85 */}
+        <SilentErrorBoundary>
+          <QuickHealthStats
+            steps={healthMetrics?.steps ?? null}
+            sleepHours={healthMetrics?.sleep.durationHours ?? null}
+            hrv={healthMetrics?.hrv.avg ?? null}
+            rhr={healthMetrics?.rhr.avg ?? null}
+            loading={loadingHealthMetrics}
+          />
+        </SilentErrorBoundary>
 
         {/* 3. Today's Focus (One Big Thing) */}
         <View style={styles.section}>

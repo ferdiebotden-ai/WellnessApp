@@ -31,7 +31,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { HomeStackNavigator } from './HomeStack';
 import { ProtocolsStackNavigator } from './ProtocolsStack';
-import { InsightsScreen } from '../screens/InsightsScreen';
+import { HealthDashboardScreen } from '../screens/HealthDashboardScreen';
 import { ProfileStackNavigator } from './ProfileStack';
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
@@ -42,7 +42,7 @@ import { haptic } from '../utils/haptics';
 // TYPES
 // =============================================================================
 
-type TabName = 'Home' | 'Protocols' | 'Insights' | 'Profile';
+type TabName = 'Home' | 'Protocols' | 'Health' | 'Profile';
 
 interface TabConfig {
   icon: keyof typeof Ionicons.glyphMap;
@@ -65,10 +65,10 @@ const TAB_CONFIG: Record<TabName, TabConfig> = {
     iconFocused: 'grid',
     label: 'Protocols',
   },
-  Insights: {
-    icon: 'analytics-outline',
-    iconFocused: 'analytics',
-    label: 'Insights',
+  Health: {
+    icon: 'fitness-outline',
+    iconFocused: 'fitness',
+    label: 'Health',
   },
   Profile: {
     icon: 'person-outline',
@@ -226,7 +226,7 @@ export const BottomTabs: React.FC = () => (
   >
     <Tab.Screen name="Home" component={HomeStackNavigator} />
     <Tab.Screen name="Protocols" component={ProtocolsStackNavigator} />
-    <Tab.Screen name="Insights" component={InsightsScreen} />
+    <Tab.Screen name="Health" component={HealthDashboardScreen} />
     <Tab.Screen name="Profile" component={ProfileStackNavigator} />
   </Tab.Navigator>
 );
