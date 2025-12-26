@@ -21,7 +21,8 @@ interface MyScheduleSectionProps {
 }
 
 /**
- * My Schedule section displaying enrolled protocols with times.
+ * Today's Protocols section displaying enrolled protocols for today.
+ * Session 87: Renamed from "My Schedule" to "Today's Protocols" for clarity.
  * Includes loading state, empty state, and Add Protocol button.
  */
 export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
@@ -39,9 +40,9 @@ export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
   if (loading) {
     return (
       <View testID={testID}>
-        <Text style={styles.sectionTitle}>MY SCHEDULE</Text>
+        <Text style={styles.sectionTitle}>TODAY'S PROTOCOLS</Text>
         <View style={styles.loadingCard}>
-          <Text style={styles.loadingText}>Loading schedule...</Text>
+          <Text style={styles.loadingText}>Loading protocols...</Text>
         </View>
       </View>
     );
@@ -51,7 +52,7 @@ export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
   if (error) {
     return (
       <View testID={testID}>
-        <Text style={styles.sectionTitle}>MY SCHEDULE</Text>
+        <Text style={styles.sectionTitle}>TODAY'S PROTOCOLS</Text>
         <View style={styles.errorCard}>
           <Text style={styles.errorText}>{error}</Text>
           <Pressable onPress={onAddProtocol} style={styles.retryButton}>
@@ -66,7 +67,7 @@ export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
   if (protocols.length === 0) {
     return (
       <View testID={testID}>
-        <Text style={styles.sectionTitle}>MY SCHEDULE</Text>
+        <Text style={styles.sectionTitle}>TODAY'S PROTOCOLS</Text>
         <Pressable
           onPress={onAddProtocol}
           style={({ pressed }) => [
@@ -76,7 +77,7 @@ export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Add your first protocol"
         >
-          <Text style={styles.emptyTitle}>No scheduled protocols yet</Text>
+          <Text style={styles.emptyTitle}>No protocols scheduled</Text>
           <Text style={styles.emptySubtitle}>
             Add protocols to build your daily wellness routine
           </Text>
@@ -92,7 +93,7 @@ export const MyScheduleSection: React.FC<MyScheduleSectionProps> = ({
   // Normal state with protocols
   return (
     <View testID={testID}>
-      <Text style={styles.sectionTitle}>MY SCHEDULE</Text>
+      <Text style={styles.sectionTitle}>TODAY'S PROTOCOLS</Text>
       <View style={styles.protocolStack}>
         {protocols.map((protocol) => (
           <SwipeableProtocolCard

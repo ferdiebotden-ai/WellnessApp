@@ -133,11 +133,14 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
                 </Pressable>
               </View>
 
-              {/* Scrollable Content */}
+              {/* Scrollable Content - Session 87: Added scroll indicator for better UX */}
               <ScrollView
                 style={styles.scrollContent}
                 contentContainerStyle={styles.scrollContentInner}
-                showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator={true}
+                indicatorStyle="white"
+                bounces={true}
+                alwaysBounceVertical={true}
               >
                 {/* Protocol Hero */}
                 <View style={styles.heroSection}>
@@ -289,8 +292,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
-    maxHeight: '70%',
-    minHeight: '60%',
+    maxHeight: '90%',
+    // Session 87: Removed minHeight to allow content to determine sheet size
+    // Content-driven height provides better UX for varying protocol lengths
   },
   handle: {
     width: 40,
@@ -312,13 +316,14 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  // Scroll Content
+  // Scroll Content - Session 87: Fixed flex constraints for proper scrolling
   scrollContent: {
     flex: 1,
   },
   scrollContentInner: {
+    flexGrow: 1,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 24, // Extra padding for scroll end
   },
 
   // Hero Section

@@ -8,7 +8,7 @@ import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
 import { SilentErrorBoundary } from '../components/ErrorBoundary';
 // New Home Screen components (Session 57)
 import { HomeHeader } from '../components/home/HomeHeader';
-import { TodaysFocusCard } from '../components/home/TodaysFocusCard';
+// TodaysFocusCard removed (Session 87) - Consolidated into MyScheduleSection to avoid redundancy
 import { DayTimeline } from '../components/home/DayTimeline';
 import { WeeklyProgressCard } from '../components/home/WeeklyProgressCard';
 import { MyScheduleSection } from '../components/home/MyScheduleSection';
@@ -24,7 +24,7 @@ import { useRecoveryScore } from '../hooks/useRecoveryScore';
 import { useWakeDetection } from '../hooks/useWakeDetection';
 import { useNudgeActions } from '../hooks/useNudgeActions';
 // New hooks (Session 57)
-import { useTodaysFocus } from '../hooks/useTodaysFocus';
+// useTodaysFocus removed (Session 87) - Consolidated into MyScheduleSection
 import { useWeeklyProgress, useMockWeeklyProgress } from '../hooks/useWeeklyProgress';
 import { useEnrolledProtocols, ScheduledProtocol } from '../hooks/useEnrolledProtocols';
 import { useTodayMetrics } from '../hooks/useTodayMetrics';
@@ -56,12 +56,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // Session 85: Today's health metrics for QuickHealthStats
   const { metrics: healthMetrics, loading: loadingHealthMetrics } = useTodayMetrics(userId);
 
-  // Session 57: Today's Focus (One Big Thing)
-  const { focus, isMVD } = useTodaysFocus({
-    tasks,
-    recoveryZone: recoveryData?.zone ?? null,
-    recoveryScore: recoveryData?.score ?? null,
-  });
+  // Session 57/87: Today's Focus removed - consolidated into MyScheduleSection
+  // The "One Big Thing" philosophy is preserved via visual highlighting of due-now protocols
 
   // Session 57: Weekly Progress (use mock if Firestore unavailable)
   const weeklyProgress = useWeeklyProgress(userId);
@@ -352,15 +348,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.getParent()?.navigate('Profile', { screen: 'WeeklyInsights' });
   }, [navigation]);
 
-  const handleFocusStart = useCallback(
-    async (taskId: string) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (task) {
-        await handleTaskComplete(task);
-      }
-    },
-    [tasks, handleTaskComplete]
-  );
+  // Session 87: handleFocusStart removed - TodaysFocusCard consolidated into MyScheduleSection
 
   return (
     <View style={styles.root} testID="home-screen">
@@ -401,19 +389,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         </SilentErrorBoundary>
 
-        {/* 3. Today's Focus (One Big Thing) */}
-        <View style={styles.section}>
-          <SilentErrorBoundary>
-            <TodaysFocusCard
-              focus={focus}
-              isMVD={isMVD}
-              onStart={handleFocusStart}
-              loading={loadingTasks}
-            />
-          </SilentErrorBoundary>
-        </View>
+        {/* Session 87: TodaysFocusCard removed - consolidated into MyScheduleSection */}
+        {/* The "One Big Thing" philosophy preserved via pulsing border on due-now protocols */}
 
-        {/* 4. Day Timeline (Horizontal) */}
+        {/* 3. Day Timeline (Horizontal) */}
         <View style={styles.section}>
           <SilentErrorBoundary>
             <DayTimeline
@@ -425,7 +404,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </SilentErrorBoundary>
         </View>
 
-        {/* 5. My Schedule - Session 64 (replaces Your Focus Areas) */}
+        {/* 4. Today's Protocols - Session 87 (consolidated from TodaysFocusCard + MyScheduleSection) */}
         <View style={styles.section}>
           <SilentErrorBoundary>
             <MyScheduleSection
@@ -442,7 +421,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </SilentErrorBoundary>
         </View>
 
-        {/* 6. Weekly Progress */}
+        {/* 5. Weekly Progress */}
         <View style={styles.section}>
           <SilentErrorBoundary>
             <WeeklyProgressCard
