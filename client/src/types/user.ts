@@ -47,4 +47,6 @@ export interface UserProfile {
   timezone?: string | null;
   /** Last weight update timestamp */
   weight_updated_at?: string | null;
+  /** Daily step goal (default: 10,000) */
+  step_goal?: number | null;
 }

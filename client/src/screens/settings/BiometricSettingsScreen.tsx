@@ -29,6 +29,9 @@ const SEX_OPTIONS: { id: BiologicalSex; label: string }[] = [
   { id: 'prefer_not_to_say', label: 'Prefer not to say' },
 ];
 
+const STEP_GOAL_OPTIONS = [5000, 7500, 10000, 12500, 15000];
+const DEFAULT_STEP_GOAL = 10000;
+
 export const BiometricSettingsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +47,7 @@ export const BiometricSettingsScreen: React.FC = () => {
   const [heightCm, setHeightCm] = useState('');
   const [weightLbs, setWeightLbs] = useState('');
   const [weightKg, setWeightKg] = useState('');
+  const [stepGoal, setStepGoal] = useState(DEFAULT_STEP_GOAL);
   const [timezone, setTimezone] = useState('UTC');
 
   // Detect timezone
@@ -79,6 +83,9 @@ export const BiometricSettingsScreen: React.FC = () => {
           setWeightKg(String(user.weight_kg));
           // Also populate imperial
           setWeightLbs(String(Math.round(user.weight_kg * 2.205)));
+        }
+        if (user.step_goal) {
+          setStepGoal(user.step_goal);
         }
         setTimezone(user.timezone ?? detectedTimezone);
       } catch (err) {
@@ -151,6 +158,9 @@ export const BiometricSettingsScreen: React.FC = () => {
         updatePayload.weight_kg = weightKgValue;
         updatePayload.weight_updated_at = new Date().toISOString();
       }
+      if (stepGoal) {
+        updatePayload.step_goal = stepGoal;
+      }
       if (timezone) {
         updatePayload.timezone = timezone;
       }
@@ -164,7 +174,7 @@ export const BiometricSettingsScreen: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [birthDate, biologicalSex, getHeightCm, getWeightKg, timezone]);
+  }, [birthDate, biologicalSex, getHeightCm, getWeightKg, stepGoal, timezone]);
 
   const handleDateChange = useCallback(
     (_event: unknown, selectedDate?: Date) => {
@@ -186,6 +196,15 @@ export const BiometricSettingsScreen: React.FC = () => {
     void Haptics.selectionAsync();
     setUnitSystem((prev) => (prev === 'metric' ? 'imperial' : 'metric'));
   }, []);
+
+  const handleStepGoalSelect = useCallback((goal: number) => {
+    void Haptics.selectionAsync();
+    setStepGoal(goal);
+  }, []);
+
+  const formatStepGoal = (goal: number): string => {
+    return goal.toLocaleString();
+  };
 
   if (isLoading) {
     return (
@@ -386,8 +405,37 @@ export const BiometricSettingsScreen: React.FC = () => {
           </View>
         </Animated.View>
 
+        {/* Daily Step Goal Section */}
+        <Animated.View entering={FadeInDown.duration(400).delay(350)} style={styles.section}>
+          <Text style={styles.sectionTitle}>Daily Step Goal</Text>
+          <Text style={styles.sectionSubtitle}>
+            For step tracking progress on Health Dashboard
+          </Text>
+          <View style={styles.stepGoalRow}>
+            {STEP_GOAL_OPTIONS.map((goal) => (
+              <Pressable
+                key={goal}
+                style={[
+                  styles.stepGoalOption,
+                  stepGoal === goal && styles.stepGoalOptionSelected,
+                ]}
+                onPress={() => handleStepGoalSelect(goal)}
+              >
+                <Text
+                  style={[
+                    styles.stepGoalText,
+                    stepGoal === goal && styles.stepGoalTextSelected,
+                  ]}
+                >
+                  {formatStepGoal(goal)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+
         {/* Timezone Section */}
-        <Animated.View entering={FadeInDown.duration(400).delay(400)} style={styles.section}>
+        <Animated.View entering={FadeInDown.duration(400).delay(450)} style={styles.section}>
           <Text style={styles.sectionTitle}>Timezone</Text>
           <Text style={styles.sectionSubtitle}>
             For scheduling nudges at the right time
@@ -398,7 +446,7 @@ export const BiometricSettingsScreen: React.FC = () => {
         </Animated.View>
 
         {/* Save Button */}
-        <Animated.View entering={FadeInDown.duration(400).delay(500)}>
+        <Animated.View entering={FadeInDown.duration(400).delay(550)}>
           <Pressable
             style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
             onPress={handleSave}
@@ -587,6 +635,32 @@ const styles = StyleSheet.create({
   timezoneText: {
     ...typography.body,
     color: palette.textSecondary,
+  },
+  stepGoalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  stepGoalOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: palette.surface,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  stepGoalOptionSelected: {
+    borderColor: palette.primary,
+    backgroundColor: 'rgba(99, 230, 190, 0.15)',
+  },
+  stepGoalText: {
+    ...typography.body,
+    color: palette.textSecondary,
+    fontWeight: '500',
+  },
+  stepGoalTextSelected: {
+    color: palette.primary,
+    fontWeight: '600',
   },
   saveButton: {
     backgroundColor: palette.primary,
