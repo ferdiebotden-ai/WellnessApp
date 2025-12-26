@@ -155,17 +155,6 @@ Comprehensive Protocol UI/UX redesign with progressive disclosure, bottom sheet 
 
 ---
 
-## Session 83 (Previous)
-
-**Date:** December 24, 2025
-**Focus:** AI Coach Button Redesign + Persistent Chat History
-
-**Solution:** Redesigned button with teal branding and implemented full chat history persistence.
-
-**Commits:** `0b894ac`
-
----
-
 ## Next Session Priority
 
 ### Session 87 Focus: Test Protocol UI/UX Changes + Visual Polish
@@ -335,4 +324,4 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 
 ---
 
-*Last Updated: December 26, 2025 (Session 86 complete - Protocol UI/UX Redesign)*
+*Last Updated: December 26, 2025 (Session 86 closed - Protocol UI/UX Redesign requires testing)*
