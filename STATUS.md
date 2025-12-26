@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 84 (complete) |
-| **Progress** | Multi-goal onboarding + Protocol UX overhaul |
+| **Session** | 85 (complete) |
+| **Progress** | Health Dashboard + Full Health Data Visualization |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,80 +52,108 @@
 
 ## Last Session
 
-**Date:** December 24, 2025 (Session 84)
-**Focus:** Multi-Goal Onboarding + Protocol UX Overhaul
+**Date:** December 26, 2025 (Session 85)
+**Focus:** Health Dashboard + Full Health Data Visualization
 
-**Context:** User reported: "When I click a module under the protocols screen, nothing happens. It doesn't ask me what I want to add." Also wanted multiple focus area selection during onboarding.
+**Context:** User discovered that Apple Health and Android Health Connect integrations were complete and working on the backend, but the collected health data (steps, sleep details, HRV, RHR) was NOT being displayed to users. Only the composite recovery score was shown.
 
-**Root Causes Identified:**
-1. ProtocolsScreen was a dead-end leaf screen (no navigation)
-2. BottomTabs architecture didn't allow drill-down to protocols
-3. Missing API endpoints for fetching module protocols
-4. Single-goal limitation in onboarding flow
+**Problem:**
+Health data is collected via HealthKit/Health Connect but not surfaced in UI. Users have no visibility into steps, sleep stages, HRV trends, etc.
 
 **Solution:**
-Comprehensive 5-phase overhaul of protocol selection UX and onboarding flow.
+Comprehensive Health Dashboard with full data visualization, replacing the Insights tab with a dedicated Health tab.
 
 **Changes Made:**
 
-### Phase 1: Backend Endpoints
-- Created `functions/src/starterProtocols.ts` with two endpoints:
-  - `GET /api/modules/:moduleId/starter-protocols` — Returns protocols with `is_starter_protocol=true`
-  - `GET /api/modules/:moduleId/protocols` — Returns all protocols for a module
-- Registered routes in `functions/src/api.ts`
+### Phase 1: Reusable UI Components
+- Created `CircularProgress.tsx` — Animated circular progress ring (Reanimated)
+- Created `TrendChart.tsx` — Line/area chart for 7/30 day trends (react-native-svg)
 
-### Phase 2: Protocols Tab Navigation
-- Created `client/src/navigation/ProtocolsStack.tsx` — Stack navigator with 3 screens
-- Updated `client/src/navigation/BottomTabs.tsx` — Protocols tab now uses stack navigator
-- Created `client/src/screens/ModuleListScreen.tsx` — Shows modules with "View protocols" action
+### Phase 2: Health Dashboard Components
+- Created `StepsProgressCard.tsx` — Apple Watch-style step counter with ring
+- Created `SleepSummaryCard.tsx` — Sleep duration, efficiency display
+- Created `SleepStagesBar.tsx` — Horizontal stage breakdown (Deep/REM/Light/Awake)
+- Created `MetricCard.tsx` — Generic card with mini sparkline (HRVMetricCard, RHRMetricCard)
+- Created `QuickHealthStats.tsx` — Horizontal mini-metrics for HomeScreen
+- Created `components/health/index.ts` — Central exports
 
-### Phase 3: Module Protocols Screen
-- Created `client/src/screens/ModuleProtocolsScreen.tsx`
-  - Displays protocols grouped by "Recommended" (starters) and "All Protocols"
-  - Toggle to enroll/unenroll protocols
-  - Toggle to set module as primary
-- Added `fetchModuleProtocols` to `client/src/services/api.ts`
+### Phase 3: Data Hooks
+- Created `useHealthHistory.ts` — Historical health data for trend charts
+  - Supports 7/14/30 day ranges
+  - Mock data generator (Phase 4 ready for real API)
+  - getMetricData() transformer for charts
 
-### Phase 4: Multi-Goal Onboarding
-- Updated `client/src/types/onboarding.ts`:
-  - Added `GOAL_TO_MODULES_MAP` for multi-goal → modules mapping
-  - Added `getModulesForGoals()` and `getPrimaryModuleForGoals()` helpers
-- Updated `client/src/components/GoalCard.tsx` — Added `multiSelect` prop
-- Rewrote `client/src/screens/onboarding/GoalSelectionScreen.tsx`:
-  - Multi-select using `Set<PrimaryGoal>` instead of single selection
-  - Added "Continue" button instead of auto-advance
-  - Shows selection count summary
-- Rewrote `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx`:
-  - Uses `SectionList` to group protocols by module
-  - Fetches protocols for all selected modules in parallel
-  - Shows section headers when multiple modules present
-- Updated all remaining onboarding screens to use `selectedGoals: PrimaryGoal[]`:
-  - `BiometricProfileScreen.tsx`
-  - `WearableConnectionScreen.tsx`
-  - `HealthDataSyncScreen.tsx`
-  - `MagicMomentScreen.tsx`
-- Updated `client/src/navigation/OnboardingStack.tsx` — All params now use `selectedGoals` array
+### Phase 4: Health Dashboard Screen
+- Created `HealthDashboardScreen.tsx` — Main health dashboard
+  - Steps progress card with circular ring
+  - Sleep summary with stages breakdown
+  - HRV and RHR cards with sparklines
+  - 7d/30d trend charts for Sleep, HRV, Steps
+  - Data source attribution (Apple Health / Health Connect)
 
-**Files Modified (17):**
-- `functions/src/starterProtocols.ts` — **NEW** API endpoints
-- `functions/src/api.ts` — Registered new routes
-- `client/src/navigation/ProtocolsStack.tsx` — **NEW** stack navigator
-- `client/src/navigation/BottomTabs.tsx` — Uses ProtocolsStackNavigator
-- `client/src/navigation/OnboardingStack.tsx` — Multi-goal params
-- `client/src/screens/ModuleListScreen.tsx` — **NEW** module selection screen
-- `client/src/screens/ModuleProtocolsScreen.tsx` — **NEW** protocol enrollment screen
-- `client/src/services/api.ts` — Added fetchModuleProtocols
-- `client/src/types/onboarding.ts` — Multi-goal types and helpers
-- `client/src/components/GoalCard.tsx` — multiSelect prop
-- `client/src/screens/onboarding/GoalSelectionScreen.tsx` — Multi-select UI
-- `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx` — Grouped display
-- `client/src/screens/onboarding/BiometricProfileScreen.tsx` — selectedGoals array
-- `client/src/screens/onboarding/WearableConnectionScreen.tsx` — selectedGoals array
-- `client/src/screens/onboarding/HealthDataSyncScreen.tsx` — selectedGoals array
-- `client/src/screens/onboarding/MagicMomentScreen.tsx` — selectedGoals array
+### Phase 5: Navigation Updates
+- Replaced Insights tab with Health tab in BottomTabs.tsx
+- Added QuickHealthStats row to HomeScreen (between Recovery Score and Today's Focus)
+- Added WeeklyInsights screen to ProfileStack
+- Added "Weekly Insights" card to ProfileScreen
+- Updated HomeScreen synthesis navigation to Profile → WeeklyInsights
+
+### Phase 6: Backend API
+- Created `healthHistory.ts` with `GET /api/health/history?days=7|14|30`
+- Registered route in api.ts
+- Returns historical data from daily_metrics table
+
+### Phase 7: Step Goal Configuration
+- Added step_goal setting to BiometricSettingsScreen
+  - Preset options: 5,000 / 7,500 / 10,000 / 12,500 / 15,000
+  - Default: 10,000 steps
+- Added step_goal to UserProfile type
+- Created database migration for step_goal column
+
+**Files Created (12):**
+- `client/src/components/ui/CircularProgress.tsx`
+- `client/src/components/health/TrendChart.tsx`
+- `client/src/components/health/StepsProgressCard.tsx`
+- `client/src/components/health/SleepSummaryCard.tsx`
+- `client/src/components/health/SleepStagesBar.tsx`
+- `client/src/components/health/MetricCard.tsx`
+- `client/src/components/health/QuickHealthStats.tsx`
+- `client/src/components/health/index.ts`
+- `client/src/hooks/useHealthHistory.ts`
+- `client/src/screens/HealthDashboardScreen.tsx`
+- `functions/src/healthHistory.ts`
+- `supabase/migrations/20251226000000_add_step_goal.sql`
+
+**Files Modified (6):**
+- `client/src/navigation/BottomTabs.tsx` — Health tab replaces Insights
+- `client/src/screens/HomeScreen.tsx` — QuickHealthStats + synthesis nav fix
+- `client/src/navigation/ProfileStack.tsx` — WeeklyInsights route
+- `client/src/screens/ProfileScreen.tsx` — Weekly Insights card
+- `client/src/screens/settings/BiometricSettingsScreen.tsx` — Step goal setting
+- `client/src/types/user.ts` — step_goal property
+- `functions/src/api.ts` — Health history route
 
 **Commits:**
-- `229159f` — Multi-goal onboarding + Protocol UX overhaul
+- `e0db311` — Add Health Dashboard with full health data visualization
+- `10ecdee` — Add GET /api/health/history endpoint for trend charts
+- `6885c8e` — Add step goal setting to BiometricSettingsScreen
+- `584797c` — Move Weekly Synthesis to Profile section
+
+---
+
+## Session 84 (Previous)
+
+**Date:** December 24, 2025
+**Focus:** Multi-Goal Onboarding + Protocol UX Overhaul
+
+**Context:** User reported: "When I click a module under the protocols screen, nothing happens."
+
+**Solution:**
+- Created stack navigator for Protocols tab with ModuleListScreen → ModuleProtocolsScreen flow
+- Implemented multi-goal selection in onboarding with SectionList grouped by module
+- Created backend endpoints for module protocols
+
+**Commits:** `229159f`
 
 ---
 
@@ -259,53 +287,54 @@ Consolidated to single persistent AI button in TopNavigationBar (already availab
 
 ## Next Session Priority
 
-### Session 85 Focus: Test Multi-Goal Onboarding + Protocol UX
+### Session 86 Focus: Test Health Dashboard + Deploy
 
-Test the new multi-goal onboarding flow and protocol selection UX.
+Test the new Health Dashboard and verify data flows correctly.
 
 **Immediate Testing:**
-1. Test multi-goal onboarding:
-   - Create new account
-   - Select multiple goals (e.g., "Better Sleep" + "More Energy")
-   - Verify StarterProtocolSelectionScreen shows protocols grouped by module
-   - Verify section headers appear when multiple modules selected
-   - Toggle protocols on/off
-   - Complete onboarding flow
-   - Verify selected protocols appear on home screen
+1. Test Health Dashboard:
+   - Navigate to Health tab
+   - Verify steps progress card displays correctly
+   - Verify sleep summary with stages breakdown
+   - Verify HRV and RHR cards with sparklines
+   - Toggle between 7d and 30d trend views
+   - Pull-to-refresh works
 
-2. Test Protocols tab navigation:
-   - Go to Protocols tab
-   - Tap on a module card
-   - Verify navigation to ModuleProtocolsScreen
-   - Verify "Recommended" and "All Protocols" sections
-   - Toggle enrollment on a protocol
-   - Verify protocol appears/disappears from home screen
+2. Test QuickHealthStats on HomeScreen:
+   - Verify mini-metrics row appears below Recovery Score
+   - Tap any metric → navigates to Health tab
+   - Loading states display correctly
 
-3. Test existing functionality still works:
-   - AI Coach button + chat history persistence
-   - Account deletion
-   - Search for "Morning Light" → should return ONE protocol
+3. Test Weekly Insights in Profile:
+   - Go to Profile tab
+   - Tap "View Weekly Insights" card
+   - Verify InsightsScreen loads correctly
+   - Verify navigation back works
 
-**Onboarding Flow (Updated):**
+4. Test Step Goal Setting:
+   - Go to Profile → Biometric Profile
+   - Find "Daily Step Goal" section
+   - Select different goals (5k, 7.5k, 10k, etc.)
+   - Save changes
+   - Verify step goal updates in Health Dashboard
+
+**Navigation Flow (Updated):**
 ```
-GoalSelection (multi-select) → StarterProtocolSelection (grouped by module) → BiometricProfile → WearableConnection → HealthDataSync → MagicMoment → Home
+Home Tab → Health Tab (new)
+        → Profile Tab → Weekly Insights (moved from Insights tab)
 ```
 
-**Protocols Tab Flow (New):**
-```
-ModuleListScreen → ModuleProtocolsScreen (enroll/unenroll) → ProtocolDetailScreen
-```
+**Deployment:**
+1. Apply database migration: `supabase db push`
+2. Deploy functions: `gcloud run deploy api ...`
+3. Build and submit to TestFlight
 
-**API Endpoints (New):**
-- `GET /api/modules/:moduleId/starter-protocols` — Starter protocols only
-- `GET /api/modules/:moduleId/protocols` — All protocols for a module
-
-**TestFlight Testing Checklist:**
-1. Multi-goal selection works — Select 2+ goals
-2. Protocols grouped by module — Section headers appear
-3. Protocol enrollment works — Via ModuleProtocolsScreen toggles
-4. Onboarding completes — All selected protocols enrolled
-5. Protocols tab navigation — Module → Protocol list → Enroll
+**Health Dashboard Components:**
+- `StepsProgressCard` — Circular progress ring with goal
+- `SleepSummaryCard` — Duration + efficiency + stages
+- `HRVMetricCard` / `RHRMetricCard` — Metric with sparkline
+- `TrendChart` — 7d/30d line charts for Sleep, HRV, Steps
+- `QuickHealthStats` — Mini-metrics row on HomeScreen
 
 ---
 
