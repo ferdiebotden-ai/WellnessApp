@@ -69,6 +69,25 @@ Every feature maps to a protocol in `@Master_Protocol_Library.md`. Cite studies 
 - **WRITE** to Firebase (Firestore) → Immediate UI updates, nudges, logs
 - Prefer real-time listeners over polling APIs (battery efficiency, cost savings)
 
+### Database Sync (Autonomous)
+**Always sync the database when code changes impact it.** This includes:
+- New or modified migrations in `supabase/migrations/`
+- Seed data changes in `supabase/seed/`
+- Schema changes that affect API behavior
+
+**Commands to run:**
+```bash
+supabase db push              # Apply pending migrations
+supabase db push --dry-run    # Preview changes first (if uncertain)
+```
+
+**When to sync:**
+- At the start of each session if migrations exist that haven't been applied
+- Immediately after creating or modifying migration files
+- Before testing features that depend on database schema/data
+
+**Do not wait for the user to request this.** Database sync is part of the development workflow and should happen autonomously.
+
 ### Tech Stack
 | Layer | Technology |
 |-------|------------|
