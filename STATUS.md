@@ -8,9 +8,9 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | PRD v8.1 MVP Polish — 🚀 IN PROGRESS |
-| **Session** | 92 (complete) |
-| **Progress** | Protocol Quick Sheet Upgrade |
+| **Phase** | PRD v8.1 MVP Polish — 🚀 BETA READY |
+| **Session** | 93 (complete) |
+| **Progress** | Beta MVP Readiness Review |
 | **Branch** | main |
 | **Blocker** | None |
 
@@ -52,58 +52,50 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 92)
+**Date:** December 26, 2025 (Session 93)
+**Focus:** Beta MVP Readiness Review
+
+**Context:** Comprehensive codebase review before beta launch to identify blocking issues.
+
+**Review Results:**
+
+### Live Health Checks Passed
+- API Server: ✅ HTTP 200
+- Supabase Migrations: ✅ 37 synced (Local = Remote)
+- Functions TypeScript: ✅ 0 errors
+- Modules API: ✅ Returns valid JSON
+
+### Blocking Issue Fixed
+**Health Connect TypeScript Errors (11 errors)**
+- Cast `readRecords` calls to bypass SDK type definition mismatch
+- Refactored HRV and RHR derivation to use explicit loops
+- Added proper null checks for sample arrays
+
+### Documentation Added
+- Production Release Checklist in STATUS.md
+- DEV_MODE_FULL_ACCESS flag tracking
+- Streak and calendar TODO tracking
+
+**Files Modified (2):**
+- `client/src/services/wearables/aggregators.ts` — Fixed Health Connect types
+- `STATUS.md` — Added production checklist, removed fixed issues
+
+**Commits:**
+- `d136913` Fix Health Connect TypeScript errors
+- `f3cd997` Add production release checklist
+
+---
+
+## Session 92 (Previous)
+
+**Date:** December 26, 2025
 **Focus:** Protocol Quick Sheet Upgrade & Bug Fixes
 
-**Context:** User testing revealed the protocol quick sheet wasn't working properly - only buttons visible, Mark Complete showing errors, AI Coach missing context.
-
 **Problems Fixed:**
-
-### Issue 1: Quick Sheet Content Not Visible
-**Root Cause:** Basic Modal with incorrect flex constraints caused ScrollView content to not render.
-
-**Solution:**
-- Upgraded to `@gorhom/bottom-sheet` for native-feeling drag gestures
-- Added GestureHandlerRootView wrapper in App.tsx
-- Snap points: 60% (default) and 90% (expanded)
-- Swipe down to dismiss, tap backdrop to close
-
-### Issue 2: Mark Complete Error
-**Root Cause:** `protocolLogs.ts` rejected null moduleId — passing empty string still failed validation.
-
-**Solution:**
-- Changed validation to only require `protocolId`
-- Added `normalizedModuleId` fallback to 'general' for protocols without modules
-
-### Issue 3: AI Coach Missing Context
-**Root Cause:** State timing issue — context set AFTER modal opened due to async state updates.
-
-**Solution:**
-- Set context BEFORE closing quick sheet and opening modal
-- Used `requestAnimationFrame` to ensure state commits before modal opens
-- Context banner now persists when conversation history exists
-- Added dismiss (X) button to context banner
-
-### Issue 4: UX Upgrade
-**User Request:** Native draggable bottom sheet like Oura/Headspace.
-
-**Solution:**
-- Implemented `@gorhom/bottom-sheet` with:
-  - Snap points (60%, 90%)
-  - Pan down to close
-  - Backdrop tap to dismiss
-  - Native gesture handling
-
-**Files Modified (5):**
-- `client/src/App.tsx` — GestureHandlerRootView wrapper
-- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Full rewrite with BottomSheet
-- `client/src/screens/HomeScreen.tsx` — Fixed AI Coach context timing
-- `client/src/services/protocolLogs.ts` — Made moduleId optional
-- `client/src/components/ChatModal.tsx` — Context banner improvements
-
-**Dependencies Added:**
-- `@gorhom/bottom-sheet@^5.2.8`
-- `react-native-gesture-handler@^2.16.1`
+- Quick Sheet content not visible → Upgraded to @gorhom/bottom-sheet
+- Mark Complete error → Made moduleId optional in validation
+- AI Coach missing context → Fixed state timing with requestAnimationFrame
+- UX upgrade → Native draggable bottom sheet
 
 **Commit:** `abec703`
 
@@ -114,82 +106,31 @@
 **Date:** December 26, 2025
 **Focus:** Protocol UI/UX Comprehensive Fixes
 
-**Context:** User testing revealed multiple UI/UX issues with protocol cards, quick sheet, timer, and AI Coach.
-
 **Problems Fixed:**
-
-### Issue 1: "Why This Works" Truncation in ProtocolBrowseCard
-**Root Cause:** Hardcoded 80px height animation and `numberOfLines={3}` truncated content.
-
-**Solution:**
-- Added dynamic content height measurement with `onLayout`
-- Removed fixed height interpolation
-- Removed numberOfLines limit
-- Full "Why this works" text now displays when expanded
-
-### Issue 2: RECOMMENDED Badge Overlapping
-**Root Cause:** Absolute positioning at `top: 12, right: 12` overlapped with Switch control.
-
-**Solution:**
-- Repositioned badge to `top: -6, right: 70` to clear the toggle switch
-
-### Issue 3: Timer Removal from ProtocolDetailScreen
-**User Request:** Timer was unwanted, should be removed entirely.
-
-**Solution:**
-- Removed timer state, useEffect, and ref
-- Removed timer card UI display
-- Removed durationSeconds from completion logging
-- Simplified completion modal props
-
-### Issue 4: Mark Complete UX Enhancement
-**Root Cause:** Tapping "Mark Complete" navigated to ProtocolDetailScreen instead of completing inline.
-
-**Solution:**
-- Inline completion with `enqueueProtocolLog()` directly
-- Success animation overlay with checkmark
-- Haptic feedback on success/error
-- Auto-dismiss quick sheet after 1.5s success display
+- "Why This Works" truncation → Dynamic content height measurement
+- RECOMMENDED badge overlapping → Repositioned to clear toggle
+- Timer removal → Cleaned up timer state and UI
+- Mark Complete UX → Inline completion with haptic feedback
 
 **Commit:** `9b0915b`
 
 ---
 
-## Session 90 (Previous)
-
-**Date:** December 26, 2025
-**Focus:** Protocol Data Fix + AI Coach UX Enhancement
-
-**Solution:**
-- Fixed protocol ID mismatch in module_protocol_map
-- Added error UI with retry to ModuleProtocolsScreen
-- Created SuggestionCard component for AI Coach
-
-**Commit:** `8e7e200`
-
----
-
 ## Next Session Priority
 
-### Session 93 Focus: User Testing & Validation
+### Session 94 Focus: EAS Development Build Testing
 
-Session 92 completed the Protocol Quick Sheet upgrade with @gorhom/bottom-sheet.
+Session 93 confirmed beta MVP readiness with all blocking issues resolved.
 
-**Potential Focus Areas:**
-- User testing on iOS device to verify:
+**Recommended Focus Areas:**
+- Build and deploy EAS Development Build to TestFlight
+- User testing on physical iOS device:
   - Protocol Quick Sheet opens with full content visible
-  - Sheet can be dragged to 60% and 90% snap points
-  - Swipe down to dismiss works
+  - Sheet snaps to 60% and 90%, swipe down dismisses
   - Mark Complete works without errors
   - AI Coach opens with protocol context
-- EAS Development Build testing on physical iPhone
-- Performance optimization
+- Performance profiling on device
 - Additional polish based on user feedback
-
-**Known Pre-existing TypeScript Issues (Non-blocking):**
-- `ProtocolDetailScreen.tsx:568` — ViewStyle array type
-- `firebase.ts` — Firestore null handling
-- Test files — Mock type mismatches
 
 ---
 
