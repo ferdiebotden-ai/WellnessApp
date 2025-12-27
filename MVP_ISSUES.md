@@ -17,7 +17,7 @@
 | MVP-005 | Duplicate Protocols on Home Screen | High | ✅ Complete |
 | MVP-006 | Protocol Card Detail UX Redesign | High | ✅ Complete |
 | MVP-007 | AI Chat Text Input Horizontal Scroll | High | ✅ Complete |
-| MVP-008 | Time Picker Redesign with Scroll Wheel | Medium | Open |
+| MVP-008 | Time Picker Redesign with Scroll Wheel | Medium | ✅ Complete |
 
 ---
 
@@ -577,7 +577,7 @@ input: {
 
 ### MVP-008: Time Picker Redesign with Scroll Wheel
 
-**Status:** Open
+**Status:** Complete (Session 99)
 **Priority:** Medium
 **Complexity:** Medium
 

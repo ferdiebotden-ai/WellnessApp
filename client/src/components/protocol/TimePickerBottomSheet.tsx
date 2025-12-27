@@ -8,7 +8,7 @@
  * Session 63: Push Notifications & Schedule Reminders
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   Pressable,
@@ -16,12 +16,15 @@ import {
   Text,
   View,
   TouchableWithoutFeedback,
-  ScrollView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { palette } from '../../theme/palette';
 import { typography } from '../../theme/typography';
+import { tokens } from '../../theme/tokens';
 
 interface Props {
   visible: boolean;
@@ -32,18 +35,24 @@ interface Props {
   category?: string | null;
 }
 
-// Common schedule times for quick selection
-const QUICK_TIMES = [
-  { label: '6:00 AM', value: '06:00', period: 'morning' },
-  { label: '7:00 AM', value: '07:00', period: 'morning' },
-  { label: '8:00 AM', value: '08:00', period: 'morning' },
-  { label: '10:00 AM', value: '10:00', period: 'midday' },
-  { label: '12:00 PM', value: '12:00', period: 'midday' },
-  { label: '2:00 PM', value: '14:00', period: 'afternoon' },
-  { label: '5:00 PM', value: '17:00', period: 'afternoon' },
-  { label: '7:00 PM', value: '19:00', period: 'evening' },
-  { label: '9:00 PM', value: '21:00', period: 'evening' },
-];
+/**
+ * Convert "HH:MM" string to Date object (uses today's date)
+ */
+function timeStringToDate(timeStr: string): Date {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
+/**
+ * Convert Date back to "HH:MM" 24-hour format string
+ */
+function dateToTimeString(date: Date): string {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
 
 /**
  * Format time from "HH:MM" to "h:mm AM/PM"
@@ -81,19 +90,30 @@ export const TimePickerBottomSheet: React.FC<Props> = ({
   suggestedTime,
   category,
 }) => {
-  const [selectedTime, setSelectedTime] = useState(suggestedTime);
+  const [selectedDate, setSelectedDate] = useState<Date>(() =>
+    timeStringToDate(suggestedTime)
+  );
 
   // Reset selection when modal opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
-      setSelectedTime(suggestedTime);
+      setSelectedDate(timeStringToDate(suggestedTime));
     }
   }, [visible, suggestedTime]);
 
   const categoryHint = useMemo(() => getCategoryHint(category), [category]);
 
+  // Current selected time as string for display
+  const selectedTimeString = dateToTimeString(selectedDate);
+
+  const handleTimeChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
   const handleConfirm = () => {
-    onConfirm(selectedTime);
+    onConfirm(selectedTimeString);
   };
 
   return (
@@ -129,25 +149,35 @@ export const TimePickerBottomSheet: React.FC<Props> = ({
                 </View>
               )}
 
-              {/* Suggested Time */}
+              {/* Suggested Time Quick-Select */}
               <View style={styles.suggestedSection}>
                 <Text style={styles.suggestedLabel}>Suggested time:</Text>
                 <Pressable
                   style={[
                     styles.suggestedButton,
-                    selectedTime === suggestedTime && styles.suggestedButtonSelected,
+                    selectedTimeString === suggestedTime &&
+                      styles.suggestedButtonSelected,
                   ]}
-                  onPress={() => setSelectedTime(suggestedTime)}
+                  onPress={() => setSelectedDate(timeStringToDate(suggestedTime))}
                 >
                   <Ionicons
-                    name={selectedTime === suggestedTime ? 'checkmark-circle' : 'time-outline'}
+                    name={
+                      selectedTimeString === suggestedTime
+                        ? 'checkmark-circle'
+                        : 'time-outline'
+                    }
                     size={20}
-                    color={selectedTime === suggestedTime ? palette.primary : palette.textSecondary}
+                    color={
+                      selectedTimeString === suggestedTime
+                        ? palette.primary
+                        : palette.textSecondary
+                    }
                   />
                   <Text
                     style={[
                       styles.suggestedButtonText,
-                      selectedTime === suggestedTime && styles.suggestedButtonTextSelected,
+                      selectedTimeString === suggestedTime &&
+                        styles.suggestedButtonTextSelected,
                     ]}
                   >
                     {formatTimeDisplay(suggestedTime)}
@@ -158,38 +188,22 @@ export const TimePickerBottomSheet: React.FC<Props> = ({
               {/* Divider */}
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or choose a time</Text>
+                <Text style={styles.dividerText}>or pick a custom time</Text>
                 <View style={styles.dividerLine} />
               </View>
 
-              {/* Time Grid */}
-              <ScrollView
-                style={styles.timeGrid}
-                contentContainerStyle={styles.timeGridContent}
-                showsVerticalScrollIndicator={false}
-              >
-                <View style={styles.timeRow}>
-                  {QUICK_TIMES.map((time) => (
-                    <Pressable
-                      key={time.value}
-                      style={[
-                        styles.timeButton,
-                        selectedTime === time.value && styles.timeButtonSelected,
-                      ]}
-                      onPress={() => setSelectedTime(time.value)}
-                    >
-                      <Text
-                        style={[
-                          styles.timeButtonText,
-                          selectedTime === time.value && styles.timeButtonTextSelected,
-                        ]}
-                      >
-                        {time.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </ScrollView>
+              {/* Time Picker */}
+              <View style={styles.pickerContainer}>
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  minuteInterval={15}
+                  onChange={handleTimeChange}
+                  themeVariant="dark"
+                  style={styles.picker}
+                />
+              </View>
 
               {/* Confirm Button */}
               <Pressable
@@ -201,7 +215,7 @@ export const TimePickerBottomSheet: React.FC<Props> = ({
               >
                 <Ionicons name="add-circle" size={20} color={palette.background} />
                 <Text style={styles.confirmButtonText}>
-                  Add at {formatTimeDisplay(selectedTime)}
+                  Add at {formatTimeDisplay(selectedTimeString)}
                 </Text>
               </Pressable>
             </View>
@@ -324,42 +338,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Time Grid
-  timeGrid: {
-    maxHeight: 180,
-    marginBottom: 20,
-  },
-  timeGridContent: {
-    paddingBottom: 8,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    justifyContent: 'center',
-  },
-  timeButton: {
+  // Time Picker
+  pickerContainer: {
     backgroundColor: palette.elevated,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: palette.border,
-    minWidth: 90,
-    alignItems: 'center',
+    borderRadius: tokens.radius.md,
+    marginBottom: tokens.spacing.md,
+    overflow: 'hidden',
+    ...(Platform.OS === 'ios' && { height: 180 }),
   },
-  timeButtonSelected: {
-    borderColor: palette.primary,
-    backgroundColor: `${palette.primary}15`,
-  },
-  timeButtonText: {
-    ...typography.body,
-    color: palette.textSecondary,
-    fontSize: 14,
-  },
-  timeButtonTextSelected: {
-    color: palette.primary,
-    fontWeight: '600',
+  picker: {
+    width: '100%',
+    height: Platform.OS === 'ios' ? 180 : undefined,
   },
 
   // Confirm
