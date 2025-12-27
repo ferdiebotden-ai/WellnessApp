@@ -160,58 +160,6 @@ Consolidated protocol detail experience into a single enhanced bottom sheet with
 
 ---
 
-## Session 96 (Previous)
-
-**Date:** December 27, 2025
-**Focus:** Quick Wins Sprint — MVP-007, MVP-005, MVP-004
-
-### Work Completed
-
-**Fixed 3 MVP Issues in Quick Wins Sprint**
-
-**MVP-007: AI Chat Text Input Horizontal Scroll**
-- Changed `multiline={false}` to `multiline={true}` in ChatModal.tsx
-- Updated input styles: `maxHeight: 120`, added `minHeight: 44`
-- Text now wraps vertically, Enter creates new line
-
-**MVP-005: Duplicate Protocols on Home Screen**
-- Added Map-based deduplication in `useEnrolledProtocols.ts`
-- Keeps first enrollment if duplicates exist for same protocol_id
-
-**MVP-004: Remove Start Check-in Button**
-- Removed check-in button from LiteModeScoreCard empty state
-- Updated messaging to "Connect a Wearable" for recovery insights
-- Removed unused `onCheckIn` prop and handler from HomeScreen
-
-**Files Modified (4):**
-- `client/src/components/ChatModal.tsx` — Multiline input fix
-- `client/src/hooks/useEnrolledProtocols.ts` — Protocol deduplication
-- `client/src/components/LiteModeScoreCard.tsx` — Removed check-in, updated empty state
-- `client/src/screens/HomeScreen.tsx` — Removed onCheckIn handler
-
----
-
-## Session 95 (Previous)
-
-**Date:** December 27, 2025
-**Focus:** MVP-001 & MVP-002 Fix (Protocol Toggle Bug)
-
-### Work Completed
-
-**Fixed MVP-001 & MVP-002 — Protocol Toggle De-selection Bug**
-
-**Root Cause:** `getModulesForGoals()` returned a new array reference on every render, causing the `useEffect` to re-run and reset `selectedProtocolIds` to all-selected after each toggle.
-
-**Fix:** Added `useMemo` to memoize `moduleIds`, ensuring stable reference.
-
-**Files Modified (2):**
-- `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx` — Added `useMemo` wrapper
-- `MVP_ISSUES.md` — Marked MVP-001 and MVP-002 as Complete
-
-**Commit:** `089b337`
-
----
-
 ## Next Session Priority
 
 ### 🚀 MVP Complete — Ready for Release
