@@ -12,7 +12,7 @@
 |----|-------|----------|--------|
 | MVP-001 | Protocol Toggle Not De-selecting | High | ✅ Complete |
 | MVP-002 | Protocol Selection Counter Inaccurate | High | ✅ Complete |
-| MVP-003 | Timezone Selector Not Editable | Medium | Open |
+| MVP-003 | Timezone Selector Not Editable | Medium | ✅ Complete |
 | MVP-004 | Remove Start Check-in Button | Medium | ✅ Complete |
 | MVP-005 | Duplicate Protocols on Home Screen | High | ✅ Complete |
 | MVP-006 | Protocol Card Detail UX Redesign | High | ✅ Complete |
@@ -155,7 +155,7 @@ Potential issues:
 
 ### MVP-003: Timezone Selector Not Editable
 
-**Status:** Open
+**Status:** Complete (Session 98)
 **Priority:** Medium
 **Complexity:** Medium
 

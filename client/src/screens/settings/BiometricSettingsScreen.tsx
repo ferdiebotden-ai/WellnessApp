@@ -13,6 +13,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ApexLoadingIndicator, ThinkingDots } from '../../components/ui/ApexLoadingIndicator';
+import { TimezonePickerModal } from '../../components/TimezonePickerModal';
 import * as Localization from 'expo-localization';
 import * as Haptics from 'expo-haptics';
 import { fetchCurrentUser, updateUserBiometrics } from '../../services/api';
@@ -49,6 +50,7 @@ export const BiometricSettingsScreen: React.FC = () => {
   const [weightKg, setWeightKg] = useState('');
   const [stepGoal, setStepGoal] = useState(DEFAULT_STEP_GOAL);
   const [timezone, setTimezone] = useState('UTC');
+  const [showTimezonePicker, setShowTimezonePicker] = useState(false);
 
   // Detect timezone
   const detectedTimezone = useMemo(() => {
@@ -200,6 +202,11 @@ export const BiometricSettingsScreen: React.FC = () => {
   const handleStepGoalSelect = useCallback((goal: number) => {
     void Haptics.selectionAsync();
     setStepGoal(goal);
+  }, []);
+
+  const handleTimezoneSelect = useCallback((tz: string) => {
+    void Haptics.selectionAsync();
+    setTimezone(tz);
   }, []);
 
   const formatStepGoal = (goal: number): string => {
@@ -440,10 +447,33 @@ export const BiometricSettingsScreen: React.FC = () => {
           <Text style={styles.sectionSubtitle}>
             For scheduling nudges at the right time
           </Text>
-          <View style={styles.timezoneDisplay}>
-            <Text style={styles.timezoneText}>{timezone}</Text>
-          </View>
+          <Pressable
+            style={styles.timezoneDisplay}
+            onPress={() => {
+              setShowTimezonePicker(true);
+              void Haptics.selectionAsync();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Select timezone"
+          >
+            <View style={styles.timezoneContent}>
+              <Text style={styles.timezoneText}>{timezone}</Text>
+              <Text style={styles.timezoneLabel}>
+                {timezone === detectedTimezone ? 'Auto-detected' : 'Custom'}
+              </Text>
+            </View>
+            <Text style={styles.timezoneChevron}>›</Text>
+          </Pressable>
         </Animated.View>
+
+        {/* Timezone Picker Modal */}
+        <TimezonePickerModal
+          visible={showTimezonePicker}
+          currentTimezone={timezone}
+          detectedTimezone={detectedTimezone}
+          onSelect={handleTimezoneSelect}
+          onClose={() => setShowTimezonePicker(false)}
+        />
 
         {/* Save Button */}
         <Animated.View entering={FadeInDown.duration(400).delay(550)}>
@@ -631,10 +661,27 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: palette.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timezoneContent: {
+    flex: 1,
   },
   timezoneText: {
     ...typography.body,
-    color: palette.textSecondary,
+    color: palette.textPrimary,
+  },
+  timezoneLabel: {
+    ...typography.caption,
+    color: palette.textMuted,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  timezoneChevron: {
+    fontSize: 22,
+    color: palette.textMuted,
+    marginLeft: 8,
   },
   stepGoalRow: {
     flexDirection: 'row',

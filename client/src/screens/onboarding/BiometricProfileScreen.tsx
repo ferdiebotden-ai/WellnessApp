@@ -16,6 +16,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Localization from 'expo-localization';
 import * as Haptics from 'expo-haptics';
 import { palette } from '../../theme/palette';
+import { TimezonePickerModal } from '../../components/TimezonePickerModal';
 import type { OnboardingStackParamList } from '../../navigation/OnboardingStack';
 import type {
   PrimaryGoal,
@@ -62,6 +63,11 @@ export const BiometricProfileScreen: React.FC<BiometricProfileScreenProps> = ({
   const [heightCm, setHeightCm] = useState('');
   const [weightLbs, setWeightLbs] = useState('');
   const [weightKg, setWeightKg] = useState('');
+  const [customTimezone, setCustomTimezone] = useState<string | null>(null);
+  const [showTimezonePicker, setShowTimezonePicker] = useState(false);
+
+  // Effective timezone: custom if set, otherwise auto-detected
+  const effectiveTimezone = customTimezone ?? detectedTimezone;
 
   // Calculate age from birth date
   const age = useMemo(() => {
@@ -150,6 +156,17 @@ export const BiometricProfileScreen: React.FC<BiometricProfileScreenProps> = ({
     return true;
   }, [ageError]);
 
+  // Handle timezone selection
+  const handleTimezoneSelect = useCallback((timezone: string) => {
+    // If selecting the auto-detected timezone, clear custom
+    if (timezone === detectedTimezone) {
+      setCustomTimezone(null);
+    } else {
+      setCustomTimezone(timezone);
+    }
+    void Haptics.selectionAsync();
+  }, [detectedTimezone]);
+
   // Handle continue
   const handleContinue = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -159,7 +176,7 @@ export const BiometricProfileScreen: React.FC<BiometricProfileScreenProps> = ({
       biologicalSex,
       heightCm: getHeightInCm(),
       weightKg: getWeightInKg(),
-      timezone: detectedTimezone,
+      timezone: effectiveTimezone,
     };
 
     navigation.navigate('WearableConnection', {
@@ -175,7 +192,7 @@ export const BiometricProfileScreen: React.FC<BiometricProfileScreenProps> = ({
     biologicalSex,
     getHeightInCm,
     getWeightInKg,
-    detectedTimezone,
+    effectiveTimezone,
   ]);
 
   // Calculate max date (must be at least MIN_AGE years old)
@@ -399,17 +416,39 @@ export const BiometricProfileScreen: React.FC<BiometricProfileScreenProps> = ({
             </View>
           </Animated.View>
 
-          {/* Timezone (auto-detected) */}
+          {/* Timezone (editable) */}
           <Animated.View
             entering={FadeInDown.duration(500).delay(700)}
             style={styles.section}
           >
             <Text style={styles.sectionLabel}>TIMEZONE</Text>
-            <View style={styles.timezoneDisplay}>
-              <Text style={styles.timezoneText}>{detectedTimezone}</Text>
-              <Text style={styles.timezoneAuto}>Auto-detected</Text>
-            </View>
+            <Pressable
+              style={styles.timezoneDisplay}
+              onPress={() => {
+                setShowTimezonePicker(true);
+                void Haptics.selectionAsync();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Select timezone"
+            >
+              <View style={styles.timezoneContent}>
+                <Text style={styles.timezoneText}>{effectiveTimezone}</Text>
+                <Text style={styles.timezoneAuto}>
+                  {customTimezone ? 'Custom' : 'Auto-detected'}
+                </Text>
+              </View>
+              <Text style={styles.timezoneChevron}>›</Text>
+            </Pressable>
           </Animated.View>
+
+          {/* Timezone Picker Modal */}
+          <TimezonePickerModal
+            visible={showTimezonePicker}
+            currentTimezone={effectiveTimezone}
+            detectedTimezone={detectedTimezone}
+            onSelect={handleTimezoneSelect}
+            onClose={() => setShowTimezonePicker(false)}
+          />
 
           {/* Continue Button */}
           <Animated.View
@@ -606,6 +645,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  timezoneContent: {
+    flex: 1,
+  },
   timezoneText: {
     fontSize: 16,
     color: palette.textPrimary,
@@ -614,6 +656,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: palette.textMuted,
     fontStyle: 'italic',
+    marginTop: 2,
+  },
+  timezoneChevron: {
+    fontSize: 22,
+    color: palette.textMuted,
+    marginLeft: 8,
   },
   // Buttons
   buttonContainer: {
