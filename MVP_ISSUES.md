@@ -15,7 +15,7 @@
 | MVP-003 | Timezone Selector Not Editable | Medium | Open |
 | MVP-004 | Remove Start Check-in Button | Medium | ✅ Complete |
 | MVP-005 | Duplicate Protocols on Home Screen | High | ✅ Complete |
-| MVP-006 | Protocol Card Detail UX Redesign | High | Open |
+| MVP-006 | Protocol Card Detail UX Redesign | High | ✅ Complete |
 | MVP-007 | AI Chat Text Input Horizontal Scroll | High | ✅ Complete |
 | MVP-008 | Time Picker Redesign with Scroll Wheel | Medium | Open |
 
@@ -369,7 +369,7 @@ The database has a unique constraint on `(user_id, protocol_id)` which should pr
 
 ### MVP-006: Protocol Card Detail UX Redesign
 
-**Status:** Open
+**Status:** Complete (Session 97)
 **Priority:** High
 **Complexity:** High
 

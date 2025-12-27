@@ -9,11 +9,11 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | MVP Testing & Bug Fixes |
-| **Session** | 96 (complete) |
-| **Progress** | 5 of 8 MVP issues fixed |
+| **Session** | 97 (complete) |
+| **Progress** | 6 of 8 MVP issues fixed |
 | **Branch** | main |
 | **Blocker** | None |
-| **Issues** | 3 MVP issues remaining (see MVP_ISSUES.md) |
+| **Issues** | 2 MVP issues remaining (see MVP_ISSUES.md) |
 
 ---
 
@@ -53,7 +53,44 @@
 
 ## Last Session
 
-**Date:** December 27, 2025 (Session 96)
+**Date:** December 27, 2025 (Session 97)
+**Focus:** MVP-006 — Protocol Card Detail UX Redesign
+
+### Work Completed
+
+**MVP-006: Protocol Card Detail UX Redesign**
+
+Consolidated protocol detail experience into a single enhanced bottom sheet with progressive disclosure.
+
+**Changes:**
+1. **Created AnimatedExpandableSection** — Reusable animated expand/collapse component with spring physics
+2. **Simplified ScheduledProtocolCard** — Removed "Why this?" chip, kept clean minimal card
+3. **Created useProtocolDetailSheet hook** — Wrapper for protocol data with pre-parsed display fields
+4. **Enhanced ProtocolQuickSheet** — Changed snap points to 50%/90%, added 4 evidence panels:
+   - What to Do (expanded by default)
+   - Why This Works (collapsed)
+   - Research & Evidence (collapsed, with tappable DOI links)
+   - Your Data (collapsed, shows adherence stats)
+5. **Updated HomeScreen** — Removed unused `onViewFullDetails` prop
+6. **Refactored ProtocolDetailScreen** — Uses shared AnimatedExpandableSection
+
+**Files Created (2):**
+- `client/src/components/ui/AnimatedExpandableSection.tsx` — Shared animated component
+- `client/src/hooks/useProtocolDetailSheet.ts` — Protocol data wrapper hook
+
+**Files Modified (4):**
+- `client/src/components/home/ScheduledProtocolCard.tsx` — Simplified card
+- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Enhanced with 4 panels
+- `client/src/screens/HomeScreen.tsx` — Removed onViewFullDetails
+- `client/src/screens/ProtocolDetailScreen.tsx` — Uses shared component
+
+**Commit:** `26da66e`
+
+---
+
+## Session 96 (Previous)
+
+**Date:** December 27, 2025
 **Focus:** Quick Wins Sprint — MVP-007, MVP-005, MVP-004
 
 ### Work Completed
@@ -119,25 +156,24 @@
 
 ## Next Session Priority
 
-### Session 97 Focus: MVP Issue Resolution (Final 3)
+### Session 98 Focus: MVP Issue Resolution (Final 2)
 
 **How to start:**
 ```
-/start MVP-006
+/start MVP-003
 ```
 
 **Issue Queue (by priority):**
 1. ~~**MVP-001** (High) — Protocol Toggle Not De-selecting~~ ✅ Complete
 2. ~~**MVP-002** (High) — Protocol Selection Counter Inaccurate~~ ✅ Complete
 3. ~~**MVP-005** (High) — Duplicate Protocols on Home Screen~~ ✅ Complete
-4. **MVP-006** (High) — Protocol Card Detail UX Redesign — 6-7 hours
+4. ~~**MVP-006** (High) — Protocol Card Detail UX Redesign~~ ✅ Complete
 5. ~~**MVP-007** (High) — AI Chat Text Input Horizontal Scroll~~ ✅ Complete
 6. **MVP-003** (Medium) — Timezone Selector Not Editable — 2-3 hours
 7. ~~**MVP-004** (Medium) — Remove Start Check-in Button~~ ✅ Complete
 8. **MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel — 2-3 hours
 
-**Remaining Issues (3):**
-- **MVP-006** — Biggest remaining (simplify card, enhance QuickSheet with 4 evidence panels)
+**Remaining Issues (2):**
 - **MVP-003** — Add searchable timezone picker modal
 - **MVP-008** — Replace button grid with scroll wheel time picker
 
@@ -275,4 +311,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 26, 2025 (Session 92 closed - Protocol Quick Sheet upgrade with @gorhom/bottom-sheet)*
+*Last Updated: December 27, 2025 (Session 97 closed - MVP-006 Protocol Card Detail UX Redesign)*
