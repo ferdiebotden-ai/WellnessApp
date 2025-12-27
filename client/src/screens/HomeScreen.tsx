@@ -273,20 +273,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     []
   );
 
-  const handleQuickSheetViewDetails = useCallback(
-    (protocol: ScheduledProtocol) => {
-      // Close quick sheet and navigate to full detail screen
-      setShowQuickSheet(false);
-      navigation.navigate('ProtocolDetail', {
-        protocolId: protocol.protocol_id,
-        protocolName: protocol.protocol.name,
-        moduleId: protocol.module_id || undefined,
-        source: 'schedule',
-      });
-    },
-    [navigation]
-  );
-
   const handleChatModalClose = useCallback(() => {
     setShowChatModal(false);
     setChatContext(undefined);
@@ -451,7 +437,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onClose={handleQuickSheetClose}
         onMarkComplete={handleQuickSheetComplete}
         onAskAICoach={handleQuickSheetAskAI}
-        onViewFullDetails={handleQuickSheetViewDetails}
         isCompleting={isCompletingProtocol}
         completionSuccess={completionSuccess}
       />

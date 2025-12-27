@@ -12,7 +12,6 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  LayoutChangeEvent,
   Linking,
   Pressable,
   ScrollView,
@@ -20,12 +19,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import Animated, {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useProtocolDetail } from '../hooks/useProtocolDetail';
 import { enqueueProtocolLog } from '../services/protocolLogs';
@@ -35,6 +28,8 @@ import { PrimaryButton } from '../components/PrimaryButton';
 // Session 86: AI Coach integration
 import { ChatModal, ChatContext } from '../components/ChatModal';
 import { ApexLoadingIndicator } from '../components/ui/ApexLoadingIndicator';
+// Session 97: Use shared AnimatedExpandableSection component
+import { AnimatedExpandableSection } from '../components/ui/AnimatedExpandableSection';
 import { Card } from '../components/ui/Card';
 import { palette } from '../theme/palette';
 import { typography, fontFamily } from '../theme/typography';
@@ -90,83 +85,6 @@ const CategoryBadge: React.FC<{ category?: ProtocolCategory }> = ({ category = '
     <View style={[styles.categoryBadge, { backgroundColor: `${color}20` }]}>
       <View style={[styles.categoryDot, { backgroundColor: color }]} />
       <Text style={[styles.categoryText, { color }]}>{label}</Text>
-    </View>
-  );
-};
-
-/** Expandable section with animated height */
-interface ExpandableSectionProps {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-  defaultExpanded?: boolean;
-}
-
-const ExpandableSection: React.FC<ExpandableSectionProps> = ({
-  title,
-  icon,
-  children,
-  defaultExpanded = false,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const [contentHeight, setContentHeight] = useState(0);
-  const animatedHeight = useSharedValue(defaultExpanded ? 1 : 0);
-
-  const handleContentLayout = useCallback((event: LayoutChangeEvent) => {
-    const { height } = event.nativeEvent.layout;
-    if (height > 0 && contentHeight === 0) {
-      setContentHeight(height);
-    }
-  }, [contentHeight]);
-
-  const toggleExpand = useCallback(() => {
-    const newExpanded = !isExpanded;
-    setIsExpanded(newExpanded);
-    animatedHeight.value = withSpring(newExpanded ? 1 : 0, {
-      damping: 20,
-      stiffness: 200,
-      overshootClamping: true,
-    });
-  }, [isExpanded, animatedHeight]);
-
-  const expandStyle = useAnimatedStyle(() => {
-    if (contentHeight === 0) {
-      return { height: 0, opacity: 0, overflow: 'hidden' as const };
-    }
-
-    return {
-      height: interpolate(animatedHeight.value, [0, 1], [0, contentHeight]),
-      opacity: interpolate(animatedHeight.value, [0, 0.5, 1], [0, 0.5, 1]),
-      overflow: 'hidden' as const,
-    };
-  });
-
-  return (
-    <View style={styles.expandableSection}>
-      <Pressable
-        onPress={toggleExpand}
-        style={({ pressed }) => [
-          styles.expandableHeader,
-          pressed && styles.expandableHeaderPressed,
-        ]}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel={`${isExpanded ? 'Hide' : 'Show'} ${title}`}
-      >
-        <View style={styles.expandableHeaderLeft}>
-          <Text style={styles.expandableIcon}>{icon}</Text>
-          <Text style={styles.expandableTitle}>{title}</Text>
-        </View>
-        <Text style={styles.expandableChevron}>
-          {isExpanded ? '▲' : '▼'}
-        </Text>
-      </Pressable>
-
-      <Animated.View style={expandStyle}>
-        <View onLayout={handleContentLayout} style={styles.expandableContent}>
-          {children}
-        </View>
-      </Animated.View>
     </View>
   );
 };
@@ -441,7 +359,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
             {/* 4-Panel Why? Sections */}
             <View style={styles.whySection}>
               {/* Mechanism */}
-              <ExpandableSection title="Why This Works" icon="🧬">
+              <AnimatedExpandableSection title="Why This Works" icon="🧬" defaultExpanded>
                 <Text style={styles.mechanismText}>
                   {protocol.mechanism_description ||
                     'This protocol works by signaling your body\'s natural systems to adapt. When practiced consistently, it helps establish healthier patterns that compound over time.'}
@@ -449,10 +367,10 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
                 <Text style={styles.caveatText}>
                   Note: Individual response varies based on genetics and baseline health.
                 </Text>
-              </ExpandableSection>
+              </AnimatedExpandableSection>
 
               {/* Evidence */}
-              <ExpandableSection title="Research & Evidence" icon="📊">
+              <AnimatedExpandableSection title="Research & Evidence" icon="📊">
                 {citations.length > 0 ? (
                   citations.map((citation, index) => (
                     <Pressable
@@ -473,10 +391,10 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
                     Evidence citations will be added soon.
                   </Text>
                 )}
-              </ExpandableSection>
+              </AnimatedExpandableSection>
 
               {/* Your Data */}
-              <ExpandableSection title="Your Data" icon="📈">
+              <AnimatedExpandableSection title="Your Data" icon="📈">
                 {userData.memory_insight ? (
                   <Text style={styles.yourDataText}>{userData.memory_insight}</Text>
                 ) : userData.total_completions > 0 ? (
@@ -502,10 +420,10 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
                     <Text style={styles.dataPointValue}>{formatDifficultyRating(userData.difficulty_avg)}</Text>
                   </View>
                 )}
-              </ExpandableSection>
+              </AnimatedExpandableSection>
 
               {/* Confidence */}
-              <ExpandableSection title="Our Confidence" icon="🎯">
+              <AnimatedExpandableSection title="Our Confidence" icon="🎯">
                 <ConfidenceIndicator level={confidence.level} />
                 <Text style={styles.confidenceExplainer}>
                   {confidence.reasoning}
@@ -542,7 +460,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
                     </View>
                   </View>
                 </View>
-              </ExpandableSection>
+              </AnimatedExpandableSection>
             </View>
           </>
         )}
@@ -723,42 +641,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
-  // Expandable Section
-  expandableSection: {
-    backgroundColor: palette.surface,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  expandableHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  expandableHeaderPressed: {
-    backgroundColor: palette.elevated,
-  },
-  expandableHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  expandableIcon: {
-    fontSize: 18,
-  },
-  expandableTitle: {
-    ...typography.subheading,
-    color: palette.textPrimary,
-  },
-  expandableChevron: {
-    fontSize: 10,
-    color: palette.textMuted,
-  },
-  expandableContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 12,
-  },
+  // Session 97: Expandable section styles now in AnimatedExpandableSection component
 
   // Mechanism Section
   mechanismText: {
