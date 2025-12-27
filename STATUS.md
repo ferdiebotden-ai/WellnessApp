@@ -8,12 +8,12 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | MVP Testing & Bug Fixes |
-| **Session** | 99 (complete) |
-| **Progress** | 8 of 8 MVP issues fixed ✅ |
+| **Phase** | TestFlight Release |
+| **Session** | 100 (complete) |
+| **Progress** | Build #18 submitted to TestFlight ✅ |
 | **Branch** | main |
 | **Blocker** | None |
-| **Issues** | All MVP issues complete — Ready for release |
+| **Issues** | App live on TestFlight — awaiting Apple processing |
 
 ---
 
@@ -53,7 +53,45 @@
 
 ## Last Session
 
-**Date:** December 27, 2025 (Session 99)
+**Date:** December 27, 2025 (Session 100)
+**Focus:** TestFlight Deployment 🚀
+
+### Work Completed
+
+**TestFlight Build & Submission**
+
+Successfully deployed Apex OS to TestFlight for beta testing.
+
+**Steps Completed:**
+1. **Pre-flight checks** — TypeScript compilation verified
+2. **Minor fixes** — Removed debug console.logs, fixed style prop typing
+3. **EAS Build** — Build #18 created with `testflight` profile
+4. **App Store Connect submission** — Automated via `eas submit`
+
+**Build Details:**
+- **Build Number:** 18
+- **App Version:** 1.0.0
+- **Bundle ID:** com.wellnessos.app
+- **ASC App ID:** 6756579125
+
+**Files Modified (2):**
+- `client/src/navigation/RootNavigator.tsx` — Removed debug console.log
+- `client/src/screens/ProtocolDetailScreen.tsx` — Fixed style prop typing
+
+**Commit:** `dcad759`
+
+### 🚀 TESTFLIGHT LIVE
+
+Build submitted to App Store Connect. After Apple processing (~5-10 min):
+- Add testers in TestFlight dashboard
+- Share TestFlight link with beta users
+- Monitor crash reports and feedback
+
+---
+
+## Session 99 (Previous)
+
+**Date:** December 27, 2025
 **Focus:** MVP-008 — Time Picker Redesign with Scroll Wheel (FINAL MVP ISSUE)
 
 ### Work Completed
@@ -62,41 +100,7 @@
 
 Replaced the 9-button time grid with a native scroll wheel picker for precise time selection.
 
-**Implementation:**
-1. **Replaced Button Grid with DateTimePicker** — Using `@react-native-community/datetimepicker`:
-   - iOS: Native spinner with 15-minute intervals
-   - Android: Native time picker dialog
-   - Dark theme support via `themeVariant="dark"`
-
-2. **State Management Update:**
-   - Changed from string state to Date object
-   - Added helper functions: `timeStringToDate()` and `dateToTimeString()`
-   - Maintains "HH:MM" format output for API compatibility
-
-3. **Preserved UX Features:**
-   - Suggested time quick-select button (one-tap to use recommended time)
-   - Category hints (morning/evening timing guidance)
-   - Confirm button with formatted time display
-
-**Files Modified (2):**
-- `client/src/components/protocol/TimePickerBottomSheet.tsx` — Replaced button grid with DateTimePicker
-- `MVP_ISSUES.md` — Marked MVP-008 Complete
-
 **Commit:** `bbdd109`
-
-### 🎉 MVP COMPLETE
-
-All 8 MVP issues have been resolved:
-- ✅ MVP-001: Protocol Toggle Not De-selecting
-- ✅ MVP-002: Protocol Selection Counter Inaccurate
-- ✅ MVP-003: Timezone Selector Not Editable
-- ✅ MVP-004: Remove Start Check-in Button
-- ✅ MVP-005: Duplicate Protocols on Home Screen
-- ✅ MVP-006: Protocol Card Detail UX Redesign
-- ✅ MVP-007: AI Chat Text Input Horizontal Scroll
-- ✅ MVP-008: Time Picker Redesign with Scroll Wheel
-
-**App is ready for TestFlight/Play Store release.**
 
 ---
 
@@ -162,25 +166,35 @@ Consolidated protocol detail experience into a single enhanced bottom sheet with
 
 ## Next Session Priority
 
-### 🚀 MVP Complete — Ready for Release
+### 🚀 TestFlight Live — Beta Testing Phase
 
-All 8 MVP issues have been resolved. Next steps:
+Build #18 is live on TestFlight. Next steps:
 
-**Release Preparation:**
-1. Run full test suite: `cd client && npm test`
-2. Build for TestFlight: `eas build --platform ios --profile preview`
-3. Build for Play Store: `eas build --platform android --profile preview`
-4. Review Production Release Checklist (see below)
+**Immediate (After Apple Processing):**
+1. Add internal testers in App Store Connect
+2. Share TestFlight link with beta users
+3. Monitor TestFlight crash reports
+
+**Android Release:**
+```bash
+npx eas build --platform android --profile testflight
+npx eas submit --platform android --profile testflight
+```
+
+**Post-Beta (Before Production):**
+1. Review Production Release Checklist (see below)
+2. Set `DEV_MODE = false` in MonetizationProvider
+3. Address any critical bugs from beta feedback
 
 **All MVP Issues — Complete:**
-1. ~~**MVP-001** (High) — Protocol Toggle Not De-selecting~~ ✅ Complete
-2. ~~**MVP-002** (High) — Protocol Selection Counter Inaccurate~~ ✅ Complete
-3. ~~**MVP-003** (Medium) — Timezone Selector Not Editable~~ ✅ Complete
-4. ~~**MVP-004** (Medium) — Remove Start Check-in Button~~ ✅ Complete
-5. ~~**MVP-005** (High) — Duplicate Protocols on Home Screen~~ ✅ Complete
-6. ~~**MVP-006** (High) — Protocol Card Detail UX Redesign~~ ✅ Complete
-7. ~~**MVP-007** (High) — AI Chat Text Input Horizontal Scroll~~ ✅ Complete
-8. ~~**MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel~~ ✅ Complete
+1. ~~**MVP-001** (High) — Protocol Toggle Not De-selecting~~ ✅
+2. ~~**MVP-002** (High) — Protocol Selection Counter Inaccurate~~ ✅
+3. ~~**MVP-003** (Medium) — Timezone Selector Not Editable~~ ✅
+4. ~~**MVP-004** (Medium) — Remove Start Check-in Button~~ ✅
+5. ~~**MVP-005** (High) — Duplicate Protocols on Home Screen~~ ✅
+6. ~~**MVP-006** (High) — Protocol Card Detail UX Redesign~~ ✅
+7. ~~**MVP-007** (High) — AI Chat Text Input Horizontal Scroll~~ ✅
+8. ~~**MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel~~ ✅
 
 ---
 
@@ -316,4 +330,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 27, 2025 (Session 99 closed - MVP-008 Time Picker — ALL MVP ISSUES COMPLETE)*
+*Last Updated: December 27, 2025 (Session 100 — TestFlight Build #18 submitted)*
