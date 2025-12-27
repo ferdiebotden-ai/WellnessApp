@@ -9,11 +9,11 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | MVP Testing & Bug Fixes |
-| **Session** | 94 (complete) |
-| **Progress** | MVP Issues Document Created |
+| **Session** | 95 (complete) |
+| **Progress** | 2 of 8 MVP issues fixed |
 | **Branch** | main |
 | **Blocker** | None |
-| **Issues** | 8 MVP issues identified (see MVP_ISSUES.md) |
+| **Issues** | 6 MVP issues remaining (see MVP_ISSUES.md) |
 
 ---
 
@@ -53,38 +53,36 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 94)
-**Focus:** MVP Issue Analysis & Documentation
-
-**Context:** User testing revealed 8 UX/UI issues that need resolution before MVP launch.
+**Date:** December 27, 2025 (Session 95)
+**Focus:** MVP-001 & MVP-002 Fix (Protocol Toggle Bug)
 
 ### Work Completed
 
-**MVP Issues Document Created (`MVP_ISSUES.md`)**
-- Comprehensive analysis of 8 issues with full documentation
-- Each issue includes: problem description, expected behavior, UX research, file locations, verification steps
+**Fixed MVP-001 & MVP-002 — Protocol Toggle De-selection Bug**
 
-| ID | Issue | Priority |
-|----|-------|----------|
-| MVP-001 | Protocol Toggle Not De-selecting | High |
-| MVP-002 | Protocol Selection Counter Inaccurate | High |
-| MVP-003 | Timezone Selector Not Editable | Medium |
-| MVP-004 | Remove Start Check-in Button | Medium |
-| MVP-005 | Duplicate Protocols on Home Screen | High |
-| MVP-006 | Protocol Card Detail UX Redesign | High |
-| MVP-007 | AI Chat Text Input Horizontal Scroll | High |
-| MVP-008 | Time Picker Redesign with Scroll Wheel | Medium |
+**Root Cause:** `getModulesForGoals()` returned a new array reference on every render, causing the `useEffect` to re-run and reset `selectedProtocolIds` to all-selected after each toggle.
 
-**Project Files Updated:**
-- `CLAUDE.md` — Added "CURRENT PHASE: MVP Testing & Bug Fixes" section
-- `.claude/commands/start.md` — Support for `/start MVP-XXX` workflow
-- `.claude/commands/close.md` — MVP issue tracking in closeout
+**Fix:** Added `useMemo` to memoize `moduleIds`, ensuring stable reference.
 
-**Files Created/Modified (4):**
-- `MVP_ISSUES.md` — New comprehensive issue document
-- `CLAUDE.md` — Added MVP testing workflow section
-- `.claude/commands/start.md` — Issue-based session support
-- `.claude/commands/close.md` — Issue tracking on close
+**Files Modified (2):**
+- `client/src/screens/onboarding/StarterProtocolSelectionScreen.tsx` — Added `useMemo` wrapper
+- `MVP_ISSUES.md` — Marked MVP-001 and MVP-002 as Complete
+
+**Commit:** `089b337`
+
+---
+
+## Session 94 (Previous)
+
+**Date:** December 26, 2025
+**Focus:** MVP Issue Analysis & Documentation
+
+**Work Completed:**
+- Created `MVP_ISSUES.md` — Comprehensive analysis of 8 issues
+- Updated `CLAUDE.md` with MVP testing workflow
+- Updated `/start` and `/close` commands for issue tracking
+
+**Commit:** `7ad0cb0`
 
 ---
 
@@ -103,34 +101,18 @@
 
 ---
 
-## Session 92 (Previous)
-
-**Date:** December 26, 2025
-**Focus:** Protocol Quick Sheet Upgrade & Bug Fixes
-
-**Problems Fixed:**
-- Quick Sheet content not visible → Upgraded to @gorhom/bottom-sheet
-- Mark Complete error → Made moduleId optional in validation
-- AI Coach missing context → Fixed state timing with requestAnimationFrame
-
-**Commit:** `abec703`
-
----
-
 ## Next Session Priority
 
-### Session 95 Focus: MVP Issue Resolution
-
-**Recommended approach:** Work through issues in priority order (High → Medium).
+### Session 96 Focus: MVP Issue Resolution (Continued)
 
 **How to start:**
 ```
-/start MVP-001
+/start MVP-007
 ```
 
 **Issue Queue (by priority):**
-1. **MVP-001** (High) — Protocol Toggle Not De-selecting
-2. **MVP-002** (High) — Protocol Selection Counter Inaccurate
+1. ~~**MVP-001** (High) — Protocol Toggle Not De-selecting~~ ✅ Complete
+2. ~~**MVP-002** (High) — Protocol Selection Counter Inaccurate~~ ✅ Complete
 3. **MVP-005** (High) — Duplicate Protocols on Home Screen
 4. **MVP-006** (High) — Protocol Card Detail UX Redesign
 5. **MVP-007** (High) — AI Chat Text Input Horizontal Scroll
@@ -139,9 +121,8 @@
 8. **MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel
 
 **Quick Win Suggestions:**
-- MVP-007 is a one-line fix (`multiline={false}` → `multiline={true}`)
-- MVP-001 and MVP-002 are likely related (same file, same state)
-- MVP-004 is simple removal of a feature
+- **MVP-007** is a one-line fix (`multiline={false}` → `multiline={true}`)
+- **MVP-004** is simple removal of a feature
 
 ---
 
