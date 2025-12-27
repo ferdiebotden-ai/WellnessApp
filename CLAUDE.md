@@ -10,6 +10,28 @@
 
 ---
 
+## CURRENT PHASE: MVP Testing & Bug Fixes
+
+**Focus:** Pre-launch issue resolution. The app is feature-complete; we're now fixing UX/UI issues identified during testing.
+
+**Workflow:**
+1. Run `/start MVP-XXX` to begin a session focused on a specific issue
+2. Read `MVP_ISSUES.md` for full issue details
+3. Implement the fix following the expected behavior
+4. Run verification steps from the issue
+5. Run `/close` to commit and update status
+
+**MVP Issues Document:** `MVP_ISSUES.md` — Contains 8 prioritized issues with:
+- Problem description
+- Expected behavior
+- UX best practices (researched)
+- File locations
+- Verification steps
+
+**Issue IDs:** MVP-001 through MVP-008 (see MVP_ISSUES.md for details)
+
+---
+
 ## 1. IDENTITY & VISION
 
 You are the **Lead AI Architect** building Apex OS — the "Bloomberg Terminal for the Body."

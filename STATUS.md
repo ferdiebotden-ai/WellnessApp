@@ -8,11 +8,12 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | PRD v8.1 MVP Polish — 🚀 BETA READY |
-| **Session** | 93 (complete) |
-| **Progress** | Beta MVP Readiness Review |
+| **Phase** | MVP Testing & Bug Fixes |
+| **Session** | 94 (complete) |
+| **Progress** | MVP Issues Document Created |
 | **Branch** | main |
 | **Blocker** | None |
+| **Issues** | 8 MVP issues identified (see MVP_ISSUES.md) |
 
 ---
 
@@ -52,37 +53,53 @@
 
 ## Last Session
 
-**Date:** December 26, 2025 (Session 93)
+**Date:** December 26, 2025 (Session 94)
+**Focus:** MVP Issue Analysis & Documentation
+
+**Context:** User testing revealed 8 UX/UI issues that need resolution before MVP launch.
+
+### Work Completed
+
+**MVP Issues Document Created (`MVP_ISSUES.md`)**
+- Comprehensive analysis of 8 issues with full documentation
+- Each issue includes: problem description, expected behavior, UX research, file locations, verification steps
+
+| ID | Issue | Priority |
+|----|-------|----------|
+| MVP-001 | Protocol Toggle Not De-selecting | High |
+| MVP-002 | Protocol Selection Counter Inaccurate | High |
+| MVP-003 | Timezone Selector Not Editable | Medium |
+| MVP-004 | Remove Start Check-in Button | Medium |
+| MVP-005 | Duplicate Protocols on Home Screen | High |
+| MVP-006 | Protocol Card Detail UX Redesign | High |
+| MVP-007 | AI Chat Text Input Horizontal Scroll | High |
+| MVP-008 | Time Picker Redesign with Scroll Wheel | Medium |
+
+**Project Files Updated:**
+- `CLAUDE.md` — Added "CURRENT PHASE: MVP Testing & Bug Fixes" section
+- `.claude/commands/start.md` — Support for `/start MVP-XXX` workflow
+- `.claude/commands/close.md` — MVP issue tracking in closeout
+
+**Files Created/Modified (4):**
+- `MVP_ISSUES.md` — New comprehensive issue document
+- `CLAUDE.md` — Added MVP testing workflow section
+- `.claude/commands/start.md` — Issue-based session support
+- `.claude/commands/close.md` — Issue tracking on close
+
+---
+
+## Session 93 (Previous)
+
+**Date:** December 26, 2025
 **Focus:** Beta MVP Readiness Review
 
-**Context:** Comprehensive codebase review before beta launch to identify blocking issues.
-
 **Review Results:**
-
-### Live Health Checks Passed
 - API Server: ✅ HTTP 200
-- Supabase Migrations: ✅ 37 synced (Local = Remote)
+- Supabase Migrations: ✅ 37 synced
 - Functions TypeScript: ✅ 0 errors
-- Modules API: ✅ Returns valid JSON
+- Fixed Health Connect TypeScript errors (11 errors)
 
-### Blocking Issue Fixed
-**Health Connect TypeScript Errors (11 errors)**
-- Cast `readRecords` calls to bypass SDK type definition mismatch
-- Refactored HRV and RHR derivation to use explicit loops
-- Added proper null checks for sample arrays
-
-### Documentation Added
-- Production Release Checklist in STATUS.md
-- DEV_MODE_FULL_ACCESS flag tracking
-- Streak and calendar TODO tracking
-
-**Files Modified (2):**
-- `client/src/services/wearables/aggregators.ts` — Fixed Health Connect types
-- `STATUS.md` — Added production checklist, removed fixed issues
-
-**Commits:**
-- `d136913` Fix Health Connect TypeScript errors
-- `f3cd997` Add production release checklist
+**Commits:** `d136913`, `f3cd997`
 
 ---
 
@@ -95,42 +112,36 @@
 - Quick Sheet content not visible → Upgraded to @gorhom/bottom-sheet
 - Mark Complete error → Made moduleId optional in validation
 - AI Coach missing context → Fixed state timing with requestAnimationFrame
-- UX upgrade → Native draggable bottom sheet
 
 **Commit:** `abec703`
 
 ---
 
-## Session 91 (Previous)
-
-**Date:** December 26, 2025
-**Focus:** Protocol UI/UX Comprehensive Fixes
-
-**Problems Fixed:**
-- "Why This Works" truncation → Dynamic content height measurement
-- RECOMMENDED badge overlapping → Repositioned to clear toggle
-- Timer removal → Cleaned up timer state and UI
-- Mark Complete UX → Inline completion with haptic feedback
-
-**Commit:** `9b0915b`
-
----
-
 ## Next Session Priority
 
-### Session 94 Focus: EAS Development Build Testing
+### Session 95 Focus: MVP Issue Resolution
 
-Session 93 confirmed beta MVP readiness with all blocking issues resolved.
+**Recommended approach:** Work through issues in priority order (High → Medium).
 
-**Recommended Focus Areas:**
-- Build and deploy EAS Development Build to TestFlight
-- User testing on physical iOS device:
-  - Protocol Quick Sheet opens with full content visible
-  - Sheet snaps to 60% and 90%, swipe down dismisses
-  - Mark Complete works without errors
-  - AI Coach opens with protocol context
-- Performance profiling on device
-- Additional polish based on user feedback
+**How to start:**
+```
+/start MVP-001
+```
+
+**Issue Queue (by priority):**
+1. **MVP-001** (High) — Protocol Toggle Not De-selecting
+2. **MVP-002** (High) — Protocol Selection Counter Inaccurate
+3. **MVP-005** (High) — Duplicate Protocols on Home Screen
+4. **MVP-006** (High) — Protocol Card Detail UX Redesign
+5. **MVP-007** (High) — AI Chat Text Input Horizontal Scroll
+6. **MVP-003** (Medium) — Timezone Selector Not Editable
+7. **MVP-004** (Medium) — Remove Start Check-in Button
+8. **MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel
+
+**Quick Win Suggestions:**
+- MVP-007 is a one-line fix (`multiline={false}` → `multiline={true}`)
+- MVP-001 and MVP-002 are likely related (same file, same state)
+- MVP-004 is simple removal of a feature
 
 ---
 
@@ -161,11 +172,12 @@ supabase db push                                           # Apply migrations
 
 | Document | Purpose |
 |----------|---------|
-| `PRD Documents/APEX_OS_PRD_v8.1.md` | **Master PRD (v8.1.1)** — Vision + critical specs |
+| `MVP_ISSUES.md` | **Active** — 8 pre-launch issues with fix details |
+| `PRD Documents/APEX_OS_PRD_v8.1.md` | Master PRD (v8.1.1) — Vision + critical specs |
 | `PRD Documents/APEX_OS_TECHNICAL_SPEC_v1.md` | Implementation details, algorithms, APIs |
 | `PRD Documents/APEX_OS_WIDGET_PRD_v1.md` | Widget specifications for iOS/Android |
 | `Master_Protocol_Library.md` | Protocol evidence library (18 protocols) |
-| `CLAUDE.md` | Agent operating instructions |
+| `CLAUDE.md` | Agent operating instructions + MVP workflow |
 | `skills/apex-os-design/SKILL.md` | Design system for UI/frontend work |
 
 ---
