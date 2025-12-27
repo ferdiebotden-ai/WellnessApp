@@ -50,11 +50,6 @@ interface Props {
   loading?: boolean;
 
   /**
-   * Called when user wants to start a check-in.
-   */
-  onCheckIn?: () => void;
-
-  /**
    * Called when card is pressed (for expansion).
    */
   onPress?: () => void;
@@ -140,24 +135,13 @@ const ComponentRow: React.FC<{
   );
 };
 
-/** Empty state when no check-in exists */
-const EmptyState: React.FC<{ onCheckIn?: () => void }> = ({ onCheckIn }) => (
+/** Empty state when no wearable data available */
+const EmptyState: React.FC = () => (
   <View style={styles.emptyContainer}>
-    <Text style={styles.emptyTitle}>No check-in yet</Text>
+    <Text style={styles.emptyTitle}>Connect a Wearable</Text>
     <Text style={styles.emptySubtext}>
-      Complete your morning check-in for personalized guidance
+      Sync your Apple Watch, Oura Ring, or other health device for personalized recovery insights
     </Text>
-    {onCheckIn && (
-      <Pressable
-        style={({ pressed }) => [
-          styles.checkInButton,
-          pressed && styles.checkInButtonPressed,
-        ]}
-        onPress={onCheckIn}
-      >
-        <Text style={styles.checkInButtonText}>Start Check-in</Text>
-      </Pressable>
-    )}
   </View>
 );
 
@@ -168,7 +152,6 @@ const EmptyState: React.FC<{ onCheckIn?: () => void }> = ({ onCheckIn }) => (
 export const LiteModeScoreCard: React.FC<Props> = ({
   data,
   loading = false,
-  onCheckIn,
   onPress,
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -208,15 +191,15 @@ export const LiteModeScoreCard: React.FC<Props> = ({
     );
   }
 
-  // Empty state (no check-in today)
+  // Empty state (no wearable data)
   if (!data) {
     return (
       <View style={styles.card}>
         <View style={styles.header}>
-          <Text style={styles.title}>Check-in Score</Text>
+          <Text style={styles.title}>Recovery Score</Text>
           <LiteModeBadge />
         </View>
-        <EmptyState onCheckIn={onCheckIn} />
+        <EmptyState />
       </View>
     );
   }
@@ -535,25 +518,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: palette.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
     paddingHorizontal: 16,
     lineHeight: 20,
-  },
-  checkInButton: {
-    backgroundColor: palette.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-  },
-  checkInButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  checkInButtonText: {
-    color: palette.background,
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: 0.3,
   },
 });
 

@@ -87,7 +87,12 @@ export const useEnrolledProtocols = () => {
     setError(null);
     try {
       const data = await fetchEnrolledProtocols();
-      setRawProtocols(data);
+      // MVP-005: Deduplicate by protocol_id to prevent duplicate cards on home screen
+      // Keeps the first enrollment if somehow multiple exist for same protocol
+      const deduped = Array.from(
+        new Map(data.map(p => [p.protocol_id, p])).values()
+      );
+      setRawProtocols(deduped);
     } catch (err) {
       console.error('[useEnrolledProtocols] Fetch failed:', err);
       setError('Failed to load your schedule');

@@ -16,7 +16,7 @@ import { QuickHealthStats } from '../components/health';
 // Session 86: Protocol Quick Sheet and AI Coach integration
 import { ProtocolQuickSheet } from '../components/protocol/ProtocolQuickSheet';
 import { ChatModal, ChatContext } from '../components/ChatModal';
-import type { ManualCheckInInput } from '../types/checkIn';
+// ManualCheckInInput removed - MVP-004: Check-in feature removed from Lite Mode
 import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
@@ -132,47 +132,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     handleLater: handleWakeLater,
     handleDismiss: handleWakeDismiss,
   } = useWakeDetection();
-
-  // Handle Lite Mode check-in completion (Phase 3 Session 49)
-  const handleCheckInComplete = useCallback(
-    async (answers: ManualCheckInInput) => {
-      if (!userId) {
-        console.error('[HomeScreen] No userId for check-in');
-        return;
-      }
-
-      try {
-        const token = await firebaseAuth.currentUser?.getIdToken();
-        if (!token) {
-          throw new Error('No auth token');
-        }
-
-        const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.example.com';
-        const response = await fetch(`${API_BASE_URL}/api/manual-check-in`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(answers),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error((errorData as { error?: string }).error || 'Check-in failed');
-        }
-
-        // Refresh recovery score to show new check-in data
-        await refreshRecoveryScore();
-        console.log('[HomeScreen] Check-in completed successfully');
-      } catch (error) {
-        console.error('[HomeScreen] Check-in failed:', error);
-        Alert.alert('Check-in Failed', 'Unable to save your check-in. Please try again.');
-        throw error; // Re-throw so overlay knows it failed
-      }
-    },
-    [userId, refreshRecoveryScore]
-  );
 
   // Handle task completion
   const handleTaskComplete = useCallback(
@@ -403,9 +362,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <LiteModeScoreCard
                 data={checkInData}
                 loading={loadingRecovery}
-                onCheckIn={() => {
-                  handleWakeConfirm();
-                }}
               />
             ) : (
               <RecoveryScoreCard
@@ -479,12 +435,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         )}
       </ScrollView>
 
-      {/* Wake Confirmation Overlay - shows check-in questionnaire for Lite Mode users */}
+      {/* Wake Confirmation Overlay */}
       <WakeConfirmationOverlay
         visible={showWakeConfirmation}
         isLiteMode={isLiteMode}
         onConfirm={handleWakeConfirm}
-        onCheckInComplete={handleCheckInComplete}
         onLater={handleWakeLater}
         onDismiss={handleWakeDismiss}
       />

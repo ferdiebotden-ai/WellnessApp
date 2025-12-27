@@ -13,10 +13,10 @@
 | MVP-001 | Protocol Toggle Not De-selecting | High | ✅ Complete |
 | MVP-002 | Protocol Selection Counter Inaccurate | High | ✅ Complete |
 | MVP-003 | Timezone Selector Not Editable | Medium | Open |
-| MVP-004 | Remove Start Check-in Button | Medium | Open |
-| MVP-005 | Duplicate Protocols on Home Screen | High | Open |
+| MVP-004 | Remove Start Check-in Button | Medium | ✅ Complete |
+| MVP-005 | Duplicate Protocols on Home Screen | High | ✅ Complete |
 | MVP-006 | Protocol Card Detail UX Redesign | High | Open |
-| MVP-007 | AI Chat Text Input Horizontal Scroll | High | Open |
+| MVP-007 | AI Chat Text Input Horizontal Scroll | High | ✅ Complete |
 | MVP-008 | Time Picker Redesign with Scroll Wheel | Medium | Open |
 
 ---
@@ -241,7 +241,7 @@ Per PRD Appendix E, timezone is collected for "nudge scheduling at appropriate l
 
 ### MVP-004: Remove Start Check-in Button
 
-**Status:** Open
+**Status:** Complete (Session 96)
 **Priority:** Medium
 **Complexity:** Low
 
@@ -313,7 +313,7 @@ For Lite Mode users (no wearable):
 
 ### MVP-005: Duplicate Protocols on Home Screen
 
-**Status:** Open
+**Status:** Complete (Session 96)
 **Priority:** High
 **Complexity:** Medium
 
@@ -470,7 +470,7 @@ Per PRD Section 2.1 Evidence Transparency: "Every recommendation includes a 'Why
 
 ### MVP-007: AI Chat Text Input Horizontal Scroll
 
-**Status:** Open
+**Status:** Complete (Session 96)
 **Priority:** High
 **Complexity:** Low
 

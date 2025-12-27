@@ -9,11 +9,11 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | MVP Testing & Bug Fixes |
-| **Session** | 95 (complete) |
-| **Progress** | 2 of 8 MVP issues fixed |
+| **Session** | 96 (complete) |
+| **Progress** | 5 of 8 MVP issues fixed |
 | **Branch** | main |
 | **Blocker** | None |
-| **Issues** | 6 MVP issues remaining (see MVP_ISSUES.md) |
+| **Issues** | 3 MVP issues remaining (see MVP_ISSUES.md) |
 
 ---
 
@@ -53,7 +53,38 @@
 
 ## Last Session
 
-**Date:** December 27, 2025 (Session 95)
+**Date:** December 27, 2025 (Session 96)
+**Focus:** Quick Wins Sprint — MVP-007, MVP-005, MVP-004
+
+### Work Completed
+
+**Fixed 3 MVP Issues in Quick Wins Sprint**
+
+**MVP-007: AI Chat Text Input Horizontal Scroll**
+- Changed `multiline={false}` to `multiline={true}` in ChatModal.tsx
+- Updated input styles: `maxHeight: 120`, added `minHeight: 44`
+- Text now wraps vertically, Enter creates new line
+
+**MVP-005: Duplicate Protocols on Home Screen**
+- Added Map-based deduplication in `useEnrolledProtocols.ts`
+- Keeps first enrollment if duplicates exist for same protocol_id
+
+**MVP-004: Remove Start Check-in Button**
+- Removed check-in button from LiteModeScoreCard empty state
+- Updated messaging to "Connect a Wearable" for recovery insights
+- Removed unused `onCheckIn` prop and handler from HomeScreen
+
+**Files Modified (4):**
+- `client/src/components/ChatModal.tsx` — Multiline input fix
+- `client/src/hooks/useEnrolledProtocols.ts` — Protocol deduplication
+- `client/src/components/LiteModeScoreCard.tsx` — Removed check-in, updated empty state
+- `client/src/screens/HomeScreen.tsx` — Removed onCheckIn handler
+
+---
+
+## Session 95 (Previous)
+
+**Date:** December 27, 2025
 **Focus:** MVP-001 & MVP-002 Fix (Protocol Toggle Bug)
 
 ### Work Completed
@@ -103,26 +134,27 @@
 
 ## Next Session Priority
 
-### Session 96 Focus: MVP Issue Resolution (Continued)
+### Session 97 Focus: MVP Issue Resolution (Final 3)
 
 **How to start:**
 ```
-/start MVP-007
+/start MVP-006
 ```
 
 **Issue Queue (by priority):**
 1. ~~**MVP-001** (High) — Protocol Toggle Not De-selecting~~ ✅ Complete
 2. ~~**MVP-002** (High) — Protocol Selection Counter Inaccurate~~ ✅ Complete
-3. **MVP-005** (High) — Duplicate Protocols on Home Screen
-4. **MVP-006** (High) — Protocol Card Detail UX Redesign
-5. **MVP-007** (High) — AI Chat Text Input Horizontal Scroll
-6. **MVP-003** (Medium) — Timezone Selector Not Editable
-7. **MVP-004** (Medium) — Remove Start Check-in Button
-8. **MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel
+3. ~~**MVP-005** (High) — Duplicate Protocols on Home Screen~~ ✅ Complete
+4. **MVP-006** (High) — Protocol Card Detail UX Redesign — 6-7 hours
+5. ~~**MVP-007** (High) — AI Chat Text Input Horizontal Scroll~~ ✅ Complete
+6. **MVP-003** (Medium) — Timezone Selector Not Editable — 2-3 hours
+7. ~~**MVP-004** (Medium) — Remove Start Check-in Button~~ ✅ Complete
+8. **MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel — 2-3 hours
 
-**Quick Win Suggestions:**
-- **MVP-007** is a one-line fix (`multiline={false}` → `multiline={true}`)
-- **MVP-004** is simple removal of a feature
+**Remaining Issues (3):**
+- **MVP-006** — Biggest remaining (simplify card, enhance QuickSheet with 4 evidence panels)
+- **MVP-003** — Add searchable timezone picker modal
+- **MVP-008** — Replace button grid with scroll wheel time picker
 
 ---
 

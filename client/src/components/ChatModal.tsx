@@ -285,10 +285,10 @@ const ChatModalContent: React.FC<Props> = ({ visible, onClose, initialContext })
             onChangeText={setInput}
             placeholder="Ask your coach..."
             placeholderTextColor={palette.textMuted}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-            multiline={false}
+            multiline={true}
+            textAlignVertical="top"
             blurOnSubmit={false}
+            returnKeyType="default"
           />
           <Pressable
             onPress={handleSend}
@@ -413,9 +413,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: tokens.spacing.md,
     backgroundColor: palette.surface,
-    borderRadius: tokens.radius.lg, // Pill shape
+    borderRadius: tokens.radius.lg,
     color: palette.textPrimary,
-    maxHeight: 100,
+    minHeight: 44,
+    maxHeight: 120,
     borderWidth: 1,
     borderColor: palette.border,
     ...typography.body,
