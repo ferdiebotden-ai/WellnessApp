@@ -243,10 +243,23 @@ E2E:           20/67 passing + 47 skipped (Playwright) — Session 51 expanded c
 |------|-------|
 | `firebase.ts` | Firestore null handling (4 errors) |
 | `firebase.web.ts` | Index signature (2 errors) |
-| `aggregators.ts` | Health Connect ReadRecordsOptions type (5 errors) |
 | Test files (*.test.ts) | Mock type mismatches (18 errors) |
 
 *Note: Production code compiles. These are edge cases and test file issues.*
+
+---
+
+## Production Release Checklist
+
+Before App Store / Play Store release, verify these items:
+
+| Item | Location | Current | Production |
+|------|----------|---------|------------|
+| Dev Mode Flag | `client/src/providers/MonetizationProvider.tsx:16` | `true` | Set to `false` |
+| Streak TODO | `functions/src/nudgeEngine.ts:275` | Hardcoded 0 | Implement user_stats |
+| Calendar TODO | `functions/src/nudgeEngine.ts:325` | Hardcoded 0 | Implement FreeBusy API |
+
+**Note:** For EAS Development Build (TestFlight), dev mode flag can remain `true`.
 
 ---
 
