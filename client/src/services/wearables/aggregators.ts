@@ -219,18 +219,14 @@ const fetchHealthKitSleep = async (options: WearableQueryOptions): Promise<Weara
 
 const fetchHealthConnectSleep = async (options: WearableQueryOptions): Promise<WearableMetricReading[]> => {
   try {
-    const result = await readRecords<{
-      startTime: string;
-      endTime: string;
-      stages?: Array<{ stage: number }>;
-      metadata?: { id?: string };
-    }>('SleepSession', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (readRecords as any)('SleepSession', {
       timeRangeFilter: {
         operator: 'between',
         startTime: toISOString(options.startDate),
         endTime: toISOString(options.endDate),
       },
-    });
+    }) as { records: Array<{ startTime: string; endTime: string; stages?: Array<{ stage: number }>; metadata?: { id?: string } }> };
 
     return ensureChronologicalOrder(
       result.records.map((record) =>
@@ -287,19 +283,14 @@ const fetchHealthConnectQuantitySamples = async (
   options: WearableQueryOptions
 ): Promise<WearableMetricReading[]> => {
   try {
-    const result = await readRecords<{
-      startTime: string;
-      endTime: string;
-      beatsPerMinute?: number;
-      count?: number;
-      metadata?: { id?: string };
-    }>(recordType, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (readRecords as any)(recordType, {
       timeRangeFilter: {
         operator: 'between',
         startTime: toISOString(options.startDate),
         endTime: toISOString(options.endDate),
       },
-    });
+    }) as { records: Array<{ startTime: string; endTime: string; beatsPerMinute?: number; count?: number; metadata?: { id?: string } }> };
 
     return ensureChronologicalOrder(
       result.records.map((record) => {
@@ -332,19 +323,14 @@ const fetchHealthConnectHeartRateSamples = async (
   options: WearableQueryOptions
 ): Promise<Array<{ startDate: string; endDate: string; value: number; sourceId?: string }>> => {
   try {
-    const result = await readRecords<{
-      startTime: string;
-      endTime: string;
-      beatsPerMinute: number;
-      samples?: Array<{ time: string; beatsPerMinute: number }>;
-      metadata?: { id?: string };
-    }>('HeartRate', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (readRecords as any)('HeartRate', {
       timeRangeFilter: {
         operator: 'between',
         startTime: toISOString(options.startDate),
         endTime: toISOString(options.endDate),
       },
-    });
+    }) as { records: Array<{ startTime: string; endTime: string; beatsPerMinute: number; samples?: Array<{ time: string; beatsPerMinute: number }>; metadata?: { id?: string } }> };
 
     return ensureChronologicalOrder(
       result.records.flatMap((record) => {
@@ -416,18 +402,14 @@ const deriveHealthConnectHrvReadings = async (
 ): Promise<WearableMetricReading[]> => {
   try {
     // Try to get HRV records directly first
-    const hrvResult = await readRecords<{
-      startTime: string;
-      endTime: string;
-      samples?: Array<{ time: string; milliseconds: number }>;
-      metadata?: { id?: string };
-    }>('HeartRateVariability', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hrvResult = await (readRecords as any)('HeartRateVariability', {
       timeRangeFilter: {
         operator: 'between',
         startTime: toISOString(options.startDate),
         endTime: toISOString(options.endDate),
       },
-    });
+    }) as { records: Array<{ startTime: string; endTime: string; samples?: Array<{ time: string; milliseconds: number }>; metadata?: { id?: string } }> };
 
     if (hrvResult.records.length > 0) {
       return ensureChronologicalOrder(
@@ -458,41 +440,45 @@ const deriveHealthConnectHrvReadings = async (
   const samples = await fetchHealthConnectHeartRateSamples(options);
   const grouped = groupSamplesByDay(samples);
 
-  const readings = Object.values(grouped)
-    .map((daySamples) => {
-      if (daySamples.length < 2) {
-        return null;
-      }
+  const readings: WearableMetricReading[] = [];
 
-      const sorted = ensureChronologicalOrder(daySamples);
-      const intervals = sorted
-        .map((sample) => (sample.value > 0 ? (60_000 / sample.value) : null))
-        .filter((value): value is number => value !== null);
+  for (const daySamples of Object.values(grouped)) {
+    if (daySamples.length < 2) {
+      continue;
+    }
 
-      const rmssd = calculateRmssd(intervals);
-      if (rmssd === null) {
-        return null;
-      }
+    const sorted = ensureChronologicalOrder(daySamples);
+    const intervals = sorted
+      .map((sample) => (sample.value > 0 ? (60_000 / sample.value) : null))
+      .filter((value): value is number => value !== null);
 
-      const sdnn = calculateSdnn(intervals);
-      const startDate = sorted[0]?.startDate;
-      const endDate = sorted[sorted.length - 1]?.endDate ?? startDate;
+    const rmssd = calculateRmssd(intervals);
+    if (rmssd === null) {
+      continue;
+    }
 
-      return {
-        metric: 'hrv' as const,
-        value: rmssd,
-        unit: 'ms',
-        startDate,
-        endDate,
-        source: 'google_fit' as const,
-        metadata: {
-          sdnn: sdnn ?? undefined,
-          sampleCount: sorted.length,
-          sourceId: sorted[0]?.sourceId,
-        },
-      } satisfies WearableMetricReading;
-    })
-    .filter((reading): reading is WearableMetricReading => reading !== null);
+    const firstSample = sorted[0];
+    const lastSample = sorted[sorted.length - 1];
+    if (!firstSample || !lastSample) {
+      continue;
+    }
+
+    const sdnn = calculateSdnn(intervals);
+
+    readings.push({
+      metric: 'hrv',
+      value: rmssd,
+      unit: 'ms',
+      startDate: firstSample.startDate,
+      endDate: lastSample.endDate ?? firstSample.startDate,
+      source: 'google_fit',
+      metadata: {
+        sdnn: sdnn ?? undefined,
+        sampleCount: sorted.length,
+        sourceId: firstSample.sourceId,
+      },
+    });
+  }
 
   return ensureChronologicalOrder(readings);
 };
@@ -502,18 +488,14 @@ const deriveHealthConnectRestingHeartRateReadings = async (
 ): Promise<WearableMetricReading[]> => {
   try {
     // Try to get resting heart rate records directly first
-    const rhrResult = await readRecords<{
-      startTime: string;
-      endTime: string;
-      beatsPerMinute: number;
-      metadata?: { id?: string };
-    }>('RestingHeartRate', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rhrResult = await (readRecords as any)('RestingHeartRate', {
       timeRangeFilter: {
         operator: 'between',
         startTime: toISOString(options.startDate),
         endTime: toISOString(options.endDate),
       },
-    });
+    }) as { records: Array<{ startTime: string; endTime: string; beatsPerMinute: number; metadata?: { id?: string } }> };
 
     if (rhrResult.records.length > 0) {
       return ensureChronologicalOrder(
@@ -539,46 +521,49 @@ const deriveHealthConnectRestingHeartRateReadings = async (
   const samples = await fetchHealthConnectHeartRateSamples(options);
   const grouped = groupSamplesByDay(samples);
 
-  const readings = Object.values(grouped)
-    .map((daySamples) => {
-      if (daySamples.length === 0) {
-        return null;
+  const readings: WearableMetricReading[] = [];
+
+  for (const daySamples of Object.values(grouped)) {
+    if (daySamples.length === 0) {
+      continue;
+    }
+
+    const sorted = ensureChronologicalOrder(daySamples);
+    const resting = sorted.reduce<number | null>((lowest, sample) => {
+      if (typeof sample.value !== 'number' || sample.value <= 0) {
+        return lowest;
       }
 
-      const sorted = ensureChronologicalOrder(daySamples);
-      const resting = sorted.reduce<number | null>((lowest, sample) => {
-        if (typeof sample.value !== 'number' || sample.value <= 0) {
-          return lowest;
-        }
-
-        if (lowest === null) {
-          return sample.value;
-        }
-
-        return Math.min(lowest, sample.value);
-      }, null);
-
-      if (resting === null) {
-        return null;
+      if (lowest === null) {
+        return sample.value;
       }
 
-      const startDate = sorted[0]?.startDate;
-      const endDate = sorted[sorted.length - 1]?.endDate ?? startDate;
+      return Math.min(lowest, sample.value);
+    }, null);
 
-      return {
-        metric: 'rhr' as const,
-        value: resting,
-        unit: 'bpm',
-        startDate,
-        endDate,
-        source: 'google_fit' as const,
-        metadata: {
-          sampleCount: sorted.length,
-          sourceId: sorted[0]?.sourceId,
-        },
-      } satisfies WearableMetricReading;
-    })
-    .filter((reading): reading is WearableMetricReading => reading !== null);
+    if (resting === null) {
+      continue;
+    }
+
+    const firstSample = sorted[0];
+    const lastSample = sorted[sorted.length - 1];
+    if (!firstSample || !lastSample) {
+      continue;
+    }
+
+    readings.push({
+      metric: 'rhr',
+      value: resting,
+      unit: 'bpm',
+      startDate: firstSample.startDate,
+      endDate: lastSample.endDate ?? firstSample.startDate,
+      source: 'google_fit',
+      metadata: {
+        sampleCount: sorted.length,
+        sourceId: firstSample.sourceId,
+      },
+    });
+  }
 
   return ensureChronologicalOrder(readings);
 };
