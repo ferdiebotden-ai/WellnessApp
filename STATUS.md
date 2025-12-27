@@ -140,20 +140,6 @@ Consolidated protocol detail experience into a single enhanced bottom sheet with
 
 ---
 
-## Session 94 (Previous)
-
-**Date:** December 26, 2025
-**Focus:** MVP Issue Analysis & Documentation
-
-**Work Completed:**
-- Created `MVP_ISSUES.md` — Comprehensive analysis of 8 issues
-- Updated `CLAUDE.md` with MVP testing workflow
-- Updated `/start` and `/close` commands for issue tracking
-
-**Commit:** `7ad0cb0`
-
----
-
 ## Next Session Priority
 
 ### Session 98 Focus: MVP Issue Resolution (Final 2)
