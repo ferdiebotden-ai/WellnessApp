@@ -9,11 +9,11 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | MVP Testing & Bug Fixes |
-| **Session** | 97 (complete) |
-| **Progress** | 6 of 8 MVP issues fixed |
+| **Session** | 98 (complete) |
+| **Progress** | 7 of 8 MVP issues fixed |
 | **Branch** | main |
 | **Blocker** | None |
-| **Issues** | 2 MVP issues remaining (see MVP_ISSUES.md) |
+| **Issues** | 1 MVP issue remaining (MVP-008) |
 
 ---
 
@@ -53,7 +53,49 @@
 
 ## Last Session
 
-**Date:** December 27, 2025 (Session 97)
+**Date:** December 27, 2025 (Session 98)
+**Focus:** MVP-003 — Timezone Selector Not Editable
+
+### Work Completed
+
+**MVP-003: Searchable Timezone Picker**
+
+Created a reusable timezone picker modal that allows users to edit their timezone during onboarding and in settings.
+
+**Implementation:**
+1. **Created TimezonePickerModal** — Searchable modal component with:
+   - FlatList of all IANA timezones using `Intl.supportedValuesOf('timeZone')`
+   - City name extraction from timezone IDs (e.g., "New_York" → "New York")
+   - UTC offset display for each timezone
+   - Search filtering by city name, region, or full timezone ID
+   - "Use auto-detected" option to reset to device timezone
+   - Haptic feedback on selection
+
+2. **Updated BiometricProfileScreen (Onboarding):**
+   - Added `customTimezone` state to track user selection
+   - Made timezone display tappable with chevron indicator
+   - Shows "Auto-detected" vs "Custom" label
+   - Passes effective timezone to next screen
+
+3. **Updated BiometricSettingsScreen (Post-onboarding):**
+   - Same timezone picker integration
+   - Timezone saved to API on "Save Changes"
+
+**Files Created (1):**
+- `client/src/components/TimezonePickerModal.tsx` — Reusable timezone picker modal
+
+**Files Modified (3):**
+- `client/src/screens/onboarding/BiometricProfileScreen.tsx` — Timezone editing in onboarding
+- `client/src/screens/settings/BiometricSettingsScreen.tsx` — Timezone editing in settings
+- `MVP_ISSUES.md` — Marked MVP-003 Complete
+
+**Commit:** `2685379`
+
+---
+
+## Session 97 (Previous)
+
+**Date:** December 27, 2025
 **Focus:** MVP-006 — Protocol Card Detail UX Redesign
 
 ### Work Completed
@@ -142,25 +184,24 @@ Consolidated protocol detail experience into a single enhanced bottom sheet with
 
 ## Next Session Priority
 
-### Session 98 Focus: MVP Issue Resolution (Final 2)
+### Session 99 Focus: Final MVP Issue (MVP-008)
 
 **How to start:**
 ```
-/start MVP-003
+/start MVP-008
 ```
 
 **Issue Queue (by priority):**
 1. ~~**MVP-001** (High) — Protocol Toggle Not De-selecting~~ ✅ Complete
 2. ~~**MVP-002** (High) — Protocol Selection Counter Inaccurate~~ ✅ Complete
-3. ~~**MVP-005** (High) — Duplicate Protocols on Home Screen~~ ✅ Complete
-4. ~~**MVP-006** (High) — Protocol Card Detail UX Redesign~~ ✅ Complete
-5. ~~**MVP-007** (High) — AI Chat Text Input Horizontal Scroll~~ ✅ Complete
-6. **MVP-003** (Medium) — Timezone Selector Not Editable — 2-3 hours
-7. ~~**MVP-004** (Medium) — Remove Start Check-in Button~~ ✅ Complete
-8. **MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel — 2-3 hours
+3. ~~**MVP-003** (Medium) — Timezone Selector Not Editable~~ ✅ Complete
+4. ~~**MVP-004** (Medium) — Remove Start Check-in Button~~ ✅ Complete
+5. ~~**MVP-005** (High) — Duplicate Protocols on Home Screen~~ ✅ Complete
+6. ~~**MVP-006** (High) — Protocol Card Detail UX Redesign~~ ✅ Complete
+7. ~~**MVP-007** (High) — AI Chat Text Input Horizontal Scroll~~ ✅ Complete
+8. **MVP-008** (Medium) — Time Picker Redesign with Scroll Wheel
 
-**Remaining Issues (2):**
-- **MVP-003** — Add searchable timezone picker modal
+**Remaining Issue (1):**
 - **MVP-008** — Replace button grid with scroll wheel time picker
 
 ---
@@ -297,4 +338,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 27, 2025 (Session 97 closed - MVP-006 Protocol Card Detail UX Redesign)*
+*Last Updated: December 27, 2025 (Session 98 closed - MVP-003 Timezone Picker)*
