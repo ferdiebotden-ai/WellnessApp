@@ -483,7 +483,7 @@ export const ProtocolDetailScreen: React.FC<ProtocolDetailScreenProps> = ({ rout
             onPress={handleMarkComplete}
             loading={logStatus === 'pending'}
             disabled={!moduleId || logStatus === 'pending' || logStatus === 'success'}
-            style={[styles.footerButtonMain, logStatus === 'success' ? styles.primaryButtonSuccess : undefined]}
+            style={logStatus === 'success' ? { ...styles.footerButtonMain, ...styles.primaryButtonSuccess } : styles.footerButtonMain}
             testID="log-complete-button"
           />
           <Pressable

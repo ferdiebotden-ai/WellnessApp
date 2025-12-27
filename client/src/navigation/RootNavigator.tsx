@@ -100,12 +100,10 @@ export const RootNavigator: React.FC = () => {
           </ErrorBoundary>
         ) : onboardingStatus === 'pending' ? (
           <ErrorBoundary name="OnboardingStack">
-            {console.log('📋 Showing OnboardingStack')}
             <OnboardingStackNavigator />
           </ErrorBoundary>
         ) : (
           <ErrorBoundary name="MainStack">
-            {console.log('🏠 Showing MainStack')}
             <MainStackContent />
           </ErrorBoundary>
         )}
