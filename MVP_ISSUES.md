@@ -8,16 +8,16 @@
 
 ## Quick Reference
 
-| ID | Issue | Priority | Complexity |
-|----|-------|----------|------------|
-| MVP-001 | Protocol Toggle Not De-selecting | High | Low |
-| MVP-002 | Protocol Selection Counter Inaccurate | High | Low |
-| MVP-003 | Timezone Selector Not Editable | Medium | Medium |
-| MVP-004 | Remove Start Check-in Button | Medium | Low |
-| MVP-005 | Duplicate Protocols on Home Screen | High | Medium |
-| MVP-006 | Protocol Card Detail UX Redesign | High | High |
-| MVP-007 | AI Chat Text Input Horizontal Scroll | High | Low |
-| MVP-008 | Time Picker Redesign with Scroll Wheel | Medium | Medium |
+| ID | Issue | Priority | Status |
+|----|-------|----------|--------|
+| MVP-001 | Protocol Toggle Not De-selecting | High | ✅ Complete |
+| MVP-002 | Protocol Selection Counter Inaccurate | High | ✅ Complete |
+| MVP-003 | Timezone Selector Not Editable | Medium | Open |
+| MVP-004 | Remove Start Check-in Button | Medium | Open |
+| MVP-005 | Duplicate Protocols on Home Screen | High | Open |
+| MVP-006 | Protocol Card Detail UX Redesign | High | Open |
+| MVP-007 | AI Chat Text Input Horizontal Scroll | High | Open |
+| MVP-008 | Time Picker Redesign with Scroll Wheel | Medium | Open |
 
 ---
 
@@ -27,7 +27,7 @@
 
 ### MVP-001: Protocol Toggle Not De-selecting
 
-**Status:** Open
+**Status:** Complete (Session 95)
 **Priority:** High
 **Complexity:** Low
 
@@ -101,7 +101,7 @@ setSelectedProtocolIds(prev => {
 
 ### MVP-002: Protocol Selection Counter Inaccurate
 
-**Status:** Open
+**Status:** Complete (Session 95)
 **Priority:** High
 **Complexity:** Low
 

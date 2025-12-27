@@ -10,7 +10,7 @@
  * Session 83: Multi-goal support
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -146,7 +146,12 @@ export const StarterProtocolSelectionScreen: React.FC<StarterProtocolSelectionSc
   route,
 }) => {
   const { selectedGoals } = route.params;
-  const moduleIds = getModulesForGoals(selectedGoals);
+  // Memoize moduleIds to prevent useEffect re-running on every render
+  // (getModulesForGoals returns a new array reference each call)
+  const moduleIds = useMemo(
+    () => getModulesForGoals(selectedGoals),
+    [selectedGoals]
+  );
 
   const [sections, setSections] = useState<ProtocolSection[]>([]);
   const [selectedProtocolIds, setSelectedProtocolIds] = useState<Set<string>>(new Set());
