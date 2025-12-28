@@ -123,82 +123,21 @@ Replaced the 9-button time grid with a native scroll wheel picker for precise ti
 
 ---
 
-## Session 98 (Previous)
-
-**Date:** December 27, 2025
-**Focus:** MVP-003 — Timezone Selector Not Editable
-
-### Work Completed
-
-**MVP-003: Searchable Timezone Picker**
-
-Created a reusable timezone picker modal that allows users to edit their timezone during onboarding and in settings.
-
-**Files Created (1):**
-- `client/src/components/TimezonePickerModal.tsx` — Reusable timezone picker modal
-
-**Files Modified (3):**
-- `client/src/screens/onboarding/BiometricProfileScreen.tsx` — Timezone editing in onboarding
-- `client/src/screens/settings/BiometricSettingsScreen.tsx` — Timezone editing in settings
-- `MVP_ISSUES.md` — Marked MVP-003 Complete
-
-**Commit:** `2685379`
-
----
-
-## Session 97 (Previous)
-
-**Date:** December 27, 2025
-**Focus:** MVP-006 — Protocol Card Detail UX Redesign
-
-### Work Completed
-
-**MVP-006: Protocol Card Detail UX Redesign**
-
-Consolidated protocol detail experience into a single enhanced bottom sheet with progressive disclosure.
-
-**Changes:**
-1. **Created AnimatedExpandableSection** — Reusable animated expand/collapse component with spring physics
-2. **Simplified ScheduledProtocolCard** — Removed "Why this?" chip, kept clean minimal card
-3. **Created useProtocolDetailSheet hook** — Wrapper for protocol data with pre-parsed display fields
-4. **Enhanced ProtocolQuickSheet** — Changed snap points to 50%/90%, added 4 evidence panels:
-   - What to Do (expanded by default)
-   - Why This Works (collapsed)
-   - Research & Evidence (collapsed, with tappable DOI links)
-   - Your Data (collapsed, shows adherence stats)
-5. **Updated HomeScreen** — Removed unused `onViewFullDetails` prop
-6. **Refactored ProtocolDetailScreen** — Uses shared AnimatedExpandableSection
-
-**Files Created (2):**
-- `client/src/components/ui/AnimatedExpandableSection.tsx` — Shared animated component
-- `client/src/hooks/useProtocolDetailSheet.ts` — Protocol data wrapper hook
-
-**Files Modified (4):**
-- `client/src/components/home/ScheduledProtocolCard.tsx` — Simplified card
-- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Enhanced with 4 panels
-- `client/src/screens/HomeScreen.tsx` — Removed onViewFullDetails
-- `client/src/screens/ProtocolDetailScreen.tsx` — Uses shared component
-
-**Commit:** `26da66e`
-
----
-
 ## Next Session Priority
 
-### 🚀 TestFlight Live — Beta Testing Phase
+### 🔄 Deploy Bug Fix to TestFlight
 
-Build #18 is live on TestFlight. Next steps:
-
-**Immediate (After Apple Processing):**
-1. Add internal testers in App Store Connect
-2. Share TestFlight link with beta users
-3. Monitor TestFlight crash reports
-
-**Android Release:**
+Session 101 fix needs to be deployed. Run:
 ```bash
-npx eas build --platform android --profile testflight
-npx eas submit --platform android --profile testflight
+cd client && npx eas build --platform ios --profile testflight
+npx eas submit --platform ios --profile testflight
 ```
+
+### 🚀 TestFlight Beta Testing Phase
+
+**Current Status:**
+- Build #18 deployed (has expandable section bug)
+- Build #19 pending (with fix from session 101)
 
 **Post-Beta (Before Production):**
 1. Review Production Release Checklist (see below)
