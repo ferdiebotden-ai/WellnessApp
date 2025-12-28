@@ -9,11 +9,11 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | TestFlight Release |
-| **Session** | 100 (complete) |
-| **Progress** | Build #18 submitted to TestFlight ✅ |
+| **Session** | 101 (complete) |
+| **Progress** | TestFlight bug fixes complete ✅ |
 | **Branch** | main |
 | **Blocker** | None |
-| **Issues** | App live on TestFlight — awaiting Apple processing |
+| **Issues** | Fixed expandable sections in protocol sheets |
 
 ---
 
@@ -53,7 +53,37 @@
 
 ## Last Session
 
-**Date:** December 27, 2025 (Session 100)
+**Date:** December 28, 2025 (Session 101)
+**Focus:** TestFlight Bug Fixes — Expandable Sections
+
+### Work Completed
+
+**Bug Fix: Expandable Sections Not Expanding**
+
+Fixed a critical bug in `AnimatedExpandableSection` where the expand/collapse animation wasn't working. Users could click the section headers, see the chevron flip, but content wouldn't appear.
+
+**Root Cause:** The component was using React state (`contentHeight`) inside a Reanimated `useAnimatedStyle` worklet. Since worklets run on the UI thread and React state is on the JS thread, the worklet wasn't reacting to state changes.
+
+**Solution:**
+1. Converted `contentHeight` from React state to a Reanimated shared value
+2. Added a hidden measurement container (positioned absolute with opacity 0) to reliably measure content height
+3. Allowed re-measurement for dynamic content (skeleton → real content transitions)
+
+**Files Modified (1):**
+- `client/src/components/ui/AnimatedExpandableSection.tsx` — Core fix
+
+**Testing:**
+- Verified all 3 expandable sections work in ProtocolQuickSheet:
+  - "Why This Works" ✓
+  - "Research & Evidence" ✓
+  - "Your Data" ✓
+- Protocol cards successfully open bottom sheet
+
+---
+
+## Session 100 (Previous)
+
+**Date:** December 27, 2025
 **Focus:** TestFlight Deployment 🚀
 
 ### Work Completed
@@ -74,18 +104,7 @@ Successfully deployed Apex OS to TestFlight for beta testing.
 - **Bundle ID:** com.wellnessos.app
 - **ASC App ID:** 6756579125
 
-**Files Modified (2):**
-- `client/src/navigation/RootNavigator.tsx` — Removed debug console.log
-- `client/src/screens/ProtocolDetailScreen.tsx` — Fixed style prop typing
-
 **Commit:** `dcad759`
-
-### 🚀 TESTFLIGHT LIVE
-
-Build submitted to App Store Connect. After Apple processing (~5-10 min):
-- Add testers in TestFlight dashboard
-- Share TestFlight link with beta users
-- Monitor crash reports and feedback
 
 ---
 
@@ -330,4 +349,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 27, 2025 (Session 100 — TestFlight Build #18 submitted)*
+*Last Updated: December 28, 2025 (Session 101 — Expandable sections bug fix)*

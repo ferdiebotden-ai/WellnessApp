@@ -48,14 +48,17 @@ export const AnimatedExpandableSection: React.FC<AnimatedExpandableSectionProps>
   testID,
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const [contentHeight, setContentHeight] = useState(0);
+  // Use shared value for contentHeight - this ensures Reanimated worklets
+  // react to height changes (React state doesn't work reliably in worklets)
+  const contentHeight = useSharedValue(0);
   const animatedHeight = useSharedValue(defaultExpanded ? 1 : 0);
 
   const handleContentLayout = useCallback(
     (event: LayoutChangeEvent) => {
       const { height } = event.nativeEvent.layout;
-      if (height > 0 && contentHeight === 0) {
-        setContentHeight(height);
+      // Always update height when valid (allows re-measurement for dynamic content)
+      if (height > 0) {
+        contentHeight.value = height;
       }
     },
     [contentHeight]
@@ -72,12 +75,12 @@ export const AnimatedExpandableSection: React.FC<AnimatedExpandableSectionProps>
   }, [isExpanded, animatedHeight]);
 
   const expandStyle = useAnimatedStyle(() => {
-    if (contentHeight === 0) {
+    if (contentHeight.value === 0) {
       return { height: 0, opacity: 0, overflow: 'hidden' as const };
     }
 
     return {
-      height: interpolate(animatedHeight.value, [0, 1], [0, contentHeight]),
+      height: interpolate(animatedHeight.value, [0, 1], [0, contentHeight.value]),
       opacity: interpolate(animatedHeight.value, [0, 0.5, 1], [0, 0.5, 1]),
       overflow: 'hidden' as const,
     };
@@ -110,8 +113,16 @@ export const AnimatedExpandableSection: React.FC<AnimatedExpandableSectionProps>
         <Text style={styles.chevron}>{isExpanded ? '▲' : '▼'}</Text>
       </Pressable>
 
-      <Animated.View style={expandStyle}>
+      {/* Hidden measurement container - always fully laid out for accurate height */}
+      <View style={styles.measureContainer} pointerEvents="none">
         <View onLayout={handleContentLayout} style={styles.content}>
+          {children}
+        </View>
+      </View>
+
+      {/* Animated visible content */}
+      <Animated.View style={expandStyle}>
+        <View style={styles.content}>
           {children}
         </View>
       </Animated.View>
@@ -127,6 +138,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     marginBottom: 12,
+  },
+  measureContainer: {
+    position: 'absolute',
+    opacity: 0,
+    left: 0,
+    right: 0,
   },
   header: {
     flexDirection: 'row',
