@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | TestFlight Release |
-| **Session** | 102 (complete) |
-| **Progress** | Check-in pop-up removed ✅ |
+| **Session** | 103 (complete) |
+| **Progress** | Apple Health crash fixed ✅ |
 | **Branch** | main |
 | **Blocker** | None |
 | **Issues** | None |
@@ -53,24 +53,51 @@
 
 ## Last Session
 
-**Date:** December 29, 2025 (Session 102)
-**Focus:** Remove check-in pop-up on app launch
+**Date:** December 29, 2025 (Session 103)
+**Focus:** Fix Apple Health crash on navigation
 
 ### Work Completed
 
-**UX Improvement: Remove Wake Confirmation Overlay**
+**Bug Fix: App Crash on Profile/Health Navigation**
+
+Fixed critical crash that occurred when:
+- Clicking "Connect Apple Health" button on Health tab
+- Navigating to Profile settings tab
+
+**Root Cause:** Force unwraps (`!`) in Swift static initializers (`HealthKitManager.swift` lines 53-68) crashed at module load time, before any TypeScript error handling could intercept.
+
+**Solution:** Replaced force-unwrapped static `let` arrays with computed `var` properties using `compactMap` and optional binding for safe unwrapping.
+
+**Changes:**
+- Moved `expo-healthkit-observer` module from project root to `client/modules/`
+- Added module as file dependency in `client/package.json`
+- Replaced force-unwrapped `readableTypes` array with computed property
+- Replaced force-unwrapped `observableTypes` dictionary with computed property
+- Fixed force unwrap in error logging (line 271)
+- Updated all imports to use package name instead of relative paths
+- Fixed navigation in HealthDashboardScreen (removed `getParent()`)
+
+**Files Modified (10+):**
+- `client/modules/expo-healthkit-observer/ios/HealthKitManager.swift` — Safe unwrapping
+- `client/package.json` — Added expo-healthkit-observer dependency
+- `client/src/hooks/useHealthKit.ts` — Updated imports
+- `client/src/hooks/useWearableHealth.ts` — Updated imports
+- `client/src/screens/HealthDashboardScreen.tsx` — Fixed navigation
+- `client/src/screens/settings/WearableSettingsScreen.tsx` — Updated error message
+- `client/src/services/wake/HealthKitWakeDetector.ts` — Updated imports
+
+**Commit:** `0912d2d`
+
+---
+
+## Session 102 (Previous)
+
+**Date:** December 29, 2025
+**Focus:** Remove check-in pop-up on app launch
 
 Removed the "Good morning, Ready for your Morning Anchor?" check-in pop-up that appeared when opening the app. Per user feedback, this pop-up didn't add value and interrupted the user experience.
 
-**Changes:**
-- Removed `WakeConfirmationOverlay` component from HomeScreen render
-- Removed `useWakeDetection` hook usage (no longer needed)
-- Users now go straight to home screen when opening the app while logged in
-
-**Files Modified (1):**
-- `client/src/screens/HomeScreen.tsx` — Removed wake confirmation overlay
-
-**Commit:** `0912d2d` (included with Apple Health crash fix)
+**Files Modified:** `client/src/screens/HomeScreen.tsx`
 
 ---
 
@@ -79,44 +106,9 @@ Removed the "Good morning, Ready for your Morning Anchor?" check-in pop-up that 
 **Date:** December 28, 2025
 **Focus:** TestFlight Bug Fixes — Expandable Sections
 
-### Work Completed
-
-**Bug Fix: Expandable Sections Not Expanding**
-
-Fixed a critical bug in `AnimatedExpandableSection` where the expand/collapse animation wasn't working.
-
-**Root Cause:** React state used inside Reanimated worklet.
-
-**Solution:** Converted to shared values + hidden measurement container.
+Fixed a critical bug in `AnimatedExpandableSection` where the expand/collapse animation wasn't working. Root cause: React state used inside Reanimated worklet. Solution: Converted to shared values + hidden measurement container.
 
 **Files Modified:** `client/src/components/ui/AnimatedExpandableSection.tsx`
-
----
-
-## Session 100 (Previous)
-
-**Date:** December 27, 2025
-**Focus:** TestFlight Deployment 🚀
-
-### Work Completed
-
-**TestFlight Build & Submission**
-
-Successfully deployed Apex OS to TestFlight for beta testing.
-
-**Steps Completed:**
-1. **Pre-flight checks** — TypeScript compilation verified
-2. **Minor fixes** — Removed debug console.logs, fixed style prop typing
-3. **EAS Build** — Build #18 created with `testflight` profile
-4. **App Store Connect submission** — Automated via `eas submit`
-
-**Build Details:**
-- **Build Number:** 18
-- **App Version:** 1.0.0
-- **Bundle ID:** com.wellnessos.app
-- **ASC App ID:** 6756579125
-
-**Commit:** `dcad759`
 
 ---
 
@@ -133,8 +125,8 @@ npx eas submit --platform ios --profile testflight
 ### 🚀 TestFlight Beta Testing Phase
 
 **Current Status:**
-- Build #18 deployed (has expandable section bug + check-in pop-up)
-- Build #19 pending (with fixes from sessions 101-102)
+- Build #18 deployed (has expandable section bug + check-in pop-up + Apple Health crash)
+- Build #19 pending (with fixes from sessions 101-103)
 
 **Post-Beta (Before Production):**
 1. Review Production Release Checklist (see below)
@@ -285,4 +277,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 29, 2025 (Session 102 — Check-in pop-up removed)*
+*Last Updated: December 29, 2025 (Session 103 — Apple Health crash fixed)*
