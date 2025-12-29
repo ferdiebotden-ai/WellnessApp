@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { RecoveryScoreCard } from '../components/RecoveryScoreCard';
 import { LiteModeScoreCard } from '../components/LiteModeScoreCard';
-import { WakeConfirmationOverlay } from '../components/WakeConfirmationOverlay';
+// WakeConfirmationOverlay removed - check-in pop-up no longer shown on app launch
 import { SilentErrorBoundary } from '../components/ErrorBoundary';
 // New Home Screen components (Session 57)
 import { HomeHeader } from '../components/home/HomeHeader';
@@ -21,7 +21,7 @@ import { palette } from '../theme/palette';
 import { typography } from '../theme/typography';
 import { useTaskFeed } from '../hooks/useTaskFeed';
 import { useRecoveryScore } from '../hooks/useRecoveryScore';
-import { useWakeDetection } from '../hooks/useWakeDetection';
+// useWakeDetection removed - check-in pop-up no longer shown on app launch
 import { useNudgeActions } from '../hooks/useNudgeActions';
 // New hooks (Session 57)
 // useTodaysFocus removed (Session 87) - Consolidated into MyScheduleSection
@@ -125,13 +125,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
   });
 
-  // Wake detection for Morning Anchor (Phase 3)
-  const {
-    showConfirmation: showWakeConfirmation,
-    handleConfirm: handleWakeConfirm,
-    handleLater: handleWakeLater,
-    handleDismiss: handleWakeDismiss,
-  } = useWakeDetection();
+  // Wake detection for Morning Anchor removed - check-in pop-up no longer shown
 
   // Handle task completion
   const handleTaskComplete = useCallback(
@@ -421,14 +415,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         )}
       </ScrollView>
 
-      {/* Wake Confirmation Overlay */}
-      <WakeConfirmationOverlay
-        visible={showWakeConfirmation}
-        isLiteMode={isLiteMode}
-        onConfirm={handleWakeConfirm}
-        onLater={handleWakeLater}
-        onDismiss={handleWakeDismiss}
-      />
+      {/* Wake Confirmation Overlay - Removed per MVP decision: no value in check-in prompt */}
 
       {/* Session 86: Protocol Quick Sheet */}
       <ProtocolQuickSheet

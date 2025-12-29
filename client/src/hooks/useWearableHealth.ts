@@ -39,7 +39,7 @@ import { Platform } from 'react-native';
 
 import { useHealthKit, UseHealthKitReturn, UnavailableReason } from './useHealthKit';
 import { useHealthConnect, UseHealthConnectReturn } from './useHealthConnect';
-import type { HealthKitReading } from '../../../modules/expo-healthkit-observer/src/types';
+import type { HealthKitReading } from 'expo-healthkit-observer';
 import type { HealthConnectReading } from '../types/healthConnect';
 
 // =============================================================================

@@ -95,9 +95,9 @@ export class HealthKitWakeDetector {
    */
   private async loadHealthKitModule(): Promise<void> {
     try {
-      // Dynamic import using relative path to local module
+      // Dynamic import of the HealthKit module
       // This avoids bundling issues on web/Android
-      const module = await import('../../../../modules/expo-healthkit-observer/src');
+      const module = await import('expo-healthkit-observer');
       this.healthKitModule = module.default;
     } catch (error) {
       console.warn('[HealthKitWakeDetector] Failed to load HealthKit module:', error);

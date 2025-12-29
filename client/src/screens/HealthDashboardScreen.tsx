@@ -134,7 +134,7 @@ export function HealthDashboardScreen(): React.ReactElement {
   // Handler for connecting wearables
   const handleConnectWearable = useCallback(() => {
     // Navigate to Profile tab, then to WearableSettings
-    navigation.getParent()?.navigate('Profile', { screen: 'WearableSettings' });
+    navigation.navigate('Profile', { screen: 'WearableSettings' });
   }, [navigation]);
 
   // Last sync info

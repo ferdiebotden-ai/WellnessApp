@@ -1,0 +1,41 @@
+{
+  "name": "expo-healthkit-observer",
+  "version": "1.0.0",
+  "description": "Native iOS HealthKit integration with background delivery observers for Apex OS",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean",
+    "lint": "expo-module lint",
+    "test": "expo-module test",
+    "prepare": "expo-module prepare",
+    "prepublishOnly": "expo-module prepublishOnly",
+    "expo-module": "expo-module"
+  },
+  "keywords": [
+    "expo",
+    "expo-module",
+    "healthkit",
+    "ios",
+    "wearable",
+    "health"
+  ],
+  "license": "MIT",
+  "author": "Apex OS <dev@apexos.dev>",
+  "homepage": "https://github.com/your-org/apex-os",
+  "bugs": {
+    "url": "https://github.com/your-org/apex-os/issues"
+  },
+  "devDependencies": {
+    "expo-module-scripts": "^4.0.0",
+    "expo-modules-core": "^2.0.0",
+    "react-native": "^0.76.0",
+    "@types/react": "^18.0.0"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

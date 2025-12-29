@@ -11,6 +11,7 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
+    "expo-healthkit-observer": "file:./modules/expo-healthkit-observer",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@gorhom/bottom-sheet": "^5.2.8",

@@ -48,7 +48,7 @@ import type {
   HealthKitAuthorizationStatus,
   HealthKitReading,
   HealthKitDataUpdateEvent,
-} from '../../../modules/expo-healthkit-observer/src/types';
+} from 'expo-healthkit-observer';
 
 // Storage keys
 const STORAGE_KEY_BACKGROUND_ENABLED = 'healthkit_background_enabled';
@@ -104,7 +104,7 @@ export function useHealthKit(): UseHealthKitReturn {
   const [unavailableReason, setUnavailableReason] = useState<UnavailableReason | null>(null);
 
   // Refs for module and subscription
-  const moduleRef = useRef<typeof import('../../../modules/expo-healthkit-observer/src') | null>(null);
+  const moduleRef = useRef<typeof import('expo-healthkit-observer') | null>(null);
   const subscriptionRef = useRef<{ remove: () => void } | null>(null);
 
   // Load module and initialize
@@ -130,7 +130,7 @@ export function useHealthKit(): UseHealthKitReturn {
         // Dynamically import the module - may fail in Expo Go or builds without native module
         let ExpoHealthKitObserver;
         try {
-          ExpoHealthKitObserver = await import('../../../modules/expo-healthkit-observer/src');
+          ExpoHealthKitObserver = await import('expo-healthkit-observer');
           moduleRef.current = ExpoHealthKitObserver;
         } catch (importError) {
           console.warn('[useHealthKit] Failed to import native module:', importError);

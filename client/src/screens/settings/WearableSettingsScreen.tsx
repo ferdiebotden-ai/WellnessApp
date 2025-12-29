@@ -233,7 +233,7 @@ export const WearableSettingsScreen: React.FC = () => {
         case 'simulator':
           return 'HealthKit requires a physical iPhone. Simulators cannot access health data.';
         case 'module_missing':
-          return 'HealthKit is not available in this app build. If using Expo Go, please build with EAS instead.';
+          return 'HealthKit failed to initialize. Please restart the app or reinstall from the App Store.';
         case 'device_unsupported':
           return 'HealthKit is not supported on this device (requires iOS 8+).';
         default:
