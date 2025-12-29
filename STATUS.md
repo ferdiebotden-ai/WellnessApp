@@ -9,11 +9,11 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | TestFlight Release |
-| **Session** | 101 (complete) |
-| **Progress** | TestFlight bug fixes complete ✅ |
+| **Session** | 102 (complete) |
+| **Progress** | Check-in pop-up removed ✅ |
 | **Branch** | main |
 | **Blocker** | None |
-| **Issues** | Fixed expandable sections in protocol sheets |
+| **Issues** | None |
 
 ---
 
@@ -53,31 +53,43 @@
 
 ## Last Session
 
-**Date:** December 28, 2025 (Session 101)
+**Date:** December 29, 2025 (Session 102)
+**Focus:** Remove check-in pop-up on app launch
+
+### Work Completed
+
+**UX Improvement: Remove Wake Confirmation Overlay**
+
+Removed the "Good morning, Ready for your Morning Anchor?" check-in pop-up that appeared when opening the app. Per user feedback, this pop-up didn't add value and interrupted the user experience.
+
+**Changes:**
+- Removed `WakeConfirmationOverlay` component from HomeScreen render
+- Removed `useWakeDetection` hook usage (no longer needed)
+- Users now go straight to home screen when opening the app while logged in
+
+**Files Modified (1):**
+- `client/src/screens/HomeScreen.tsx` — Removed wake confirmation overlay
+
+**Commit:** `0912d2d` (included with Apple Health crash fix)
+
+---
+
+## Session 101 (Previous)
+
+**Date:** December 28, 2025
 **Focus:** TestFlight Bug Fixes — Expandable Sections
 
 ### Work Completed
 
 **Bug Fix: Expandable Sections Not Expanding**
 
-Fixed a critical bug in `AnimatedExpandableSection` where the expand/collapse animation wasn't working. Users could click the section headers, see the chevron flip, but content wouldn't appear.
+Fixed a critical bug in `AnimatedExpandableSection` where the expand/collapse animation wasn't working.
 
-**Root Cause:** The component was using React state (`contentHeight`) inside a Reanimated `useAnimatedStyle` worklet. Since worklets run on the UI thread and React state is on the JS thread, the worklet wasn't reacting to state changes.
+**Root Cause:** React state used inside Reanimated worklet.
 
-**Solution:**
-1. Converted `contentHeight` from React state to a Reanimated shared value
-2. Added a hidden measurement container (positioned absolute with opacity 0) to reliably measure content height
-3. Allowed re-measurement for dynamic content (skeleton → real content transitions)
+**Solution:** Converted to shared values + hidden measurement container.
 
-**Files Modified (1):**
-- `client/src/components/ui/AnimatedExpandableSection.tsx` — Core fix
-
-**Testing:**
-- Verified all 3 expandable sections work in ProtocolQuickSheet:
-  - "Why This Works" ✓
-  - "Research & Evidence" ✓
-  - "Your Data" ✓
-- Protocol cards successfully open bottom sheet
+**Files Modified:** `client/src/components/ui/AnimatedExpandableSection.tsx`
 
 ---
 
@@ -108,26 +120,11 @@ Successfully deployed Apex OS to TestFlight for beta testing.
 
 ---
 
-## Session 99 (Previous)
-
-**Date:** December 27, 2025
-**Focus:** MVP-008 — Time Picker Redesign with Scroll Wheel (FINAL MVP ISSUE)
-
-### Work Completed
-
-**MVP-008: Native Scroll Wheel Time Picker**
-
-Replaced the 9-button time grid with a native scroll wheel picker for precise time selection.
-
-**Commit:** `bbdd109`
-
----
-
 ## Next Session Priority
 
-### 🔄 Deploy Bug Fix to TestFlight
+### 🔄 Deploy Updates to TestFlight
 
-Session 101 fix needs to be deployed. Run:
+Recent fixes need to be deployed. Run:
 ```bash
 cd client && npx eas build --platform ios --profile testflight
 npx eas submit --platform ios --profile testflight
@@ -136,8 +133,8 @@ npx eas submit --platform ios --profile testflight
 ### 🚀 TestFlight Beta Testing Phase
 
 **Current Status:**
-- Build #18 deployed (has expandable section bug)
-- Build #19 pending (with fix from session 101)
+- Build #18 deployed (has expandable section bug + check-in pop-up)
+- Build #19 pending (with fixes from sessions 101-102)
 
 **Post-Beta (Before Production):**
 1. Review Production Release Checklist (see below)
@@ -288,4 +285,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 28, 2025 (Session 101 — Expandable sections bug fix)*
+*Last Updated: December 29, 2025 (Session 102 — Check-in pop-up removed)*
