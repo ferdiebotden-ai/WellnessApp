@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | TestFlight Release |
-| **Session** | 104 (complete) |
-| **Progress** | Protocol tap gesture fix ✅ |
+| **Session** | 104 (complete - rewrite) |
+| **Progress** | Protocol tap gesture fix ✅ (react-native-gesture-handler) |
 | **Branch** | main |
 | **Blocker** | None |
 | **Issues** | None |
@@ -53,28 +53,41 @@
 
 ## Last Session
 
-**Date:** December 29, 2025 (Session 104)
-**Focus:** Fix protocol cards not expanding on iOS
+**Date:** December 30, 2025 (Session 104 continued)
+**Focus:** Fix protocol cards not expanding on iOS (complete rewrite)
 
 ### Work Completed
 
 **Bug Fix: Protocol Cards Not Opening Detail Sheet on Tap**
 
-Fixed intermittent issue where some protocol cards on the home screen would show visual press feedback but fail to open the detail sheet.
+Initial threshold fix (25px + velocity check) did not resolve the issue. Deep investigation revealed multiple architectural problems:
 
-**Root Cause:** Gesture competition between PanResponder (swipe gestures) and Pressable (tap) on iOS. The swipe detection threshold was only 10px, which is less than typical finger drift during an iOS tap. When natural finger drift exceeded 10px horizontally, the PanResponder captured the gesture and the `onPress` callback never fired.
+1. **Stale Closures:** PanResponder created with `useRef()` captured closures at mount time and never updated when `canSwipeRight`, `canSwipeLeft`, or `isUpdating` changed
+2. **iOS Gesture Competition:** PanResponder and Pressable fought for the same gesture without clear priority on iOS
+3. **BottomSheet Conditional Mount:** Early return when `protocol === null` caused BottomSheet to unmount/remount, creating ref timing issues
 
-**Solution:** Increased swipe gesture threshold from 10px to 25px and added a velocity check (`vx > 0.1`) to distinguish intentional swipes from accidental drift.
+**Solution:** Complete rewrite using `react-native-gesture-handler` (v2.30.0, already installed):
+- Replaced PanResponder with `Gesture.Pan()` + `Gesture.Tap()`
+- Used `Gesture.Exclusive()` for proper gesture arbitration
+- Added `activeOffsetX` threshold to allow taps before pan activates
+- Fixed BottomSheet to stay mounted (removed early return)
 
 **Changes:**
-- Added `SWIPE_THRESHOLD_START = 25` constant for gesture capture threshold
-- Updated `onMoveShouldSetPanResponder` to use new threshold
-- Added velocity check to ensure gesture is intentional, not drift
+1. `SwipeableProtocolCard.tsx` — Complete rewrite:
+   - Replaced PanResponder with react-native-gesture-handler's Gesture API
+   - `Gesture.Pan()` with `activeOffsetX([-20, 20])` prevents tap interference
+   - `Gesture.Tap()` handles card press reliably
+   - `Gesture.Exclusive()` ensures only one gesture runs
+   - No more stale closures — gestures use fresh callback refs
 
-**File Modified:**
-- `client/src/components/home/SwipeableProtocolCard.tsx`
+2. `ProtocolQuickSheet.tsx` — Fixed conditional mounting:
+   - Removed early return when `protocol === null`
+   - BottomSheet stays mounted, content renders conditionally
+   - Added null-safe button handlers
 
-**Commit:** `74d6508`
+**Files Modified:**
+- `client/src/components/home/SwipeableProtocolCard.tsx` — Complete rewrite
+- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Fixed mounting
 
 ---
 
@@ -267,4 +280,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 29, 2025 (Session 104 — Protocol tap gesture fix)*
+*Last Updated: December 30, 2025 (Session 104 — Protocol tap fix with gesture-handler rewrite)*

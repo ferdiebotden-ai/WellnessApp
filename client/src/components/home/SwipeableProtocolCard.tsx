@@ -4,18 +4,16 @@
  * Wrapper that adds swipe gestures to ScheduledProtocolCard.
  * - Swipe right (>80px) → Complete/Start (only when protocol is due)
  * - Swipe left (>80px) → Remove from schedule
+ * - Tap → Open protocol detail sheet
  *
- * Uses PanResponder + Reanimated for cross-platform compatibility.
+ * Session 104: Migrated from PanResponder to react-native-gesture-handler
+ * to fix iOS gesture competition issues where taps were being captured
+ * as swipes, preventing the detail sheet from opening.
  */
 
-import React, { useCallback, useRef } from 'react';
-import {
-  PanResponder,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, { useCallback } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -31,11 +29,11 @@ import type { ScheduledProtocol } from '../../hooks/useEnrolledProtocols';
 /** Minimum swipe distance to trigger action */
 const SWIPE_THRESHOLD = 80;
 
-/** Minimum distance to START capturing gesture (prevents tap interference on iOS) */
-const SWIPE_THRESHOLD_START = 25;
-
 /** Maximum swipe distance (prevents over-swiping) */
 const MAX_SWIPE = 120;
+
+/** Minimum pan distance before pan gesture activates (allows taps to work) */
+const PAN_ACTIVATION_THRESHOLD = 20;
 
 interface SwipeableProtocolCardProps {
   /** Protocol data */
@@ -68,6 +66,8 @@ const triggerHaptic = () => {
 /**
  * Swipeable wrapper for protocol cards.
  * Only enables right swipe when protocol is due (isDueNow).
+ *
+ * Uses react-native-gesture-handler for proper gesture arbitration on iOS.
  */
 export const SwipeableProtocolCard: React.FC<SwipeableProtocolCardProps> = ({
   protocol,
@@ -78,11 +78,18 @@ export const SwipeableProtocolCard: React.FC<SwipeableProtocolCardProps> = ({
   testID,
 }) => {
   const translateX = useSharedValue(0);
-  const hasTriggeredHaptic = useRef(false);
+  const hasTriggeredHaptic = useSharedValue(false);
 
   // Right swipe only enabled when protocol is due now
   const canSwipeRight = protocol.isDueNow && !!onSwipeRight;
   const canSwipeLeft = !!onSwipeLeft;
+
+  /**
+   * Handle tap - opens detail sheet
+   */
+  const handleTap = useCallback(() => {
+    onPress(protocol);
+  }, [onPress, protocol]);
 
   /**
    * Handle swipe completion.
@@ -99,75 +106,76 @@ export const SwipeableProtocolCard: React.FC<SwipeableProtocolCardProps> = ({
   );
 
   /**
-   * PanResponder for handling swipe gestures.
+   * Tap gesture - handles card press to open detail sheet
+   * This runs on the native thread and properly arbitrates with pan
    */
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        const { dx, dy, vx } = gestureState;
-        // Only respond to horizontal swipes when not updating
-        if (isUpdating) return false;
+  const tapGesture = Gesture.Tap()
+    .enabled(!isUpdating)
+    .onEnd(() => {
+      'worklet';
+      runOnJS(handleTap)();
+    });
 
-        // Session 103: Higher threshold (25px vs 10px) + velocity check
-        // This prevents accidental gesture capture from finger drift during taps on iOS
-        // Normal tap drift is 5-15px; intentional swipes exceed 25px with velocity
-        const isIntentionalSwipe =
-          Math.abs(dx) > Math.abs(dy) &&
-          Math.abs(dx) > SWIPE_THRESHOLD_START &&
-          Math.abs(vx) > 0.1; // Require some velocity (intentional movement)
-
-        if (!isIntentionalSwipe) return false;
-
-        // Only allow swipes in enabled directions
-        const swipingRight = dx > 0;
-        const swipingLeft = dx < 0;
-
-        return (swipingRight && canSwipeRight) || (swipingLeft && canSwipeLeft);
-      },
-      onPanResponderGrant: () => {
-        hasTriggeredHaptic.current = false;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const { dx } = gestureState;
-
-        // Clamp translation based on enabled directions
-        let clampedDx = dx;
-        if (dx > 0 && !canSwipeRight) clampedDx = 0;
-        if (dx < 0 && !canSwipeLeft) clampedDx = 0;
-        clampedDx = Math.max(-MAX_SWIPE, Math.min(MAX_SWIPE, clampedDx));
-
-        translateX.value = clampedDx;
-
-        // Trigger haptic when crossing threshold
-        if (!hasTriggeredHaptic.current && Math.abs(dx) >= SWIPE_THRESHOLD) {
-          hasTriggeredHaptic.current = true;
-          runOnJS(triggerHaptic)();
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const { dx } = gestureState;
-
-        if (dx > SWIPE_THRESHOLD && canSwipeRight) {
-          runOnJS(handleSwipeComplete)('right');
-        } else if (dx < -SWIPE_THRESHOLD && canSwipeLeft) {
-          runOnJS(handleSwipeComplete)('left');
-        }
-
-        // Animate back to center
-        translateX.value = withSpring(0, {
-          damping: 20,
-          stiffness: 200,
-        });
-      },
-      onPanResponderTerminate: () => {
-        translateX.value = withSpring(0, {
-          damping: 20,
-          stiffness: 200,
-        });
-      },
+  /**
+   * Pan gesture - handles horizontal swipes
+   * Only activates after PAN_ACTIVATION_THRESHOLD to allow taps to work
+   */
+  const panGesture = Gesture.Pan()
+    .enabled(!isUpdating)
+    .activeOffsetX([-PAN_ACTIVATION_THRESHOLD, PAN_ACTIVATION_THRESHOLD])
+    .failOffsetY([-15, 15]) // Fail if vertical movement exceeds 15px (scrolling)
+    .onStart(() => {
+      'worklet';
+      hasTriggeredHaptic.value = false;
     })
-  ).current;
+    .onUpdate((event) => {
+      'worklet';
+      const { translationX } = event;
+
+      // Clamp translation based on enabled directions
+      let clampedX = translationX;
+      if (translationX > 0 && !canSwipeRight) clampedX = 0;
+      if (translationX < 0 && !canSwipeLeft) clampedX = 0;
+      clampedX = Math.max(-MAX_SWIPE, Math.min(MAX_SWIPE, clampedX));
+
+      translateX.value = clampedX;
+
+      // Trigger haptic when crossing threshold
+      if (!hasTriggeredHaptic.value && Math.abs(translationX) >= SWIPE_THRESHOLD) {
+        hasTriggeredHaptic.value = true;
+        runOnJS(triggerHaptic)();
+      }
+    })
+    .onEnd((event) => {
+      'worklet';
+      const { translationX } = event;
+
+      if (translationX > SWIPE_THRESHOLD && canSwipeRight) {
+        runOnJS(handleSwipeComplete)('right');
+      } else if (translationX < -SWIPE_THRESHOLD && canSwipeLeft) {
+        runOnJS(handleSwipeComplete)('left');
+      }
+
+      // Animate back to center
+      translateX.value = withSpring(0, {
+        damping: 20,
+        stiffness: 200,
+      });
+    })
+    .onFinalize(() => {
+      'worklet';
+      // Ensure we spring back even if gesture is cancelled
+      translateX.value = withSpring(0, {
+        damping: 20,
+        stiffness: 200,
+      });
+    });
+
+  /**
+   * Composed gesture: Pan has priority, but tap wins if no significant horizontal movement
+   * Gesture.Exclusive ensures only one gesture runs at a time
+   */
+  const composedGesture = Gesture.Exclusive(panGesture, tapGesture);
 
   /**
    * Animated style for the card container.
@@ -220,17 +228,16 @@ export const SwipeableProtocolCard: React.FC<SwipeableProtocolCardProps> = ({
         </View>
       )}
 
-      {/* Swipeable card content */}
-      <Animated.View
-        style={[styles.cardWrapper, cardStyle]}
-        {...panResponder.panHandlers}
-      >
-        <ScheduledProtocolCard
-          protocol={protocol}
-          onPress={onPress}
-          testID={testID ? `${testID}-card` : undefined}
-        />
-      </Animated.View>
+      {/* Swipeable card content with gesture handler */}
+      <GestureDetector gesture={composedGesture}>
+        <Animated.View style={[styles.cardWrapper, cardStyle]}>
+          <ScheduledProtocolCard
+            protocol={protocol}
+            onPress={() => {}} // Handled by gesture - pass no-op to satisfy prop type
+            testID={testID ? `${testID}-card` : undefined}
+          />
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 };

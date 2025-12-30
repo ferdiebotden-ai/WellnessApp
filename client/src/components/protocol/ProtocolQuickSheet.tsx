@@ -136,10 +136,14 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
     }
   }, []);
 
-  // Don't render anything if no protocol
-  if (!protocol) return null;
-
-  const { name, category, summary, duration_minutes } = protocol.protocol;
+  // Session 104: Extract protocol data safely (protocol may be null)
+  // Keep BottomSheet mounted to avoid ref timing issues on iOS
+  const { name, category, summary, duration_minutes } = protocol?.protocol ?? {
+    name: '',
+    category: '',
+    summary: '',
+    duration_minutes: null,
+  };
   const categoryColor = CATEGORY_COLORS[category?.toLowerCase()] || palette.primary;
 
   // Get protocol icon
@@ -201,7 +205,7 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
             {duration_minutes && (
               <Text style={styles.duration}>{duration_minutes} min</Text>
             )}
-            {protocol.isDueNow && (
+            {protocol?.isDueNow && (
               <View style={styles.nowBadge}>
                 <Text style={styles.nowBadgeText}>NOW</Text>
               </View>
@@ -361,8 +365,8 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
             pressed && styles.buttonPressed,
             isCompleting && styles.buttonDisabled,
           ]}
-          onPress={() => onMarkComplete(protocol)}
-          disabled={isCompleting}
+          onPress={() => protocol && onMarkComplete(protocol)}
+          disabled={isCompleting || !protocol}
         >
           {isCompleting ? (
             <ActivityIndicator size="small" color={palette.background} />
@@ -380,7 +384,8 @@ export const ProtocolQuickSheet: React.FC<Props> = ({
             styles.secondaryButton,
             pressed && styles.buttonPressed,
           ]}
-          onPress={() => onAskAICoach(protocol)}
+          onPress={() => protocol && onAskAICoach(protocol)}
+          disabled={!protocol}
         >
           <Ionicons name="chatbubble-ellipses-outline" size={18} color={palette.primary} />
           <Text style={styles.secondaryButtonText}>Ask AI Coach</Text>
