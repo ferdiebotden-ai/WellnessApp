@@ -19,7 +19,11 @@ public class ExpoHealthKitObserverModule: Module {
 
     // MARK: - Properties
 
-    private let manager = HealthKitManager.shared
+    /// Lazy initialization to prevent crashes during module load
+    /// The manager is only created when first accessed, not at class instantiation
+    private lazy var manager: HealthKitManager = {
+        return HealthKitManager.shared
+    }()
 
     // MARK: - Module Definition
 

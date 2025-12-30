@@ -1,7 +1,6 @@
 {
   "platforms": ["ios"],
   "ios": {
-    "modules": ["ExpoHealthKitObserverModule"],
-    "appDelegateSubscribers": ["ExpoHealthKitObserverAppDelegate"]
+    "modules": ["ExpoHealthKitObserverModule"]
   }
 }

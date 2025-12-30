@@ -35,15 +35,22 @@ final class HealthKitManager {
 
     weak var delegate: HealthKitManagerDelegate?
 
-    private let healthStore = HKHealthStore()
+    /// Lazy initialization of HKHealthStore to prevent crashes during early module load
+    private lazy var healthStore: HKHealthStore = {
+        return HKHealthStore()
+    }()
+
     private var observerQueries: [String: HKObserverQuery] = [:]
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
     /// Processing queue with low priority for battery optimization
-    private let processingQueue = DispatchQueue(
-        label: "com.apexos.healthkit-processing",
-        qos: .utility
-    )
+    /// Lazy initialization to prevent thread issues during module load
+    private lazy var processingQueue: DispatchQueue = {
+        return DispatchQueue(
+            label: "com.apexos.healthkit-processing",
+            qos: .utility
+        )
+    }()
 
     /// Pending updates cached locally (network sync happens on foreground)
     private var pendingUpdates: [[String: Any]] = []
