@@ -74,6 +74,8 @@ Fixed intermittent issue where some protocol cards on the home screen would show
 **File Modified:**
 - `client/src/components/home/SwipeableProtocolCard.tsx`
 
+**Commit:** `74d6508`
+
 ---
 
 ## Session 103 (Previous)
@@ -97,17 +99,6 @@ Fixed critical crash that occurred when clicking "Connect Apple Health" button o
 Removed the "Good morning, Ready for your Morning Anchor?" check-in pop-up that appeared when opening the app. Per user feedback, this pop-up didn't add value and interrupted the user experience.
 
 **Files Modified:** `client/src/screens/HomeScreen.tsx`
-
----
-
-## Session 101 (Previous)
-
-**Date:** December 28, 2025
-**Focus:** TestFlight Bug Fixes — Expandable Sections
-
-Fixed a critical bug in `AnimatedExpandableSection` where the expand/collapse animation wasn't working. Root cause: React state used inside Reanimated worklet. Solution: Converted to shared values + hidden measurement container.
-
-**Files Modified:** `client/src/components/ui/AnimatedExpandableSection.tsx`
 
 ---
 
