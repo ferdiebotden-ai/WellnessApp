@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | TestFlight Release |
-| **Session** | 105 (complete) |
-| **Progress** | HealthKit initialization timing fix ✅ |
+| **Session** | 106 (complete) |
+| **Progress** | Fixed 3 UX issues from beta testing ✅ |
 | **Branch** | main |
 | **Blocker** | None |
 | **Issues** | None |
@@ -53,34 +53,48 @@
 
 ## Last Session
 
-**Date:** December 30, 2025 (Session 105)
-**Focus:** Fix Apple Health crash (initialization timing)
+**Date:** December 30, 2025 (Session 106)
+**Focus:** Fix 3 UX issues from beta testing
 
 ### Work Completed
 
-**Bug Fix: iOS App Crashes When Accessing HealthKit**
+**Issue 1: Recovery Score "Connect a Wearable" Now Clickable**
+- Added `onConnectWearable` prop to `LiteModeScoreCard`
+- Wrapped `EmptyState` in `Pressable` with watch icon and "Tap to connect" hint
+- Added handler in `HomeScreen` navigating to Profile > WearableSettings
 
-After previous session's force-unwrap fixes, app still crashed when clicking "Connect Apple Health" or navigating to Profile settings.
+**Issue 2: iOS Crash on Apple Health Connection Fixed**
+- Enhanced defensive guards in `useHealthKit.ts` with specific error messages
+- Added comprehensive try-catch in `WearableSettingsScreen`
+- Added "Open Settings" button for permission denial flow
+- Graceful handling of background delivery failure
 
-**Root Cause:** Initialization timing, not force unwraps. Native module properties initialized at class instantiation time, before iOS Health database was ready:
-
-1. `ExpoHealthKitObserverAppDelegate` ran at app launch via `appDelegateSubscribers`
-2. Accessed `HealthKitManager.shared` at property declaration (line 25)
-3. Triggered singleton creation before iOS Health database ready
-4. `HKHealthStore()` and `DispatchQueue` created at declaration time caused crash
-
-**Solution:** Defer all HealthKit initialization using Swift's `lazy var` pattern:
-
-1. **expo-module.config.json** — Removed `appDelegateSubscribers` to prevent AppDelegate running at launch
-2. **ExpoHealthKitObserverModule.swift** — Made `manager` property `lazy var` to defer singleton access
-3. **HealthKitManager.swift** — Made `healthStore` and `processingQueue` `lazy var`
+**Issue 3: Health Tab Layout Cleanup**
+- Removed redundant header from empty state
+- Changed title to "Connect Your Health Data"
+- Constrained benefits list width (fixes "line too far left")
+- Added flex spacers for proper vertical centering
 
 **Files Modified:**
-- `client/modules/expo-healthkit-observer/expo-module.config.json`
-- `client/modules/expo-healthkit-observer/ios/ExpoHealthKitObserverModule.swift`
-- `client/modules/expo-healthkit-observer/ios/HealthKitManager.swift`
+- `client/src/components/LiteModeScoreCard.tsx`
+- `client/src/screens/HomeScreen.tsx`
+- `client/src/hooks/useHealthKit.ts`
+- `client/src/screens/settings/WearableSettingsScreen.tsx`
+- `client/src/screens/HealthDashboardScreen.tsx`
+- `client/src/components/health/HealthEmptyState.tsx`
 
-**Commits:** `747dca8`, `82fccc6`
+**Commit:** `b243a83`
+
+---
+
+## Session 105 (Previous)
+
+**Date:** December 30, 2025
+**Focus:** Fix Apple Health crash (initialization timing)
+
+Deferred HealthKit initialization using Swift's `lazy var` pattern. Removed `appDelegateSubscribers` to prevent AppDelegate running at launch.
+
+**Files Modified:** `expo-module.config.json`, `ExpoHealthKitObserverModule.swift`, `HealthKitManager.swift`
 
 ---
 
@@ -89,11 +103,7 @@ After previous session's force-unwrap fixes, app still crashed when clicking "Co
 **Date:** December 30, 2025
 **Focus:** Fix protocol cards not expanding on iOS (complete rewrite)
 
-Rewrote SwipeableProtocolCard using `react-native-gesture-handler` to fix intermittent tap failures. Root cause was stale closures in PanResponder and iOS gesture competition.
-
-**Solution:** Used `Gesture.Pan()` + `Gesture.Tap()` with `Gesture.Exclusive()` for proper gesture arbitration.
-
-**Files Modified:** `SwipeableProtocolCard.tsx`, `ProtocolQuickSheet.tsx`
+Rewrote SwipeableProtocolCard using `react-native-gesture-handler` with `Gesture.Exclusive()` for proper gesture arbitration.
 
 ---
 
@@ -102,18 +112,7 @@ Rewrote SwipeableProtocolCard using `react-native-gesture-handler` to fix interm
 **Date:** December 29, 2025
 **Focus:** Fix Apple Health crash (force unwraps)
 
-Fixed force unwraps (`!`) in Swift static initializers that crashed at module load time.
-
-**Solution:** Replaced force-unwrapped static `let` arrays with computed `var` properties using `compactMap`.
-
----
-
-## Session 102 (Previous)
-
-**Date:** December 29, 2025
-**Focus:** Remove check-in pop-up on app launch
-
-Removed the "Good morning, Ready for your Morning Anchor?" check-in pop-up.
+Replaced force-unwrapped static `let` arrays with computed `var` properties using `compactMap`.
 
 ---
 
@@ -282,4 +281,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 30, 2025 (Session 105 — HealthKit initialization timing fix)*
+*Last Updated: December 30, 2025 (Session 106 — Fixed 3 UX issues from beta testing)*
