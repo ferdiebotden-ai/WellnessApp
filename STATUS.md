@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | TestFlight Release |
-| **Session** | 103 (complete) |
-| **Progress** | Apple Health crash fixed ✅ |
+| **Session** | 104 (complete) |
+| **Progress** | Protocol tap gesture fix ✅ |
 | **Branch** | main |
 | **Blocker** | None |
 | **Issues** | None |
@@ -53,38 +53,37 @@
 
 ## Last Session
 
-**Date:** December 29, 2025 (Session 103)
-**Focus:** Fix Apple Health crash on navigation
+**Date:** December 29, 2025 (Session 104)
+**Focus:** Fix protocol cards not expanding on iOS
 
 ### Work Completed
 
-**Bug Fix: App Crash on Profile/Health Navigation**
+**Bug Fix: Protocol Cards Not Opening Detail Sheet on Tap**
 
-Fixed critical crash that occurred when:
-- Clicking "Connect Apple Health" button on Health tab
-- Navigating to Profile settings tab
+Fixed intermittent issue where some protocol cards on the home screen would show visual press feedback but fail to open the detail sheet.
 
-**Root Cause:** Force unwraps (`!`) in Swift static initializers (`HealthKitManager.swift` lines 53-68) crashed at module load time, before any TypeScript error handling could intercept.
+**Root Cause:** Gesture competition between PanResponder (swipe gestures) and Pressable (tap) on iOS. The swipe detection threshold was only 10px, which is less than typical finger drift during an iOS tap. When natural finger drift exceeded 10px horizontally, the PanResponder captured the gesture and the `onPress` callback never fired.
 
-**Solution:** Replaced force-unwrapped static `let` arrays with computed `var` properties using `compactMap` and optional binding for safe unwrapping.
+**Solution:** Increased swipe gesture threshold from 10px to 25px and added a velocity check (`vx > 0.1`) to distinguish intentional swipes from accidental drift.
 
 **Changes:**
-- Moved `expo-healthkit-observer` module from project root to `client/modules/`
-- Added module as file dependency in `client/package.json`
-- Replaced force-unwrapped `readableTypes` array with computed property
-- Replaced force-unwrapped `observableTypes` dictionary with computed property
-- Fixed force unwrap in error logging (line 271)
-- Updated all imports to use package name instead of relative paths
-- Fixed navigation in HealthDashboardScreen (removed `getParent()`)
+- Added `SWIPE_THRESHOLD_START = 25` constant for gesture capture threshold
+- Updated `onMoveShouldSetPanResponder` to use new threshold
+- Added velocity check to ensure gesture is intentional, not drift
 
-**Files Modified (10+):**
-- `client/modules/expo-healthkit-observer/ios/HealthKitManager.swift` — Safe unwrapping
-- `client/package.json` — Added expo-healthkit-observer dependency
-- `client/src/hooks/useHealthKit.ts` — Updated imports
-- `client/src/hooks/useWearableHealth.ts` — Updated imports
-- `client/src/screens/HealthDashboardScreen.tsx` — Fixed navigation
-- `client/src/screens/settings/WearableSettingsScreen.tsx` — Updated error message
-- `client/src/services/wake/HealthKitWakeDetector.ts` — Updated imports
+**File Modified:**
+- `client/src/components/home/SwipeableProtocolCard.tsx`
+
+---
+
+## Session 103 (Previous)
+
+**Date:** December 29, 2025
+**Focus:** Fix Apple Health crash on navigation
+
+Fixed critical crash that occurred when clicking "Connect Apple Health" button or navigating to Profile settings. Root cause: Force unwraps (`!`) in Swift static initializers crashed at module load time.
+
+**Solution:** Replaced force-unwrapped static `let` arrays with computed `var` properties using `compactMap` and optional binding.
 
 **Commit:** `0912d2d`
 
@@ -125,8 +124,8 @@ npx eas submit --platform ios --profile testflight
 ### 🚀 TestFlight Beta Testing Phase
 
 **Current Status:**
-- Build #18 deployed (has expandable section bug + check-in pop-up + Apple Health crash)
-- Build #19 pending (with fixes from sessions 101-103)
+- Build #18 deployed (has expandable section bug + check-in pop-up + Apple Health crash + tap gesture issue)
+- Build #19 pending (with fixes from sessions 101-104)
 
 **Post-Beta (Before Production):**
 1. Review Production Release Checklist (see below)
@@ -277,4 +276,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 29, 2025 (Session 103 — Apple Health crash fixed)*
+*Last Updated: December 29, 2025 (Session 104 — Protocol tap gesture fix)*

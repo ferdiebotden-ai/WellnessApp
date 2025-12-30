@@ -31,6 +31,9 @@ import type { ScheduledProtocol } from '../../hooks/useEnrolledProtocols';
 /** Minimum swipe distance to trigger action */
 const SWIPE_THRESHOLD = 80;
 
+/** Minimum distance to START capturing gesture (prevents tap interference on iOS) */
+const SWIPE_THRESHOLD_START = 25;
+
 /** Maximum swipe distance (prevents over-swiping) */
 const MAX_SWIPE = 120;
 
@@ -102,13 +105,19 @@ export const SwipeableProtocolCard: React.FC<SwipeableProtocolCardProps> = ({
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        const { dx, dy } = gestureState;
+        const { dx, dy, vx } = gestureState;
         // Only respond to horizontal swipes when not updating
         if (isUpdating) return false;
 
-        // Check if swiping in an enabled direction
-        const isHorizontal = Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10;
-        if (!isHorizontal) return false;
+        // Session 103: Higher threshold (25px vs 10px) + velocity check
+        // This prevents accidental gesture capture from finger drift during taps on iOS
+        // Normal tap drift is 5-15px; intentional swipes exceed 25px with velocity
+        const isIntentionalSwipe =
+          Math.abs(dx) > Math.abs(dy) &&
+          Math.abs(dx) > SWIPE_THRESHOLD_START &&
+          Math.abs(vx) > 0.1; // Require some velocity (intentional movement)
+
+        if (!isIntentionalSwipe) return false;
 
         // Only allow swipes in enabled directions
         const swipingRight = dx > 0;
