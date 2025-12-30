@@ -12,6 +12,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -115,27 +116,67 @@ export const WearableSettingsScreen: React.FC = () => {
 
   const handleConnect = useCallback(async () => {
     setIsConnecting(true);
+
     try {
+      // Guard: Check requestPermission function exists
+      if (!requestPermission) {
+        console.error('[WearableSettings] requestPermission not available');
+        Alert.alert('Error', 'Health integration is not available. Please restart the app.');
+        setIsConnecting(false);
+        return;
+      }
+
       const granted = await requestPermission();
+
       if (granted) {
         // Only enable background delivery on iOS (Health Connect is foreground-only for MVP)
         if (platform === 'ios' && enableBackgroundDelivery) {
-          await enableBackgroundDelivery();
-          Alert.alert('Connected', `${providerName} is now connected and syncing in the background.`);
+          try {
+            await enableBackgroundDelivery();
+            Alert.alert('Connected', `${providerName} is now connected and syncing in the background.`);
+          } catch (bgError) {
+            // Background delivery failed but permission was granted - partial success
+            console.warn('[WearableSettings] Background delivery failed:', bgError);
+            Alert.alert(
+              'Connected',
+              `${providerName} is connected. Background sync may not be available - open the app to sync.`
+            );
+          }
         } else {
           Alert.alert('Connected', `${providerName} is now connected. Open the app to sync your latest data.`);
         }
       } else {
+        // Permission denied - show settings guidance with option to open settings
         const settingsPath = platform === 'ios'
-          ? 'Settings > Privacy > Health > Apex OS'
+          ? 'Settings > Privacy & Security > Health > Apex OS'
           : 'Settings > Apps > Apex OS > Permissions';
+
         Alert.alert(
-          'Permission Denied',
-          `Please enable ${providerName} access in ${settingsPath}`
+          'Permission Required',
+          `To track your health data, please enable ${providerName} access in ${settingsPath}`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                Linking.openSettings().catch(() => {
+                  // Silently fail if settings can't be opened
+                  console.warn('[WearableSettings] Could not open settings');
+                });
+              },
+            },
+          ]
         );
       }
     } catch (err) {
-      Alert.alert('Error', `Failed to connect to ${providerName}`);
+      console.error('[WearableSettings] Connect failed:', err);
+
+      // Provide user-friendly error message
+      const errorMessage = err instanceof Error && err.message
+        ? err.message
+        : `Unable to connect to ${providerName}. Please try again.`;
+
+      Alert.alert('Connection Failed', errorMessage);
     } finally {
       setIsConnecting(false);
     }

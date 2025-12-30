@@ -211,13 +211,24 @@ export function useHealthKit(): UseHealthKitReturn {
 
   // Request permission (with defensive guard)
   const requestPermission = useCallback(async (): Promise<boolean> => {
-    if (!moduleRef.current || !isAvailable) {
+    // Guard 1: Check availability
+    if (!isAvailable) {
+      console.warn('[useHealthKit] requestPermission called but HealthKit not available');
+      setError('HealthKit is not available on this device.');
       return false;
     }
 
-    // Guard: verify method exists
+    // Guard 2: Check module exists
+    if (!moduleRef.current) {
+      console.warn('[useHealthKit] requestPermission called but module not loaded');
+      setError('HealthKit module not loaded. Please restart the app.');
+      return false;
+    }
+
+    // Guard 3: Verify method exists (defensive against incomplete module)
     if (typeof moduleRef.current.requestAuthorization !== 'function') {
-      console.warn('[useHealthKit] requestAuthorization method not found');
+      console.warn('[useHealthKit] requestAuthorization method not found on module');
+      setError('HealthKit integration error. Please update the app.');
       return false;
     }
 
@@ -235,7 +246,20 @@ export function useHealthKit(): UseHealthKitReturn {
       return granted;
     } catch (err) {
       console.error('[useHealthKit] Authorization failed:', err);
-      setError(err instanceof Error ? err.message : 'Authorization failed');
+      const errorMessage = err instanceof Error ? err.message : 'Authorization failed';
+
+      // Provide specific error messages for known issues
+      if (errorMessage.toLowerCase().includes('entitlement')) {
+        setError('App is missing HealthKit entitlement. Please contact support.');
+      } else if (errorMessage.toLowerCase().includes('simulator')) {
+        setError('HealthKit is not available in the simulator.');
+      } else if (errorMessage.toLowerCase().includes('cancel')) {
+        // User cancelled the permission dialog - not an error
+        setError(null);
+      } else {
+        setError(errorMessage);
+      }
+
       setStatus('denied');
       return false;
     }

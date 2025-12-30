@@ -326,6 +326,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.getParent()?.navigate('Profile', { screen: 'WeeklyInsights' });
   }, [navigation]);
 
+  // Session 106: Navigate to wearable settings when user taps "Connect a Wearable"
+  const handleConnectWearable = useCallback(() => {
+    navigation.getParent()?.navigate('Profile', { screen: 'WearableSettings' });
+  }, [navigation]);
+
   // Session 87: handleFocusStart removed - TodaysFocusCard consolidated into MyScheduleSection
 
   return (
@@ -342,6 +347,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <LiteModeScoreCard
                 data={checkInData}
                 loading={loadingRecovery}
+                onConnectWearable={handleConnectWearable}
               />
             ) : (
               <RecoveryScoreCard

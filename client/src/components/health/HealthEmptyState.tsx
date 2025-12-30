@@ -30,20 +30,23 @@ export function HealthEmptyState({ onConnectWearable }: HealthEmptyStateProps): 
 
   return (
     <View style={styles.container}>
+      {/* Session 106: Top spacer for proper vertical centering */}
+      <View style={styles.topSpacer} />
+
       {/* Icon Circle */}
       <View style={styles.iconCircle}>
         <Ionicons name="heart-outline" size={48} color={palette.primary} />
       </View>
 
-      {/* Title */}
-      <Text style={styles.title}>No Health Data Yet</Text>
+      {/* Title - Updated for action-oriented copy */}
+      <Text style={styles.title}>Connect Your Health Data</Text>
 
       {/* Description */}
       <Text style={styles.description}>
-        Connect {platformName} to see your steps, sleep, HRV, and heart rate trends.
+        Sync with {platformName} to unlock personalized recovery insights and health tracking.
       </Text>
 
-      {/* Benefits List */}
+      {/* Benefits List - Session 106: Constrained width for better alignment */}
       <View style={styles.benefits}>
         {BENEFITS.map((text, index) => (
           <View key={index} style={styles.benefitRow}>
@@ -62,6 +65,7 @@ export function HealthEmptyState({ onConnectWearable }: HealthEmptyStateProps): 
         onPress={onConnectWearable}
         accessibilityRole="button"
         accessibilityLabel={`Connect ${platformName}`}
+        testID="health-connect-button"
       >
         <Ionicons name="link" size={18} color={palette.canvas} />
         <Text style={styles.connectText}>Connect {platformName}</Text>
@@ -71,6 +75,9 @@ export function HealthEmptyState({ onConnectWearable }: HealthEmptyStateProps): 
       <Text style={styles.privacy}>
         Your health data stays on your device. We only read data you explicitly share.
       </Text>
+
+      {/* Session 106: Bottom spacer for visual balance */}
+      <View style={styles.bottomSpacer} />
     </View>
   );
 }
@@ -78,9 +85,18 @@ export function HealthEmptyState({ onConnectWearable }: HealthEmptyStateProps): 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    padding: 32,
+    paddingHorizontal: 32,
+  },
+  // Session 106: Flex spacers for proper vertical centering
+  topSpacer: {
+    flex: 0.2,
+    minHeight: 40,
+  },
+  bottomSpacer: {
+    flex: 0.3,
+    minHeight: 60,
   },
   iconCircle: {
     width: 96,
@@ -105,8 +121,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     maxWidth: 300,
   },
+  // Session 106: Constrained width for better alignment (fixes "line too far left")
   benefits: {
-    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: 280,
     marginBottom: 32,
     gap: 12,
   },

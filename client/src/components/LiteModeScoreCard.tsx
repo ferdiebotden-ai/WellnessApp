@@ -28,6 +28,7 @@ import Animated, {
   withSpring,
   FadeIn,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { palette } from '../theme/palette';
 import type { CheckInResult, CheckInComponents } from '../types/checkIn';
 import { ApexLoadingIndicator } from './ui/ApexLoadingIndicator';
@@ -53,6 +54,11 @@ interface Props {
    * Called when card is pressed (for expansion).
    */
   onPress?: () => void;
+
+  /**
+   * Called when user taps the empty state to connect a wearable.
+   */
+  onConnectWearable?: () => void;
 }
 
 // =============================================================================
@@ -136,13 +142,28 @@ const ComponentRow: React.FC<{
 };
 
 /** Empty state when no wearable data available */
-const EmptyState: React.FC = () => (
-  <View style={styles.emptyContainer}>
+interface EmptyStateProps {
+  onConnectWearable?: () => void;
+}
+
+const EmptyState: React.FC<EmptyStateProps> = ({ onConnectWearable }) => (
+  <Pressable
+    style={styles.emptyContainer}
+    onPress={onConnectWearable}
+    accessibilityRole="button"
+    accessibilityLabel="Connect a wearable device"
+    testID="connect-wearable-button"
+  >
+    <Ionicons name="watch-outline" size={32} color={palette.primary} style={styles.emptyIcon} />
     <Text style={styles.emptyTitle}>Connect a Wearable</Text>
     <Text style={styles.emptySubtext}>
       Sync your Apple Watch, Oura Ring, or other health device for personalized recovery insights
     </Text>
-  </View>
+    <View style={styles.emptyButtonHint}>
+      <Text style={styles.emptyButtonText}>Tap to connect</Text>
+      <Ionicons name="chevron-forward" size={16} color={palette.primary} />
+    </View>
+  </Pressable>
 );
 
 // =============================================================================
@@ -153,6 +174,7 @@ export const LiteModeScoreCard: React.FC<Props> = ({
   data,
   loading = false,
   onPress,
+  onConnectWearable,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
@@ -199,7 +221,7 @@ export const LiteModeScoreCard: React.FC<Props> = ({
           <Text style={styles.title}>Recovery Score</Text>
           <LiteModeBadge />
         </View>
-        <EmptyState />
+        <EmptyState onConnectWearable={onConnectWearable} />
       </View>
     );
   }
@@ -508,6 +530,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 24,
   },
+  emptyIcon: {
+    marginBottom: 12,
+  },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -520,6 +545,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 16,
     lineHeight: 20,
+  },
+  emptyButtonHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: `${palette.primary}15`,
+    borderRadius: 8,
+  },
+  emptyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: palette.primary,
   },
 });
 

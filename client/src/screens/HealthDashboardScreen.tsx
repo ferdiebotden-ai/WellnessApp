@@ -153,13 +153,11 @@ export function HealthDashboardScreen(): React.ReactElement {
   }, [metrics?.lastSyncedAt]);
 
   // Show empty state when no health data is available
+  // Session 106: Removed header for cleaner empty state layout
   if (showEmptyState) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor={palette.canvas} />
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Health</Text>
-        </View>
         <HealthEmptyState onConnectWearable={handleConnectWearable} />
       </SafeAreaView>
     );
