@@ -9,8 +9,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Phase** | TestFlight Release |
-| **Session** | 104 (complete - rewrite) |
-| **Progress** | Protocol tap gesture fix ✅ (react-native-gesture-handler) |
+| **Session** | 105 (complete) |
+| **Progress** | HealthKit initialization timing fix ✅ |
 | **Branch** | main |
 | **Blocker** | None |
 | **Issues** | None |
@@ -53,54 +53,58 @@
 
 ## Last Session
 
-**Date:** December 30, 2025 (Session 104 continued)
-**Focus:** Fix protocol cards not expanding on iOS (complete rewrite)
+**Date:** December 30, 2025 (Session 105)
+**Focus:** Fix Apple Health crash (initialization timing)
 
 ### Work Completed
 
-**Bug Fix: Protocol Cards Not Opening Detail Sheet on Tap**
+**Bug Fix: iOS App Crashes When Accessing HealthKit**
 
-Initial threshold fix (25px + velocity check) did not resolve the issue. Deep investigation revealed multiple architectural problems:
+After previous session's force-unwrap fixes, app still crashed when clicking "Connect Apple Health" or navigating to Profile settings.
 
-1. **Stale Closures:** PanResponder created with `useRef()` captured closures at mount time and never updated when `canSwipeRight`, `canSwipeLeft`, or `isUpdating` changed
-2. **iOS Gesture Competition:** PanResponder and Pressable fought for the same gesture without clear priority on iOS
-3. **BottomSheet Conditional Mount:** Early return when `protocol === null` caused BottomSheet to unmount/remount, creating ref timing issues
+**Root Cause:** Initialization timing, not force unwraps. Native module properties initialized at class instantiation time, before iOS Health database was ready:
 
-**Solution:** Complete rewrite using `react-native-gesture-handler` (v2.30.0, already installed):
-- Replaced PanResponder with `Gesture.Pan()` + `Gesture.Tap()`
-- Used `Gesture.Exclusive()` for proper gesture arbitration
-- Added `activeOffsetX` threshold to allow taps before pan activates
-- Fixed BottomSheet to stay mounted (removed early return)
+1. `ExpoHealthKitObserverAppDelegate` ran at app launch via `appDelegateSubscribers`
+2. Accessed `HealthKitManager.shared` at property declaration (line 25)
+3. Triggered singleton creation before iOS Health database ready
+4. `HKHealthStore()` and `DispatchQueue` created at declaration time caused crash
 
-**Changes:**
-1. `SwipeableProtocolCard.tsx` — Complete rewrite:
-   - Replaced PanResponder with react-native-gesture-handler's Gesture API
-   - `Gesture.Pan()` with `activeOffsetX([-20, 20])` prevents tap interference
-   - `Gesture.Tap()` handles card press reliably
-   - `Gesture.Exclusive()` ensures only one gesture runs
-   - No more stale closures — gestures use fresh callback refs
+**Solution:** Defer all HealthKit initialization using Swift's `lazy var` pattern:
 
-2. `ProtocolQuickSheet.tsx` — Fixed conditional mounting:
-   - Removed early return when `protocol === null`
-   - BottomSheet stays mounted, content renders conditionally
-   - Added null-safe button handlers
+1. **expo-module.config.json** — Removed `appDelegateSubscribers` to prevent AppDelegate running at launch
+2. **ExpoHealthKitObserverModule.swift** — Made `manager` property `lazy var` to defer singleton access
+3. **HealthKitManager.swift** — Made `healthStore` and `processingQueue` `lazy var`
 
 **Files Modified:**
-- `client/src/components/home/SwipeableProtocolCard.tsx` — Complete rewrite
-- `client/src/components/protocol/ProtocolQuickSheet.tsx` — Fixed mounting
+- `client/modules/expo-healthkit-observer/expo-module.config.json`
+- `client/modules/expo-healthkit-observer/ios/ExpoHealthKitObserverModule.swift`
+- `client/modules/expo-healthkit-observer/ios/HealthKitManager.swift`
+
+**Commits:** `747dca8`, `82fccc6`
+
+---
+
+## Session 104 (Previous)
+
+**Date:** December 30, 2025
+**Focus:** Fix protocol cards not expanding on iOS (complete rewrite)
+
+Rewrote SwipeableProtocolCard using `react-native-gesture-handler` to fix intermittent tap failures. Root cause was stale closures in PanResponder and iOS gesture competition.
+
+**Solution:** Used `Gesture.Pan()` + `Gesture.Tap()` with `Gesture.Exclusive()` for proper gesture arbitration.
+
+**Files Modified:** `SwipeableProtocolCard.tsx`, `ProtocolQuickSheet.tsx`
 
 ---
 
 ## Session 103 (Previous)
 
 **Date:** December 29, 2025
-**Focus:** Fix Apple Health crash on navigation
+**Focus:** Fix Apple Health crash (force unwraps)
 
-Fixed critical crash that occurred when clicking "Connect Apple Health" button or navigating to Profile settings. Root cause: Force unwraps (`!`) in Swift static initializers crashed at module load time.
+Fixed force unwraps (`!`) in Swift static initializers that crashed at module load time.
 
-**Solution:** Replaced force-unwrapped static `let` arrays with computed `var` properties using `compactMap` and optional binding.
-
-**Commit:** `0912d2d`
+**Solution:** Replaced force-unwrapped static `let` arrays with computed `var` properties using `compactMap`.
 
 ---
 
@@ -109,9 +113,7 @@ Fixed critical crash that occurred when clicking "Connect Apple Health" button o
 **Date:** December 29, 2025
 **Focus:** Remove check-in pop-up on app launch
 
-Removed the "Good morning, Ready for your Morning Anchor?" check-in pop-up that appeared when opening the app. Per user feedback, this pop-up didn't add value and interrupted the user experience.
-
-**Files Modified:** `client/src/screens/HomeScreen.tsx`
+Removed the "Good morning, Ready for your Morning Anchor?" check-in pop-up.
 
 ---
 
@@ -129,7 +131,7 @@ npx eas submit --platform ios --profile testflight
 
 **Current Status:**
 - Build #18 deployed (has expandable section bug + check-in pop-up + Apple Health crash + tap gesture issue)
-- Build #19 pending (with fixes from sessions 101-104)
+- Build #19 pending (with fixes from sessions 101-105 including HealthKit initialization timing fix)
 
 **Post-Beta (Before Production):**
 1. Review Production Release Checklist (see below)
@@ -280,4 +282,4 @@ Before App Store / Play Store release, verify these items:
 
 ---
 
-*Last Updated: December 30, 2025 (Session 104 — Protocol tap fix with gesture-handler rewrite)*
+*Last Updated: December 30, 2025 (Session 105 — HealthKit initialization timing fix)*
